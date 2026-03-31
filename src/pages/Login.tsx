@@ -1,0 +1,217 @@
+import React, { useState, useRef, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useTranslation } from "react-i18next";
+import { Sparkles, Zap, Globe } from "lucide-react";
+import { toast } from "sonner";
+import { googleLogin } from "@/api/auth";
+
+const Login = () => {
+  const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { login, isAuthenticated } = useAuth();
+
+  const redirectTo =
+    ((location.state as { from?: string } | null | undefined)?.from as string | undefined) || "/";
+
+  const toggleLanguage = () => {
+    const newLang = i18n.language === "en" ? "zh" : "en";
+    i18n.changeLanguage(newLang);
+    localStorage.setItem("language", newLang);
+  };
+
+  // 验证码登录逻辑临时停用（仅保留 Google 登录）
+  // const [step, setStep] = useState<"email" | "code">("email");
+  // const [email, setEmail] = useState("");
+  // const [code, setCode] = useState(["", "", "", "", "", ""]);
+  // const [isLoading, setIsLoading] = useState(false);
+  // const [countdown, setCountdown] = useState(0);
+  // const [needCode, setNeedCode] = useState(true);
+  // const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate(redirectTo, { replace: true });
+    }
+  }, [isAuthenticated, navigate, redirectTo]);
+
+  // useEffect(() => {
+  //   if (countdown > 0) {
+  //     const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+  //     return () => clearTimeout(timer);
+  //   }
+  // }, [countdown]);
+
+  // const handleSendCode = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   if (!email.trim() || !email.includes("@")) {
+  //     toast.error(t("login.invalidEmail"));
+  //     return;
+  //   }
+  //   setIsLoading(true);
+  //   try {
+  //     const res = await sendCode({ email });
+  //     if (res.need_code === false) {
+  //       const loginRes = await apiLogin({ email });
+  //       login(email, loginRes.access_token);
+  //       toast.success(t("login.loginSuccess"));
+  //       navigate(redirectTo, { replace: true });
+  //     } else {
+  //       setNeedCode(true);
+  //       setStep("code");
+  //       setCountdown(60);
+  //       toast.success(t("login.codeSent", { email }));
+  //       setTimeout(() => inputRefs.current[0]?.focus(), 100);
+  //     }
+  //   } catch (err: any) {
+  //     const msg = err?.response?.data?.message || err?.message || "Failed";
+  //     toast.error(msg);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
+  // const handleCodeChange = (index: number, value: string) => {
+  //   if (value.length > 1) value = value.slice(-1);
+  //   if (!/^\d*$/.test(value)) return;
+  //
+  //   const newCode = [...code];
+  //   newCode[index] = value;
+  //   setCode(newCode);
+  //
+  //   if (value && index < 5) {
+  //     inputRefs.current[index + 1]?.focus();
+  //   }
+  //
+  //   if (newCode.every(c => c !== "")) {
+  //     handleVerify(newCode.join(""));
+  //   }
+  // };
+
+  // const handleCodeKeyDown = (index: number, e: React.KeyboardEvent) => {
+  //   if (e.key === "Backspace" && !code[index] && index > 0) {
+  //     inputRefs.current[index - 1]?.focus();
+  //   }
+  // };
+
+  // const handleCodePaste = (e: React.ClipboardEvent) => {
+  //   e.preventDefault();
+  //   const paste = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+  //   if (paste.length === 0) return;
+  //   const newCode = [...code];
+  //   for (let i = 0; i < paste.length; i++) {
+  //     newCode[i] = paste[i];
+  //   }
+  //   setCode(newCode);
+  //   if (paste.length === 6) {
+  //     handleVerify(paste);
+  //   } else {
+  //     inputRefs.current[Math.min(paste.length, 5)]?.focus();
+  //   }
+  // };
+
+  // const handleVerify = async (fullCode?: string) => {
+  //   const codeStr = fullCode || code.join("");
+  //   if (codeStr.length !== 6) {
+  //     toast.error(t("login.invalidCode"));
+  //     return;
+  //   }
+  //   setIsLoading(true);
+  //   try {
+  //     const res = await apiLogin({ email, code: codeStr });
+  //     login(email, res.access_token);
+  //     toast.success(t("login.loginSuccess"));
+  //     navigate(redirectTo, { replace: true });
+  //   } catch (err: any) {
+  //     const msg = err?.response?.data?.detail || err?.response?.data?.message || err?.message || "验证失败";
+  //     toast.error(msg);
+  //     // Clear code on failure for retry
+  //     setCode(["", "", "", "", "", ""]);
+  //     inputRefs.current[0]?.focus();
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
+  // const handleResend = async () => {
+  //   if (countdown > 0) return;
+  //   try {
+  //     await sendCode({ email });
+  //     setCountdown(60);
+  //     toast.success(t("login.codeSent", { email }));
+  //   } catch {
+  //     toast.error("发送失败，请重试");
+  //   }
+  // };
+
+  const handleGoogle = () => {
+    googleLogin(redirectTo);
+  };
+
+  return (
+    <div className="min-h-screen bg-background bg-grid flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Language Toggle */}
+      <button
+        onClick={toggleLanguage}
+        className="fixed top-5 right-5 h-8 px-2.5 flex items-center gap-1.5 bg-card border-brutal border-foreground hover:bg-secondary brutal-press text-[10px] font-bold uppercase z-50"
+      >
+        <Globe className="w-3 h-3" />
+        {i18n.language === "en" ? "EN" : "中"}
+      </button>
+
+      {/* Decorative elements — more subtle */}
+      <div className="fixed top-10 left-10 w-12 h-12 bg-accent-yellow border-brutal border-foreground brutal-shadow rotate-12 hidden lg:flex items-center justify-center opacity-80">
+        <Sparkles className="w-6 h-6" />
+      </div>
+      <div className="fixed bottom-16 right-16 w-10 h-10 bg-accent-cyan border-brutal border-foreground brutal-shadow -rotate-6 hidden lg:flex items-center justify-center opacity-80">
+        <Zap className="w-5 h-5" />
+      </div>
+      <div className="fixed top-1/4 right-20 w-6 h-6 bg-accent-pink border-brutal border-foreground rotate-45 hidden lg:block opacity-60" />
+      <div className="fixed bottom-1/3 left-20 w-8 h-8 bg-accent-green border-brutal border-foreground -rotate-12 hidden lg:block opacity-60" />
+
+      <div className="w-full max-w-md animate-fade-in">
+        {/* Logo */}
+        <div className="flex items-center justify-center gap-2.5 mb-8">
+          <div className="w-10 h-10 bg-accent-cyan text-foreground flex items-center justify-center font-bold text-lg border-brutal border-foreground brutal-shadow-cyan">
+            N
+          </div>
+          <span className="text-2xl font-bold tracking-tight">NEOSPARK</span>
+        </div>
+
+        {/* Login Card */}
+        <div className="bg-card border-brutal border-foreground brutal-shadow p-7">
+          {/* Header */}
+          <div className="mb-7">
+            <h1 className="text-xl font-bold uppercase tracking-widest mb-1.5">
+              {t("login.title")}
+            </h1>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {t("login.subtitle")}
+            </p>
+          </div>
+
+          {/* 验证码登录 UI 临时停用（仅保留 Google 登录） */}
+          {/* <form onSubmit={handleSendCode}>...</form> */}
+          {/* <div className="animate-fade-in">...</div> */}
+          <div className="mt-4">
+            <button
+              type="button"
+              onClick={handleGoogle}
+              className="w-full h-11 bg-card text-foreground font-bold text-xs uppercase tracking-wider border-brutal border-foreground brutal-shadow brutal-press hover:bg-secondary flex items-center justify-center gap-2"
+            >
+              {t("login.googleButton")}
+            </button>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <p className="text-center text-[10px] text-muted-foreground mt-5 font-mono">
+          {t("login.footer")}
+        </p>
+      </div>
+    </div>
+  );
+};
+
+export default Login;
