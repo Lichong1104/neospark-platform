@@ -22,7 +22,7 @@ import type { ApiResponse } from "@/types/common";
  * 获取绘画模型配置
  */
 export async function getModelsConfig(): Promise<ModelsConfigMap> {
-  const res = await http.get<ModelsConfigMap>("/api/v1/drawing/models/config");
+  const res = await http.get<ModelsConfigMap>("/drawing/models/config");
   return res.data;
 }
 
@@ -30,7 +30,7 @@ export async function getModelsConfig(): Promise<ModelsConfigMap> {
  * 创建绘画会话
  */
 export async function createSession(params?: CreateSessionParams): Promise<CreateSessionResponse> {
-  const res = await http.post<CreateSessionResponse>("/api/v1/drawing/sessions", params);
+  const res = await http.post<CreateSessionResponse>("/drawing/sessions", params);
   return res.data ?? (res as unknown as CreateSessionResponse);
 }
 
@@ -38,7 +38,7 @@ export async function createSession(params?: CreateSessionParams): Promise<Creat
  * 获取会话列表
  */
 export async function listSessions(params?: ListSessionsParams): Promise<SessionItem[]> {
-  const res = await http.get<SessionItem[]>("/api/v1/drawing/sessions", params as Record<string, unknown>);
+  const res = await http.get<SessionItem[]>("/drawing/sessions", params as Record<string, unknown>);
   return res.data;
 }
 
@@ -46,7 +46,7 @@ export async function listSessions(params?: ListSessionsParams): Promise<Session
  * 获取会话详情
  */
 export async function getSessionDetail(sessionId: string): Promise<SessionDetail> {
-  const res = await http.get<SessionDetail>(`/api/v1/drawing/sessions/${sessionId}`);
+  const res = await http.get<SessionDetail>(`/drawing/sessions/${sessionId}`);
   return res.data;
 }
 
@@ -58,7 +58,7 @@ export async function generateImage(
   params: GenerateImageParams
 ): Promise<GenerateImageResponse> {
   const res = await http.post<GenerateImageResponse>(
-    `/api/v1/drawing/sessions/${sessionId}/generate`,
+    `/drawing/sessions/${sessionId}/generate`,
     params
   );
   return res.data ?? (res as unknown as GenerateImageResponse);
@@ -72,7 +72,7 @@ export async function generateBatch(
   params: GenerateBatchParams
 ): Promise<GenerateBatchData> {
   const res = await http.post<GenerateBatchData>(
-    `/api/v1/drawing/sessions/${sessionId}/generate-batch`,
+    `/drawing/sessions/${sessionId}/generate-batch`,
     params
   );
   return res.data ?? (res as unknown as GenerateBatchData);
@@ -82,7 +82,7 @@ export async function generateBatch(
  * 查询消息生成状态
  */
 export async function getMessageStatus(messageId: string): Promise<MessageStatusResponse> {
-  const res = await http.get<MessageStatusResponse>(`/api/v1/drawing/messages/${messageId}`);
+  const res = await http.get<MessageStatusResponse>(`/drawing/messages/${messageId}`);
   return res.data;
 }
 
@@ -93,7 +93,7 @@ export async function updateSessionTitle(
   sessionId: string,
   params: UpdateSessionTitleParams
 ): Promise<ApiResponse<unknown>> {
-  return http.put(`/api/v1/drawing/sessions/${sessionId}/title`, params);
+  return http.put(`/drawing/sessions/${sessionId}/title`, params);
 }
 
 /**
@@ -103,7 +103,7 @@ export async function deleteSession(
   sessionId: string,
   params?: DeleteSessionParams
 ): Promise<ApiResponse<unknown>> {
-  return http.del(`/api/v1/drawing/sessions/${sessionId}`, params as Record<string, unknown>);
+  return http.del(`/drawing/sessions/${sessionId}`, params as Record<string, unknown>);
 }
 
 /**
@@ -111,7 +111,7 @@ export async function deleteSession(
  */
 export async function getBillingHistory(params?: BillingHistoryParams): Promise<BillingHistoryData> {
   const res = await http.get<BillingHistoryData>(
-    "/api/v1/drawing/billing/history",
+    "/drawing/billing/history",
     params as Record<string, unknown>
   );
   return res.data;

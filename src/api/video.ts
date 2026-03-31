@@ -15,7 +15,7 @@ import type { ApiResponse } from "@/types/common";
  * 创建视频生成任务
  */
 export async function createVideoTask(params: CreateVideoParams): Promise<CreateVideoResponse> {
-  const res = await http.post<CreateVideoResponse>("/api/v1/video/generations", params);
+  const res = await http.post<CreateVideoResponse>("/video/generations", params);
   return res.data ?? (res as unknown as CreateVideoResponse);
 }
 
@@ -23,7 +23,7 @@ export async function createVideoTask(params: CreateVideoParams): Promise<Create
  * 获取视频任务详情
  */
 export async function getVideoTask(taskId: string): Promise<VideoTaskDetail> {
-  const res = await http.get<VideoTaskDetail>(`/api/v1/video/generations/${taskId}`);
+  const res = await http.get<VideoTaskDetail>(`/video/generations/${taskId}`);
   return res.data;
 }
 
@@ -32,7 +32,7 @@ export async function getVideoTask(taskId: string): Promise<VideoTaskDetail> {
  */
 export async function listVideoTasks(params?: ListVideoTasksParams): Promise<VideoTaskListData> {
   const res = await http.get<VideoTaskListData>(
-    "/api/v1/video/generations",
+    "/video/generations",
     params as Record<string, unknown>
   );
   return res.data;
@@ -42,7 +42,7 @@ export async function listVideoTasks(params?: ListVideoTasksParams): Promise<Vid
  * 取消/删除视频任务
  */
 export async function deleteVideoTask(taskId: string): Promise<ApiResponse<unknown>> {
-  return http.del(`/api/v1/video/generations/${taskId}`);
+  return http.del(`/video/generations/${taskId}`);
 }
 
 /**
@@ -57,7 +57,7 @@ export function connectVideoWs(
 ): WebSocket {
   const token = getToken();
   const wsBase = BASE_URL.replace(/^http/, "ws");
-  const url = `${wsBase}/api/v1/video/ws?task_id=${taskId}${token ? `&token=${token}` : ""}`;
+  const url = `${wsBase}/video/ws?task_id=${taskId}${token ? `&token=${token}` : ""}`;
 
   const ws = new WebSocket(url);
 

@@ -113,7 +113,7 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({ isOpen, onClose, onAddToCan
   };
 
   const handleClickVideo = (file: FileItem) => {
-    const url = file.path ? `${BASE_URL}/api/v1/storage/file/${file.path}` : "";
+    const url = file.path ? `${BASE_URL}/storage/file/${file.path}` : "";
     onAddToCanvas?.({
       src: url,
       name: file.filename,

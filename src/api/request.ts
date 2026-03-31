@@ -5,7 +5,7 @@ import type { ApiResponse } from "@/types/common";
 
 // API 基础路径 — 按需修改为实际后端地址
 // const BASE_URL = "http://116.204.67.82:9100";
-const BASE_URL = "http://localhost:9100";
+const BASE_URL = "https://api.useneospark.com/api/v1";
 
 const instance: AxiosInstance = axios.create({
   baseURL: BASE_URL,
