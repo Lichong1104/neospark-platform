@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import storageApi from "@/api/storage";
-import { BASE_URL } from "@/api/request";
+import { STATIC_BASE_URL } from "@/api/request";
 import type { UserImageItem, FileItem } from "@/types/storage";
 
 interface AssetSidebarProps {
@@ -34,7 +34,7 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({ isOpen, onClose, onAddToCan
 
   const getImageUrl = useCallback((url: string) => {
     if (!url) return "";
-    return url.startsWith("http") ? url : `${BASE_URL}${url}`;
+    return url.startsWith("http") ? url : `${STATIC_BASE_URL}${url}`;
   }, []);
 
   const loadImages = useCallback(async () => {
@@ -113,7 +113,7 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({ isOpen, onClose, onAddToCan
   };
 
   const handleClickVideo = (file: FileItem) => {
-    const url = file.path ? `${BASE_URL}/storage/file/${file.path}` : "";
+    const url = file.path ? `${STATIC_BASE_URL}/storage/file/${file.path}` : "";
     onAddToCanvas?.({
       src: url,
       name: file.filename,

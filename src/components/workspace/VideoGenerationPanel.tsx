@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import { createVideoTask } from "@/api/video";
 import { useVideoWebSocket } from "@/hooks/useVideoWebSocket";
-import { BASE_URL } from "@/api/request";
+import { BASE_URL, STATIC_BASE_URL } from "@/api/request";
 import type { CreateVideoParams } from "@/types/video";
 import { VideoConfigForm } from "./VideoConfigForm";
 
@@ -23,13 +23,13 @@ interface VideoGenerationPanelProps {
 
 const getVideoFullUrl = (url: string) => {
   if (!url) return "";
-  return url.startsWith("http") ? url : `${BASE_URL}${url}`;
+  return url.startsWith("http") ? url : `${STATIC_BASE_URL}${url}`;
 };
 
 /** Strip BASE_URL prefix to get server-relative path for API */
 const toServerPath = (fullUrl: string) => {
   if (!fullUrl) return "";
-  if (fullUrl.startsWith(BASE_URL)) return fullUrl.slice(BASE_URL.length);
+  if (fullUrl.startsWith(STATIC_BASE_URL)) return fullUrl.slice(STATIC_BASE_URL.length);
   if (fullUrl.startsWith("http")) {
     try { return new URL(fullUrl).pathname; } catch { return fullUrl; }
   }

@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import imageLayerApi from "@/api/imageLayer";
-import { BASE_URL } from "@/api/request";
+import { BASE_URL, STATIC_BASE_URL } from "@/api/request";
 import type { BgRemovalTaskDetail, LayerTaskDetail, UpscaleTaskDetail } from "@/types/imageLayer";
 
 type ProcessingType = "bg-remover" | "layer-split" | "upscale" | null;
@@ -38,8 +38,8 @@ export function useImageProcessing(
 
   const getImagePath = (src: string): string => {
     // Extract relative path from full URL for API calls
-    if (src.startsWith(BASE_URL)) {
-      return src.replace(BASE_URL, "");
+    if (src.startsWith(STATIC_BASE_URL)) {
+      return src.replace(STATIC_BASE_URL, "");
     }
     if (src.startsWith("http")) {
       try {
@@ -53,7 +53,7 @@ export function useImageProcessing(
 
   const fullUrl = (path: string): string => {
     if (path.startsWith("http")) return path;
-    return `${BASE_URL}${path}`;
+    return `${STATIC_BASE_URL}${path}`;
   };
 
   // ========== Background Removal ==========
@@ -125,7 +125,7 @@ export function useImageProcessing(
             let images: { src: string; name: string }[] = [];
             if (detail.local_paths && detail.local_paths.length > 0) {
               images = detail.local_paths.map((p, i) => ({
-                src: `${BASE_URL}${p}`,
+                src: fullUrl(p),
                 name: `${imageName}_layer${i + 1}`,
               }));
             } else if (detail.layer_urls && detail.layer_urls.length > 0) {

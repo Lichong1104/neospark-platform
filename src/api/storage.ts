@@ -1,4 +1,4 @@
-import http, { BASE_URL } from "./request";
+import http, { STATIC_BASE_URL } from "./request";
 import type {
   UploadFileResponse,
   ListFilesParams,
@@ -55,7 +55,7 @@ export async function listUserImages(params?: ListUserImagesParams): Promise<Use
  * 也可直接使用静态 URL: /uploads/{path}
  */
 export function getFileAccessUrl(path: string): string {
-  return `${BASE_URL}/storage/file/${path}`;
+  return `${STATIC_BASE_URL}/storage/file/${path}`;
 }
 
 /**

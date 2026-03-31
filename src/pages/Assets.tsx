@@ -7,7 +7,7 @@ import { Folder, File, Image, Trash2, Plus, ChevronRight, Upload, Loader2 } from
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import storageApi from "@/api/storage";
-import { BASE_URL } from "@/api/request";
+import { STATIC_BASE_URL } from "@/api/request";
 import type { UserImageItem } from "@/types/storage";
 
 const Assets = () => {
@@ -76,7 +76,7 @@ const Assets = () => {
 
   const getImageUrl = (url: string) => {
     if (url.startsWith("http")) return url;
-    return `${BASE_URL}${url}`;
+    return `${STATIC_BASE_URL}${url}`;
   };
 
   return (

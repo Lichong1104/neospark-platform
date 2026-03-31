@@ -5,7 +5,7 @@ import { AssetSidebar } from "@/components/workspace/AssetSidebar";
 import { CanvasArea, type CanvasImage } from "@/components/workspace/CanvasArea";
 import { WorkflowCanvas } from "@/components/workspace/WorkflowCanvas";
 import { IntelligenceHub } from "@/components/workspace/IntelligenceHub";
-import { BASE_URL } from "@/api/request";
+import { STATIC_BASE_URL } from "@/api/request";
 import { toast } from "sonner";
 import storageApi from "@/api/storage";
 import { useImageProcessing } from "@/hooks/useImageProcessing";
@@ -68,7 +68,7 @@ const Index = () => {
       width: 256,
       height: 256,
       selected: false,
-      src: img.url.startsWith("http") ? img.url : `${BASE_URL}${img.url}`,
+      src: img.url.startsWith("http") ? img.url : `${STATIC_BASE_URL}${img.url}`,
       name: `Generated_${Date.now()}_${idx + 1}`,
       type: "image" as const,
     }));

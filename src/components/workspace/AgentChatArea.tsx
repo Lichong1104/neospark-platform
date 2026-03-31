@@ -21,7 +21,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import drawingApi from "@/api/drawing";
 import storageApi from "@/api/storage";
-import { BASE_URL } from "@/api/request";
+import { STATIC_BASE_URL } from "@/api/request";
 import { useGenerationPolling } from "@/hooks/useGenerationPolling";
 import type { GenerateImageParams, MessageStatusResponse, ModelsConfigMap } from "@/types/drawing";
 
@@ -981,7 +981,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
 
   const getImageUrl = (url: string) => {
     if (url.startsWith("http")) return url;
-    return `${BASE_URL}${url}`;
+    return `${STATIC_BASE_URL}${url}`;
   };
 
   const DEFAULT_ASPECT_RATIOS: DropdownOption[] = useMemo(
@@ -1143,9 +1143,9 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
                       </div>
                       <p className="text-sm text-muted-foreground">{message.content}</p>
                       <div className="border-brutal border-foreground p-1.5 bg-secondary/10 inline-block">
-                        <a href={message.images[0].url.startsWith("http") ? message.images[0].url : `${BASE_URL}${message.images[0].url}`} target="_blank" rel="noopener noreferrer">
+                        <a href={message.images[0].url.startsWith("http") ? message.images[0].url : `${STATIC_BASE_URL}${message.images[0].url}`} target="_blank" rel="noopener noreferrer">
                           <img
-                            src={message.images[0].url.startsWith("http") ? message.images[0].url : `${BASE_URL}${message.images[0].url}`}
+                            src={message.images[0].url.startsWith("http") ? message.images[0].url : `${STATIC_BASE_URL}${message.images[0].url}`}
                             alt="Final detail page"
                             className="max-w-xs max-h-96 object-contain hover:brightness-110 transition-none"
                           />

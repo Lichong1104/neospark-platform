@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import storageApi from "@/api/storage";
 import { toast } from "sonner";
 import { useGenerationPolling } from "@/hooks/useGenerationPolling";
-import { BASE_URL } from "@/api/request";
+import { STATIC_BASE_URL } from "@/api/request";
 import { 
   Send, 
   Zap, 
@@ -558,7 +558,7 @@ const ChatView: React.FC<ChatViewProps> = ({
             </div>
             <div className="grid grid-cols-2 gap-2">
               {generatedImages.map((img, idx) => {
-                const imgUrl = img.url.startsWith("http") ? img.url : `${BASE_URL}${img.url}`;
+                const imgUrl = img.url.startsWith("http") ? img.url : `${STATIC_BASE_URL}${img.url}`;
                 return (
                   <a
                     key={idx}

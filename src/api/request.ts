@@ -6,6 +6,8 @@ import type { ApiResponse } from "@/types/common";
 // API 基础路径 — 按需修改为实际后端地址
 // const BASE_URL = "http://116.204.67.82:9100";
 const BASE_URL = "https://api.useneospark.com/api/v1";
+// 静态资源基础路径（去掉 /api/v1）
+const STATIC_BASE_URL = BASE_URL.replace(/\/api\/v1\/?$/, "");
 
 const instance: AxiosInstance = axios.create({
   baseURL: BASE_URL,
@@ -62,6 +64,6 @@ function del<T>(
 
 const http = { get, post, postForm, put, del };
 
-export { http, BASE_URL };
+export { http, BASE_URL, STATIC_BASE_URL };
 export type { ApiResponse };
 export default http;
