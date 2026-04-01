@@ -150,11 +150,9 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onImageSelect, canvasImages, on
       URL.revokeObjectURL(blobUrl);
       toast.success(t("canvas.downloading", { name: img.name }));
     } catch {
-      // Fallback for resources that cannot be fetched (e.g. strict CORS).
       const link = document.createElement("a");
       link.href = buildDirectUrl(img.src);
       link.download = `${img.name}.${img.type === "video" ? "mp4" : "jpg"}`;
-      link.target = "_blank";
       document.body.appendChild(link);
       link.click();
       link.remove();
