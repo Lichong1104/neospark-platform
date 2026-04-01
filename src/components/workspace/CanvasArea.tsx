@@ -128,11 +128,33 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onImageSelect, canvasImages, on
     if (!img) return;
 
     const buildDownloadUrl = (src: string) => {
-      if (!src || src.startsWith("data:") || /^https?:\/\//i.test(src)) {
-        return src;
+      if (!src || src.startsWith("data:")) return src;
+
+      const normalizeUploadsPath = (rawPath: string) => {
+        const clean = rawPath.replace(/^\/+/, "");
+        if (clean.startsWith("storage/file/")) return clean.slice("storage/file/".length);
+        if (clean.startsWith("uploads/")) return clean;
+        return null;
+      };
+
+      if (/^https?:\/\//i.test(src)) {
+        try {
+          const url = new URL(src);
+          const fromPath = normalizeUploadsPath(url.pathname);
+          if (fromPath) {
+            return storageApi.getFileAccessUrl(fromPath);
+          }
+          return src;
+        } catch {
+          return src;
+        }
       }
-      const normalizedPath = src.startsWith("/") ? src.slice(1) : src;
-      return storageApi.getFileAccessUrl(normalizedPath);
+
+      const fromRelative = normalizeUploadsPath(src);
+      if (fromRelative) {
+        return storageApi.getFileAccessUrl(fromRelative);
+      }
+      return src;
     };
 
     try {

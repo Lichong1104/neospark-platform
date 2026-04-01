@@ -989,11 +989,33 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
   };
 
   const getStorageDownloadUrl = (pathOrUrl: string) => {
-    if (!pathOrUrl || pathOrUrl.startsWith("data:") || /^https?:\/\//i.test(pathOrUrl)) {
-      return pathOrUrl;
+    if (!pathOrUrl || pathOrUrl.startsWith("data:")) return pathOrUrl;
+
+    const normalizeUploadsPath = (rawPath: string) => {
+      const clean = rawPath.replace(/^\/+/, "");
+      if (clean.startsWith("storage/file/")) return clean.slice("storage/file/".length);
+      if (clean.startsWith("uploads/")) return clean;
+      return null;
+    };
+
+    if (/^https?:\/\//i.test(pathOrUrl)) {
+      try {
+        const url = new URL(pathOrUrl);
+        const fromPath = normalizeUploadsPath(url.pathname);
+        if (fromPath) {
+          return storageApi.getFileAccessUrl(fromPath);
+        }
+        return pathOrUrl;
+      } catch {
+        return pathOrUrl;
+      }
     }
-    const normalizedPath = pathOrUrl.startsWith("/") ? pathOrUrl.slice(1) : pathOrUrl;
-    return storageApi.getFileAccessUrl(normalizedPath);
+
+    const fromRelative = normalizeUploadsPath(pathOrUrl);
+    if (fromRelative) {
+      return storageApi.getFileAccessUrl(fromRelative);
+    }
+    return pathOrUrl;
   };
 
   const getDownloadFileName = (img: { url: string; local_path: string }, index: number) => {
