@@ -24,6 +24,7 @@ import storageApi from "@/api/storage";
 import { STATIC_BASE_URL } from "@/api/request";
 import { useGenerationPolling } from "@/hooks/useGenerationPolling";
 import type { GenerateImageParams, MessageStatusResponse, ModelsConfigMap } from "@/types/drawing";
+import JSZip from "jszip";
 
 type StatusType = "ecommerce" | "optimizer" | "photographer" | "custom" | "offline";
 
@@ -988,34 +989,10 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
     return `${STATIC_BASE_URL}${url}`;
   };
 
-  const getStorageDownloadUrl = (pathOrUrl: string) => {
+  const getDirectDownloadUrl = (pathOrUrl: string) => {
     if (!pathOrUrl || pathOrUrl.startsWith("data:")) return pathOrUrl;
-
-    const normalizeUploadsPath = (rawPath: string) => {
-      const clean = rawPath.replace(/^\/+/, "");
-      if (clean.startsWith("storage/file/")) return clean.slice("storage/file/".length);
-      if (clean.startsWith("uploads/")) return clean;
-      return null;
-    };
-
-    if (/^https?:\/\//i.test(pathOrUrl)) {
-      try {
-        const url = new URL(pathOrUrl);
-        const fromPath = normalizeUploadsPath(url.pathname);
-        if (fromPath) {
-          return storageApi.getFileAccessUrl(fromPath);
-        }
-        return pathOrUrl;
-      } catch {
-        return pathOrUrl;
-      }
-    }
-
-    const fromRelative = normalizeUploadsPath(pathOrUrl);
-    if (fromRelative) {
-      return storageApi.getFileAccessUrl(fromRelative);
-    }
-    return pathOrUrl;
+    if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl;
+    return pathOrUrl.startsWith("/") ? `${STATIC_BASE_URL}${pathOrUrl}` : `${STATIC_BASE_URL}/${pathOrUrl}`;
   };
 
   const getDownloadFileName = (img: { url: string; local_path: string }, index: number) => {
@@ -1028,35 +1005,39 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
 
   const handleDownloadEcommerceImages = async (images: { url: string; local_path: string }[]) => {
     if (!images.length) return;
+    const zip = new JSZip();
     let successCount = 0;
     for (let idx = 0; idx < images.length; idx++) {
       const img = images[idx];
       try {
         const source = img.local_path || img.url;
-        const downloadUrl = getStorageDownloadUrl(source);
+        const downloadUrl = getDirectDownloadUrl(source);
         const response = await fetch(downloadUrl, { credentials: "include" });
         if (!response.ok) {
           throw new Error(`Download failed: ${response.status}`);
         }
         const blob = await response.blob();
-        const blobUrl = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = blobUrl;
-        link.download = getDownloadFileName(img, idx);
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        URL.revokeObjectURL(blobUrl);
+        zip.file(getDownloadFileName(img, idx), blob);
         successCount += 1;
       } catch {
         // Continue downloading remaining files even if one fails
       }
     }
-    if (successCount > 0) {
-      toast.success(t("ecommerceAgent.downloadAllDone", { count: successCount }));
-    } else {
+    if (successCount === 0) {
       toast.error(t("assetSidebar.downloadFailed"));
+      return;
     }
+
+    const zipBlob = await zip.generateAsync({ type: "blob" });
+    const zipUrl = URL.createObjectURL(zipBlob);
+    const link = document.createElement("a");
+    link.href = zipUrl;
+    link.download = `ecommerce_images_${Date.now()}.zip`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(zipUrl);
+    toast.success(t("ecommerceAgent.downloadAllDone", { count: successCount }));
   };
 
   const DEFAULT_ASPECT_RATIOS: DropdownOption[] = useMemo(

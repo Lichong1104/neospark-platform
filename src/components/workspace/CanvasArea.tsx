@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { ImageAnnotator } from "./ImageAnnotator";
-import storageApi from "@/api/storage";
+import { STATIC_BASE_URL } from "@/api/request";
 
 export interface CanvasImage {
   id: string;
@@ -127,38 +127,14 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onImageSelect, canvasImages, on
     const img = images.find(i => i.id === selectedId);
     if (!img) return;
 
-    const buildDownloadUrl = (src: string) => {
+    const buildDirectUrl = (src: string) => {
       if (!src || src.startsWith("data:")) return src;
-
-      const normalizeUploadsPath = (rawPath: string) => {
-        const clean = rawPath.replace(/^\/+/, "");
-        if (clean.startsWith("storage/file/")) return clean.slice("storage/file/".length);
-        if (clean.startsWith("uploads/")) return clean;
-        return null;
-      };
-
-      if (/^https?:\/\//i.test(src)) {
-        try {
-          const url = new URL(src);
-          const fromPath = normalizeUploadsPath(url.pathname);
-          if (fromPath) {
-            return storageApi.getFileAccessUrl(fromPath);
-          }
-          return src;
-        } catch {
-          return src;
-        }
-      }
-
-      const fromRelative = normalizeUploadsPath(src);
-      if (fromRelative) {
-        return storageApi.getFileAccessUrl(fromRelative);
-      }
-      return src;
+      if (/^https?:\/\//i.test(src)) return src;
+      return src.startsWith("/") ? `${STATIC_BASE_URL}${src}` : `${STATIC_BASE_URL}/${src}`;
     };
 
     try {
-      const url = buildDownloadUrl(img.src);
+      const url = buildDirectUrl(img.src);
       const response = await fetch(url, { credentials: "include" });
       if (!response.ok) {
         throw new Error(`Download failed: ${response.status}`);
@@ -174,7 +150,15 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onImageSelect, canvasImages, on
       URL.revokeObjectURL(blobUrl);
       toast.success(t("canvas.downloading", { name: img.name }));
     } catch {
-      toast.error(t("assetSidebar.downloadFailed"));
+      // Fallback for resources that cannot be fetched (e.g. strict CORS).
+      const link = document.createElement("a");
+      link.href = buildDirectUrl(img.src);
+      link.download = `${img.name}.${img.type === "video" ? "mp4" : "jpg"}`;
+      link.target = "_blank";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success(t("canvas.downloading", { name: img.name }));
     }
   };
 
