@@ -52,7 +52,28 @@
     "feat_rollover6": "积分滚存6个月",
     "feat_videoUnlimited365": "视频无限365天",
     "feat_rollover12": "积分滚存12个月",
-    "feat_dedicatedSupport": "专属客服支持"
+    "feat_dedicatedSupport": "专属客服支持",
+    "wechatPayTitle": "微信支付 · 积分包",
+    "wechatPaySubtitle": "使用微信扫码购买一次性积分包（Native 二维码）。",
+    "wechatPayBuy": "微信扫码购买",
+    "scanToPay": "微信扫码支付",
+    "scanToPayDesc": "打开微信扫一扫二维码，支付成功后将自动确认。",
+    "preparingOrder": "正在创建订单...",
+    "orderId": "订单号",
+    "amount": "金额",
+    "orderStatus": "状态",
+    "waitingPayment": "等待支付确认中...",
+    "cancel": "取消",
+    "done": "完成",
+    "loading": "加载中...",
+    "loadFailed": "加载失败",
+    "loginRequired": "需要登录",
+    "loginRequiredDesc": "请先登录，然后再尝试购买。",
+    "wechatPayCreateFailed": "微信支付暂不可用",
+    "paymentSuccess": "支付成功",
+    "creditsAdded": "积分已到账。",
+    "paymentNotCompleted": "支付未完成",
+    "tryAgain": "如仍需购买，请重试。"
   },
   "uc": {
     "planFree": "免费版",
@@ -97,7 +118,9 @@
     "expandCanvas": "扩展画布",
     "aiEnhance": "AI 增强",
     "autoColorize": "自动上色",
-    "aiUpscale": "AI 放大"
+    "aiUpscale": "AI 放大",
+    "uploadFailedWithName": "上传失败：{{name}}",
+    "uploadedFiles": "已上传 {{count}} 个文件"
   },
   "canvas": {
     "canvas": "画布",
@@ -136,6 +159,12 @@
     "promptArsenal": "提示词库",
     "inputPlaceholder": "描述你想要创建的效果...",
     "imagePasted": "图片已粘贴",
+    "imageGenerated": "图片生成完成！",
+    "generateFailed": "生成失败",
+    "generating": "生成中...",
+    "generatingHint": "AI 正在创作中，请稍候...",
+    "generatingCost": "生成中... 预估消耗 {{cost}} pts",
+    "generationResult": "生成结果",
     "imageUploadFailed": "图片上传失败",
     "uploading": "上传中...",
     "refImage": "参考图",
@@ -196,7 +225,9 @@
     "details": "详情",
     "confirmBtn": "确认",
     "modify": "修改",
-    "regenerate": "重新生成"
+    "regenerate": "重新生成",
+    "copied": "已复制配置",
+    "copy": "复制"
   },
   "ecommerceAgent": {
     "greeting": "您好！我是您的电商视觉创意总监。为了精准构建品牌视觉方案，请提供以下信息（建议上传 1-2 张产品参考图）：",
@@ -231,7 +262,9 @@
     "uploadProduct": "上传产品图",
     "useCanvasImage": "使用画布图片",
     "useCanvasNoImage": "请先在画布上选中一张图片",
-    "useCanvasFailed": "读取画布图片失败"
+    "useCanvasFailed": "读取画布图片失败",
+    "downloadAll": "下载全部图片",
+    "downloadAllDone": "已开始下载 {{count}} 张图片"
   },
   "assetSidebar": {
     "assetManagement": "素材管理",
@@ -247,13 +280,42 @@
     "uploadSuccess": "上传成功",
     "deleted": "已删除",
     "fileDetail": "文件详情",
-    "loading": "加载中..."
+    "loading": "加载中...",
+    "uploading": "上传中",
+    "upload": "上传",
+    "uploadFailed": "上传失败",
+    "deleteFailed": "删除失败",
+    "fileName": "文件名",
+    "source": "来源",
+    "generated": "AI生成",
+    "size": "大小",
+    "model": "模型",
+    "prompt": "提示词",
+    "addToCanvas": "添加到画布",
+    "filterAll": "全部",
+    "clickToUpload": "点击上传",
+    "viewDetail": "查看详情",
+    "clickAgainConfirm": "再次点击确认",
+    "delete": "删除",
+    "confirm": "确认?",
+    "cancel": "取消",
+    "confirmDelete": "确认删除",
+    "noVideos": "暂无视频",
+    "imageCount": "{{count}} 张图片",
+    "videoCount": "{{count}} 个视频",
+    "footerHint": "点击素材添加到画布"
   },
   "assetsPage": {
     "directory": "目录",
     "allAssets": "所有素材",
     "upload": "上传",
-    "confirmDelete": "确认删除？"
+    "confirmDelete": "确认删除？",
+    "uploadSuccess": "上传成功",
+    "uploadFailed": "上传失败",
+    "deleted": "已删除",
+    "deleteFailed": "删除失败",
+    "uploaded": "已上传",
+    "generated": "AI生成"
   },
   "workflowCanvas": {
     "workflowMode": "工作流模式",
@@ -402,6 +464,7 @@
     "newTask": "新任务",
     "retry": "重试",
     "generate": "生成视频",
-    "prompt": "提示词"
+    "prompt": "提示词",
+    "selectCanvasImageHint": "请在画布中选中一张图片作为参考图"
   }
 }

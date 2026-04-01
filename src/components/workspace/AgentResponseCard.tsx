@@ -52,7 +52,7 @@ const AgentResponseCard: React.FC<AgentResponseCardProps> = ({
   const handleCopy = () => {
     const text = `Scene: ${config.sceneName}\nStyle: ${config.style || "Realistic"}\nLighting: ${config.lighting || "Natural"}\nQuality: ${config.quality || "HD"}`;
     navigator.clipboard.writeText(text);
-    toast.success("已复制配置");
+    toast.success(t("agentResponse.copied"));
   };
 
   return (
@@ -153,7 +153,7 @@ const AgentResponseCard: React.FC<AgentResponseCardProps> = ({
 
       {/* Feedback row */}
       <div className="flex items-center gap-2 text-muted-foreground">
-        <button onClick={handleCopy} className="p-1 hover:bg-secondary hover:text-foreground transition-none" title="Copy">
+        <button onClick={handleCopy} className="p-1 hover:bg-secondary hover:text-foreground transition-none" title={t("agentResponse.copy")}>
           <Copy className="w-3 h-3" />
         </button>
         <button onClick={() => setFeedbackGiven("up")} className={cn("p-1 hover:bg-secondary transition-none", feedbackGiven === "up" ? "text-accent-green" : "hover:text-foreground")}>

@@ -41,7 +41,7 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({ isOpen, onClose, onAddToCan
     setIsLoadingImages(true);
     try {
       const params = imageSource === "all" ? {} : { source: imageSource };
-      const data = await storageApi.listUserImages(params);
+      const data = await storageApi.listAllUserImages(params);
       setUserImages(data.images || []);
     } catch {
       setUserImages([]);
@@ -75,11 +75,11 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({ isOpen, onClose, onAddToCan
     try {
       const fileType = file.type.startsWith("video") ? "video" : "image";
       await storageApi.uploadFile(file, fileType);
-      toast.success(t("assetSidebar.uploadSuccess") || "上传成功");
+      toast.success(t("assetSidebar.uploadSuccess"));
       if (activeTab === "images") loadImages();
       else if (activeTab === "videos") loadVideos();
     } catch (err: any) {
-      toast.error(err?.response?.data?.detail || "上传失败");
+      toast.error(err?.response?.data?.detail || t("assetSidebar.uploadFailed"));
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -93,13 +93,13 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({ isOpen, onClose, onAddToCan
     }
     try {
       await storageApi.deleteFile(path);
-      toast.success(t("assetSidebar.deleted") || "已删除");
+      toast.success(t("assetSidebar.deleted"));
       setUserImages(prev => prev.filter(img => img.id !== id));
       setVideoFiles(prev => prev.filter(f => f.upload_id !== id));
       setConfirmDeleteId(null);
       if (previewItem?.id === id) setPreviewItem(null);
     } catch {
-      toast.error("删除失败");
+      toast.error(t("assetSidebar.deleteFailed"));
     }
   };
 
@@ -109,7 +109,7 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({ isOpen, onClose, onAddToCan
       name: img.filename,
       type: "image",
     });
-    toast.success(t("assetSidebar.addedToCanvas") || "已添加到画布");
+    toast.success(t("assetSidebar.addedToCanvas"));
   };
 
   const handleClickVideo = (file: FileItem) => {
@@ -119,7 +119,7 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({ isOpen, onClose, onAddToCan
       name: file.filename,
       type: "video",
     });
-    toast.success(t("assetSidebar.addedToCanvas") || "已添加到画布");
+    toast.success(t("assetSidebar.addedToCanvas"));
   };
 
   const tabs: { id: AssetTab; label: string; icon: React.ReactNode }[] = [
@@ -134,7 +134,7 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({ isOpen, onClose, onAddToCan
     return (
       <div className="absolute left-16 top-0 bottom-0 w-80 bg-card border-r-brutal border-foreground z-40 flex flex-col">
         <div className="flex items-center justify-between px-4 py-3 border-b-brutal border-foreground">
-          <h2 className="text-xs font-bold uppercase tracking-wider">{t("assetSidebar.fileDetail") || "文件详情"}</h2>
+          <h2 className="text-xs font-bold uppercase tracking-wider">{t("assetSidebar.fileDetail")}</h2>
           <button onClick={() => setPreviewItem(null)} className="p-1 hover:bg-secondary transition-none">
             <X className="w-4 h-4" />
           </button>
@@ -145,30 +145,30 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({ isOpen, onClose, onAddToCan
           </div>
           <div className="space-y-1.5 text-[11px] font-mono">
             <div className="flex justify-between py-1 border-b border-foreground/10">
-              <span className="text-muted-foreground uppercase">文件名</span>
+              <span className="text-muted-foreground uppercase">{t("assetSidebar.fileName")}</span>
               <span className="font-bold truncate ml-2 max-w-[150px]">{previewItem.filename}</span>
             </div>
             <div className="flex justify-between py-1 border-b border-foreground/10">
-              <span className="text-muted-foreground uppercase">来源</span>
+              <span className="text-muted-foreground uppercase">{t("assetSidebar.source")}</span>
               <span className={cn("font-bold", previewItem.type === "generation" ? "text-accent-purple" : "text-accent-cyan")}>
-                {previewItem.type === "generation" ? "🎨 AI生成" : "📤 上传"}
+                {previewItem.type === "generation" ? `🎨 ${t("assetSidebar.generated")}` : `📤 ${t("assetSidebar.upload")}`}
               </span>
             </div>
             {previewItem.size && (
               <div className="flex justify-between py-1 border-b border-foreground/10">
-                <span className="text-muted-foreground uppercase">大小</span>
+                <span className="text-muted-foreground uppercase">{t("assetSidebar.size")}</span>
                 <span className="font-bold">{(previewItem.size / 1024).toFixed(1)} KB</span>
               </div>
             )}
             {previewItem.model && (
               <div className="flex justify-between py-1 border-b border-foreground/10">
-                <span className="text-muted-foreground uppercase">模型</span>
+                <span className="text-muted-foreground uppercase">{t("assetSidebar.model")}</span>
                 <span className="font-bold">{previewItem.model}</span>
               </div>
             )}
             {previewItem.prompt && (
               <div className="py-1 border-b border-foreground/10">
-                <span className="text-muted-foreground uppercase block mb-1">提示词</span>
+                <span className="text-muted-foreground uppercase block mb-1">{t("assetSidebar.prompt")}</span>
                 <p className="text-[10px] leading-relaxed">{previewItem.prompt}</p>
               </div>
             )}
@@ -178,7 +178,7 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({ isOpen, onClose, onAddToCan
               onClick={() => { handleClickImage(previewItem); setPreviewItem(null); }}
               className="flex-1 py-2 border-brutal border-foreground bg-accent-cyan font-bold text-xs uppercase flex items-center justify-center gap-1 brutal-press"
             >
-              <Plus className="w-3 h-3" /> 添加到画布
+              <Plus className="w-3 h-3" /> {t("assetSidebar.addToCanvas")}
             </button>
             <button
               onClick={() => { handleDelete(previewItem.path, previewItem.id); }}
@@ -239,9 +239,9 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({ isOpen, onClose, onAddToCan
             className="flex-1 py-2 bg-accent-cyan border-brutal border-foreground font-bold uppercase text-[11px] flex items-center justify-center gap-1.5 brutal-press hover:brightness-95 disabled:opacity-50"
           >
             {isUploading ? (
-              <><Loader2 className="w-3.5 h-3.5 animate-spin" /> 上传中</>
+              <><Loader2 className="w-3.5 h-3.5 animate-spin" /> {t("assetSidebar.uploading")}</>
             ) : (
-              <><Upload className="w-3.5 h-3.5" /> 上传</>
+              <><Upload className="w-3.5 h-3.5" /> {t("assetSidebar.upload")}</>
             )}
           </button>
         </div>
@@ -258,7 +258,7 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({ isOpen, onClose, onAddToCan
                   imageSource === src ? "bg-foreground text-card" : "bg-card hover:bg-secondary"
                 )}
               >
-                {src === "all" ? "全部" : src === "upload" ? "上传" : "AI生成"}
+                {src === "all" ? t("assetSidebar.filterAll") : src === "upload" ? t("assetSidebar.upload") : t("assetSidebar.generated")}
               </button>
             ))}
           </div>
@@ -271,18 +271,18 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({ isOpen, onClose, onAddToCan
               <div className="flex flex-col items-center justify-center py-16 gap-3">
                 <Loader2 className="w-8 h-8 animate-spin text-accent-cyan" />
                 <span className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">
-                  {t("assetSidebar.loading") || "加载中..."}
+                  {t("assetSidebar.loading")}
                 </span>
               </div>
             ) : userImages.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 gap-3">
                 <Image className="w-10 h-10 text-muted-foreground/30" />
-                <span className="text-xs text-muted-foreground">暂无素材</span>
+                <span className="text-xs text-muted-foreground">{t("assetSidebar.noAssets")}</span>
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   className="text-[10px] font-bold uppercase text-accent-cyan underline"
                 >
-                  点击上传
+                  {t("assetSidebar.clickToUpload")}
                 </button>
               </div>
             ) : (
@@ -315,14 +315,14 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({ isOpen, onClose, onAddToCan
                       <button
                         onClick={() => handleClickImage(img)}
                         className="flex-1 py-1.5 flex items-center justify-center gap-1 text-card hover:bg-accent-cyan hover:text-foreground transition-none"
-                        title="添加到画布"
+                        title={t("assetSidebar.addToCanvas")}
                       >
                         <Plus className="w-3 h-3" />
                       </button>
                       <button
                         onClick={() => setPreviewItem(img)}
                         className="flex-1 py-1.5 flex items-center justify-center text-card hover:bg-accent-cyan hover:text-foreground transition-none border-l border-card/20"
-                        title="查看详情"
+                        title={t("assetSidebar.viewDetail")}
                       >
                         <Eye className="w-3 h-3" />
                       </button>
@@ -332,10 +332,10 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({ isOpen, onClose, onAddToCan
                           "flex-1 py-1.5 flex items-center justify-center transition-none border-l border-card/20",
                           confirmDeleteId === img.id ? "bg-accent-red text-card" : "text-card hover:bg-accent-red"
                         )}
-                        title={confirmDeleteId === img.id ? "再次点击确认" : "删除"}
+                        title={confirmDeleteId === img.id ? t("assetSidebar.clickAgainConfirm") : t("assetSidebar.delete")}
                       >
                         {confirmDeleteId === img.id
-                          ? <span className="text-[8px] font-bold uppercase">确认?</span>
+                          ? <span className="text-[8px] font-bold uppercase">{t("assetSidebar.confirm")}</span>
                           : <Trash2 className="w-3 h-3" />
                         }
                       </button>
@@ -348,13 +348,13 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({ isOpen, onClose, onAddToCan
                           onClick={() => setConfirmDeleteId(null)}
                           className="flex-1 py-1.5 text-[9px] font-bold uppercase text-card hover:bg-secondary hover:text-foreground transition-none"
                         >
-                          取消
+                          {t("assetSidebar.cancel")}
                         </button>
                         <button
                           onClick={() => handleDelete(img.path, img.id)}
                           className="flex-1 py-1.5 text-[9px] font-bold uppercase bg-accent-red text-card hover:brightness-110 transition-none border-l border-card/20"
                         >
-                          确认删除
+                          {t("assetSidebar.confirmDelete")}
                         </button>
                       </div>
                     )}
@@ -372,13 +372,13 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({ isOpen, onClose, onAddToCan
               <div className="flex flex-col items-center justify-center py-16 gap-3">
                 <Loader2 className="w-8 h-8 animate-spin text-accent-purple" />
                 <span className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">
-                  {t("assetSidebar.loading") || "加载中..."}
+                  {t("assetSidebar.loading")}
                 </span>
               </div>
             ) : videoFiles.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 gap-3">
                 <Video className="w-10 h-10 text-muted-foreground/30" />
-                <span className="text-xs text-muted-foreground">暂无视频</span>
+                <span className="text-xs text-muted-foreground">{t("assetSidebar.noVideos")}</span>
               </div>
             ) : (
               <div className="space-y-1.5">
@@ -417,9 +417,9 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({ isOpen, onClose, onAddToCan
       {/* Footer count */}
       <div className="px-3 py-2 border-t border-foreground/10 text-[10px] font-mono text-muted-foreground text-center">
         {activeTab === "images"
-          ? `${userImages.length} 张图片`
-          : `${videoFiles.length} 个视频`
-        } · 点击素材添加到画布
+          ? t("assetSidebar.imageCount", { count: userImages.length })
+          : t("assetSidebar.videoCount", { count: videoFiles.length })
+        } · {t("assetSidebar.footerHint")}
       </div>
     </div>
   );

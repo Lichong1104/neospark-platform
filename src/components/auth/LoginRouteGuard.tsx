@@ -2,12 +2,20 @@ import React from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
+// 临时开关：用于本地/临时关闭路由登录校验
+// 需要恢复时改为 false 即可
+const DISABLE_ROUTE_AUTH = false;
+
 interface LoginRouteGuardProps {
   children: React.ReactNode;
 }
 
 const LoginRouteGuard: React.FC<LoginRouteGuardProps> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
+
+  if (DISABLE_ROUTE_AUTH) {
+    return <>{children}</>;
+  }
 
   if (isLoading) {
     return (

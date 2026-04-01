@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { ImageAnnotator } from "./ImageAnnotator";
+import storageApi from "@/api/storage";
 
 export interface CanvasImage {
   id: string;
@@ -121,15 +122,38 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onImageSelect, canvasImages, on
     toast.success(t("canvas.duplicated", { name: original.name }));
   };
 
-  const handleDownloadSelected = () => {
+  const handleDownloadSelected = async () => {
     if (!selectedId) return;
     const img = images.find(i => i.id === selectedId);
     if (!img) return;
-    const link = document.createElement('a');
-    link.href = img.src;
-    link.download = `${img.name}.${img.type === "video" ? "mp4" : "jpg"}`;
-    link.click();
-    toast.success(t("canvas.downloading", { name: img.name }));
+
+    const buildDownloadUrl = (src: string) => {
+      if (!src || src.startsWith("data:") || /^https?:\/\//i.test(src)) {
+        return src;
+      }
+      const normalizedPath = src.startsWith("/") ? src.slice(1) : src;
+      return storageApi.getFileAccessUrl(normalizedPath);
+    };
+
+    try {
+      const url = buildDownloadUrl(img.src);
+      const response = await fetch(url, { credentials: "include" });
+      if (!response.ok) {
+        throw new Error(`Download failed: ${response.status}`);
+      }
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = `${img.name}.${img.type === "video" ? "mp4" : "jpg"}`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(blobUrl);
+      toast.success(t("canvas.downloading", { name: img.name }));
+    } catch {
+      toast.error(t("assetSidebar.downloadFailed"));
+    }
   };
 
   const handleAnnotateSelected = () => {
@@ -249,7 +273,7 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onImageSelect, canvasImages, on
         <div className="absolute inset-0 z-50 bg-accent-cyan/10 flex items-center justify-center pointer-events-none">
           <div className="border-2 border-dashed border-accent-cyan px-8 py-6 bg-card/90 backdrop-blur-sm">
             <p className="text-sm font-bold uppercase tracking-wider text-accent-cyan">
-              {t("canvas.dropToAdd") || "松开以添加到画布"}
+              {t("canvas.dropToAdd")}
             </p>
           </div>
         </div>
@@ -375,7 +399,7 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onImageSelect, canvasImages, on
               <PenTool className="w-6 h-6 text-foreground/30" />
             </div>
             <p className="text-xs font-bold uppercase tracking-wider text-foreground/30">
-              {t("canvas.emptyHint") || "拖拽图片到此处 或 使用右侧面板生成"}
+              {t("canvas.emptyHint")}
             </p>
           </div>
         </div>

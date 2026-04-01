@@ -1,17 +1,33 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Header } from "@/components/layout/Header";
 import { BrutalCard, BrutalCardContent } from "@/components/ui/brutal-card";
 import { BrutalButton } from "@/components/ui/brutal-button";
 import { Check, Crown, Zap, Star, Rocket, Gift } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import wechatPayApi from "@/api/wechatPay";
+import type { WeChatPayOrder, WeChatPayPlan, WeChatPayPlanKey } from "@/api/wechatPay";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type BillingCycle = "monthly" | "yearly";
 
 interface PlanTier {
   key: string;
   icon: React.ReactNode;
+  title?: string;
+  description?: string;
   badge?: { text: string; color: string };
   price: { monthly: number; yearly: number };
+  yearlySave?: string;
   credits: { monthly: string; yearly: string };
   images: string;
   videos: string;
@@ -22,18 +38,134 @@ interface PlanTier {
   accentColor: string;
 }
 
+function formatCnyFen(amountFen: number): string {
+  if (!Number.isFinite(amountFen)) return "¥--";
+  return `¥${(amountFen / 100).toFixed(2)}`;
+}
+
 const Pricing = () => {
   const [billing, setBilling] = useState<BillingCycle>("monthly");
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { refreshUser } = useAuth();
+  const { toast } = useToast();
+
+  const [wechatPlans, setWechatPlans] = useState<WeChatPayPlan[] | null>(null);
+  const [wechatPlansLoading, setWechatPlansLoading] = useState(false);
+  const [wechatPlansError, setWechatPlansError] = useState<string | null>(null);
+
+  const [wxDialogOpen, setWxDialogOpen] = useState(false);
+  const [wxOrder, setWxOrder] = useState<WeChatPayOrder | null>(null);
+  const [wxSubmitting, setWxSubmitting] = useState(false);
+  const pollTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    setWechatPlansLoading(true);
+    setWechatPlansError(null);
+    wechatPayApi
+      .getPlans()
+      .then((list) => setWechatPlans(list))
+      .catch((e) => {
+        const msg = e?.response?.data?.detail || e?.message || "Failed to load WeChat plans";
+        setWechatPlansError(String(msg));
+      })
+      .finally(() => setWechatPlansLoading(false));
+  }, []);
+
+  const activeWechatPlans = useMemo(() => {
+    const list = wechatPlans ?? [];
+    return list.filter((p) => p.isActive);
+  }, [wechatPlans]);
+
+  async function startWechatPay(planKey: WeChatPayPlanKey) {
+    if (wxSubmitting) return;
+    try {
+      setWxSubmitting(true);
+      const order = await wechatPayApi.createNativeOrder(planKey);
+      setWxOrder(order);
+      setWxDialogOpen(true);
+    } catch (e: any) {
+      const status = e?.response?.status;
+      const detail = e?.response?.data?.detail || e?.message || "Failed to create WeChat order";
+      if (status === 401) {
+        toast({
+          title: t("pricing.loginRequired", { defaultValue: "Login required" }),
+          description: t("pricing.loginRequiredDesc", { defaultValue: "Please login first, then try again." }),
+          variant: "destructive",
+        });
+        navigate("/login");
+        return;
+      }
+      toast({
+        title: t("pricing.wechatPayCreateFailed", { defaultValue: "WeChat Pay unavailable" }),
+        description: String(detail),
+        variant: "destructive",
+      });
+    } finally {
+      setWxSubmitting(false);
+    }
+  }
+
+  async function safeCloseWechatOrder(orderId: string) {
+    try {
+      await wechatPayApi.closeOrder(orderId);
+    } catch {
+      // ignore
+    }
+  }
+
+  useEffect(() => {
+    if (!wxDialogOpen || !wxOrder || wxOrder.status !== "pending") return;
+
+    if (pollTimerRef.current) {
+      window.clearInterval(pollTimerRef.current);
+      pollTimerRef.current = null;
+    }
+
+    pollTimerRef.current = window.setInterval(async () => {
+      try {
+        const latest = await wechatPayApi.getOrder(wxOrder.orderId);
+        setWxOrder(latest);
+
+        if (latest.status === "paid") {
+          window.clearInterval(pollTimerRef.current!);
+          pollTimerRef.current = null;
+          toast({
+            title: t("pricing.paymentSuccess", { defaultValue: "Payment successful" }),
+            description: t("pricing.creditsAdded", { defaultValue: "Credits have been added to your account." }),
+          });
+          await refreshUser();
+          setWxDialogOpen(false);
+        } else if (latest.status === "failed" || latest.status === "closed") {
+          window.clearInterval(pollTimerRef.current!);
+          pollTimerRef.current = null;
+          toast({
+            title: t("pricing.paymentNotCompleted", { defaultValue: "Payment not completed" }),
+            description: t("pricing.tryAgain", { defaultValue: "Please try again if you still want to purchase credits." }),
+            variant: "destructive",
+          });
+        }
+      } catch {
+        // polling errors should not spam the user; keep trying
+      }
+    }, 2000);
+
+    return () => {
+      if (pollTimerRef.current) {
+        window.clearInterval(pollTimerRef.current);
+        pollTimerRef.current = null;
+      }
+    };
+  }, [wxDialogOpen, wxOrder, refreshUser, t, toast]);
 
   const plans: PlanTier[] = [
     {
       key: "free",
       icon: <Gift className="w-5 h-5" />,
       price: { monthly: 0, yearly: 0 },
-      credits: { monthly: "200", yearly: "200" },
-      images: "~100",
-      videos: "~10 clips",
+      credits: { monthly: "100 credits / 7 days", yearly: "100 credits / 7 days" },
+      images: "~14 Nano banana 2",
+      videos: "~3 clips",
       features: [
         t("pricing.feat_credits", { amount: "200", defaultValue: "{{amount}} credits/month" }),
         t("pricing.feat_basicModels", { defaultValue: "Basic AI models" }),
@@ -48,11 +180,14 @@ const Pricing = () => {
     {
       key: "starter",
       icon: <Star className="w-5 h-5" />,
-      badge: { text: t("pricing.beginnerChoice", { defaultValue: "Beginner's Choice" }), color: "bg-accent-green" },
-      price: { monthly: 19, yearly: 12 },
-      credits: { monthly: "2,500", yearly: "2,500" },
-      images: "~1,250",
-      videos: "~125 clips",
+      title: "Starter",
+      description: "Try commercial features",
+      badge: { text: "🎁 Try Commercial", color: "bg-accent-yellow" },
+      price: { monthly: 18, yearly: 14 },
+      yearlySave: "Save $48",
+      credits: { monthly: "2,000", yearly: "2,000" },
+      images: "~285 Nano banana 2",
+      videos: "~10 clips",
       features: [
         t("pricing.feat_credits", { amount: "2,500", defaultValue: "{{amount}} credits/month" }),
         t("pricing.feat_allModels", { defaultValue: "All AI models unlocked" }),
@@ -67,11 +202,14 @@ const Pricing = () => {
     {
       key: "growth",
       icon: <Rocket className="w-5 h-5" />,
-      badge: { text: t("pricing.userChoice", { defaultValue: "🔥 93% user choice" }), color: "bg-accent-yellow" },
-      price: { monthly: 39, yearly: 25 },
-      credits: { monthly: "6,000", yearly: "6,000" },
-      images: "~3,000",
-      videos: "~300 clips",
+      title: "Basic",
+      description: "Commercial + Priority",
+      badge: { text: "🔥 Most Popular", color: "bg-accent-purple" },
+      price: { monthly: 31, yearly: 25 },
+      yearlySave: "Save $72",
+      credits: { monthly: "3,500", yearly: "3,500" },
+      images: "~500 Nano banana 2",
+      videos: "~17 clips",
       features: [
         t("pricing.feat_credits", { amount: "6,000", defaultValue: "{{amount}} credits/month" }),
         t("pricing.feat_commercial", { defaultValue: "Commercial license included" }),
@@ -79,19 +217,21 @@ const Pricing = () => {
         t("pricing.feat_batchDiscount50", { defaultValue: "Batch API 50% discount" }),
         t("pricing.feat_rollover3", { defaultValue: "Credits rollover 3 months" }),
       ],
-      buttonVariant: "yellow",
+      buttonVariant: "purple",
       buttonText: t("pricing.chooseMostPopular", { defaultValue: "Choose Most Popular Plan" }),
       highlighted: true,
-      accentColor: "bg-accent-yellow",
+      accentColor: "bg-accent-purple",
     },
     {
       key: "pro",
       icon: <Crown className="w-5 h-5" />,
-      badge: { text: t("pricing.powerUser", { defaultValue: "⚡ Power User" }), color: "bg-accent-cyan" },
-      price: { monthly: 89, yearly: 57 },
-      credits: { monthly: "15,000", yearly: "15,000" },
-      images: "~7,500",
-      videos: "~750 clips",
+      description: "Team collaboration",
+      badge: { text: "🏆 Team Ready", color: "bg-accent-yellow" },
+      price: { monthly: 68, yearly: 44 },
+      yearlySave: "Save $288",
+      credits: { monthly: "11,000", yearly: "11,000" },
+      images: "~1,571 Nano banana 2",
+      videos: "~55 clips",
       features: [
         t("pricing.feat_credits", { amount: "15,000", defaultValue: "{{amount}} credits/month" }),
         t("pricing.feat_batchApiFree", { defaultValue: "Batch API FREE" }),
@@ -99,18 +239,20 @@ const Pricing = () => {
         t("pricing.feat_videoUnlimited", { defaultValue: "Video unlimited mode" }),
         t("pricing.feat_rollover6", { defaultValue: "Credits rollover 6 months" }),
       ],
-      buttonVariant: "cyan",
+      buttonVariant: "green",
       buttonText: t("pricing.goPro", { defaultValue: "Go Pro" }),
-      accentColor: "bg-accent-cyan",
+      accentColor: "bg-accent-green",
     },
     {
       key: "ultimate",
       icon: <Zap className="w-5 h-5" />,
-      badge: { text: t("pricing.enterprise", { defaultValue: "🏢 Enterprise" }), color: "bg-accent-purple" },
-      price: { monthly: 199, yearly: 129 },
-      credits: { monthly: "40,000", yearly: "40,000" },
-      images: "~20,000",
-      videos: "~2,000 clips",
+      description: "White-label + Automation",
+      badge: { text: "👑 Enterprise", color: "bg-accent-purple" },
+      price: { monthly: 148, yearly: 98 },
+      yearlySave: "Save $600",
+      credits: { monthly: "27,000", yearly: "27,000" },
+      images: "~3,857 Nano banana 2",
+      videos: "~135 clips",
       features: [
         t("pricing.feat_credits", { amount: "40,000", defaultValue: "{{amount}} credits/month" }),
         t("pricing.feat_batchApiFree", { defaultValue: "Batch API FREE" }),
@@ -172,6 +314,14 @@ const Pricing = () => {
             </span>
           </div>
 
+          {billing === "yearly" && (
+            <div className="mb-8">
+              <div className="max-w-3xl mx-auto text-center px-4 py-3 bg-accent-green border-brutal border-foreground font-bold">
+                🔥 Yearly billing saves up to 35% — Growth plan saves $120/year!
+              </div>
+            </div>
+          )}
+
           {/* Plans Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
             {plans.map((plan) => (
@@ -200,10 +350,10 @@ const Pricing = () => {
 
                   {/* Plan Name */}
                   <h3 className="text-lg font-bold uppercase text-center tracking-wider">
-                    {t(`pricing.plan_${plan.key}`, { defaultValue: plan.key.charAt(0).toUpperCase() + plan.key.slice(1) })}
+                    {plan.title ?? t(`pricing.plan_${plan.key}`, { defaultValue: plan.key.charAt(0).toUpperCase() + plan.key.slice(1) })}
                   </h3>
                   <p className="text-xs text-muted-foreground text-center mt-1 mb-4">
-                    {t(`pricing.plan_${plan.key}_desc`, { defaultValue: "" })}
+                    {plan.description ?? t(`pricing.plan_${plan.key}_desc`, { defaultValue: "" })}
                   </p>
 
                   {/* Divider */}
@@ -217,6 +367,9 @@ const Pricing = () => {
                     <span className="text-sm text-muted-foreground">
                       /{t("pricing.month", { defaultValue: "month" })}
                     </span>
+                    {billing === "yearly" && plan.yearlySave && (
+                      <div className="text-xs font-bold text-accent-green mt-1">{plan.yearlySave}</div>
+                    )}
                   </div>
 
                   {/* Credits */}
@@ -225,7 +378,7 @@ const Pricing = () => {
                       {t("pricing.credits", { defaultValue: "Credits" })}
                     </div>
                     <div className="text-xl font-bold font-mono">
-                      {plan.credits[billing]}/{t("pricing.month", { defaultValue: "month" })}
+                      {plan.credits[billing]}{plan.key === "free" ? "" : `/${t("pricing.month", { defaultValue: "month" })}`}
                     </div>
                   </div>
 
@@ -263,8 +416,174 @@ const Pricing = () => {
               </BrutalCard>
             ))}
           </div>
+
+          {/* WeChat Pay Credits */}
+          <div className="mt-12">
+            <div className="flex items-end justify-between gap-4 mb-4">
+              <div>
+                <h2 className="text-xl font-bold uppercase tracking-widest">
+                  {t("pricing.wechatPayTitle", { defaultValue: "WeChat Pay · Credits Packs" })}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {t("pricing.wechatPaySubtitle", { defaultValue: "Scan with WeChat to buy one-time credits packs (Native QR Code)." })}
+                </p>
+              </div>
+              <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                {wechatPlansLoading
+                  ? t("pricing.loading", { defaultValue: "Loading..." })
+                  : wechatPlansError
+                    ? t("pricing.loadFailed", { defaultValue: "Load failed" })
+                    : ""}
+              </div>
+            </div>
+
+            {wechatPlansError && (
+              <div className="mb-4 p-3 bg-accent-red text-card border-brutal border-foreground font-bold text-sm">
+                {wechatPlansError}
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {activeWechatPlans.map((p) => (
+                <BrutalCard key={p.planKey} className="overflow-hidden">
+                  <div className="h-2 bg-accent-green" />
+                  <BrutalCardContent className="p-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="text-lg font-bold uppercase tracking-wider">{p.name}</div>
+                        <div className="text-xs text-muted-foreground mt-1">{p.description}</div>
+                      </div>
+                      <div className="px-2 py-1 bg-secondary border-brutal border-foreground text-xs font-bold font-mono">
+                        {formatCnyFen(p.amountFen)}
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex items-center justify-between gap-3">
+                      <div className="text-sm">
+                        <span className="text-muted-foreground">
+                          {t("pricing.credits", { defaultValue: "Credits" })}:
+                        </span>{" "}
+                        <span className="font-bold font-mono">{p.points.toLocaleString()}</span>
+                      </div>
+                      <BrutalButton
+                        variant="green"
+                        size="default"
+                        disabled={wxSubmitting}
+                        onClick={() => startWechatPay(p.planKey)}
+                      >
+                        {t("pricing.wechatPayBuy", { defaultValue: "Buy via WeChat" })}
+                      </BrutalButton>
+                    </div>
+                  </BrutalCardContent>
+                </BrutalCard>
+              ))}
+            </div>
+          </div>
         </div>
       </main>
+
+      <Dialog
+        open={wxDialogOpen}
+        onOpenChange={(open) => {
+          if (!open && wxOrder?.orderId && wxOrder.status === "pending") {
+            void safeCloseWechatOrder(wxOrder.orderId);
+          }
+          if (!open) {
+            setWxDialogOpen(false);
+            setWxOrder(null);
+          } else {
+            setWxDialogOpen(true);
+          }
+        }}
+      >
+        <DialogContent className="border-brutal border-foreground brutal-shadow bg-card max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-bold uppercase tracking-wider">
+              {t("pricing.scanToPay", { defaultValue: "Scan to pay with WeChat" })}
+            </DialogTitle>
+            <DialogDescription>
+              {wxOrder
+                ? t("pricing.scanToPayDesc", { defaultValue: "Open WeChat and scan the QR code. We’ll confirm automatically once paid." })
+                : t("pricing.preparingOrder", { defaultValue: "Preparing order..." })}
+            </DialogDescription>
+          </DialogHeader>
+
+          {wxOrder && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between text-sm">
+                <div className="text-muted-foreground">
+                  {t("pricing.orderId", { defaultValue: "Order" })}:
+                </div>
+                <div className="font-mono font-bold">{wxOrder.orderId}</div>
+              </div>
+
+              <div className="flex items-center justify-between text-sm">
+                <div className="text-muted-foreground">
+                  {t("pricing.amount", { defaultValue: "Amount" })}:
+                </div>
+                <div className="font-mono font-bold">{formatCnyFen(wxOrder.amountFen)}</div>
+              </div>
+
+              <div className="flex items-center justify-between text-sm">
+                <div className="text-muted-foreground">
+                  {t("pricing.credits", { defaultValue: "Credits" })}:
+                </div>
+                <div className="font-mono font-bold">{wxOrder.points.toLocaleString()}</div>
+              </div>
+
+              <div className="flex items-center justify-center">
+                <div className="p-3 bg-background border-brutal border-foreground brutal-shadow">
+                  <img
+                    src={wxOrder.qrCodeDataUrl}
+                    alt="WeChat Pay QR"
+                    className="w-56 h-56"
+                  />
+                </div>
+              </div>
+
+              <div className="text-center text-xs text-muted-foreground">
+                {t("pricing.orderStatus", { defaultValue: "Status" })}:{" "}
+                <span className="font-bold uppercase">{wxOrder.status}</span>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            {wxOrder?.status === "pending" && (
+              <div className="w-full flex items-center justify-between gap-3">
+                <div className="text-xs text-muted-foreground">
+                  {t("pricing.waitingPayment", { defaultValue: "Waiting for payment confirmation..." })}
+                </div>
+                <BrutalButton
+                  variant="outline"
+                  size="default"
+                  onClick={async () => {
+                    if (wxOrder?.orderId) {
+                      await safeCloseWechatOrder(wxOrder.orderId);
+                    }
+                    setWxDialogOpen(false);
+                    setWxOrder(null);
+                  }}
+                >
+                  {t("pricing.cancel", { defaultValue: "Cancel" })}
+                </BrutalButton>
+              </div>
+            )}
+            {wxOrder && wxOrder.status !== "pending" && (
+              <BrutalButton
+                variant="green"
+                className="w-full"
+                onClick={() => {
+                  setWxDialogOpen(false);
+                  setWxOrder(null);
+                }}
+              >
+                {t("pricing.done", { defaultValue: "Done" })}
+              </BrutalButton>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

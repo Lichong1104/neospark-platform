@@ -9,8 +9,10 @@ import { STATIC_BASE_URL } from "@/api/request";
 import { toast } from "sonner";
 import storageApi from "@/api/storage";
 import { useImageProcessing } from "@/hooks/useImageProcessing";
+import { useTranslation } from "react-i18next";
 
 const Index = () => {
+  const { t } = useTranslation();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [activeView, setActiveView] = useState<"canvas" | "workflow">("canvas");
   const [isAssetSidebarOpen, setIsAssetSidebarOpen] = useState(false);
@@ -38,27 +40,27 @@ const Index = () => {
 
   const handleBgRemove = useCallback(() => {
     if (!selectedCanvasImage || selectedCanvasImage.type === "video") {
-      toast.error("请先选择一张图片");
+      toast.error(t("workspace.selectImageFirst"));
       return;
     }
     startBgRemoval(selectedCanvasImage.src, selectedCanvasImage.name);
-  }, [selectedCanvasImage, startBgRemoval]);
+  }, [selectedCanvasImage, startBgRemoval, t]);
 
   const handleLayerSplit = useCallback(() => {
     if (!selectedCanvasImage || selectedCanvasImage.type === "video") {
-      toast.error("请先选择一张图片");
+      toast.error(t("workspace.selectImageFirst"));
       return;
     }
     startLayerSplit(selectedCanvasImage.src, selectedCanvasImage.name, 4);
-  }, [selectedCanvasImage, startLayerSplit]);
+  }, [selectedCanvasImage, startLayerSplit, t]);
 
   const handleUpscale = useCallback((resolution: "2K" | "4K" | "8K") => {
     if (!selectedCanvasImage || selectedCanvasImage.type === "video") {
-      toast.error("请先选择一张图片");
+      toast.error(t("workspace.selectImageFirst"));
       return;
     }
     startUpscale(selectedCanvasImage.src, selectedCanvasImage.name, resolution);
-  }, [selectedCanvasImage, startUpscale]);
+  }, [selectedCanvasImage, startUpscale, t]);
 
   const handleImagesGenerated = useCallback((images: { url: string; local_path: string }[]) => {
     const newCanvasImages: CanvasImage[] = images.map((img, idx) => ({
@@ -111,13 +113,13 @@ const Index = () => {
         const fileType = file.type.startsWith("video") ? "video" : "image";
         await storageApi.uploadFile(file, fileType);
       } catch {
-        toast.error(`上传失败: ${file.name}`);
+        toast.error(t("workspace.uploadFailedWithName", { name: file.name }));
       }
     }
     if (files.length > 0) {
-      toast.success(`已上传 ${files.length} 个文件`);
+      toast.success(t("workspace.uploadedFiles", { count: files.length }));
     }
-  }, []);
+  }, [t]);
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">

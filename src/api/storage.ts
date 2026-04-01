@@ -21,7 +21,10 @@ export async function uploadFile(
   const formData = new FormData();
   formData.append("file", file);
   formData.append("file_type", fileType);
-  const res = await http.postForm<UploadFileResponse>("/storage/upload", formData);
+  const res = await http.postForm<UploadFileResponse>(
+    "/storage/upload",
+    formData
+  );
   return res.data;
 }
 
@@ -29,7 +32,9 @@ export async function uploadFile(
  * 获取文件列表
  * GET /api/v1/storage/files
  */
-export async function listFiles(params?: ListFilesParams): Promise<FileListData> {
+export async function listFiles(
+  params?: ListFilesParams
+): Promise<FileListData> {
   const res = await http.get<FileListData>(
     "/storage/files",
     params as Record<string, unknown>
@@ -41,12 +46,72 @@ export async function listFiles(params?: ListFilesParams): Promise<FileListData>
  * 获取用户所有图片
  * GET /api/v1/storage/user-images
  */
-export async function listUserImages(params?: ListUserImagesParams): Promise<UserImagesData> {
+export async function listUserImages(
+  params?: ListUserImagesParams
+): Promise<UserImagesData> {
   const res = await http.get<UserImagesData>(
     "/storage/user-images",
     params as Record<string, unknown>
   );
   return res.data;
+}
+
+export type ListAllUserImagesParams = Omit<
+  ListUserImagesParams,
+  "limit" | "offset"
+> & {
+  /**
+   * Page size per request.
+   * Use a reasonable value to avoid timeouts.
+   */
+  pageSize?: number;
+  /**
+   * Backend-enforced maximum page size (default: 20).
+   */
+  pageSizeMax?: number;
+  /**
+   * Safety cap to avoid infinite loops if backend behaves unexpectedly.
+   */
+  maxPages?: number;
+};
+
+/**
+ * 获取用户所有图片（自动翻页拉取，避免后端默认 limit=20 导致只返回前 20 条）
+ */
+export async function listAllUserImages(
+  params?: ListAllUserImagesParams
+): Promise<UserImagesData> {
+  const { pageSize = 20, pageSizeMax = 20, maxPages = 200, ...rest } = params ?? {};
+  const effectivePageSize = Math.max(1, Math.min(pageSize, pageSizeMax));
+
+  let offset = 0;
+  let total: number | null = null;
+  const images: UserImagesData["images"] = [];
+
+  for (let page = 0; page < maxPages; page++) {
+    const data = await listUserImages({
+      ...(rest as Omit<ListUserImagesParams, "limit" | "offset">),
+      limit: effectivePageSize,
+      offset,
+    });
+
+    if (total === null) total = data.total ?? 0;
+
+    const batch = data.images ?? [];
+    if (batch.length === 0) break;
+
+    images.push(...batch);
+    offset += batch.length;
+
+    if (images.length >= (total ?? 0)) break;
+  }
+
+  return {
+    total: total ?? images.length,
+    offset: 0,
+    limit: images.length,
+    images,
+  };
 }
 
 /**
@@ -88,6 +153,7 @@ const storageApi = {
   uploadFile,
   listFiles,
   listUserImages,
+  listAllUserImages,
   getFileAccessUrl,
   deleteFile,
   getFileDetail,

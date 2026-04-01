@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from "react"
 import { 
   Send, 
   Sparkles, 
-  ChevronDown,
   Grid3X3,
   User,
   Image as ImageIcon,
@@ -12,7 +11,8 @@ import {
   RefreshCw,
   Check,
   Pencil,
-  Upload
+  Upload,
+  Download
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BrutalDropdown, type DropdownOption } from "@/components/ui/brutal-dropdown";
@@ -81,9 +81,6 @@ interface Agent {
 interface AgentChatAreaProps {
   agentStatus: StatusType;
   agents: Agent[];
-  onSelectAgent: (agent: StatusType) => void;
-  onToggleAgentMenu: () => void;
-  showAgentMenu: boolean;
   onImagesGenerated?: (images: { url: string; local_path: string }[]) => void;
   /** 画布当前选中的图片，用于「使用画布图片」作为产品参考图 */
   selectedCanvasImage?: { src: string; name: string; type?: "image" | "video" } | null;
@@ -138,7 +135,12 @@ const EcommerceResultGrid: React.FC<{
   agentIcon,
 }) => {
   const { t } = useTranslation();
-  const getImageUrl = (url: string) => url.startsWith("http") ? url : `${BASE_URL}${url}`;
+  const getImageUrl = (url: string) => {
+    if (!url) return url;
+    if (/^https?:\/\//i.test(url)) return url;
+    const base = STATIC_BASE_URL.replace(/\/$/, "");
+    return url.startsWith("/") ? `${base}${url}` : `${base}/${url}`;
+  };
 
   return (
     <div className="flex items-start gap-3 animate-fade-in">
@@ -222,7 +224,12 @@ const EcommercePreviewGrid: React.FC<{
   agentIcon: React.ReactNode;
 }> = ({ previewImage, cost, onRegenerate, onConfirm, onModify, agentColor, agentIcon }) => {
   const { t } = useTranslation();
-  const getImageUrl = (url: string) => (url.startsWith("http") ? url : `${BASE_URL}${url}`);
+  const getImageUrl = (url: string) => {
+    if (!url) return url;
+    if (/^https?:\/\//i.test(url)) return url;
+    const base = STATIC_BASE_URL.replace(/\/$/, "");
+    return url.startsWith("/") ? `${base}${url}` : `${base}/${url}`;
+  };
 
   if (!previewImage) return null;
 
@@ -314,9 +321,6 @@ const PastedImagesPreview: React.FC<{
 const AgentChatArea: React.FC<AgentChatAreaProps> = ({
   agentStatus,
   agents,
-  onSelectAgent,
-  onToggleAgentMenu,
-  showAgentMenu,
   onImagesGenerated,
   selectedCanvasImage,
 }) => {
@@ -480,9 +484,6 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
     setInputValue(value);
-    if (value === "/") {
-      onToggleAgentMenu();
-    }
   };
 
   const uploadProductFile = useCallback(async (file: File) => {
@@ -494,9 +495,9 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
         if (prev.length >= 2) return prev;
         return [...prev, { preview, uploadId: res.upload_id }];
       });
-      toast.success(t("intelligenceHub.imagePasted") || "图片已粘贴");
+      toast.success(t("intelligenceHub.imagePasted"));
     } catch {
-      toast.error(t("intelligenceHub.imageUploadFailed") || "图片上传失败");
+      toast.error(t("intelligenceHub.imageUploadFailed"));
     } finally {
       setIsUploadingPaste(false);
     }
@@ -517,7 +518,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
             const preview = URL.createObjectURL(file);
             setPastedPreviews((prev) => [...prev, preview]);
             setPastedPaths((prev) => [...prev, preview]);
-            toast.success(t("intelligenceHub.imagePasted") || "图片已粘贴");
+            toast.success(t("intelligenceHub.imagePasted"));
           }
         }
       }
@@ -727,7 +728,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
       setMessages(prev => [...prev, agentMessage]);
       polling.startPolling(res.message_id);
     } catch (err: any) {
-      const errorMsg = err?.response?.data?.detail || err?.response?.data?.message || err?.message || "生成失败";
+      const errorMsg = err?.response?.data?.detail || err?.response?.data?.message || err?.message || t("agentChat.generationFailed");
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "agent",
@@ -888,6 +889,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
 
       const ids = batchData.messages.map((m) => m.message_id);
       let totalCost = targetMessage.cost ?? 0;
+      const generatedBatchImages: { url: string; local_path: string }[] = [];
 
       for (let i = 0; i < ids.length; i++) {
         setEcommerceBatchProgress({ current: i + 1, total: ids.length });
@@ -898,6 +900,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
         totalCost += r.actual_cost ?? 0;
         const img = r.images?.[0];
         if (img) {
+          generatedBatchImages.push(img);
           // 阶段2要求：每张完成后立即添加到画布
           onImagesGenerated?.([img]);
         }
@@ -915,6 +918,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
                 isEcommerceResult: false,
                 isEcommercePreview: false,
                 isEcommerceFinalAdded: true,
+                images: generatedBatchImages,
                 ecommercePhase: undefined,
                 content: t("ecommerceAgent.finalReady"),
               }
@@ -984,6 +988,55 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
     return `${STATIC_BASE_URL}${url}`;
   };
 
+  const getStorageDownloadUrl = (pathOrUrl: string) => {
+    if (!pathOrUrl || pathOrUrl.startsWith("data:") || /^https?:\/\//i.test(pathOrUrl)) {
+      return pathOrUrl;
+    }
+    const normalizedPath = pathOrUrl.startsWith("/") ? pathOrUrl.slice(1) : pathOrUrl;
+    return storageApi.getFileAccessUrl(normalizedPath);
+  };
+
+  const getDownloadFileName = (img: { url: string; local_path: string }, index: number) => {
+    const source = img.local_path || img.url || "";
+    const segments = source.split("/");
+    const lastPart = segments[segments.length - 1] || "";
+    if (lastPart.includes(".")) return lastPart;
+    return `detail_${index + 1}.jpg`;
+  };
+
+  const handleDownloadEcommerceImages = async (images: { url: string; local_path: string }[]) => {
+    if (!images.length) return;
+    let successCount = 0;
+    for (let idx = 0; idx < images.length; idx++) {
+      const img = images[idx];
+      try {
+        const source = img.local_path || img.url;
+        const downloadUrl = getStorageDownloadUrl(source);
+        const response = await fetch(downloadUrl, { credentials: "include" });
+        if (!response.ok) {
+          throw new Error(`Download failed: ${response.status}`);
+        }
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = getDownloadFileName(img, idx);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(blobUrl);
+        successCount += 1;
+      } catch {
+        // Continue downloading remaining files even if one fails
+      }
+    }
+    if (successCount > 0) {
+      toast.success(t("ecommerceAgent.downloadAllDone", { count: successCount }));
+    } else {
+      toast.error(t("assetSidebar.downloadFailed"));
+    }
+  };
+
   const DEFAULT_ASPECT_RATIOS: DropdownOption[] = useMemo(
     () => [
       { value: "1:1", label: "1:1", icon: <Grid3X3 className="w-3.5 h-3.5" /> },
@@ -1030,43 +1083,6 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
-      <button
-        onClick={onToggleAgentMenu}
-        className="mx-4 mt-4 px-4 py-2 bg-accent-pink text-foreground font-mono text-xs font-bold uppercase tracking-wider border-brutal border-foreground flex items-center justify-between"
-      >
-        <span>{t("agents.agentLabel")}: {currentAgent.name} ({t("agentChat.typeToSwitch")})</span>
-        <ChevronDown className="w-4 h-4" />
-      </button>
-
-      {showAgentMenu && (
-        <div className="mx-4 mt-1 bg-card border-brutal border-foreground z-20 brutal-shadow">
-          <div className="px-3 py-2 text-xs font-bold uppercase text-accent-red border-b border-foreground/20">
-            {t("intelligenceHub.selectAgent")}
-          </div>
-          {agents.map((agent) => (
-            <button
-              key={agent.id}
-              onClick={() => onSelectAgent(agent.id as StatusType)}
-              className={cn(
-                "w-full text-left px-3 py-3 hover:bg-accent-cyan/20 transition-none flex items-center gap-3 border-b border-foreground/10 last:border-0",
-                agentStatus === agent.id && "bg-accent-cyan/10"
-              )}
-            >
-              <div className={cn("w-8 h-8 flex items-center justify-center border-brutal border-foreground", agent.color)}>
-                {agent.icon}
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-sm">{agent.name}</span>
-                  <span className="text-xs text-muted-foreground">{agent.command}</span>
-                </div>
-                <div className="text-xs text-muted-foreground">{agent.description}</div>
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
-
       <div className="flex-1 overflow-y-auto p-4 space-y-6">
         {messages.length === 0 ? (
           <div className="flex flex-col justify-start pt-12 px-8">
@@ -1169,6 +1185,31 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
                     agentColor={currentAgent.color}
                     agentIcon={currentAgent.icon}
                   />
+                ) : message.isEcommerceFinalAdded && message.status === "completed" ? (
+                  <div className="flex items-start gap-3 animate-fade-in">
+                    <div className={cn("w-10 h-10 border-brutal border-foreground flex items-center justify-center flex-shrink-0", currentAgent.color)}>
+                      {currentAgent.icon}
+                    </div>
+                    <div className="flex-1 space-y-3">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-bold text-sm">{t("agents.ecommerce").toUpperCase()}_AGENT</span>
+                        <span className="text-xs text-muted-foreground">{message.timestamp}</span>
+                      </div>
+                      <p className="text-sm bg-secondary/30 border border-foreground/10 p-3 whitespace-pre-wrap">
+                        {message.content}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleDownloadEcommerceImages(message.images ?? [])}
+                          disabled={!message.images || message.images.length === 0}
+                          className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase border-brutal border-foreground bg-accent-cyan hover:brightness-110 brutal-press disabled:opacity-50"
+                        >
+                          <Download className="w-3 h-3" />
+                          {t("ecommerceAgent.downloadAll")}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 ) : (
                   <div>
                     {message.config && message.status !== "failed" ? (

@@ -137,7 +137,6 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
   const [isAgentMode, setIsAgentMode] = useState(false);
   const [agentStatus, setAgentStatus] = useState<StatusType>("offline");
   const [showPresets, setShowPresets] = useState(false);
-  const [showAgentMenu, setShowAgentMenu] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [modelsConfig, setModelsConfig] = useState<ModelsConfigMap | null>(null);
   
@@ -159,9 +158,9 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
       const res = await storageApi.uploadFile(file, "image");
       const path = res.path || res.url || "";
       setPastedImage({ preview, path });
-      toast.success(t("intelligenceHub.imagePasted") || "图片已粘贴");
+      toast.success(t("intelligenceHub.imagePasted"));
     } catch {
-      toast.error(t("intelligenceHub.imageUploadFailed") || "图片上传失败");
+      toast.error(t("intelligenceHub.imageUploadFailed"));
     } finally {
       setIsUploadingPaste(false);
     }
@@ -178,10 +177,10 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
       setIsStandardGenerating(false);
       onImagesGenerated?.(polling.images);
       polling.reset();
-      toast.success("图片生成完成！");
+      toast.success(t("intelligenceHub.imageGenerated"));
     } else if (polling.status === "failed") {
       setIsStandardGenerating(false);
-      toast.error(polling.error || "生成失败");
+      toast.error(polling.error || t("intelligenceHub.generateFailed"));
       polling.reset();
     }
   }, [polling.status, polling.images, polling.error]);
@@ -244,20 +243,12 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
 
   const handleModeToggle = (mode: boolean) => {
     setIsAgentMode(mode);
-    setAgentStatus(mode ? "optimizer" : "offline");
+    setAgentStatus(mode ? "ecommerce" : "offline");
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
     setInputValue(value);
-    if (value === "/" && isAgentMode) setShowAgentMenu(true);
-    else if (!value.startsWith("/")) setShowAgentMenu(false);
-  };
-
-  const selectAgent = (agent: StatusType) => {
-    setAgentStatus(agent);
-    setShowAgentMenu(false);
-    setInputValue("");
   };
 
   const handleSend = async () => {
@@ -291,10 +282,10 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
       setPastedImage(null);
 
       const res = await drawingApi.generateImage(sid, params);
-      toast.info(`生成中... 预估消耗 ${res.estimated_cost} pts`);
+      toast.info(t("intelligenceHub.generatingCost", { cost: res.estimated_cost }));
       polling.startPolling(res.message_id);
     } catch (err: any) {
-      const msg = err?.response?.data?.detail || err?.message || "生成失败";
+      const msg = err?.response?.data?.detail || err?.message || t("intelligenceHub.generateFailed");
       toast.error(msg);
       setIsStandardGenerating(false);
     }
@@ -302,31 +293,35 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
 
   return (
     <div className="flex flex-col h-full bg-card border-l-brutal border-foreground overflow-hidden">
-      {/* Tabs */}
-      <div className="flex border-b-brutal border-foreground">
-        <button
-          onClick={() => setActiveTab("CHAT")}
-          className={cn(
-            "flex-1 px-6 py-4 font-mono font-bold text-sm uppercase tracking-wider transition-none flex items-center justify-center gap-2",
-            activeTab === "CHAT" ? "bg-foreground text-card" : "bg-card text-foreground/50 hover:text-foreground"
-          )}
-        >
-          <Terminal className="w-4 h-4" />
-          {t("intelligenceHub.chat")}
-        </button>
-        <button
-          onClick={() => setActiveTab("WORKFLOW")}
-          className={cn(
-            "flex-1 px-6 py-4 font-mono font-bold text-sm uppercase tracking-wider transition-none flex items-center justify-center gap-2 border-l-brutal border-foreground",
-            activeTab === "WORKFLOW" ? "bg-foreground text-card" : "bg-card text-foreground/50 hover:text-foreground"
-          )}
-        >
-          <GitBranch className="w-4 h-4" />
-          {t("intelligenceHub.workflow")}
-        </button>
-      </div>
+      {/* Tabs (temporarily hidden) */}
+      {false && (
+        <div className="flex border-b-brutal border-foreground">
+          <button
+            onClick={() => setActiveTab("CHAT")}
+            className={cn(
+              "flex-1 px-6 py-4 font-mono font-bold text-sm uppercase tracking-wider transition-none flex items-center justify-center gap-2",
+              activeTab === "CHAT" ? "bg-foreground text-card" : "bg-card text-foreground/50 hover:text-foreground"
+            )}
+          >
+            <Terminal className="w-4 h-4" />
+            {t("intelligenceHub.chat")}
+          </button>
+          <button
+            onClick={() => setActiveTab("WORKFLOW")}
+            className={cn(
+              "flex-1 px-6 py-4 font-mono font-bold text-sm uppercase tracking-wider transition-none flex items-center justify-center gap-2 border-l-brutal border-foreground",
+              activeTab === "WORKFLOW" ? "bg-foreground text-card" : "bg-card text-foreground/50 hover:text-foreground"
+            )}
+          >
+            <GitBranch className="w-4 h-4" />
+            {t("intelligenceHub.workflow")}
+          </button>
+        </div>
+      )}
 
-      {activeTab === "CHAT" ? (
+      {activeTab === "WORKFLOW" ? (
+        <WorkflowView />
+      ) : (
         <>
           {/* IMAGE / VIDEO sub-tabs */}
           <div className="flex border-b border-foreground/10">
@@ -362,7 +357,6 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
               agentStatus={agentStatus}
               inputValue={inputValue}
               showPresets={showPresets}
-              showAgentMenu={showAgentMenu}
               aspectRatio={aspectRatio}
               resolution={resolution}
               model={model}
@@ -379,9 +373,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
               onInputChange={handleInputChange}
               onSend={handleSend}
               onTogglePresets={() => setShowPresets(!showPresets)}
-              onSelectAgent={selectAgent}
               onSelectPreset={(prompt) => { setInputValue(prompt); setShowPresets(false); }}
-              onToggleAgentMenu={() => setShowAgentMenu(!showAgentMenu)}
               onImagesGenerated={onImagesGenerated}
               pastedImage={pastedImage}
               onPasteImage={setPastedImage}
@@ -392,8 +384,6 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
             <VideoGenerationPanel onVideoGenerated={onVideoGenerated} selectedCanvasImage={selectedCanvasImage ?? null} />
           )}
         </>
-      ) : (
-        <WorkflowView />
       )}
     </div>
   );
@@ -404,7 +394,6 @@ interface ChatViewProps {
   agentStatus: StatusType;
   inputValue: string;
   showPresets: boolean;
-  showAgentMenu: boolean;
   aspectRatio: string;
   resolution: string;
   model: string;
@@ -421,9 +410,7 @@ interface ChatViewProps {
   onInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   onSend: () => void;
   onTogglePresets: () => void;
-  onSelectAgent: (agent: StatusType) => void;
   onSelectPreset: (prompt: string) => void;
-  onToggleAgentMenu: () => void;
   onImagesGenerated?: (images: { url: string; local_path: string }[]) => void;
   pastedImage: { preview: string; path: string } | null;
   onPasteImage: (image: { preview: string; path: string } | null) => void;
@@ -436,7 +423,6 @@ const ChatView: React.FC<ChatViewProps> = ({
   agentStatus,
   inputValue,
   showPresets,
-  showAgentMenu,
   aspectRatio,
   resolution,
   model,
@@ -453,9 +439,7 @@ const ChatView: React.FC<ChatViewProps> = ({
   onInputChange,
   onSend,
   onTogglePresets,
-  onSelectAgent,
   onSelectPreset,
-  onToggleAgentMenu,
   onImagesGenerated,
   pastedImage,
   onPasteImage,
@@ -492,9 +476,6 @@ const ChatView: React.FC<ChatViewProps> = ({
         <AgentChatArea
           agentStatus={agentStatus}
           agents={AGENTS}
-          onSelectAgent={onSelectAgent}
-          onToggleAgentMenu={onToggleAgentMenu}
-          showAgentMenu={showAgentMenu}
           onImagesGenerated={onImagesGenerated}
           selectedCanvasImage={selectedCanvasImage}
         />
@@ -536,8 +517,8 @@ const ChatView: React.FC<ChatViewProps> = ({
               <div className="absolute -inset-2 border-2 border-accent-cyan/30 border-t-accent-cyan animate-spin" style={{ animationDuration: "1.5s" }} />
             </div>
             <div className="text-center space-y-1">
-              <p className="text-sm font-bold uppercase tracking-widest">{t("intelligenceHub.generating") || "GENERATING..."}</p>
-              <p className="text-[10px] text-muted-foreground font-mono">AI 正在创作中，请稍候...</p>
+              <p className="text-sm font-bold uppercase tracking-widest">{t("intelligenceHub.generating")}</p>
+              <p className="text-[10px] text-muted-foreground font-mono">{t("intelligenceHub.generatingHint")}</p>
             </div>
             <div className="flex gap-1.5">
               {[0, 1, 2, 3, 4].map(i => (
@@ -553,7 +534,7 @@ const ChatView: React.FC<ChatViewProps> = ({
           <div className="space-y-3">
             <div className="flex items-center gap-2 text-xs font-bold uppercase text-muted-foreground">
               <Image className="w-4 h-4 text-accent-green" />
-              {t("intelligenceHub.generationResult") || "GENERATION RESULT"}
+              {t("intelligenceHub.generationResult")}
               {generationCost && <span className="text-accent-green">-{generationCost} pts</span>}
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -623,8 +604,8 @@ const ChatView: React.FC<ChatViewProps> = ({
             ) : null}
             <span className="text-[10px] font-mono text-muted-foreground">
               {isUploadingPaste
-                ? (t("intelligenceHub.uploading") || "上传中...")
-                : (t("intelligenceHub.refImage") || "参考图")}
+                ? t("intelligenceHub.uploading")
+                : t("intelligenceHub.refImage")}
             </span>
           </div>
         )}
@@ -652,7 +633,7 @@ const ChatView: React.FC<ChatViewProps> = ({
                         onPasteImage({ preview, path: res.path || res.url || "" });
                       } catch {
                         onPasteImage(null);
-                        toast.error(t("intelligenceHub.imageUploadFailed") || "图片上传失败");
+                        toast.error(t("intelligenceHub.imageUploadFailed"));
                       }
                     };
                     upload();

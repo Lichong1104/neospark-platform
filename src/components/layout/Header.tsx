@@ -39,7 +39,8 @@ const Header: React.FC = () => {
   }, [isDark]);
 
   const toggleLanguage = () => {
-    const newLang = i18n.language === "en" ? "zh" : "en";
+    const currentBase = (i18n.resolvedLanguage || i18n.language || "en").split("-")[0];
+    const newLang = currentBase === "en" ? "zh" : "en";
     i18n.changeLanguage(newLang);
     localStorage.setItem("language", newLang);
   };

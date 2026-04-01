@@ -2,6 +2,10 @@ import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
+// 临时开关：用于本地/临时关闭路由登录校验
+// 需要恢复时改为 false 即可
+const DISABLE_ROUTE_AUTH = false;
+
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
@@ -9,6 +13,10 @@ interface ProtectedRouteProps {
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
+
+  if (DISABLE_ROUTE_AUTH) {
+    return <>{children}</>;
+  }
 
   if (isLoading) {
     return (

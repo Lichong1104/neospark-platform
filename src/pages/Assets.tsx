@@ -22,7 +22,7 @@ const Assets = () => {
   const loadImages = async () => {
     setIsLoading(true);
     try {
-      const data = await storageApi.listUserImages({ limit: 100 });
+      const data = await storageApi.listAllUserImages();
       setImages(data.images || []);
     } catch {
       // 接口不可用时使用空列表
@@ -45,10 +45,10 @@ const Assets = () => {
       for (const file of Array.from(files)) {
         await storageApi.uploadFile(file, "image");
       }
-      toast.success(t("assetsPage.uploadSuccess") || "上传成功");
+      toast.success(t("assetsPage.uploadSuccess"));
       await loadImages();
     } catch (err: any) {
-      toast.error(err?.message || "上传失败");
+      toast.error(err?.message || t("assetsPage.uploadFailed"));
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -62,10 +62,10 @@ const Assets = () => {
       if (img) {
         try {
           await storageApi.deleteFile(img.path);
-          toast.success(t("assetsPage.deleted") || "已删除");
+          toast.success(t("assetsPage.deleted"));
           setImages(prev => prev.filter(i => i.id !== id));
         } catch {
-          toast.error("删除失败");
+          toast.error(t("assetsPage.deleteFailed"));
         }
       }
       setConfirmDelete(null);
@@ -106,7 +106,7 @@ const Assets = () => {
               <div className="mb-2">
                 <div className="flex items-center gap-1 py-1 px-2 text-xs font-bold uppercase text-accent-cyan">
                   <Upload className="w-3 h-3" />
-                  {t("assetsPage.uploaded") || "UPLOADED"}
+                  {t("assetsPage.uploaded")}
                   <span className="text-muted-foreground ml-auto">{images.filter(i => i.type === "upload").length}</span>
                 </div>
                 {images.filter(i => i.type === "upload").map(img => (
@@ -124,7 +124,7 @@ const Assets = () => {
               <div>
                 <div className="flex items-center gap-1 py-1 px-2 text-xs font-bold uppercase text-accent-purple">
                   <Image className="w-3 h-3" />
-                  {t("assetsPage.generated") || "GENERATED"}
+                  {t("assetsPage.generated")}
                   <span className="text-muted-foreground ml-auto">{images.filter(i => i.type === "generation").length}</span>
                 </div>
                 {images.filter(i => i.type === "generation").map(img => (
@@ -165,7 +165,7 @@ const Assets = () => {
           ) : images.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-40 text-muted-foreground">
               <Image className="w-12 h-12 mb-2" />
-              <p className="text-sm font-mono">{t("assetsPage.noAssets") || "No assets yet"}</p>
+              <p className="text-sm font-mono">{t("assetsPage.noAssets")}</p>
             </div>
           ) : (
             <div className="grid grid-cols-4 gap-4">

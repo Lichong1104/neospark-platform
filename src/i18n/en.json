@@ -52,7 +52,28 @@
     "feat_rollover6": "Credits rollover 6 months",
     "feat_videoUnlimited365": "Video unlimited 365 days",
     "feat_rollover12": "Credits rollover 12 months",
-    "feat_dedicatedSupport": "Dedicated support"
+    "feat_dedicatedSupport": "Dedicated support",
+    "wechatPayTitle": "WeChat Pay · Credits Packs",
+    "wechatPaySubtitle": "Scan with WeChat to buy one-time credits packs (Native QR Code).",
+    "wechatPayBuy": "Buy via WeChat",
+    "scanToPay": "Scan to pay with WeChat",
+    "scanToPayDesc": "Open WeChat and scan the QR code. We’ll confirm automatically once paid.",
+    "preparingOrder": "Preparing order...",
+    "orderId": "Order",
+    "amount": "Amount",
+    "orderStatus": "Status",
+    "waitingPayment": "Waiting for payment confirmation...",
+    "cancel": "Cancel",
+    "done": "Done",
+    "loading": "Loading...",
+    "loadFailed": "Load failed",
+    "loginRequired": "Login required",
+    "loginRequiredDesc": "Please login first, then try again.",
+    "wechatPayCreateFailed": "WeChat Pay unavailable",
+    "paymentSuccess": "Payment successful",
+    "creditsAdded": "Credits have been added to your account.",
+    "paymentNotCompleted": "Payment not completed",
+    "tryAgain": "Please try again if you still want to purchase credits."
   },
   "uc": {
     "planFree": "FREE PLAN",
@@ -97,7 +118,9 @@
     "expandCanvas": "Expand canvas",
     "aiEnhance": "AI enhance",
     "autoColorize": "Auto colorize",
-    "aiUpscale": "AI upscale"
+    "aiUpscale": "AI upscale",
+    "uploadFailedWithName": "Upload failed: {{name}}",
+    "uploadedFiles": "Uploaded {{count}} file(s)"
   },
   "canvas": {
     "canvas": "CANVAS",
@@ -136,6 +159,12 @@
     "promptArsenal": "PROMPT ARSENAL",
     "inputPlaceholder": "Describe the effect you want to create...",
     "imagePasted": "Image pasted",
+    "imageGenerated": "Image generation completed!",
+    "generateFailed": "Generation failed",
+    "generating": "GENERATING...",
+    "generatingHint": "AI is creating, please wait...",
+    "generatingCost": "Generating... estimated cost {{cost}} pts",
+    "generationResult": "GENERATION RESULT",
     "imageUploadFailed": "Image upload failed",
     "uploading": "Uploading...",
     "refImage": "Reference image",
@@ -196,7 +225,9 @@
     "details": "Details",
     "confirmBtn": "Confirm",
     "modify": "Modify",
-    "regenerate": "Regenerate"
+    "regenerate": "Regenerate",
+    "copied": "Configuration copied",
+    "copy": "Copy"
   },
   "ecommerceAgent": {
     "greeting": "Hello! I'm your E-Commerce Visual Creative Director. To build a precise brand visual plan, please provide the following (upload 1-2 product reference images):",
@@ -231,7 +262,9 @@
     "uploadProduct": "Upload product image",
     "useCanvasImage": "Use canvas image",
     "useCanvasNoImage": "Select an image on the canvas first",
-    "useCanvasFailed": "Could not read canvas image"
+    "useCanvasFailed": "Could not read canvas image",
+    "downloadAll": "Download all images",
+    "downloadAllDone": "Started downloading {{count}} image(s)"
   },
   "assetSidebar": {
     "assetManagement": "Asset Management",
@@ -247,13 +280,42 @@
     "uploadSuccess": "Upload successful",
     "deleted": "Deleted",
     "fileDetail": "File Detail",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "uploading": "Uploading",
+    "upload": "Upload",
+    "uploadFailed": "Upload failed",
+    "deleteFailed": "Delete failed",
+    "fileName": "File Name",
+    "source": "Source",
+    "generated": "AI Generated",
+    "size": "Size",
+    "model": "Model",
+    "prompt": "Prompt",
+    "addToCanvas": "Add to Canvas",
+    "filterAll": "All",
+    "clickToUpload": "Click to Upload",
+    "viewDetail": "View Detail",
+    "clickAgainConfirm": "Click again to confirm",
+    "delete": "Delete",
+    "confirm": "Confirm?",
+    "cancel": "Cancel",
+    "confirmDelete": "Confirm Delete",
+    "noVideos": "No videos yet",
+    "imageCount": "{{count}} images",
+    "videoCount": "{{count}} videos",
+    "footerHint": "Click an asset to add to canvas"
   },
   "assetsPage": {
     "directory": "DIRECTORY",
     "allAssets": "ALL ASSETS",
     "upload": "UPLOAD",
-    "confirmDelete": "CONFIRM?"
+    "confirmDelete": "CONFIRM?",
+    "uploadSuccess": "Upload successful",
+    "uploadFailed": "Upload failed",
+    "deleted": "Deleted",
+    "deleteFailed": "Delete failed",
+    "uploaded": "UPLOADED",
+    "generated": "GENERATED"
   },
   "workflowCanvas": {
     "workflowMode": "Workflow Mode",
@@ -402,6 +464,7 @@
     "newTask": "New Task",
     "retry": "Retry",
     "generate": "GENERATE",
-    "prompt": "Prompt"
+    "prompt": "Prompt",
+    "selectCanvasImageHint": "Please select an image on the canvas as reference"
   }
 }

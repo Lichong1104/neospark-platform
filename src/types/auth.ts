@@ -37,4 +37,6 @@ export interface UserInfo {
   is_logged_in: boolean;
   last_login_at: string;
   created_at: string;
+  /** 当前积分余额（后端字段名可能为 balance） */
+  balance?: number;
 }

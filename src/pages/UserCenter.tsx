@@ -17,6 +17,12 @@ const UserCenter = () => {
   const [usageLogs, setUsageLogs] = useState<{ action: string; amount: number; time: string }[]>([]);
 
   useEffect(() => {
+    if (typeof userInfo?.balance === "number") {
+      setCredits(userInfo.balance);
+    }
+  }, [userInfo?.balance]);
+
+  useEffect(() => {
     // 获取扣费历史
     drawingApi
       .getBillingHistory({ limit: 10 })
@@ -29,7 +35,7 @@ const UserCenter = () => {
         setUsageLogs(logs);
 
         // 从最新的交易中获取当前余额
-        if (data.transactions.length > 0) {
+        if (typeof userInfo?.balance !== "number" && data.transactions.length > 0) {
           setCredits(data.transactions[0].balance_after);
         }
       })
@@ -40,9 +46,13 @@ const UserCenter = () => {
           { action: "[AGENT_GEN]", amount: -15, time: "12:44:18" },
           { action: "[BG_REMOVE]", amount: -20, time: "12:43:01" },
         ]);
-        setCredits(850);
+        if (typeof userInfo?.balance === "number") {
+          setCredits(userInfo.balance);
+        } else {
+          setCredits(850);
+        }
       });
-  }, []);
+  }, [t, userInfo?.balance]);
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">

@@ -168,7 +168,7 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
               <div className="flex items-center gap-2 p-3 border border-accent-orange/30 bg-accent-orange/5 text-center">
                 <Image className="w-4 h-4 text-accent-orange shrink-0" />
                 <span className="text-[11px] text-muted-foreground">
-                  请在画布中选中一张图片作为参考图
+                  {t("video.selectCanvasImageHint")}
                 </span>
               </div>
             )}

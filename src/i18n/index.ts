@@ -3,7 +3,12 @@ import { initReactI18next } from "react-i18next";
 import en from "./en.json";
 import zh from "./zh.json";
 
-const savedLanguage = localStorage.getItem("language") || "en";
+function normalizeLanguage(lng: string): "en" | "zh" {
+  const base = (lng || "en").toLowerCase().split("-")[0];
+  return base === "zh" ? "zh" : "en";
+}
+
+const savedLanguage = normalizeLanguage(localStorage.getItem("language") || "en");
 
 i18n.use(initReactI18next).init({
   resources: {
@@ -12,6 +17,8 @@ i18n.use(initReactI18next).init({
   },
   lng: savedLanguage,
   fallbackLng: "en",
+  supportedLngs: ["en", "zh"],
+  nonExplicitSupportedLngs: true,
   interpolation: {
     escapeValue: false,
   },
