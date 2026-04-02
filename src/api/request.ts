@@ -13,22 +13,21 @@ const instance: AxiosInstance = axios.create({
   baseURL: BASE_URL,
   timeout: 0,
   // 让后端写入的 HttpOnly Cookie（如 neospark_session）随请求自动携带
-  // withCredentials: true,
+  withCredentials: true,
 });
 
 // 请求拦截器：自动注入 JWT Token
 instance.interceptors.request.use(
   (config) => {
-    // const token = getToken();
-    const token = true;
+    const token = getToken();
+    // const token = true;
     if (token) {
-      config.headers.Authorization = `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyIiwidHlwIjoiYWNjZXNzIiwianRpIjoiRFlxODZxN016eXJjNEQwayIsImlhdCI6MTc3NTAzMzU5MywiZXhwIjoxNzc1NjM4MzkzLCJhdWQiOiJuZW9zcGFyay1hcGkiLCJpc3MiOiJuZW9zcGFyayIsImVtYWlsIjoiY2w1NDQzNDhAZ21haWwuY29tIiwic2lkIjoiMTAifQ.Ug5uR20d3rm5D2wNqdiFpTUYwsSngUVcEw78ePdHx6M`;
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
   (error) => Promise.reject(error)
 );
-
 
 // 响应拦截器：直接返回 data
 instance.interceptors.response.use(
