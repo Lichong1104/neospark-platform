@@ -73,7 +73,12 @@
     "paymentSuccess": "Payment successful",
     "creditsAdded": "Credits have been added to your account.",
     "paymentNotCompleted": "Payment not completed",
-    "tryAgain": "Please try again if you still want to purchase credits."
+    "tryAgain": "Please try again if you still want to purchase credits.",
+    "yearlyBillingNotice": "🔥 Yearly billing saves up to 35% — Growth plan saves $72/year!",
+    "yearlySave_starter": "Save $48",
+    "yearlySave_growth": "Save $72",
+    "yearlySave_pro": "Save $288",
+    "yearlySave_ultimate": "Save $600"
   },
   "uc": {
     "planFree": "FREE PLAN",
@@ -255,6 +260,8 @@
     "finalReady": "✅ Final detail page image generated! Added to canvas.",
     "phase1": "Phase 1 · grid preview",
     "phase2": "Phase 2 · batch detail images",
+    "previewAlt": "E-commerce 3×3 preview image",
+    "finalDetailAlt": "E-commerce final detail page",
     "phase1Failed": "Grid preview generation failed",
     "panelFailed": "Panel",
     "batchComplete": "Batch generation complete",

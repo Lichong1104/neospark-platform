@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { ImageAnnotator } from "./ImageAnnotator";
-import { STATIC_BASE_URL } from "@/api/request";
+import { toFetchableAssetUrl } from "@/lib/assetFetchUrl";
 
 export interface CanvasImage {
   id: string;
@@ -127,14 +127,10 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onImageSelect, canvasImages, on
     const img = images.find(i => i.id === selectedId);
     if (!img) return;
 
-    const buildDirectUrl = (src: string) => {
-      if (!src || src.startsWith("data:")) return src;
-      if (/^https?:\/\//i.test(src)) return src;
-      return src.startsWith("/") ? `${STATIC_BASE_URL}${src}` : `${STATIC_BASE_URL}/${src}`;
-    };
+    const fileName = `${img.name}.${img.type === "video" ? "mp4" : "jpg"}`;
 
     try {
-      const url = buildDirectUrl(img.src);
+      const url = toFetchableAssetUrl(img.src);
       const response = await fetch(url, { credentials: "include" });
       if (!response.ok) {
         throw new Error(`Download failed: ${response.status}`);
@@ -143,20 +139,14 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onImageSelect, canvasImages, on
       const blobUrl = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = blobUrl;
-      link.download = `${img.name}.${img.type === "video" ? "mp4" : "jpg"}`;
+      link.download = fileName;
       document.body.appendChild(link);
       link.click();
       link.remove();
       URL.revokeObjectURL(blobUrl);
       toast.success(t("canvas.downloading", { name: img.name }));
     } catch {
-      const link = document.createElement("a");
-      link.href = buildDirectUrl(img.src);
-      link.download = `${img.name}.${img.type === "video" ? "mp4" : "jpg"}`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      toast.success(t("canvas.downloading", { name: img.name }));
+      toast.error(t("assetSidebar.downloadFailed"));
     }
   };
 

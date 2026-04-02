@@ -8,7 +8,11 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import wechatPayApi from "@/api/wechatPay";
-import type { WeChatPayOrder, WeChatPayPlan, WeChatPayPlanKey } from "@/api/wechatPay";
+import type {
+  WeChatPayOrder,
+  WeChatPayPlan,
+  WeChatPayPlanKey,
+} from "@/api/wechatPay";
 import {
   Dialog,
   DialogContent,
@@ -32,7 +36,17 @@ interface PlanTier {
   images: string;
   videos: string;
   features: string[];
-  buttonVariant: "default" | "yellow" | "purple" | "cyan" | "green" | "primary" | "orange" | "red" | "ghost" | "outline";
+  buttonVariant:
+    | "default"
+    | "yellow"
+    | "purple"
+    | "cyan"
+    | "green"
+    | "primary"
+    | "orange"
+    | "red"
+    | "ghost"
+    | "outline";
   buttonText: string;
   highlighted?: boolean;
   accentColor: string;
@@ -45,6 +59,8 @@ function formatCnyFen(amountFen: number): string {
 
 const Pricing = () => {
   const [billing, setBilling] = useState<BillingCycle>("monthly");
+  // Temporarily hide subscription tier cards; keep WeChat Pay only.
+  const showSubscriptionPlans = false;
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { refreshUser } = useAuth();
@@ -66,7 +82,10 @@ const Pricing = () => {
       .getPlans()
       .then((list) => setWechatPlans(list))
       .catch((e) => {
-        const msg = e?.response?.data?.detail || e?.message || "Failed to load WeChat plans";
+        const msg =
+          e?.response?.data?.detail ||
+          e?.message ||
+          "Failed to load WeChat plans";
         setWechatPlansError(String(msg));
       })
       .finally(() => setWechatPlansLoading(false));
@@ -86,18 +105,25 @@ const Pricing = () => {
       setWxDialogOpen(true);
     } catch (e: any) {
       const status = e?.response?.status;
-      const detail = e?.response?.data?.detail || e?.message || "Failed to create WeChat order";
+      const detail =
+        e?.response?.data?.detail ||
+        e?.message ||
+        "Failed to create WeChat order";
       if (status === 401) {
         toast({
           title: t("pricing.loginRequired", { defaultValue: "Login required" }),
-          description: t("pricing.loginRequiredDesc", { defaultValue: "Please login first, then try again." }),
+          description: t("pricing.loginRequiredDesc", {
+            defaultValue: "Please login first, then try again.",
+          }),
           variant: "destructive",
         });
         navigate("/login");
         return;
       }
       toast({
-        title: t("pricing.wechatPayCreateFailed", { defaultValue: "WeChat Pay unavailable" }),
+        title: t("pricing.wechatPayCreateFailed", {
+          defaultValue: "WeChat Pay unavailable",
+        }),
         description: String(detail),
         variant: "destructive",
       });
@@ -131,8 +157,12 @@ const Pricing = () => {
           window.clearInterval(pollTimerRef.current!);
           pollTimerRef.current = null;
           toast({
-            title: t("pricing.paymentSuccess", { defaultValue: "Payment successful" }),
-            description: t("pricing.creditsAdded", { defaultValue: "Credits have been added to your account." }),
+            title: t("pricing.paymentSuccess", {
+              defaultValue: "Payment successful",
+            }),
+            description: t("pricing.creditsAdded", {
+              defaultValue: "Credits have been added to your account.",
+            }),
           });
           await refreshUser();
           setWxDialogOpen(false);
@@ -140,8 +170,13 @@ const Pricing = () => {
           window.clearInterval(pollTimerRef.current!);
           pollTimerRef.current = null;
           toast({
-            title: t("pricing.paymentNotCompleted", { defaultValue: "Payment not completed" }),
-            description: t("pricing.tryAgain", { defaultValue: "Please try again if you still want to purchase credits." }),
+            title: t("pricing.paymentNotCompleted", {
+              defaultValue: "Payment not completed",
+            }),
+            description: t("pricing.tryAgain", {
+              defaultValue:
+                "Please try again if you still want to purchase credits.",
+            }),
             variant: "destructive",
           });
         }
@@ -163,36 +198,50 @@ const Pricing = () => {
       key: "free",
       icon: <Gift className="w-5 h-5" />,
       price: { monthly: 0, yearly: 0 },
-      credits: { monthly: "100 credits / 7 days", yearly: "100 credits / 7 days" },
+      credits: {
+        monthly: "100 credits / 7 days",
+        yearly: "100 credits / 7 days",
+      },
       images: "~14 Nano banana 2",
       videos: "~3 clips",
       features: [
-        t("pricing.feat_credits", { amount: "200", defaultValue: "{{amount}} credits/month" }),
+        t("pricing.feat_credits", {
+          amount: "200",
+          defaultValue: "{{amount}} credits/month",
+        }),
         t("pricing.feat_basicModels", { defaultValue: "Basic AI models" }),
         t("pricing.feat_watermark", { defaultValue: "Watermarked exports" }),
         t("pricing.feat_personalOnly", { defaultValue: "Personal use only" }),
         t("pricing.feat_standardQueue", { defaultValue: "Standard queue" }),
       ],
       buttonVariant: "default",
-      buttonText: t("pricing.startFreeTrial", { defaultValue: "Start Free Trial" }),
+      buttonText: t("pricing.startFreeTrial", {
+        defaultValue: "Start Free Trial",
+      }),
       accentColor: "bg-muted",
     },
     {
       key: "starter",
       icon: <Star className="w-5 h-5" />,
-      title: "Starter",
-      description: "Try commercial features",
-      badge: { text: "🎁 Try Commercial", color: "bg-accent-yellow" },
+      badge: {
+        text: t("pricing.beginnerChoice", { defaultValue: "Beginner's Choice" }),
+        color: "bg-accent-yellow",
+      },
       price: { monthly: 18, yearly: 14 },
-      yearlySave: "Save $48",
+      yearlySave: t("pricing.yearlySave_starter", { defaultValue: "Save $48" }),
       credits: { monthly: "2,000", yearly: "2,000" },
       images: "~285 Nano banana 2",
       videos: "~10 clips",
       features: [
-        t("pricing.feat_credits", { amount: "2,500", defaultValue: "{{amount}} credits/month" }),
+        t("pricing.feat_credits", {
+          amount: "2,500",
+          defaultValue: "{{amount}} credits/month",
+        }),
         t("pricing.feat_allModels", { defaultValue: "All AI models unlocked" }),
         t("pricing.feat_noWatermark", { defaultValue: "No watermark" }),
-        t("pricing.feat_batchDiscount75", { defaultValue: "Batch API 75% discount" }),
+        t("pricing.feat_batchDiscount75", {
+          defaultValue: "Batch API 75% discount",
+        }),
         t("pricing.feat_personalOnly", { defaultValue: "Personal use only" }),
       ],
       buttonVariant: "green",
@@ -202,42 +251,65 @@ const Pricing = () => {
     {
       key: "growth",
       icon: <Rocket className="w-5 h-5" />,
-      title: "Basic",
-      description: "Commercial + Priority",
-      badge: { text: "🔥 Most Popular", color: "bg-accent-purple" },
+      badge: {
+        text: t("pricing.userChoice", { defaultValue: "🔥 93% user choice" }),
+        color: "bg-accent-purple",
+      },
       price: { monthly: 31, yearly: 25 },
-      yearlySave: "Save $72",
+      yearlySave: t("pricing.yearlySave_growth", { defaultValue: "Save $72" }),
       credits: { monthly: "3,500", yearly: "3,500" },
       images: "~500 Nano banana 2",
       videos: "~17 clips",
       features: [
-        t("pricing.feat_credits", { amount: "6,000", defaultValue: "{{amount}} credits/month" }),
-        t("pricing.feat_commercial", { defaultValue: "Commercial license included" }),
-        t("pricing.feat_priorityQueue", { defaultValue: "Priority queue (2x faster)" }),
-        t("pricing.feat_batchDiscount50", { defaultValue: "Batch API 50% discount" }),
-        t("pricing.feat_rollover3", { defaultValue: "Credits rollover 3 months" }),
+        t("pricing.feat_credits", {
+          amount: "6,000",
+          defaultValue: "{{amount}} credits/month",
+        }),
+        t("pricing.feat_commercial", {
+          defaultValue: "Commercial license included",
+        }),
+        t("pricing.feat_priorityQueue", {
+          defaultValue: "Priority queue (2x faster)",
+        }),
+        t("pricing.feat_batchDiscount50", {
+          defaultValue: "Batch API 50% discount",
+        }),
+        t("pricing.feat_rollover3", {
+          defaultValue: "Credits rollover 3 months",
+        }),
       ],
       buttonVariant: "purple",
-      buttonText: t("pricing.chooseMostPopular", { defaultValue: "Choose Most Popular Plan" }),
+      buttonText: t("pricing.chooseMostPopular", {
+        defaultValue: "Choose Most Popular Plan",
+      }),
       highlighted: true,
       accentColor: "bg-accent-purple",
     },
     {
       key: "pro",
       icon: <Crown className="w-5 h-5" />,
-      description: "Team collaboration",
-      badge: { text: "🏆 Team Ready", color: "bg-accent-yellow" },
+      badge: {
+        text: t("pricing.powerUser", { defaultValue: "⚡ Power User" }),
+        color: "bg-accent-yellow",
+      },
       price: { monthly: 68, yearly: 44 },
-      yearlySave: "Save $288",
+      yearlySave: t("pricing.yearlySave_pro", { defaultValue: "Save $288" }),
       credits: { monthly: "11,000", yearly: "11,000" },
       images: "~1,571 Nano banana 2",
       videos: "~55 clips",
       features: [
-        t("pricing.feat_credits", { amount: "15,000", defaultValue: "{{amount}} credits/month" }),
+        t("pricing.feat_credits", {
+          amount: "15,000",
+          defaultValue: "{{amount}} credits/month",
+        }),
         t("pricing.feat_batchApiFree", { defaultValue: "Batch API FREE" }),
         t("pricing.feat_apiAccess", { defaultValue: "API access included" }),
-        t("pricing.feat_videoUnlimited", { defaultValue: "Video unlimited mode" }),
-        t("pricing.feat_rollover6", { defaultValue: "Credits rollover 6 months" }),
+        t("pricing.feat_videoUnlimited", {
+          defaultValue: "Video unlimited mode",
+        }),
+        t("pricing.feat_rollover6", {
+          defaultValue: "Credits rollover 6 months",
+        }),
       ],
       buttonVariant: "green",
       buttonText: t("pricing.goPro", { defaultValue: "Go Pro" }),
@@ -246,19 +318,30 @@ const Pricing = () => {
     {
       key: "ultimate",
       icon: <Zap className="w-5 h-5" />,
-      description: "White-label + Automation",
-      badge: { text: "👑 Enterprise", color: "bg-accent-purple" },
+      badge: {
+        text: t("pricing.enterprise", { defaultValue: "🏢 Enterprise" }),
+        color: "bg-accent-purple",
+      },
       price: { monthly: 148, yearly: 98 },
-      yearlySave: "Save $600",
+      yearlySave: t("pricing.yearlySave_ultimate", { defaultValue: "Save $600" }),
       credits: { monthly: "27,000", yearly: "27,000" },
       images: "~3,857 Nano banana 2",
       videos: "~135 clips",
       features: [
-        t("pricing.feat_credits", { amount: "40,000", defaultValue: "{{amount}} credits/month" }),
+        t("pricing.feat_credits", {
+          amount: "40,000",
+          defaultValue: "{{amount}} credits/month",
+        }),
         t("pricing.feat_batchApiFree", { defaultValue: "Batch API FREE" }),
-        t("pricing.feat_videoUnlimited365", { defaultValue: "Video unlimited 365 days" }),
-        t("pricing.feat_rollover12", { defaultValue: "Credits rollover 12 months" }),
-        t("pricing.feat_dedicatedSupport", { defaultValue: "Dedicated support" }),
+        t("pricing.feat_videoUnlimited365", {
+          defaultValue: "Video unlimited 365 days",
+        }),
+        t("pricing.feat_rollover12", {
+          defaultValue: "Credits rollover 12 months",
+        }),
+        t("pricing.feat_dedicatedSupport", {
+          defaultValue: "Dedicated support",
+        }),
       ],
       buttonVariant: "purple",
       buttonText: t("pricing.contactSales", { defaultValue: "Contact Sales" }),
@@ -278,162 +361,197 @@ const Pricing = () => {
               {t("pricing.title", { defaultValue: "Pricing" })}
             </h1>
             <p className="text-muted-foreground max-w-xl mx-auto mb-2">
-              {t("pricing.subtitle", { defaultValue: "From free exploration to professional creation. Upgrade or downgrade anytime." })}
+              {t("pricing.subtitle", {
+                defaultValue:
+                  "From free exploration to professional creation. Upgrade or downgrade anytime.",
+              })}
             </p>
             <p className="text-sm text-accent-orange font-bold flex items-center justify-center gap-2">
-              🎁 {t("pricing.promoText", { defaultValue: "Start free with 200 credits/month. Upgrade anytime to unlock more models and commercial license." })}
+              🎁{" "}
+              {t("pricing.promoText", {
+                defaultValue:
+                  "Start free with 200 credits/month. Upgrade anytime to unlock more models and commercial license.",
+              })}
             </p>
           </div>
 
-          {/* Billing Toggle */}
-          <div className="flex items-center justify-center mb-10">
-            <div className="inline-flex border-brutal border-foreground brutal-shadow">
-              <button
-                onClick={() => setBilling("monthly")}
-                className={`px-6 py-2.5 font-bold uppercase text-sm transition-none ${
-                  billing === "monthly"
-                    ? "bg-foreground text-card"
-                    : "bg-card text-foreground hover:bg-secondary"
-                }`}
-              >
-                {t("pricing.monthly", { defaultValue: "Monthly" })}
-              </button>
-              <button
-                onClick={() => setBilling("yearly")}
-                className={`px-6 py-2.5 font-bold uppercase text-sm transition-none border-l-brutal border-foreground ${
-                  billing === "yearly"
-                    ? "bg-foreground text-card"
-                    : "bg-card text-foreground hover:bg-secondary"
-                }`}
-              >
-                {t("pricing.yearly", { defaultValue: "Yearly" })}
-              </button>
-            </div>
-            <span className="ml-3 px-2.5 py-1 bg-accent-green text-foreground text-[10px] font-bold border-brutal border-foreground">
-              {t("pricing.saveUp", { defaultValue: "Save up to 35%" })}
-            </span>
-          </div>
-
-          {billing === "yearly" && (
-            <div className="mb-8">
-              <div className="max-w-3xl mx-auto text-center px-4 py-3 bg-accent-green border-brutal border-foreground font-bold">
-                🔥 Yearly billing saves up to 35% — Growth plan saves $120/year!
-              </div>
-            </div>
-          )}
-
-          {/* Plans Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {plans.map((plan) => (
-              <BrutalCard
-                key={plan.key}
-                shadow={plan.highlighted ? "heavy" : "default"}
-                className={`overflow-hidden flex flex-col relative ${
-                  plan.highlighted
-                    ? "border-[3px] border-accent-purple ring-2 ring-accent-purple/30 scale-[1.02] z-10"
-                    : ""
-                }`}
-              >
-                {/* Accent Bar */}
-                <div className={`h-2 ${plan.accentColor}`} />
-
-                <BrutalCardContent className="flex-1 flex flex-col p-5">
-                  {/* Badge */}
-                  {plan.badge && (
-                    <div className="flex justify-center mb-3 -mt-1">
-                      <span className={`px-3 py-1 ${plan.badge.color} text-[10px] font-bold uppercase border-brutal border-foreground`}>
-                        {plan.badge.text}
-                      </span>
-                    </div>
-                  )}
-                  {!plan.badge && <div className="h-6" />}
-
-                  {/* Plan Name */}
-                  <h3 className="text-lg font-bold uppercase text-center tracking-wider">
-                    {plan.title ?? t(`pricing.plan_${plan.key}`, { defaultValue: plan.key.charAt(0).toUpperCase() + plan.key.slice(1) })}
-                  </h3>
-                  <p className="text-xs text-muted-foreground text-center mt-1 mb-4">
-                    {plan.description ?? t(`pricing.plan_${plan.key}_desc`, { defaultValue: "" })}
-                  </p>
-
-                  {/* Divider */}
-                  <div className="h-[2px] bg-foreground/10 mb-4" />
-
-                  {/* Price */}
-                  <div className="text-center mb-4">
-                    <span className="text-4xl font-bold font-mono">
-                      ${plan.price[billing]}
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                      /{t("pricing.month", { defaultValue: "month" })}
-                    </span>
-                    {billing === "yearly" && plan.yearlySave && (
-                      <div className="text-xs font-bold text-accent-green mt-1">{plan.yearlySave}</div>
-                    )}
-                  </div>
-
-                  {/* Credits */}
-                  <div className="text-center mb-3">
-                    <div className="text-xs text-muted-foreground uppercase tracking-wider">
-                      {t("pricing.credits", { defaultValue: "Credits" })}
-                    </div>
-                    <div className="text-xl font-bold font-mono">
-                      {plan.credits[billing]}{plan.key === "free" ? "" : `/${t("pricing.month", { defaultValue: "month" })}`}
-                    </div>
-                  </div>
-
-                  {/* Usage Estimates */}
-                  <div className="space-y-1.5 mb-5">
-                    <div className="flex justify-between text-xs px-2 py-1.5 bg-secondary border-brutal border-foreground">
-                      <span className="flex items-center gap-1">🖼️ {t("pricing.images", { defaultValue: "Images" })}</span>
-                      <span className="font-bold font-mono">{plan.images}</span>
-                    </div>
-                    <div className="flex justify-between text-xs px-2 py-1.5 bg-secondary border-brutal border-foreground">
-                      <span className="flex items-center gap-1">🎬 {t("pricing.videos", { defaultValue: "Videos" })}</span>
-                      <span className="font-bold font-mono">{plan.videos}</span>
-                    </div>
-                  </div>
-
-                  {/* Features */}
-                  <div className="flex-1 space-y-2 mb-5">
-                    {plan.features.map((feat, i) => (
-                      <div key={i} className="flex items-start gap-2 text-xs">
-                        <Check className="w-3.5 h-3.5 text-accent-green mt-0.5 shrink-0" />
-                        <span>{feat}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* CTA */}
-                  <BrutalButton
-                    variant={plan.buttonVariant}
-                    className="w-full"
-                    size="default"
+          {showSubscriptionPlans && (
+            <>
+              {/* Billing Toggle */}
+              <div className="flex items-center justify-center mb-10">
+                <div className="inline-flex border-brutal border-foreground brutal-shadow">
+                  <button
+                    onClick={() => setBilling("monthly")}
+                    className={`px-6 py-2.5 font-bold uppercase text-sm transition-none ${
+                      billing === "monthly"
+                        ? "bg-foreground text-card"
+                        : "bg-card text-foreground hover:bg-secondary"
+                    }`}
                   >
-                    {plan.buttonText}
-                  </BrutalButton>
-                </BrutalCardContent>
-              </BrutalCard>
-            ))}
-          </div>
+                    {t("pricing.monthly", { defaultValue: "Monthly" })}
+                  </button>
+                  <button
+                    onClick={() => setBilling("yearly")}
+                    className={`px-6 py-2.5 font-bold uppercase text-sm transition-none border-l-brutal border-foreground ${
+                      billing === "yearly"
+                        ? "bg-foreground text-card"
+                        : "bg-card text-foreground hover:bg-secondary"
+                    }`}
+                  >
+                    {t("pricing.yearly", { defaultValue: "Yearly" })}
+                  </button>
+                </div>
+                <span className="ml-3 px-2.5 py-1 bg-accent-green text-foreground text-[10px] font-bold border-brutal border-foreground">
+                  {t("pricing.saveUp", { defaultValue: "Save up to 35%" })}
+                </span>
+              </div>
+
+              {billing === "yearly" && (
+                <div className="mb-8">
+                  <div className="max-w-3xl mx-auto text-center px-4 py-3 bg-accent-green border-brutal border-foreground font-bold">
+                    {t("pricing.yearlyBillingNotice", {
+                      defaultValue:
+                        "🔥 Yearly billing saves up to 35% — Growth plan saves $72/year!",
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Plans Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                {plans.map((plan) => (
+                  <BrutalCard
+                    key={plan.key}
+                    shadow={plan.highlighted ? "heavy" : "default"}
+                    className={`overflow-hidden flex flex-col relative ${
+                      plan.highlighted
+                        ? "border-[3px] border-accent-purple ring-2 ring-accent-purple/30 scale-[1.02] z-10"
+                        : ""
+                    }`}
+                  >
+                    {/* Accent Bar */}
+                    <div className={`h-2 ${plan.accentColor}`} />
+
+                    <BrutalCardContent className="flex-1 flex flex-col p-5">
+                      {/* Badge */}
+                      {plan.badge && (
+                        <div className="flex justify-center mb-3 -mt-1">
+                          <span
+                            className={`px-3 py-1 ${plan.badge.color} text-[10px] font-bold uppercase border-brutal border-foreground`}
+                          >
+                            {plan.badge.text}
+                          </span>
+                        </div>
+                      )}
+                      {!plan.badge && <div className="h-6" />}
+
+                      {/* Plan Name */}
+                      <h3 className="text-lg font-bold uppercase text-center tracking-wider">
+                        {plan.title ??
+                          t(`pricing.plan_${plan.key}`, {
+                            defaultValue:
+                              plan.key.charAt(0).toUpperCase() + plan.key.slice(1),
+                          })}
+                      </h3>
+                      <p className="text-xs text-muted-foreground text-center mt-1 mb-4">
+                        {plan.description ??
+                          t(`pricing.plan_${plan.key}_desc`, { defaultValue: "" })}
+                      </p>
+
+                      {/* Divider */}
+                      <div className="h-[2px] bg-foreground/10 mb-4" />
+
+                      {/* Price */}
+                      <div className="text-center mb-4">
+                        <span className="text-4xl font-bold font-mono">
+                          ${plan.price[billing]}
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          /{t("pricing.month", { defaultValue: "month" })}
+                        </span>
+                        {billing === "yearly" && plan.yearlySave && (
+                          <div className="text-xs font-bold text-accent-green mt-1">
+                            {plan.yearlySave}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Credits */}
+                      <div className="text-center mb-3">
+                        <div className="text-xs text-muted-foreground uppercase tracking-wider">
+                          {t("pricing.credits", { defaultValue: "Credits" })}
+                        </div>
+                        <div className="text-xl font-bold font-mono">
+                          {plan.credits[billing]}
+                          {plan.key === "free"
+                            ? ""
+                            : `/${t("pricing.month", { defaultValue: "month" })}`}
+                        </div>
+                      </div>
+
+                      {/* Usage Estimates */}
+                      <div className="space-y-1.5 mb-5">
+                        <div className="flex justify-between text-xs px-2 py-1.5 bg-secondary border-brutal border-foreground">
+                          <span className="flex items-center gap-1">
+                            🖼️ {t("pricing.images", { defaultValue: "Images" })}
+                          </span>
+                          <span className="font-bold font-mono">{plan.images}</span>
+                        </div>
+                        <div className="flex justify-between text-xs px-2 py-1.5 bg-secondary border-brutal border-foreground">
+                          <span className="flex items-center gap-1">
+                            🎬 {t("pricing.videos", { defaultValue: "Videos" })}
+                          </span>
+                          <span className="font-bold font-mono">{plan.videos}</span>
+                        </div>
+                      </div>
+
+                      {/* Features */}
+                      <div className="flex-1 space-y-2 mb-5">
+                        {plan.features.map((feat, i) => (
+                          <div key={i} className="flex items-start gap-2 text-xs">
+                            <Check className="w-3.5 h-3.5 text-accent-green mt-0.5 shrink-0" />
+                            <span>{feat}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* CTA */}
+                      <BrutalButton
+                        variant={plan.buttonVariant}
+                        className="w-full"
+                        size="default"
+                      >
+                        {plan.buttonText}
+                      </BrutalButton>
+                    </BrutalCardContent>
+                  </BrutalCard>
+                ))}
+              </div>
+            </>
+          )}
 
           {/* WeChat Pay Credits */}
           <div className="mt-12">
             <div className="flex items-end justify-between gap-4 mb-4">
               <div>
                 <h2 className="text-xl font-bold uppercase tracking-widest">
-                  {t("pricing.wechatPayTitle", { defaultValue: "WeChat Pay · Credits Packs" })}
+                  {t("pricing.wechatPayTitle", {
+                    defaultValue: "WeChat Pay · Credits Packs",
+                  })}
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  {t("pricing.wechatPaySubtitle", { defaultValue: "Scan with WeChat to buy one-time credits packs (Native QR Code)." })}
+                  {t("pricing.wechatPaySubtitle", {
+                    defaultValue:
+                      "Scan with WeChat to buy one-time credits packs (Native QR Code).",
+                  })}
                 </p>
               </div>
               <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 {wechatPlansLoading
                   ? t("pricing.loading", { defaultValue: "Loading..." })
                   : wechatPlansError
-                    ? t("pricing.loadFailed", { defaultValue: "Load failed" })
-                    : ""}
+                  ? t("pricing.loadFailed", { defaultValue: "Load failed" })
+                  : ""}
               </div>
             </div>
 
@@ -450,8 +568,12 @@ const Pricing = () => {
                   <BrutalCardContent className="p-5">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <div className="text-lg font-bold uppercase tracking-wider">{p.name}</div>
-                        <div className="text-xs text-muted-foreground mt-1">{p.description}</div>
+                        <div className="text-lg font-bold uppercase tracking-wider">
+                          {p.name}
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {p.description}
+                        </div>
                       </div>
                       <div className="px-2 py-1 bg-secondary border-brutal border-foreground text-xs font-bold font-mono">
                         {formatCnyFen(p.amountFen)}
@@ -463,7 +585,9 @@ const Pricing = () => {
                         <span className="text-muted-foreground">
                           {t("pricing.credits", { defaultValue: "Credits" })}:
                         </span>{" "}
-                        <span className="font-bold font-mono">{p.points.toLocaleString()}</span>
+                        <span className="font-bold font-mono">
+                          {p.points.toLocaleString()}
+                        </span>
                       </div>
                       <BrutalButton
                         variant="green"
@@ -471,7 +595,9 @@ const Pricing = () => {
                         disabled={wxSubmitting}
                         onClick={() => startWechatPay(p.planKey)}
                       >
-                        {t("pricing.wechatPayBuy", { defaultValue: "Buy via WeChat" })}
+                        {t("pricing.wechatPayBuy", {
+                          defaultValue: "Buy via WeChat",
+                        })}
                       </BrutalButton>
                     </div>
                   </BrutalCardContent>
@@ -499,12 +625,19 @@ const Pricing = () => {
         <DialogContent className="border-brutal border-foreground brutal-shadow bg-card max-w-md">
           <DialogHeader>
             <DialogTitle className="font-bold uppercase tracking-wider">
-              {t("pricing.scanToPay", { defaultValue: "Scan to pay with WeChat" })}
+              {t("pricing.scanToPay", {
+                defaultValue: "Scan to pay with WeChat",
+              })}
             </DialogTitle>
             <DialogDescription>
               {wxOrder
-                ? t("pricing.scanToPayDesc", { defaultValue: "Open WeChat and scan the QR code. We’ll confirm automatically once paid." })
-                : t("pricing.preparingOrder", { defaultValue: "Preparing order..." })}
+                ? t("pricing.scanToPayDesc", {
+                    defaultValue:
+                      "Open WeChat and scan the QR code. We’ll confirm automatically once paid.",
+                  })
+                : t("pricing.preparingOrder", {
+                    defaultValue: "Preparing order...",
+                  })}
             </DialogDescription>
           </DialogHeader>
 
@@ -521,14 +654,18 @@ const Pricing = () => {
                 <div className="text-muted-foreground">
                   {t("pricing.amount", { defaultValue: "Amount" })}:
                 </div>
-                <div className="font-mono font-bold">{formatCnyFen(wxOrder.amountFen)}</div>
+                <div className="font-mono font-bold">
+                  {formatCnyFen(wxOrder.amountFen)}
+                </div>
               </div>
 
               <div className="flex items-center justify-between text-sm">
                 <div className="text-muted-foreground">
                   {t("pricing.credits", { defaultValue: "Credits" })}:
                 </div>
-                <div className="font-mono font-bold">{wxOrder.points.toLocaleString()}</div>
+                <div className="font-mono font-bold">
+                  {wxOrder.points.toLocaleString()}
+                </div>
               </div>
 
               <div className="flex items-center justify-center">
@@ -552,7 +689,9 @@ const Pricing = () => {
             {wxOrder?.status === "pending" && (
               <div className="w-full flex items-center justify-between gap-3">
                 <div className="text-xs text-muted-foreground">
-                  {t("pricing.waitingPayment", { defaultValue: "Waiting for payment confirmation..." })}
+                  {t("pricing.waitingPayment", {
+                    defaultValue: "Waiting for payment confirmation...",
+                  })}
                 </div>
                 <BrutalButton
                   variant="outline"

@@ -74,6 +74,12 @@
     "creditsAdded": "积分已到账。",
     "paymentNotCompleted": "支付未完成",
     "tryAgain": "如仍需购买，请重试。"
+    ,
+    "yearlyBillingNotice": "🔥 年付最高省 35% — Growth 每年省 $72！",
+    "yearlySave_starter": "年付省 $48",
+    "yearlySave_growth": "年付省 $72",
+    "yearlySave_pro": "年付省 $288",
+    "yearlySave_ultimate": "年付省 $600"
   },
   "uc": {
     "planFree": "免费版",
@@ -255,6 +261,8 @@
     "finalReady": "✅ 最终详情页长图已生成完成！已添加到画布。",
     "phase1": "阶段1·预览图",
     "phase2": "阶段2·批量详情图",
+    "previewAlt": "电商详情页 3×3 预览图",
+    "finalDetailAlt": "电商详情页长图",
     "phase1Failed": "预览图生成失败",
     "panelFailed": "面板",
     "batchComplete": "批量生成完成",

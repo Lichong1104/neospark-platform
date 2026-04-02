@@ -25,6 +25,7 @@ import { STATIC_BASE_URL } from "@/api/request";
 import { useGenerationPolling } from "@/hooks/useGenerationPolling";
 import type { GenerateImageParams, MessageStatusResponse, ModelsConfigMap } from "@/types/drawing";
 import JSZip from "jszip";
+import { toFetchableAssetUrl } from "@/lib/assetFetchUrl";
 
 type StatusType = "ecommerce" | "optimizer" | "photographer" | "custom" | "offline";
 
@@ -245,12 +246,17 @@ const EcommercePreviewGrid: React.FC<{
         </div>
         <p className="text-sm text-muted-foreground">{t("ecommerceAgent.resultReady")}</p>
 
-        <div className="border-brutal border-foreground p-1.5 bg-secondary/10 inline-block">
-          <a href={getImageUrl(previewImage.url)} target="_blank" rel="noopener noreferrer">
+        <div className="border-brutal border-foreground p-1.5 bg-secondary/10 w-full max-w-xs overflow-hidden">
+          <a
+            href={getImageUrl(previewImage.url)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block"
+          >
             <img
               src={getImageUrl(previewImage.url)}
-              alt="Ecommerce 9-grid preview"
-              className="max-w-xs max-h-96 object-contain hover:brightness-110 transition-none"
+              alt={t("ecommerceAgent.previewAlt", { defaultValue: "Ecommerce 9-grid preview" })}
+              className="block w-full max-h-96 object-contain hover:brightness-110 transition-none"
             />
           </a>
         </div>
@@ -989,12 +995,6 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
     return `${STATIC_BASE_URL}${url}`;
   };
 
-  const getDirectDownloadUrl = (pathOrUrl: string) => {
-    if (!pathOrUrl || pathOrUrl.startsWith("data:")) return pathOrUrl;
-    if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl;
-    return pathOrUrl.startsWith("/") ? `${STATIC_BASE_URL}${pathOrUrl}` : `${STATIC_BASE_URL}/${pathOrUrl}`;
-  };
-
   const getDownloadFileName = (img: { url: string; local_path: string }, index: number) => {
     const source = img.local_path || img.url || "";
     const segments = source.split("/");
@@ -1011,7 +1011,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
       const img = images[idx];
       try {
         const source = img.local_path || img.url;
-        const downloadUrl = getDirectDownloadUrl(source);
+        const downloadUrl = toFetchableAssetUrl(source);
         const response = await fetch(downloadUrl, { credentials: "include" });
         if (!response.ok) {
           throw new Error(`Download failed: ${response.status}`);
@@ -1161,12 +1161,21 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
                         <span className="font-bold text-sm">{t("agents.ecommerce").toUpperCase()}_AGENT</span>
                       </div>
                       <p className="text-sm text-muted-foreground">{message.content}</p>
-                      <div className="border-brutal border-foreground p-1.5 bg-secondary/10 inline-block">
-                        <a href={message.images[0].url.startsWith("http") ? message.images[0].url : `${STATIC_BASE_URL}${message.images[0].url}`} target="_blank" rel="noopener noreferrer">
+                      <div className="border-brutal border-foreground p-1.5 bg-secondary/10 w-full max-w-xs overflow-hidden">
+                        <a
+                          href={
+                            message.images[0].url.startsWith("http")
+                              ? message.images[0].url
+                              : `${STATIC_BASE_URL}${message.images[0].url}`
+                          }
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block"
+                        >
                           <img
                             src={message.images[0].url.startsWith("http") ? message.images[0].url : `${STATIC_BASE_URL}${message.images[0].url}`}
-                            alt="Final detail page"
-                            className="max-w-xs max-h-96 object-contain hover:brightness-110 transition-none"
+                            alt={t("ecommerceAgent.finalDetailAlt", { defaultValue: "Final detail page" })}
+                            className="block w-full max-h-96 object-contain hover:brightness-110 transition-none"
                           />
                         </a>
                       </div>
