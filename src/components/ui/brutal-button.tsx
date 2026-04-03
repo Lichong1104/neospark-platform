@@ -51,7 +51,7 @@ const BrutalButton = React.forwardRef<HTMLButtonElement, BrutalButtonProps>(
   ({ className, variant, size, ...props }, ref) => {
     return (
       <button
-        className={cn(brutalButtonVariants({ variant, size, className }))}
+        className={cn(brutalButtonVariants({ variant, size }), className)}
         ref={ref}
         {...props}
       />

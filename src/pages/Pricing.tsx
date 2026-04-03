@@ -21,6 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 type BillingCycle = "monthly" | "yearly";
 
@@ -561,83 +562,129 @@ const Pricing = () => {
               </div>
             )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {activeWechatPlans.map((p) => (
-                <BrutalCard
-                  key={p.planKey}
-                  className={`overflow-hidden ${p.planKey === "black" ? "shadow-none" : ""}`}
-                >
-                  <div
-                    className={`h-2 ${p.planKey === "black" ? "bg-foreground" : "bg-accent-green"}`}
-                  />
-                  <BrutalCardContent className="p-5">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="text-lg font-bold uppercase tracking-wider">
-                          {p.name}
-                        </div>
-                        <div
-                          className={`text-xs mt-1 ${
-                            p.planKey === "black" ? "text-foreground" : "text-muted-foreground"
-                          }`}
-                        >
-                          {p.description}
+            <div className="grid grid-cols-1 gap-3">
+              {activeWechatPlans.map((p) => {
+                const isBlackGold = p.planKey === "black";
+                return (
+                  <BrutalCard
+                    key={p.planKey}
+                    className={cn(
+                      "overflow-hidden",
+                      isBlackGold &&
+                        "relative border-2 border-accent-yellow bg-gradient-to-br from-neutral-950 via-zinc-950 to-black text-zinc-100 brutal-shadow-yellow shadow-none ring-1 ring-inset ring-accent-yellow/25",
+                    )}
+                  >
+                    {isBlackGold && (
+                      <div
+                        aria-hidden
+                        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(250,204,21,0.14),transparent_55%)]"
+                      />
+                    )}
+                    <div
+                      className={cn(
+                        "relative h-2",
+                        isBlackGold
+                          ? "h-1.5 bg-gradient-to-r from-amber-800 via-yellow-300 to-amber-800"
+                          : "bg-accent-green",
+                      )}
+                    />
+                    <BrutalCardContent className={cn("relative p-5", isBlackGold && "bg-transparent")}>
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <div
+                              className={cn(
+                                "text-lg font-bold uppercase tracking-wider",
+                                isBlackGold &&
+                                  "bg-gradient-to-r from-amber-100 via-yellow-300 to-amber-200 bg-clip-text text-transparent",
+                              )}
+                            >
+                              {p.name}
+                            </div>
+                            {isBlackGold && (
+                              <>
+                                <Crown className="h-5 w-5 shrink-0 text-accent-yellow drop-shadow-[0_0_8px_rgba(250,204,21,0.45)]" />
+                                <span className="rounded-sm border border-accent-yellow/80 bg-amber-950/60 px-1.5 py-0.5 text-[10px] font-bold tracking-widest text-accent-yellow">
+                                  黑金
+                                </span>
+                              </>
+                            )}
+                          </div>
                           <div
-                            className={`mt-1 text-[11px] font-bold ${
-                              p.planKey === "black" ? "text-accent-yellow" : ""
-                            }`}
+                            className={cn(
+                              "mt-1 text-xs",
+                              isBlackGold ? "text-zinc-400" : "text-muted-foreground",
+                            )}
                           >
-                            {p.discountLabel} · {p.validDays} 天有效
+                            {p.description}
+                            <div
+                              className={cn(
+                                "mt-1 text-[11px] font-bold",
+                                isBlackGold ? "text-amber-200/90" : "",
+                              )}
+                            >
+                              {p.discountLabel} · {p.validDays} 天有效
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <div className="flex flex-col items-end">
-                        <div
-                          className={`px-2 py-1 border-brutal text-xs font-bold font-mono ${
-                            p.planKey === "black"
-                              ? "bg-foreground text-accent-yellow border-accent-yellow"
-                              : "bg-secondary border-foreground text-foreground"
-                          }`}
-                        >
-                          {formatCnyFen(p.amountFen)}
-                        </div>
-                        {p.originalAmountFen > p.amountFen && (
+                        <div className="flex flex-col items-end">
                           <div
-                            className={`mt-1 text-[10px] line-through font-mono ${
-                              p.planKey === "black" ? "text-accent-yellow/80" : "text-muted-foreground"
-                            }`}
+                            className={cn(
+                              "border-brutal px-2 py-1 text-xs font-bold font-mono",
+                              isBlackGold
+                                ? "border-accent-yellow bg-black/40 text-accent-yellow shadow-[2px_2px_0_0_hsl(var(--accent-yellow))]"
+                                : "border-foreground bg-secondary text-foreground",
+                            )}
                           >
-                            {formatCnyFen(p.originalAmountFen)}
+                            {formatCnyFen(p.amountFen)}
                           </div>
-                        )}
+                          {p.originalAmountFen > p.amountFen && (
+                            <div
+                              className={cn(
+                                "mt-1 text-[10px] line-through font-mono",
+                                isBlackGold ? "text-amber-200/70" : "text-muted-foreground",
+                              )}
+                            >
+                              {formatCnyFen(p.originalAmountFen)}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="mt-4 flex items-center justify-between gap-3">
-                      <div className="text-sm">
-                        <span className="text-muted-foreground">
-                          {t("pricing.credits", { defaultValue: "Credits" })}:
-                        </span>{" "}
-                        <span
-                          className={`font-bold font-mono ${p.planKey === "black" ? "text-accent-yellow" : ""}`}
+                      <div className="mt-4 flex items-center justify-between gap-3">
+                        <div className="text-sm">
+                          <span
+                            className={cn(
+                              isBlackGold ? "text-zinc-500" : "text-muted-foreground",
+                            )}
+                          >
+                            {t("pricing.credits", { defaultValue: "Credits" })}:
+                          </span>{" "}
+                          <span
+                            className={cn(
+                              "font-bold font-mono",
+                              isBlackGold && "text-accent-yellow drop-shadow-[0_0_10px_rgba(250,204,21,0.25)]",
+                            )}
+                          >
+                            {p.points.toLocaleString()}
+                          </span>
+                        </div>
+                        <BrutalButton
+                          variant={isBlackGold ? "yellow" : "green"}
+                          size="default"
+                          disabled={wxSubmitting}
+                          onClick={() => startWechatPay(p.planKey)}
+                          className={cn(isBlackGold && "border-accent-yellow font-extrabold")}
                         >
-                          {p.points.toLocaleString()}
-                        </span>
+                          {t("pricing.wechatPayBuy", {
+                            defaultValue: "Buy via WeChat",
+                          })}
+                        </BrutalButton>
                       </div>
-                      <BrutalButton
-                        variant={p.planKey === "black" ? "yellow" : "green"}
-                        size="default"
-                        disabled={wxSubmitting}
-                        onClick={() => startWechatPay(p.planKey)}
-                      >
-                        {t("pricing.wechatPayBuy", {
-                          defaultValue: "Buy via WeChat",
-                        })}
-                      </BrutalButton>
-                    </div>
-                  </BrutalCardContent>
-                </BrutalCard>
-              ))}
+                    </BrutalCardContent>
+                  </BrutalCard>
+                );
+              })}
             </div>
           </div>
         </div>
