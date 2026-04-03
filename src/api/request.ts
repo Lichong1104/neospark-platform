@@ -23,6 +23,7 @@ instance.interceptors.request.use(
     // const token = true;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      // config.headers.Authorization = `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyIiwidHlwIjoiYWNjZXNzIiwianRpIjoiRFlxODZxN016eXJjNEQwayIsImlhdCI6MTc3NTAzMzU5MywiZXhwIjoxNzc1NjM4MzkzLCJhdWQiOiJuZW9zcGFyay1hcGkiLCJpc3MiOiJuZW9zcGFyayIsImVtYWlsIjoiY2w1NDQzNDhAZ21haWwuY29tIiwic2lkIjoiMTAifQ.Ug5uR20d3rm5D2wNqdiFpTUYwsSngUVcEw78ePdHx6M`;
     }
     return config;
   },

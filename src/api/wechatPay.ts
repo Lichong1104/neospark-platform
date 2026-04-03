@@ -1,12 +1,15 @@
 import http from "./request";
 
-export type WeChatPayPlanKey = "starter" | "growth" | "pro" | "ultimate";
+export type WeChatPayPlanKey = "light" | "creator" | "team" | "enterprise" | "black";
 
 export interface WeChatPayPlan {
   planKey: WeChatPayPlanKey;
   name: string;
   description: string;
   amountFen: number;
+  originalAmountFen: number;
+  discountLabel: string;
+  validDays: number;
   points: number;
   isActive: boolean;
 }

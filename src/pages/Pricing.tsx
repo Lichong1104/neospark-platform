@@ -573,10 +573,20 @@ const Pricing = () => {
                         </div>
                         <div className="text-xs text-muted-foreground mt-1">
                           {p.description}
+                          <div className="mt-1 text-[11px] font-bold">
+                            {p.discountLabel} · {p.validDays} 天有效
+                          </div>
                         </div>
                       </div>
-                      <div className="px-2 py-1 bg-secondary border-brutal border-foreground text-xs font-bold font-mono">
-                        {formatCnyFen(p.amountFen)}
+                      <div className="flex flex-col items-end">
+                        <div className="px-2 py-1 bg-secondary border-brutal border-foreground text-xs font-bold font-mono">
+                          {formatCnyFen(p.amountFen)}
+                        </div>
+                        {p.originalAmountFen > p.amountFen && (
+                          <div className="mt-1 text-[10px] text-muted-foreground line-through font-mono">
+                            {formatCnyFen(p.originalAmountFen)}
+                          </div>
+                        )}
                       </div>
                     </div>
 
