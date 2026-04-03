@@ -25,6 +25,13 @@ import { cn } from "@/lib/utils";
 
 type BillingCycle = "monthly" | "yearly";
 
+const WECHAT_STANDARD_ORDER: WeChatPayPlanKey[] = [
+  "light",
+  "creator",
+  "team",
+  "enterprise",
+];
+
 interface PlanTier {
   key: string;
   icon: React.ReactNode;
@@ -96,6 +103,19 @@ const Pricing = () => {
     const list = wechatPlans ?? [];
     return list.filter((p) => p.isActive);
   }, [wechatPlans]);
+
+  const { wechatStandardPlans, wechatBlackGoldPlan } = useMemo(() => {
+    const rank = (k: WeChatPayPlanKey) => {
+      const i = WECHAT_STANDARD_ORDER.indexOf(k);
+      return i === -1 ? 999 : i;
+    };
+    const black = activeWechatPlans.find((p) => p.planKey === "black") ?? null;
+    const standard = activeWechatPlans
+      .filter((p) => p.planKey !== "black")
+      .slice()
+      .sort((a, b) => rank(a.planKey) - rank(b.planKey));
+    return { wechatStandardPlans: standard, wechatBlackGoldPlan: black };
+  }, [activeWechatPlans]);
 
   async function startWechatPay(planKey: WeChatPayPlanKey) {
     if (wxSubmitting) return;
@@ -562,119 +582,48 @@ const Pricing = () => {
               </div>
             )}
 
-            <div className="grid grid-cols-1 gap-3">
-              {activeWechatPlans.map((p) => {
-                const isBlackGold = p.planKey === "black";
-                return (
-                  <BrutalCard
-                    key={p.planKey}
-                    className={cn(
-                      "overflow-hidden",
-                      isBlackGold &&
-                        "relative border-2 border-accent-yellow bg-gradient-to-br from-neutral-950 via-zinc-950 to-black text-zinc-100 brutal-shadow-yellow shadow-none ring-1 ring-inset ring-accent-yellow/25",
-                    )}
-                  >
-                    {isBlackGold && (
-                      <div
-                        aria-hidden
-                        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(250,204,21,0.14),transparent_55%)]"
-                      />
-                    )}
-                    <div
-                      className={cn(
-                        "relative h-2",
-                        isBlackGold
-                          ? "h-1.5 bg-gradient-to-r from-amber-800 via-yellow-300 to-amber-800"
-                          : "bg-accent-green",
-                      )}
-                    />
-                    <BrutalCardContent className={cn("relative p-5", isBlackGold && "bg-transparent")}>
+            <div className="space-y-8">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+                {wechatStandardPlans.map((p) => (
+                  <BrutalCard key={p.planKey} className="overflow-hidden">
+                    <div className="h-1.5 bg-accent-green" />
+                    <BrutalCardContent className="p-4">
                       <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <div
-                              className={cn(
-                                "text-lg font-bold uppercase tracking-wider",
-                                isBlackGold &&
-                                  "bg-gradient-to-r from-amber-100 via-yellow-300 to-amber-200 bg-clip-text text-transparent",
-                              )}
-                            >
-                              {p.name}
-                            </div>
-                            {isBlackGold && (
-                              <>
-                                <Crown className="h-5 w-5 shrink-0 text-accent-yellow drop-shadow-[0_0_8px_rgba(250,204,21,0.45)]" />
-                                <span className="rounded-sm border border-accent-yellow/80 bg-amber-950/60 px-1.5 py-0.5 text-[10px] font-bold tracking-widest text-accent-yellow">
-                                  黑金
-                                </span>
-                              </>
-                            )}
+                        <div className="min-w-0">
+                          <div className="text-base font-bold uppercase tracking-wider">
+                            {p.name}
                           </div>
-                          <div
-                            className={cn(
-                              "mt-1 text-xs",
-                              isBlackGold ? "text-zinc-400" : "text-muted-foreground",
-                            )}
-                          >
+                          <div className="mt-1 text-xs text-muted-foreground">
                             {p.description}
-                            <div
-                              className={cn(
-                                "mt-1 text-[11px] font-bold",
-                                isBlackGold ? "text-amber-200/90" : "",
-                              )}
-                            >
+                            <div className="mt-1 text-[10px] font-bold text-foreground/80">
                               {p.discountLabel} · {p.validDays} 天有效
                             </div>
                           </div>
                         </div>
-                        <div className="flex flex-col items-end">
-                          <div
-                            className={cn(
-                              "border-brutal px-2 py-1 text-xs font-bold font-mono",
-                              isBlackGold
-                                ? "border-accent-yellow bg-black/40 text-accent-yellow shadow-[2px_2px_0_0_hsl(var(--accent-yellow))]"
-                                : "border-foreground bg-secondary text-foreground",
-                            )}
-                          >
+                        <div className="flex shrink-0 flex-col items-end">
+                          <div className="border-brutal border-foreground bg-secondary px-2 py-1 text-xs font-bold font-mono text-foreground">
                             {formatCnyFen(p.amountFen)}
                           </div>
                           {p.originalAmountFen > p.amountFen && (
-                            <div
-                              className={cn(
-                                "mt-1 text-[10px] line-through font-mono",
-                                isBlackGold ? "text-amber-200/70" : "text-muted-foreground",
-                              )}
-                            >
+                            <div className="mt-1 text-[10px] font-mono text-muted-foreground line-through">
                               {formatCnyFen(p.originalAmountFen)}
                             </div>
                           )}
                         </div>
                       </div>
 
-                      <div className="mt-4 flex items-center justify-between gap-3">
+                      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                         <div className="text-sm">
-                          <span
-                            className={cn(
-                              isBlackGold ? "text-zinc-500" : "text-muted-foreground",
-                            )}
-                          >
+                          <span className="text-muted-foreground">
                             {t("pricing.credits", { defaultValue: "Credits" })}:
                           </span>{" "}
-                          <span
-                            className={cn(
-                              "font-bold font-mono",
-                              isBlackGold && "text-accent-yellow drop-shadow-[0_0_10px_rgba(250,204,21,0.25)]",
-                            )}
-                          >
-                            {p.points.toLocaleString()}
-                          </span>
+                          <span className="font-bold font-mono">{p.points.toLocaleString()}</span>
                         </div>
                         <BrutalButton
-                          variant={isBlackGold ? "yellow" : "green"}
-                          size="default"
+                          variant="green"
+                          size="sm"
                           disabled={wxSubmitting}
                           onClick={() => startWechatPay(p.planKey)}
-                          className={cn(isBlackGold && "border-accent-yellow font-extrabold")}
                         >
                           {t("pricing.wechatPayBuy", {
                             defaultValue: "Buy via WeChat",
@@ -683,8 +632,99 @@ const Pricing = () => {
                       </div>
                     </BrutalCardContent>
                   </BrutalCard>
-                );
-              })}
+                ))}
+              </div>
+
+              {wechatBlackGoldPlan && (
+                <div className="space-y-3">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="flex w-full max-w-xl items-center gap-3">
+                      <div className="h-px flex-1 bg-gradient-to-r from-transparent via-foreground/25 to-transparent" />
+                      <span className="shrink-0 text-[10px] font-bold uppercase tracking-[0.35em] text-muted-foreground">
+                        旗舰档位
+                      </span>
+                      <div className="h-px flex-1 bg-gradient-to-r from-transparent via-foreground/25 to-transparent" />
+                    </div>
+                    <div className="inline-flex items-center gap-2 rounded-sm border border-accent-yellow/60 bg-gradient-to-r from-amber-950/50 to-zinc-950/40 px-3 py-1 text-[11px] font-bold tracking-wide text-accent-yellow">
+                      <Crown className="h-4 w-4 shrink-0" />
+                      黑金版 · 顶配积分
+                    </div>
+                  </div>
+
+                  <div className="mx-auto w-full max-w-3xl">
+                    <BrutalCard
+                      className={cn(
+                        "relative overflow-hidden border-2 border-accent-yellow bg-gradient-to-br from-neutral-950 via-zinc-950 to-black text-zinc-100 brutal-shadow-yellow shadow-none ring-1 ring-inset ring-accent-yellow/30",
+                      )}
+                    >
+                      <div
+                        aria-hidden
+                        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_85%_55%_at_50%_-25%,rgba(250,204,21,0.16),transparent_58%)]"
+                      />
+                      <div className="relative h-2 bg-gradient-to-r from-amber-800 via-yellow-300 to-amber-800" />
+                      <BrutalCardContent className="relative bg-transparent p-5 sm:p-6">
+                        <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between md:gap-8">
+                          <div className="min-w-0 flex-1 space-y-3">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h3
+                                className={cn(
+                                  "text-xl font-bold uppercase tracking-wider sm:text-2xl",
+                                  "bg-gradient-to-r from-amber-100 via-yellow-300 to-amber-200 bg-clip-text text-transparent",
+                                )}
+                              >
+                                {wechatBlackGoldPlan.name}
+                              </h3>
+                              <Crown className="h-6 w-6 shrink-0 text-accent-yellow drop-shadow-[0_0_10px_rgba(250,204,21,0.5)]" />
+                              <span className="rounded-sm border border-accent-yellow/90 bg-black/50 px-2 py-0.5 text-[10px] font-bold tracking-widest text-accent-yellow">
+                                黑金
+                              </span>
+                            </div>
+                            <p className="text-sm leading-relaxed text-zinc-400">
+                              {wechatBlackGoldPlan.description}
+                            </p>
+                            <div className="text-[12px] font-bold text-amber-200/90">
+                              {wechatBlackGoldPlan.discountLabel} · {wechatBlackGoldPlan.validDays}{" "}
+                              天有效
+                            </div>
+                            <div className="text-sm">
+                              <span className="text-zinc-500">
+                                {t("pricing.credits", { defaultValue: "Credits" })}:
+                              </span>{" "}
+                              <span className="font-bold font-mono text-accent-yellow drop-shadow-[0_0_12px_rgba(250,204,21,0.3)]">
+                                {wechatBlackGoldPlan.points.toLocaleString()}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex w-full shrink-0 flex-col items-stretch gap-3 sm:max-w-[220px] md:items-end">
+                            <div className="flex flex-col items-end gap-1">
+                              <div className="border-brutal border-accent-yellow bg-black/50 px-3 py-2 text-base font-bold font-mono text-accent-yellow shadow-[3px_3px_0_0_hsl(var(--accent-yellow))]">
+                                {formatCnyFen(wechatBlackGoldPlan.amountFen)}
+                              </div>
+                              {wechatBlackGoldPlan.originalAmountFen > wechatBlackGoldPlan.amountFen && (
+                                <div className="text-xs font-mono text-amber-200/70 line-through">
+                                  {formatCnyFen(wechatBlackGoldPlan.originalAmountFen)}
+                                </div>
+                              )}
+                            </div>
+                            <BrutalButton
+                              variant="yellow"
+                              size="default"
+                              disabled={wxSubmitting}
+                              onClick={() => startWechatPay(wechatBlackGoldPlan.planKey)}
+                              className="w-full border-accent-yellow font-extrabold md:w-auto md:min-w-[11rem]"
+                            >
+                              {t("pricing.wechatPayBuy", {
+                                defaultValue: "Buy via WeChat",
+                              })}
+                            </BrutalButton>
+                          </div>
+                        </div>
+                      </BrutalCardContent>
+                    </BrutalCard>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
