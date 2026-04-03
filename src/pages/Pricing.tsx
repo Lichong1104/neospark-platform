@@ -531,22 +531,22 @@ const Pricing = () => {
           )}
 
           {/* WeChat Pay Credits */}
-          <div className="mt-8">
-            <div className="flex items-end justify-between gap-4 mb-3">
+          <div className="mt-12">
+            <div className="flex items-end justify-between gap-4 mb-4">
               <div>
-                <h2 className="text-lg font-bold uppercase tracking-widest">
+                <h2 className="text-xl font-bold uppercase tracking-widest">
                   {t("pricing.wechatPayTitle", {
                     defaultValue: "WeChat Pay · Credits Packs",
                   })}
                 </h2>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-sm text-muted-foreground">
                   {t("pricing.wechatPaySubtitle", {
                     defaultValue:
                       "Scan with WeChat to buy one-time credits packs (Native QR Code).",
                   })}
                 </p>
               </div>
-              <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+              <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 {wechatPlansLoading
                   ? t("pricing.loading", { defaultValue: "Loading..." })
                   : wechatPlansError
@@ -561,16 +561,16 @@ const Pricing = () => {
               </div>
             )}
 
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {activeWechatPlans.map((p) => (
                 <BrutalCard
                   key={p.planKey}
                   className={`overflow-hidden ${p.planKey === "black" ? "shadow-none" : ""}`}
                 >
                   <div
-                    className={`h-1.5 ${p.planKey === "black" ? "bg-foreground" : "bg-accent-green"}`}
+                    className={`h-2 ${p.planKey === "black" ? "bg-foreground" : "bg-accent-green"}`}
                   />
-                  <BrutalCardContent className="p-4">
+                  <BrutalCardContent className="p-5">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="text-lg font-bold uppercase tracking-wider">
@@ -613,7 +613,7 @@ const Pricing = () => {
                       </div>
                     </div>
 
-                    <div className="mt-3 flex items-center justify-between gap-3">
+                    <div className="mt-4 flex items-center justify-between gap-3">
                       <div className="text-sm">
                         <span className="text-muted-foreground">
                           {t("pricing.credits", { defaultValue: "Credits" })}:
@@ -626,7 +626,7 @@ const Pricing = () => {
                       </div>
                       <BrutalButton
                         variant={p.planKey === "black" ? "yellow" : "green"}
-                        size="sm"
+                        size="default"
                         disabled={wxSubmitting}
                         onClick={() => startWechatPay(p.planKey)}
                       >
@@ -657,7 +657,7 @@ const Pricing = () => {
           }
         }}
       >
-        <DialogContent className="border-brutal border-foreground brutal-shadow bg-card max-w-sm">
+        <DialogContent className="border-brutal border-foreground brutal-shadow bg-card max-w-md">
           <DialogHeader>
             <DialogTitle className="font-bold uppercase tracking-wider">
               {t("pricing.scanToPay", {
@@ -704,11 +704,11 @@ const Pricing = () => {
               </div>
 
               <div className="flex items-center justify-center">
-                <div className="p-2 bg-background border-brutal border-foreground brutal-shadow">
+                <div className="p-3 bg-background border-brutal border-foreground brutal-shadow">
                   <img
                     src={wxOrder.qrCodeDataUrl}
                     alt="WeChat Pay QR"
-                    className="w-48 h-48"
+                    className="w-56 h-56"
                   />
                 </div>
               </div>
