@@ -25,6 +25,19 @@ interface CanvasAreaProps {
   onFileDrop?: (files: File[], position: { x: number; y: number }) => void;
 }
 
+const CANVAS_IMAGE_MAX_SIZE = 256;
+
+const toCanvasSize = (width: number, height: number): { width: number; height: number } => {
+  if (width <= 0 || height <= 0) {
+    return { width: CANVAS_IMAGE_MAX_SIZE, height: CANVAS_IMAGE_MAX_SIZE };
+  }
+  const scale = Math.min(CANVAS_IMAGE_MAX_SIZE / width, CANVAS_IMAGE_MAX_SIZE / height);
+  return {
+    width: Math.round(width * scale),
+    height: Math.round(height * scale),
+  };
+};
+
 const CanvasArea: React.FC<CanvasAreaProps> = ({ onImageSelect, canvasImages, onCanvasImagesChange, onFileDrop }) => {
   const { t } = useTranslation();
   const images = canvasImages;
@@ -226,18 +239,53 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onImageSelect, canvasImages, on
       reader.onload = (ev) => {
         const dataUrl = ev.target?.result as string;
         const isVideo = file.type.startsWith("video/");
-        const newItem: CanvasImage = {
-          id: Math.random().toString(36).substr(2, 8).toUpperCase(),
-          x: dropX + idx * 30,
-          y: dropY + idx * 30,
-          width: isVideo ? 320 : 256,
-          height: isVideo ? 180 : 256,
-          selected: false,
-          src: dataUrl,
-          name: file.name,
-          type: isVideo ? "video" : "image",
+        if (isVideo) {
+          const newItem: CanvasImage = {
+            id: Math.random().toString(36).substr(2, 8).toUpperCase(),
+            x: dropX + idx * 30,
+            y: dropY + idx * 30,
+            width: 320,
+            height: 180,
+            selected: false,
+            src: dataUrl,
+            name: file.name,
+            type: "video",
+          };
+          onCanvasImagesChange([...canvasImages, newItem]);
+          return;
+        }
+
+        const preview = new Image();
+        preview.onload = () => {
+          const size = toCanvasSize(preview.naturalWidth, preview.naturalHeight);
+          const newItem: CanvasImage = {
+            id: Math.random().toString(36).substr(2, 8).toUpperCase(),
+            x: dropX + idx * 30,
+            y: dropY + idx * 30,
+            width: size.width,
+            height: size.height,
+            selected: false,
+            src: dataUrl,
+            name: file.name,
+            type: "image",
+          };
+          onCanvasImagesChange([...canvasImages, newItem]);
         };
-        onCanvasImagesChange([...canvasImages, newItem]);
+        preview.onerror = () => {
+          const newItem: CanvasImage = {
+            id: Math.random().toString(36).substr(2, 8).toUpperCase(),
+            x: dropX + idx * 30,
+            y: dropY + idx * 30,
+            width: CANVAS_IMAGE_MAX_SIZE,
+            height: CANVAS_IMAGE_MAX_SIZE,
+            selected: false,
+            src: dataUrl,
+            name: file.name,
+            type: "image",
+          };
+          onCanvasImagesChange([...canvasImages, newItem]);
+        };
+        preview.src = dataUrl;
       };
       reader.readAsDataURL(file);
     });

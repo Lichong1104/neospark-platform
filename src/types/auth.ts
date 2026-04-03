@@ -4,11 +4,7 @@ export interface SendCodeParams {
 }
 
 /** 发送验证码响应 */
-export interface SendCodeResponse {
-  code: number;
-  message: string;
-  need_code: boolean;
-}
+export type SendCodeResponse = void;
 
 /** 登录请求 */
 export interface LoginParams {
@@ -18,11 +14,13 @@ export interface LoginParams {
 
 /** 登录响应 */
 export interface LoginResponse {
-  user_id: number;
-  email: string;
-  access_token: string;
-  token_type: string;
-  is_new_user: boolean;
+  user_id?: number;
+  email?: string;
+  access_token?: string;
+  token_type?: string;
+  is_new_user?: boolean;
+  message?: string;
+  redirect_url?: string;
 }
 
 /** 登出响应 */

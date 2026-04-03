@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "react-i18next";
 import { Sparkles, Zap, Globe } from "lucide-react";
 import { toast } from "sonner";
-import { googleLogin } from "@/api/auth";
+import { googleLogin, sendCode, login as apiLogin } from "@/api/auth";
 
 const Login = () => {
   const { t, i18n } = useTranslation();
@@ -21,14 +21,12 @@ const Login = () => {
     localStorage.setItem("language", newLang);
   };
 
-  // 验证码登录逻辑临时停用（仅保留 Google 登录）
-  // const [step, setStep] = useState<"email" | "code">("email");
-  // const [email, setEmail] = useState("");
-  // const [code, setCode] = useState(["", "", "", "", "", ""]);
-  // const [isLoading, setIsLoading] = useState(false);
-  // const [countdown, setCountdown] = useState(0);
-  // const [needCode, setNeedCode] = useState(true);
-  // const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const [step, setStep] = useState<"email" | "code">("email");
+  const [email, setEmail] = useState("");
+  const [code, setCode] = useState(["", "", "", "", "", ""]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -36,114 +34,107 @@ const Login = () => {
     }
   }, [isAuthenticated, navigate, redirectTo]);
 
-  // useEffect(() => {
-  //   if (countdown > 0) {
-  //     const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-  //     return () => clearTimeout(timer);
-  //   }
-  // }, [countdown]);
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [countdown]);
 
-  // const handleSendCode = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   if (!email.trim() || !email.includes("@")) {
-  //     toast.error(t("login.invalidEmail"));
-  //     return;
-  //   }
-  //   setIsLoading(true);
-  //   try {
-  //     const res = await sendCode({ email });
-  //     if (res.need_code === false) {
-  //       const loginRes = await apiLogin({ email });
-  //       login(email, loginRes.access_token);
-  //       toast.success(t("login.loginSuccess"));
-  //       navigate(redirectTo, { replace: true });
-  //     } else {
-  //       setNeedCode(true);
-  //       setStep("code");
-  //       setCountdown(60);
-  //       toast.success(t("login.codeSent", { email }));
-  //       setTimeout(() => inputRefs.current[0]?.focus(), 100);
-  //     }
-  //   } catch (err: any) {
-  //     const msg = err?.response?.data?.message || err?.message || "Failed";
-  //     toast.error(msg);
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
+  const handleSendCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim() || !email.includes("@")) {
+      toast.error(t("login.invalidEmail"));
+      return;
+    }
+    setIsLoading(true);
+    try {
+      await sendCode({ email });
+      setStep("code");
+      setCountdown(60);
+      setCode(["", "", "", "", "", ""]);
+      toast.success(t("login.codeSent", { email }));
+      setTimeout(() => inputRefs.current[0]?.focus(), 100);
+    } catch (err: any) {
+      const msg = err?.response?.data?.detail || err?.response?.data?.message || err?.message || "Failed";
+      toast.error(msg);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  // const handleCodeChange = (index: number, value: string) => {
-  //   if (value.length > 1) value = value.slice(-1);
-  //   if (!/^\d*$/.test(value)) return;
-  //
-  //   const newCode = [...code];
-  //   newCode[index] = value;
-  //   setCode(newCode);
-  //
-  //   if (value && index < 5) {
-  //     inputRefs.current[index + 1]?.focus();
-  //   }
-  //
-  //   if (newCode.every(c => c !== "")) {
-  //     handleVerify(newCode.join(""));
-  //   }
-  // };
+  const handleCodeChange = (index: number, value: string) => {
+    if (value.length > 1) value = value.slice(-1);
+    if (!/^\d*$/.test(value)) return;
 
-  // const handleCodeKeyDown = (index: number, e: React.KeyboardEvent) => {
-  //   if (e.key === "Backspace" && !code[index] && index > 0) {
-  //     inputRefs.current[index - 1]?.focus();
-  //   }
-  // };
+    const newCode = [...code];
+    newCode[index] = value;
+    setCode(newCode);
 
-  // const handleCodePaste = (e: React.ClipboardEvent) => {
-  //   e.preventDefault();
-  //   const paste = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
-  //   if (paste.length === 0) return;
-  //   const newCode = [...code];
-  //   for (let i = 0; i < paste.length; i++) {
-  //     newCode[i] = paste[i];
-  //   }
-  //   setCode(newCode);
-  //   if (paste.length === 6) {
-  //     handleVerify(paste);
-  //   } else {
-  //     inputRefs.current[Math.min(paste.length, 5)]?.focus();
-  //   }
-  // };
+    if (value && index < 5) {
+      inputRefs.current[index + 1]?.focus();
+    }
 
-  // const handleVerify = async (fullCode?: string) => {
-  //   const codeStr = fullCode || code.join("");
-  //   if (codeStr.length !== 6) {
-  //     toast.error(t("login.invalidCode"));
-  //     return;
-  //   }
-  //   setIsLoading(true);
-  //   try {
-  //     const res = await apiLogin({ email, code: codeStr });
-  //     login(email, res.access_token);
-  //     toast.success(t("login.loginSuccess"));
-  //     navigate(redirectTo, { replace: true });
-  //   } catch (err: any) {
-  //     const msg = err?.response?.data?.detail || err?.response?.data?.message || err?.message || "验证失败";
-  //     toast.error(msg);
-  //     // Clear code on failure for retry
-  //     setCode(["", "", "", "", "", ""]);
-  //     inputRefs.current[0]?.focus();
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
+    if (newCode.every((c) => c !== "")) {
+      handleVerify(newCode.join(""));
+    }
+  };
 
-  // const handleResend = async () => {
-  //   if (countdown > 0) return;
-  //   try {
-  //     await sendCode({ email });
-  //     setCountdown(60);
-  //     toast.success(t("login.codeSent", { email }));
-  //   } catch {
-  //     toast.error("发送失败，请重试");
-  //   }
-  // };
+  const handleCodeKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === "Backspace" && !code[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleCodePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const paste = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (paste.length === 0) return;
+    const newCode = [...code];
+    for (let i = 0; i < paste.length; i++) {
+      newCode[i] = paste[i];
+    }
+    setCode(newCode);
+    if (paste.length === 6) {
+      handleVerify(paste);
+    } else {
+      inputRefs.current[Math.min(paste.length, 5)]?.focus();
+    }
+  };
+
+  const handleVerify = async (fullCode?: string) => {
+    const codeStr = fullCode || code.join("");
+    if (codeStr.length !== 6) {
+      toast.error(t("login.invalidCode"));
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const res = await apiLogin({ email, code: codeStr });
+      login(email, res.access_token || "");
+      toast.success(t("login.loginSuccess"));
+      navigate(redirectTo, { replace: true });
+    } catch (err: any) {
+      const msg = err?.response?.data?.detail || err?.response?.data?.message || err?.message || "验证失败";
+      toast.error(msg);
+      setCode(["", "", "", "", "", ""]);
+      inputRefs.current[0]?.focus();
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (countdown > 0) return;
+    try {
+      await sendCode({ email });
+      setCountdown(60);
+      toast.success(t("login.codeSent", { email }));
+    } catch (err: any) {
+      const msg = err?.response?.data?.detail || err?.response?.data?.message || "发送失败，请重试";
+      toast.error(msg);
+    }
+  };
 
   const handleGoogle = () => {
     googleLogin(redirectTo);
@@ -191,14 +182,97 @@ const Login = () => {
             </p>
           </div>
 
-          {/* 验证码登录 UI 临时停用（仅保留 Google 登录） */}
-          {/* <form onSubmit={handleSendCode}>...</form> */}
-          {/* <div className="animate-fade-in">...</div> */}
+          {step === "email" ? (
+            <form onSubmit={handleSendCode} className="space-y-4 animate-fade-in">
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider mb-2">
+                  {t("login.emailLabel")}
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder={t("login.emailPlaceholder")}
+                  className="w-full h-11 px-3 bg-background border-brutal border-foreground text-sm focus:outline-none focus:ring-0 placeholder:text-muted-foreground/70"
+                  disabled={isLoading}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full h-11 bg-card text-foreground font-bold text-xs uppercase tracking-wider border-brutal border-foreground brutal-shadow brutal-press hover:bg-secondary disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {isLoading ? `${t("login.sendCode")}...` : t("login.sendCode")}
+              </button>
+            </form>
+          ) : (
+            <div className="space-y-4 animate-fade-in">
+              <div>
+                <h2 className="text-base font-bold uppercase tracking-wider">{t("login.verifyTitle")}</h2>
+                <p className="text-xs text-muted-foreground mt-1">{t("login.verifySubtitle", { email })}</p>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider mb-2">
+                  {t("login.codeLabel")}
+                </label>
+                <div className="grid grid-cols-6 gap-2" onPaste={handleCodePaste}>
+                  {code.map((digit, index) => (
+                    <input
+                      key={index}
+                      ref={(el) => {
+                        inputRefs.current[index] = el;
+                      }}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) => handleCodeChange(index, e.target.value)}
+                      onKeyDown={(e) => handleCodeKeyDown(index, e)}
+                      className="h-11 text-center bg-background border-brutal border-foreground text-base font-bold focus:outline-none focus:ring-0"
+                      disabled={isLoading}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleVerify()}
+                disabled={isLoading}
+                className="w-full h-11 bg-accent-cyan text-foreground font-bold text-xs uppercase tracking-wider border-brutal border-foreground brutal-shadow brutal-press hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {isLoading ? `${t("login.verify")}...` : t("login.verify")}
+              </button>
+
+              <div className="flex items-center justify-between text-[11px]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStep("email");
+                    setCode(["", "", "", "", "", ""]);
+                  }}
+                  className="font-semibold underline-offset-2 hover:underline"
+                >
+                  {t("login.backToEmail")}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={countdown > 0}
+                  className="font-semibold underline-offset-2 hover:underline disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {countdown > 0 ? t("login.resendIn", { seconds: countdown }) : t("login.resend")}
+                </button>
+              </div>
+            </div>
+          )}
           <div className="mt-4">
             <button
               type="button"
               onClick={handleGoogle}
-              className="w-full h-11 bg-card text-foreground font-bold text-xs uppercase tracking-wider border-brutal border-foreground brutal-shadow brutal-press hover:bg-secondary flex items-center justify-center gap-2"
+              className="w-full h-11 bg-accent-cyan text-foreground font-bold text-xs uppercase tracking-wider border-brutal border-foreground brutal-shadow brutal-press hover:opacity-90 flex items-center justify-center gap-2"
             >
               {t("login.googleButton")}
             </button>

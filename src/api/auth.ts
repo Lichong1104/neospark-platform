@@ -15,7 +15,7 @@ import type { ApiResponse } from "@/types/common";
  */
 export function sendCode(params: SendCodeParams): Promise<SendCodeResponse> {
   return http.post(
-    "/auth/send-code",
+    "/auth/email/send-code",
     params
   ) as unknown as Promise<SendCodeResponse>;
 }
@@ -25,7 +25,7 @@ export function sendCode(params: SendCodeParams): Promise<SendCodeResponse> {
  * 登录成功后自动保存 token
  */
 export async function login(params: LoginParams): Promise<LoginResponse> {
-  const res = await http.post<LoginResponse>("/auth/login", params);
+  const res = await http.post<LoginResponse>("/auth/email/login", params);
   const data = res.data ?? (res as unknown as LoginResponse);
   if (data.access_token) {
     setToken(data.access_token);

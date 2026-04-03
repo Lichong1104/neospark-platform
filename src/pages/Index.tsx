@@ -11,6 +11,34 @@ import storageApi from "@/api/storage";
 import { useImageProcessing } from "@/hooks/useImageProcessing";
 import { useTranslation } from "react-i18next";
 
+const CANVAS_IMAGE_MAX_SIZE = 256;
+
+const getImageSize = (src: string): Promise<{ width: number; height: number }> =>
+  new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      resolve({
+        width: img.naturalWidth || CANVAS_IMAGE_MAX_SIZE,
+        height: img.naturalHeight || CANVAS_IMAGE_MAX_SIZE,
+      });
+    };
+    img.onerror = () => {
+      resolve({ width: CANVAS_IMAGE_MAX_SIZE, height: CANVAS_IMAGE_MAX_SIZE });
+    };
+    img.src = src;
+  });
+
+const toCanvasSize = (width: number, height: number): { width: number; height: number } => {
+  if (width <= 0 || height <= 0) {
+    return { width: CANVAS_IMAGE_MAX_SIZE, height: CANVAS_IMAGE_MAX_SIZE };
+  }
+  const scale = Math.min(CANVAS_IMAGE_MAX_SIZE / width, CANVAS_IMAGE_MAX_SIZE / height);
+  return {
+    width: Math.round(width * scale),
+    height: Math.round(height * scale),
+  };
+};
+
 const Index = () => {
   const { t } = useTranslation();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -22,18 +50,26 @@ const Index = () => {
   const selectedCanvasImage = canvasImages.find(img => img.id === selectedImage);
 
   const addResultsToCanvas = useCallback((result: { type: string | null; images: { src: string; name: string }[] }) => {
-    const newItems: CanvasImage[] = result.images.map((img, idx) => ({
-      id: Math.random().toString(36).substr(2, 8).toUpperCase(),
-      x: (selectedCanvasImage?.x ?? 120) + 40 + idx * 30,
-      y: (selectedCanvasImage?.y ?? 60) + 40 + idx * 30,
-      width: 256,
-      height: 256,
-      selected: false,
-      src: img.src,
-      name: img.name,
-      type: "image" as const,
-    }));
-    setCanvasImages(prev => [...prev, ...newItems]);
+    (async () => {
+      const newItems: CanvasImage[] = await Promise.all(
+        result.images.map(async (img, idx) => {
+          const natural = await getImageSize(img.src);
+          const size = toCanvasSize(natural.width, natural.height);
+          return {
+            id: Math.random().toString(36).substr(2, 8).toUpperCase(),
+            x: (selectedCanvasImage?.x ?? 120) + 40 + idx * 30,
+            y: (selectedCanvasImage?.y ?? 60) + 40 + idx * 30,
+            width: size.width,
+            height: size.height,
+            selected: false,
+            src: img.src,
+            name: img.name,
+            type: "image" as const,
+          };
+        })
+      );
+      setCanvasImages((prev) => [...prev, ...newItems]);
+    })();
   }, [selectedCanvasImage]);
 
   const { state: processingState, startBgRemoval, startLayerSplit, startUpscale } = useImageProcessing(addResultsToCanvas);
@@ -63,18 +99,27 @@ const Index = () => {
   }, [selectedCanvasImage, startUpscale, t]);
 
   const handleImagesGenerated = useCallback((images: { url: string; local_path: string }[]) => {
-    const newCanvasImages: CanvasImage[] = images.map((img, idx) => ({
-      id: Math.random().toString(36).substr(2, 8).toUpperCase(),
-      x: 120 + idx * 40,
-      y: 60 + idx * 40,
-      width: 256,
-      height: 256,
-      selected: false,
-      src: img.url.startsWith("http") ? img.url : `${STATIC_BASE_URL}${img.url}`,
-      name: `Generated_${Date.now()}_${idx + 1}`,
-      type: "image" as const,
-    }));
-    setCanvasImages(prev => [...prev, ...newCanvasImages]);
+    (async () => {
+      const newCanvasImages: CanvasImage[] = await Promise.all(
+        images.map(async (img, idx) => {
+          const src = img.url.startsWith("http") ? img.url : `${STATIC_BASE_URL}${img.url}`;
+          const natural = await getImageSize(src);
+          const size = toCanvasSize(natural.width, natural.height);
+          return {
+            id: Math.random().toString(36).substr(2, 8).toUpperCase(),
+            x: 120 + idx * 40,
+            y: 60 + idx * 40,
+            width: size.width,
+            height: size.height,
+            selected: false,
+            src,
+            name: `Generated_${Date.now()}_${idx + 1}`,
+            type: "image" as const,
+          };
+        })
+      );
+      setCanvasImages((prev) => [...prev, ...newCanvasImages]);
+    })();
   }, []);
 
   const handleVideoGenerated = useCallback((videoUrl: string) => {
@@ -93,18 +138,28 @@ const Index = () => {
   }, []);
 
   const handleAddToCanvas = useCallback((item: { src: string; name: string; type: "image" | "video" }) => {
-    const newItem: CanvasImage = {
-      id: Math.random().toString(36).substr(2, 8).toUpperCase(),
-      x: 120 + Math.random() * 100,
-      y: 60 + Math.random() * 100,
-      width: item.type === "video" ? 320 : 256,
-      height: item.type === "video" ? 180 : 256,
-      selected: false,
-      src: item.src,
-      name: item.name,
-      type: item.type,
-    };
-    setCanvasImages(prev => [...prev, newItem]);
+    (async () => {
+      const base = {
+        id: Math.random().toString(36).substr(2, 8).toUpperCase(),
+        x: 120 + Math.random() * 100,
+        y: 60 + Math.random() * 100,
+        selected: false,
+        src: item.src,
+        name: item.name,
+        type: item.type,
+      } as const;
+
+      if (item.type === "video") {
+        const newItem: CanvasImage = { ...base, width: 320, height: 180 };
+        setCanvasImages((prev) => [...prev, newItem]);
+        return;
+      }
+
+      const natural = await getImageSize(item.src);
+      const size = toCanvasSize(natural.width, natural.height);
+      const newItem: CanvasImage = { ...base, width: size.width, height: size.height };
+      setCanvasImages((prev) => [...prev, newItem]);
+    })();
   }, []);
 
   const handleFileDrop = useCallback(async (files: File[]) => {

@@ -643,7 +643,7 @@ const ChatView: React.FC<ChatViewProps> = ({
               }
             }}
             placeholder={t("intelligenceHub.inputPlaceholder")}
-            className="w-full h-full min-h-[200px] p-3 border-brutal border-foreground bg-background font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-accent-cyan"
+            className="w-full h-full min-h-[120px] md:min-h-[160px] xl:min-h-[200px] p-3 border-brutal border-foreground bg-background font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-accent-cyan"
           />
         </div>
 
