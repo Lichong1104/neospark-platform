@@ -563,27 +563,50 @@ const Pricing = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {activeWechatPlans.map((p) => (
-                <BrutalCard key={p.planKey} className="overflow-hidden">
-                  <div className="h-2 bg-accent-green" />
+                <BrutalCard
+                  key={p.planKey}
+                  className={`overflow-hidden ${p.planKey === "black" ? "shadow-none" : ""}`}
+                >
+                  <div
+                    className={`h-2 ${p.planKey === "black" ? "bg-foreground" : "bg-accent-green"}`}
+                  />
                   <BrutalCardContent className="p-5">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="text-lg font-bold uppercase tracking-wider">
                           {p.name}
                         </div>
-                        <div className="text-xs text-muted-foreground mt-1">
+                        <div
+                          className={`text-xs mt-1 ${
+                            p.planKey === "black" ? "text-foreground" : "text-muted-foreground"
+                          }`}
+                        >
                           {p.description}
-                          <div className="mt-1 text-[11px] font-bold">
+                          <div
+                            className={`mt-1 text-[11px] font-bold ${
+                              p.planKey === "black" ? "text-accent-yellow" : ""
+                            }`}
+                          >
                             {p.discountLabel} · {p.validDays} 天有效
                           </div>
                         </div>
                       </div>
                       <div className="flex flex-col items-end">
-                        <div className="px-2 py-1 bg-secondary border-brutal border-foreground text-xs font-bold font-mono">
+                        <div
+                          className={`px-2 py-1 border-brutal text-xs font-bold font-mono ${
+                            p.planKey === "black"
+                              ? "bg-foreground text-accent-yellow border-accent-yellow"
+                              : "bg-secondary border-foreground text-foreground"
+                          }`}
+                        >
                           {formatCnyFen(p.amountFen)}
                         </div>
                         {p.originalAmountFen > p.amountFen && (
-                          <div className="mt-1 text-[10px] text-muted-foreground line-through font-mono">
+                          <div
+                            className={`mt-1 text-[10px] line-through font-mono ${
+                              p.planKey === "black" ? "text-accent-yellow/80" : "text-muted-foreground"
+                            }`}
+                          >
                             {formatCnyFen(p.originalAmountFen)}
                           </div>
                         )}
@@ -595,12 +618,14 @@ const Pricing = () => {
                         <span className="text-muted-foreground">
                           {t("pricing.credits", { defaultValue: "Credits" })}:
                         </span>{" "}
-                        <span className="font-bold font-mono">
+                        <span
+                          className={`font-bold font-mono ${p.planKey === "black" ? "text-accent-yellow" : ""}`}
+                        >
                           {p.points.toLocaleString()}
                         </span>
                       </div>
                       <BrutalButton
-                        variant="green"
+                        variant={p.planKey === "black" ? "yellow" : "green"}
                         size="default"
                         disabled={wxSubmitting}
                         onClick={() => startWechatPay(p.planKey)}
