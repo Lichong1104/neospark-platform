@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import storageApi from "@/api/storage";
 import { toast } from "sonner";
 import { useGenerationPolling } from "@/hooks/useGenerationPolling";
@@ -107,6 +107,14 @@ const AGENT_DEFS = [
   },
 ];
 
+type StandardGenHistoryItem = {
+  id: string;
+  prompt: string;
+  images: { url: string; local_path: string }[];
+  cost: number | null;
+  createdAt: number;
+};
+
 const useAgents = () => {
   const { t } = useTranslation();
   return AGENT_DEFS.map(a => ({
@@ -145,8 +153,8 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
   const [model, setModel] = useState("gemini-2.5-flash-image");
   const [standardSessionId, setStandardSessionId] = useState<string | null>(null);
   const [isStandardGenerating, setIsStandardGenerating] = useState(false);
-  const [generatedImages, setGeneratedImages] = useState<{ url: string; local_path: string }[]>([]);
-  const [generationCost, setGenerationCost] = useState<number | null>(null);
+  const [standardGenHistory, setStandardGenHistory] = useState<StandardGenHistoryItem[]>([]);
+  const [pendingStandardPrompt, setPendingStandardPrompt] = useState<string | null>(null);
   const [pastedImage, setPastedImage] = useState<{ preview: string; path: string } | null>(null);
   const [isUploadingPaste, setIsUploadingPaste] = useState(false);
   const polling = useGenerationPolling();
@@ -172,18 +180,32 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
 
   useEffect(() => {
     if (polling.status === "completed" && polling.images.length > 0) {
-      setGeneratedImages(polling.images);
-      setGenerationCost(polling.actualCost || null);
+      const promptText = pendingStandardPrompt?.trim() || "";
+      setStandardGenHistory((prev) => [
+        ...prev,
+        {
+          id:
+            typeof crypto !== "undefined" && crypto.randomUUID
+              ? crypto.randomUUID()
+              : `gen-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+          prompt: promptText,
+          images: polling.images,
+          cost: polling.actualCost ?? null,
+          createdAt: Date.now(),
+        },
+      ]);
+      setPendingStandardPrompt(null);
       setIsStandardGenerating(false);
       onImagesGenerated?.(polling.images);
       polling.reset();
       toast.success(t("intelligenceHub.imageGenerated"));
     } else if (polling.status === "failed") {
       setIsStandardGenerating(false);
+      setPendingStandardPrompt(null);
       toast.error(polling.error || t("intelligenceHub.generateFailed"));
       polling.reset();
     }
-  }, [polling.status, polling.images, polling.error]);
+  }, [polling.status, polling.images, polling.error, polling.actualCost, pendingStandardPrompt, onImagesGenerated, t]);
 
   const modelOptions: DropdownOption[] = useMemo(() => {
     if (!modelsConfig) return DEFAULT_MODELS;
@@ -256,8 +278,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
     const prompt = inputValue.trim();
     setInputValue("");
     setIsStandardGenerating(true);
-    setGeneratedImages([]);
-    setGenerationCost(null);
+    setPendingStandardPrompt(prompt);
 
     try {
       let sid = standardSessionId;
@@ -288,6 +309,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
       const msg = err?.response?.data?.detail || err?.message || t("intelligenceHub.generateFailed");
       toast.error(msg);
       setIsStandardGenerating(false);
+      setPendingStandardPrompt(null);
     }
   };
 
@@ -364,8 +386,8 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
               resolutionOptions={resolutionOptions}
               modelOptions={modelOptions}
               isGenerating={isStandardGenerating}
-              generatedImages={generatedImages}
-              generationCost={generationCost}
+              standardGenHistory={standardGenHistory}
+              pendingStandardPrompt={pendingStandardPrompt}
               onAspectRatioChange={setAspectRatio}
               onResolutionChange={setResolution}
               onModelChange={setModel}
@@ -374,6 +396,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
               onSend={handleSend}
               onTogglePresets={() => setShowPresets(!showPresets)}
               onSelectPreset={(prompt) => { setInputValue(prompt); setShowPresets(false); }}
+              onReuseHistoryPrompt={setInputValue}
               onImagesGenerated={onImagesGenerated}
               pastedImage={pastedImage}
               onPasteImage={setPastedImage}
@@ -401,8 +424,8 @@ interface ChatViewProps {
   resolutionOptions: DropdownOption[];
   modelOptions: DropdownOption[];
   isGenerating: boolean;
-  generatedImages: { url: string; local_path: string }[];
-  generationCost: number | null;
+  standardGenHistory: StandardGenHistoryItem[];
+  pendingStandardPrompt: string | null;
   onAspectRatioChange: (value: string) => void;
   onResolutionChange: (value: string) => void;
   onModelChange: (value: string) => void;
@@ -411,6 +434,7 @@ interface ChatViewProps {
   onSend: () => void;
   onTogglePresets: () => void;
   onSelectPreset: (prompt: string) => void;
+  onReuseHistoryPrompt: (prompt: string) => void;
   onImagesGenerated?: (images: { url: string; local_path: string }[]) => void;
   pastedImage: { preview: string; path: string } | null;
   onPasteImage: (image: { preview: string; path: string } | null) => void;
@@ -430,8 +454,8 @@ const ChatView: React.FC<ChatViewProps> = ({
   resolutionOptions,
   modelOptions,
   isGenerating,
-  generatedImages,
-  generationCost,
+  standardGenHistory,
+  pendingStandardPrompt,
   onAspectRatioChange,
   onResolutionChange,
   onModelChange,
@@ -440,6 +464,7 @@ const ChatView: React.FC<ChatViewProps> = ({
   onSend,
   onTogglePresets,
   onSelectPreset,
+  onReuseHistoryPrompt,
   onImagesGenerated,
   pastedImage,
   onPasteImage,
@@ -449,6 +474,32 @@ const ChatView: React.FC<ChatViewProps> = ({
   const { t } = useTranslation();
   const AGENTS = useAgents();
   const currentAgent = AGENTS.find(a => a.id === agentStatus) || AGENTS[0];
+  const historyBottomRef = useRef<HTMLDivElement>(null);
+  const promptInputRef = useRef<HTMLTextAreaElement>(null);
+
+  const fillPromptFromHistory = useCallback(
+    (prompt: string) => {
+      const text = prompt.trim();
+      if (!text) return;
+      onReuseHistoryPrompt(text);
+      window.setTimeout(() => {
+        const el = promptInputRef.current;
+        if (!el) return;
+        el.focus();
+        const len = el.value.length;
+        try {
+          el.setSelectionRange(len, len);
+        } catch {
+          /* ignore */
+        }
+      }, 0);
+    },
+    [onReuseHistoryPrompt]
+  );
+
+  useEffect(() => {
+    historyBottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [standardGenHistory.length, isGenerating, pendingStandardPrompt]);
 
   if (isAgentMode) {
     return (
@@ -506,55 +557,111 @@ const ChatView: React.FC<ChatViewProps> = ({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-8 pt-6 relative">
-        {isGenerating ? (
-          /* ===== Improved generating loading UI ===== */
-          <div className="flex flex-col items-center justify-center pt-12 gap-5">
-            <div className="relative">
-              <div className="w-20 h-20 border-brutal border-foreground/20 flex items-center justify-center bg-accent-cyan/5">
-                <Sparkles className="w-10 h-10 text-accent-cyan" />
+      <div className="flex-1 overflow-y-auto px-8 pt-6 relative flex flex-col min-h-0">
+        {(standardGenHistory.length > 0 || isGenerating) && (
+          <div className="flex items-center justify-between gap-2 mb-4 text-xs font-bold uppercase text-muted-foreground border-b border-foreground/10 pb-2">
+            <span className="flex items-center gap-2">
+              <Terminal className="w-4 h-4 text-accent-cyan" />
+              {t("intelligenceHub.sessionHistory")}
+            </span>
+            <span className="text-[10px] font-mono font-normal normal-case text-muted-foreground/80">
+              {t("intelligenceHub.sessionHistoryHint")}
+            </span>
+          </div>
+        )}
+
+        <div className="space-y-6 flex-1">
+          {standardGenHistory.map((entry) => (
+            <div key={entry.id} className="space-y-2">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                {t("intelligenceHub.standardPrompt")}
               </div>
-              <div className="absolute -inset-2 border-2 border-accent-cyan/30 border-t-accent-cyan animate-spin" style={{ animationDuration: "1.5s" }} />
+              {entry.prompt.trim() ? (
+                <button
+                  type="button"
+                  onClick={() => fillPromptFromHistory(entry.prompt)}
+                  title={t("intelligenceHub.reuseHistoryPrompt")}
+                  className="w-full text-left p-3 border-brutal border-foreground bg-secondary/20 font-mono text-sm whitespace-pre-wrap break-words leading-relaxed transition-none hover:bg-secondary/40 hover:border-accent-cyan/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan cursor-pointer"
+                >
+                  {entry.prompt}
+                </button>
+              ) : (
+                <div className="p-3 border-brutal border-foreground/40 bg-secondary/10 font-mono text-sm text-muted-foreground">
+                  —
+                </div>
+              )}
+              <div className="flex items-center gap-2 text-xs font-bold uppercase text-muted-foreground">
+                <Image className="w-4 h-4 text-accent-green" />
+                {t("intelligenceHub.generationResult")}
+                {entry.cost != null && entry.cost > 0 && (
+                  <span className="text-accent-green">-{entry.cost} pts</span>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {entry.images.map((img, idx) => {
+                  const imgUrl = img.url.startsWith("http") ? img.url : `${STATIC_BASE_URL}${img.url}`;
+                  return (
+                    <a
+                      key={`${entry.id}-${idx}`}
+                      href={imgUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block border-brutal border-foreground overflow-hidden hover:brightness-110"
+                    >
+                      <img src={imgUrl} alt="" className="w-full h-auto object-cover" loading="lazy" />
+                    </a>
+                  );
+                })}
+              </div>
             </div>
-            <div className="text-center space-y-1">
-              <p className="text-sm font-bold uppercase tracking-widest">{t("intelligenceHub.generating")}</p>
-              <p className="text-[10px] text-muted-foreground font-mono">{t("intelligenceHub.generatingHint")}</p>
-            </div>
-            <div className="flex gap-1.5">
-              {[0, 1, 2, 3, 4].map(i => (
-                <div
-                  key={i}
-                  className="w-1.5 h-1.5 bg-accent-cyan rounded-full animate-bounce"
-                  style={{ animationDelay: `${i * 120}ms`, animationDuration: "0.8s" }}
-                />
-              ))}
-            </div>
-          </div>
-        ) : generatedImages.length > 0 ? (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 text-xs font-bold uppercase text-muted-foreground">
-              <Image className="w-4 h-4 text-accent-green" />
-              {t("intelligenceHub.generationResult")}
-              {generationCost && <span className="text-accent-green">-{generationCost} pts</span>}
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              {generatedImages.map((img, idx) => {
-                const imgUrl = img.url.startsWith("http") ? img.url : `${STATIC_BASE_URL}${img.url}`;
-                return (
-                  <a
-                    key={idx}
-                    href={imgUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block border-brutal border-foreground overflow-hidden hover:brightness-110"
+          ))}
+
+          {isGenerating && (
+            <div className="space-y-3 pb-2">
+              {pendingStandardPrompt && (
+                <>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                    {t("intelligenceHub.standardPrompt")}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => fillPromptFromHistory(pendingStandardPrompt)}
+                    title={t("intelligenceHub.reuseHistoryPrompt")}
+                    className="w-full text-left p-3 border-brutal border-dashed border-accent-cyan/50 bg-accent-cyan/5 font-mono text-sm whitespace-pre-wrap break-words transition-none hover:bg-accent-cyan/15 hover:border-accent-cyan focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan cursor-pointer"
                   >
-                    <img src={imgUrl} alt={`Generated ${idx + 1}`} className="w-full h-auto object-cover" loading="lazy" />
-                  </a>
-                );
-              })}
+                    {pendingStandardPrompt}
+                  </button>
+                </>
+              )}
+              <div className="flex flex-col items-center justify-center py-8 gap-4">
+                <div className="relative">
+                  <div className="w-16 h-16 border-brutal border-foreground/20 flex items-center justify-center bg-accent-cyan/5">
+                    <Sparkles className="w-8 h-8 text-accent-cyan" />
+                  </div>
+                  <div
+                    className="absolute -inset-2 border-2 border-accent-cyan/30 border-t-accent-cyan animate-spin"
+                    style={{ animationDuration: "1.5s" }}
+                  />
+                </div>
+                <div className="text-center space-y-1">
+                  <p className="text-xs font-bold uppercase tracking-widest">{t("intelligenceHub.generating")}</p>
+                  <p className="text-[10px] text-muted-foreground font-mono">{t("intelligenceHub.generatingHint")}</p>
+                </div>
+                <div className="flex gap-1.5">
+                  {[0, 1, 2, 3, 4].map((i) => (
+                    <div
+                      key={i}
+                      className="w-1.5 h-1.5 bg-accent-cyan rounded-full animate-bounce"
+                      style={{ animationDelay: `${i * 120}ms`, animationDuration: "0.8s" }}
+                    />
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
-        ) : (
+          )}
+        </div>
+
+        {standardGenHistory.length === 0 && !isGenerating && (
           <div className="flex items-start gap-4 pt-6">
             <div className="w-16 h-16 border-brutal border-foreground/30 flex items-center justify-center flex-shrink-0">
               <Zap className="w-8 h-8 text-foreground/30" />
@@ -567,6 +674,8 @@ const ChatView: React.FC<ChatViewProps> = ({
             </div>
           </div>
         )}
+
+        <div ref={historyBottomRef} className="h-px w-full shrink-0" aria-hidden />
       </div>
 
       <PresetLibrary
@@ -612,6 +721,7 @@ const ChatView: React.FC<ChatViewProps> = ({
 
         <div className="relative flex-1">
           <textarea
+            ref={promptInputRef}
             value={inputValue}
             onChange={onInputChange}
             onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), onSend())}

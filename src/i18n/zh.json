@@ -4,6 +4,22 @@
     "pricing": "定价",
     "workspace": "工作台"
   },
+  "onboarding": {
+    "progress": "第 {{current}} 步，共 {{total}} 步",
+    "welcomeTitle": "欢迎使用工作台",
+    "welcomeBody": "用几步快速了解界面分区：顶栏、左侧工具、中间画布和右侧 AI 生成。点「下一步」继续；之后再次登录不会再显示本引导。",
+    "headerTitle": "顶栏导航",
+    "headerBody": "这里可以切换工作台与定价页、调整语言与主题，查看积分，进入用户中心或退出登录。",
+    "toolbarTitle": "左侧工具与素材",
+    "toolbarBody": "竖条工具包含抠图、分层、放大等图像处理；文件夹按钮可打开素材侧栏，把资源拖到画布上使用。",
+    "canvasTitle": "中间画布",
+    "canvasBody": "在此拖拽、摆放与选中图片/视频；也可把文件拖入画布上传。生成结果会默认出现在画布上。",
+    "hubTitle": "右侧生成面板",
+    "hubBody": "标准模式用提示词生图/视频；可切换智能体做更复杂的对话式创作。本侧栏也会展示本会话内的生成记录。",
+    "next": "下一步",
+    "done": "开始使用",
+    "skip": "跳过引导"
+  },
   "pricing": {
     "title": "定价方案",
     "subtitle": "从免费探索到专业创作，随时升级或降级。",
@@ -171,6 +187,10 @@
     "generatingHint": "AI 正在创作中，请稍候...",
     "generatingCost": "生成中... 预估消耗 {{cost}} pts",
     "generationResult": "生成结果",
+    "sessionHistory": "本次会话",
+    "sessionHistoryHint": "仅内存记录，刷新后清空",
+    "standardPrompt": "提示词",
+    "reuseHistoryPrompt": "点击将提示词填入输入框",
     "imageUploadFailed": "图片上传失败",
     "uploading": "上传中...",
     "refImage": "参考图",

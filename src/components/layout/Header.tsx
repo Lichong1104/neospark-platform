@@ -48,7 +48,10 @@ const Header: React.FC = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <header className="h-14 bg-card border-b-brutal border-foreground flex items-center justify-between select-none">
+    <header
+      id="onboarding-header"
+      className="h-14 bg-card border-b-brutal border-foreground flex items-center justify-between select-none"
+    >
       {/* Left: Logo + Nav */}
       <div className="flex items-center gap-0">
         <div

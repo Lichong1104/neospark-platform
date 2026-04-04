@@ -1,5 +1,14 @@
 import React, { useRef, useCallback, useState } from "react";
-import { ZoomIn, ZoomOut, Maximize2, RotateCcw, Trash2, Copy, Download, PenTool } from "lucide-react";
+import {
+  ZoomIn,
+  ZoomOut,
+  Maximize2,
+  RotateCcw,
+  Trash2,
+  Copy,
+  Download,
+  PenTool,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
@@ -27,47 +36,62 @@ interface CanvasAreaProps {
 
 const CANVAS_IMAGE_MAX_SIZE = 256;
 
-const toCanvasSize = (width: number, height: number): { width: number; height: number } => {
+const toCanvasSize = (
+  width: number,
+  height: number
+): { width: number; height: number } => {
   if (width <= 0 || height <= 0) {
     return { width: CANVAS_IMAGE_MAX_SIZE, height: CANVAS_IMAGE_MAX_SIZE };
   }
-  const scale = Math.min(CANVAS_IMAGE_MAX_SIZE / width, CANVAS_IMAGE_MAX_SIZE / height);
+  const scale = Math.min(
+    CANVAS_IMAGE_MAX_SIZE / width,
+    CANVAS_IMAGE_MAX_SIZE / height
+  );
   return {
     width: Math.round(width * scale),
     height: Math.round(height * scale),
   };
 };
 
-const CanvasArea: React.FC<CanvasAreaProps> = ({ onImageSelect, canvasImages, onCanvasImagesChange, onFileDrop }) => {
+const CanvasArea: React.FC<CanvasAreaProps> = ({
+  onImageSelect,
+  canvasImages,
+  onCanvasImagesChange,
+  onFileDrop,
+}) => {
   const { t } = useTranslation();
   const images = canvasImages;
   const setImages = onCanvasImagesChange;
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [annotatingImage, setAnnotatingImage] = useState<CanvasImage | null>(null);
+  const [annotatingImage, setAnnotatingImage] = useState<CanvasImage | null>(
+    null
+  );
   const [isDragOver, setIsDragOver] = useState(false);
 
   const [zoom, setZoom] = useState(100);
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
-  
+
   const [isPanning, setIsPanning] = useState(false);
   const [isDraggingImage, setIsDraggingImage] = useState(false);
   const [draggedImageId, setDraggedImageId] = useState<string | null>(null);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [imageDragStart, setImageDragStart] = useState({ x: 0, y: 0 });
-  
+
   const canvasRef = useRef<HTMLDivElement>(null);
 
   const handleImageClick = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     const newSelectedId = selectedId === id ? null : id;
     setSelectedId(newSelectedId);
-    setImages(images.map((img) => ({ ...img, selected: img.id === newSelectedId })));
+    setImages(
+      images.map((img) => ({ ...img, selected: img.id === newSelectedId }))
+    );
     onImageSelect?.(newSelectedId);
   };
 
   const handleImageMouseDown = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    const img = images.find(i => i.id === id);
+    const img = images.find((i) => i.id === id);
     if (!img) return;
     setIsDraggingImage(true);
     setDraggedImageId(id);
@@ -76,29 +100,51 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onImageSelect, canvasImages, on
   };
 
   const handleCanvasMouseDown = (e: React.MouseEvent) => {
-    if (e.target === canvasRef.current || (e.target as HTMLElement).classList.contains('canvas-background')) {
+    if (
+      e.target === canvasRef.current ||
+      (e.target as HTMLElement).classList.contains("canvas-background")
+    ) {
       setIsPanning(true);
       setDragStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
       setSelectedId(null);
-      setImages(images.map(img => ({ ...img, selected: false })));
+      setImages(images.map((img) => ({ ...img, selected: false })));
       onImageSelect?.(null);
     }
   };
 
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (isPanning) {
-      setPanOffset({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y });
-    } else if (isDraggingImage && draggedImageId) {
-      const scale = zoom / 100;
-      const deltaX = (e.clientX - dragStart.x) / scale;
-      const deltaY = (e.clientY - dragStart.y) / scale;
-      setImages(images.map(img =>
-        img.id === draggedImageId
-          ? { ...img, x: imageDragStart.x + deltaX, y: imageDragStart.y + deltaY }
-          : img
-      ));
-    }
-  }, [isPanning, isDraggingImage, draggedImageId, dragStart, imageDragStart, zoom]);
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      if (isPanning) {
+        setPanOffset({
+          x: e.clientX - dragStart.x,
+          y: e.clientY - dragStart.y,
+        });
+      } else if (isDraggingImage && draggedImageId) {
+        const scale = zoom / 100;
+        const deltaX = (e.clientX - dragStart.x) / scale;
+        const deltaY = (e.clientY - dragStart.y) / scale;
+        setImages(
+          images.map((img) =>
+            img.id === draggedImageId
+              ? {
+                  ...img,
+                  x: imageDragStart.x + deltaX,
+                  y: imageDragStart.y + deltaY,
+                }
+              : img
+          )
+        );
+      }
+    },
+    [
+      isPanning,
+      isDraggingImage,
+      draggedImageId,
+      dragStart,
+      imageDragStart,
+      zoom,
+    ]
+  );
 
   const handleMouseUp = () => {
     setIsPanning(false);
@@ -106,14 +152,17 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onImageSelect, canvasImages, on
     setDraggedImageId(null);
   };
 
-  const handleZoomIn = () => setZoom(prev => Math.min(prev + 10, 200));
-  const handleZoomOut = () => setZoom(prev => Math.max(prev - 10, 25));
-  const handleResetView = () => { setZoom(100); setPanOffset({ x: 0, y: 0 }); };
+  const handleZoomIn = () => setZoom((prev) => Math.min(prev + 10, 200));
+  const handleZoomOut = () => setZoom((prev) => Math.max(prev - 10, 25));
+  const handleResetView = () => {
+    setZoom(100);
+    setPanOffset({ x: 0, y: 0 });
+  };
 
   const handleDeleteSelected = () => {
     if (!selectedId) return;
-    const deletedImage = images.find(img => img.id === selectedId);
-    setImages(images.filter(img => img.id !== selectedId));
+    const deletedImage = images.find((img) => img.id === selectedId);
+    setImages(images.filter((img) => img.id !== selectedId));
     setSelectedId(null);
     onImageSelect?.(null);
     toast.success(t("canvas.deleted", { name: deletedImage?.name }));
@@ -121,7 +170,7 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onImageSelect, canvasImages, on
 
   const handleDuplicateSelected = () => {
     if (!selectedId) return;
-    const original = images.find(img => img.id === selectedId);
+    const original = images.find((img) => img.id === selectedId);
     if (!original) return;
     const duplicate: CanvasImage = {
       ...original,
@@ -137,7 +186,7 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onImageSelect, canvasImages, on
 
   const handleDownloadSelected = async () => {
     if (!selectedId) return;
-    const img = images.find(i => i.id === selectedId);
+    const img = images.find((i) => i.id === selectedId);
     if (!img) return;
 
     const fileName = `${img.name}.${img.type === "video" ? "mp4" : "jpg"}`;
@@ -165,7 +214,7 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onImageSelect, canvasImages, on
 
   const handleAnnotateSelected = () => {
     if (!selectedId) return;
-    const img = images.find(i => i.id === selectedId);
+    const img = images.find((i) => i.id === selectedId);
     if (!img || img.type === "video") return;
     setAnnotatingImage(img);
   };
@@ -197,10 +246,12 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onImageSelect, canvasImages, on
   const handleWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault();
     const delta = e.deltaY > 0 ? -5 : 5;
-    setZoom(prev => Math.min(Math.max(prev + delta, 25), 200));
+    setZoom((prev) => Math.min(Math.max(prev + delta, 25), 200));
   }, []);
 
-  const selectedItem = selectedId ? images.find(i => i.id === selectedId) : null;
+  const selectedItem = selectedId
+    ? images.find((i) => i.id === selectedId)
+    : null;
 
   // ===== Drag & Drop file support =====
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -217,82 +268,90 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onImageSelect, canvasImages, on
     setIsDragOver(false);
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOver(false);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragOver(false);
 
-    const files = Array.from(e.dataTransfer.files).filter(
-      f => f.type.startsWith("image/") || f.type.startsWith("video/")
-    );
-    if (files.length === 0) return;
+      const files = Array.from(e.dataTransfer.files).filter(
+        (f) => f.type.startsWith("image/") || f.type.startsWith("video/")
+      );
+      if (files.length === 0) return;
 
-    // Calculate canvas-space position from drop point
-    const rect = canvasRef.current?.getBoundingClientRect();
-    const scale = zoom / 100;
-    const dropX = rect ? (e.clientX - rect.left - panOffset.x) / scale : 120;
-    const dropY = rect ? (e.clientY - rect.top - 40 - panOffset.y) / scale : 60; // 40 = header height
+      // Calculate canvas-space position from drop point
+      const rect = canvasRef.current?.getBoundingClientRect();
+      const scale = zoom / 100;
+      const dropX = rect ? (e.clientX - rect.left - panOffset.x) / scale : 120;
+      const dropY = rect
+        ? (e.clientY - rect.top - 40 - panOffset.y) / scale
+        : 60; // 40 = header height
 
-    // For immediate preview: read files as data URLs and add to canvas
-    files.forEach((file, idx) => {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const dataUrl = ev.target?.result as string;
-        const isVideo = file.type.startsWith("video/");
-        if (isVideo) {
-          const newItem: CanvasImage = {
-            id: Math.random().toString(36).substr(2, 8).toUpperCase(),
-            x: dropX + idx * 30,
-            y: dropY + idx * 30,
-            width: 320,
-            height: 180,
-            selected: false,
-            src: dataUrl,
-            name: file.name,
-            type: "video",
+      // For immediate preview: read files as data URLs and add to canvas
+      files.forEach((file, idx) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const dataUrl = ev.target?.result as string;
+          const isVideo = file.type.startsWith("video/");
+          if (isVideo) {
+            const newItem: CanvasImage = {
+              id: Math.random().toString(36).substr(2, 8).toUpperCase(),
+              x: dropX + idx * 30,
+              y: dropY + idx * 30,
+              width: 320,
+              height: 180,
+              selected: false,
+              src: dataUrl,
+              name: file.name,
+              type: "video",
+            };
+            onCanvasImagesChange([...canvasImages, newItem]);
+            return;
+          }
+
+          const preview = new Image();
+          preview.onload = () => {
+            const size = toCanvasSize(
+              preview.naturalWidth,
+              preview.naturalHeight
+            );
+            const newItem: CanvasImage = {
+              id: Math.random().toString(36).substr(2, 8).toUpperCase(),
+              x: dropX + idx * 30,
+              y: dropY + idx * 30,
+              width: size.width,
+              height: size.height,
+              selected: false,
+              src: dataUrl,
+              name: file.name,
+              type: "image",
+            };
+            onCanvasImagesChange([...canvasImages, newItem]);
           };
-          onCanvasImagesChange([...canvasImages, newItem]);
-          return;
-        }
-
-        const preview = new Image();
-        preview.onload = () => {
-          const size = toCanvasSize(preview.naturalWidth, preview.naturalHeight);
-          const newItem: CanvasImage = {
-            id: Math.random().toString(36).substr(2, 8).toUpperCase(),
-            x: dropX + idx * 30,
-            y: dropY + idx * 30,
-            width: size.width,
-            height: size.height,
-            selected: false,
-            src: dataUrl,
-            name: file.name,
-            type: "image",
+          preview.onerror = () => {
+            const newItem: CanvasImage = {
+              id: Math.random().toString(36).substr(2, 8).toUpperCase(),
+              x: dropX + idx * 30,
+              y: dropY + idx * 30,
+              width: CANVAS_IMAGE_MAX_SIZE,
+              height: CANVAS_IMAGE_MAX_SIZE,
+              selected: false,
+              src: dataUrl,
+              name: file.name,
+              type: "image",
+            };
+            onCanvasImagesChange([...canvasImages, newItem]);
           };
-          onCanvasImagesChange([...canvasImages, newItem]);
+          preview.src = dataUrl;
         };
-        preview.onerror = () => {
-          const newItem: CanvasImage = {
-            id: Math.random().toString(36).substr(2, 8).toUpperCase(),
-            x: dropX + idx * 30,
-            y: dropY + idx * 30,
-            width: CANVAS_IMAGE_MAX_SIZE,
-            height: CANVAS_IMAGE_MAX_SIZE,
-            selected: false,
-            src: dataUrl,
-            name: file.name,
-            type: "image",
-          };
-          onCanvasImagesChange([...canvasImages, newItem]);
-        };
-        preview.src = dataUrl;
-      };
-      reader.readAsDataURL(file);
-    });
+        reader.readAsDataURL(file);
+      });
 
-    // Also trigger upload callback so files get persisted to backend
-    onFileDrop?.(files, { x: dropX, y: dropY });
-  }, [zoom, panOffset, canvasImages, onCanvasImagesChange, onFileDrop]);
+      // Also trigger upload callback so files get persisted to backend
+      onFileDrop?.(files, { x: dropX, y: dropY });
+    },
+    [zoom, panOffset, canvasImages, onCanvasImagesChange, onFileDrop]
+  );
 
   return (
     <div
@@ -336,16 +395,28 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onImageSelect, canvasImages, on
         </div>
 
         <div className="flex items-center gap-1">
-          <button onClick={handleZoomOut} className="w-8 h-8 flex items-center justify-center hover:bg-secondary transition-none">
+          <button
+            onClick={handleZoomOut}
+            className="w-8 h-8 flex items-center justify-center hover:bg-secondary transition-none"
+          >
             <ZoomOut className="w-4 h-4" />
           </button>
-          <button onClick={handleZoomIn} className="w-8 h-8 flex items-center justify-center hover:bg-secondary transition-none">
+          <button
+            onClick={handleZoomIn}
+            className="w-8 h-8 flex items-center justify-center hover:bg-secondary transition-none"
+          >
             <ZoomIn className="w-4 h-4" />
           </button>
-          <button onClick={handleResetView} className="w-8 h-8 flex items-center justify-center hover:bg-secondary transition-none">
+          <button
+            onClick={handleResetView}
+            className="w-8 h-8 flex items-center justify-center hover:bg-secondary transition-none"
+          >
             <RotateCcw className="w-4 h-4" />
           </button>
-          <button onClick={handleFullscreen} className="w-8 h-8 flex items-center justify-center hover:bg-secondary transition-none">
+          <button
+            onClick={handleFullscreen}
+            className="w-8 h-8 flex items-center justify-center hover:bg-secondary transition-none"
+          >
             <Maximize2 className="w-4 h-4" />
           </button>
 
@@ -353,17 +424,30 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onImageSelect, canvasImages, on
             <>
               <div className="w-px h-5 bg-foreground/15 mx-1" />
               {selectedItem?.type !== "video" && (
-                <button onClick={handleAnnotateSelected} className="w-7 h-7 flex items-center justify-center bg-accent-yellow/20 hover:bg-accent-yellow/40 transition-none" title={t("canvas.annotate")}>
+                <button
+                  onClick={handleAnnotateSelected}
+                  className="w-7 h-7 flex items-center justify-center bg-accent-yellow/20 hover:bg-accent-yellow/40 transition-none"
+                  title={t("canvas.annotate")}
+                >
                   <PenTool className="w-3.5 h-3.5" />
                 </button>
               )}
-              <button onClick={handleDuplicateSelected} className="w-7 h-7 flex items-center justify-center hover:bg-accent-cyan/20 transition-none">
+              <button
+                onClick={handleDuplicateSelected}
+                className="w-7 h-7 flex items-center justify-center hover:bg-accent-cyan/20 transition-none"
+              >
                 <Copy className="w-3.5 h-3.5" />
               </button>
-              <button onClick={handleDownloadSelected} className="w-7 h-7 flex items-center justify-center hover:bg-accent-green/20 transition-none">
+              <button
+                onClick={handleDownloadSelected}
+                className="w-7 h-7 flex items-center justify-center hover:bg-accent-green/20 transition-none"
+              >
                 <Download className="w-3.5 h-3.5" />
               </button>
-              <button onClick={handleDeleteSelected} className="w-7 h-7 flex items-center justify-center hover:bg-accent-red/20 text-accent-red transition-none">
+              <button
+                onClick={handleDeleteSelected}
+                className="w-7 h-7 flex items-center justify-center hover:bg-accent-red/20 text-accent-red transition-none"
+              >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
             </>
@@ -384,7 +468,9 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onImageSelect, canvasImages, on
         <div
           className="absolute origin-center pointer-events-none"
           style={{
-            transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom / 100})`,
+            transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${
+              zoom / 100
+            })`,
             transformOrigin: "0 0",
           }}
         >
@@ -395,10 +481,19 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onImageSelect, canvasImages, on
               onMouseDown={(e) => handleImageMouseDown(e, img.id)}
               className={cn(
                 "absolute pointer-events-auto",
-                img.selected ? "ring-2 ring-accent-cyan ring-offset-1 ring-offset-background" : "",
-                isDraggingImage && draggedImageId === img.id ? "cursor-grabbing" : "cursor-pointer"
+                img.selected
+                  ? "ring-2 ring-accent-cyan ring-offset-1 ring-offset-background"
+                  : "",
+                isDraggingImage && draggedImageId === img.id
+                  ? "cursor-grabbing"
+                  : "cursor-pointer"
               )}
-              style={{ left: img.x, top: img.y, width: img.width, height: img.height }}
+              style={{
+                left: img.x,
+                top: img.y,
+                width: img.width,
+                height: img.height,
+              }}
             >
               <div className="w-full h-full overflow-hidden relative group shadow-lg">
                 {img.type === "video" ? (
@@ -412,11 +507,18 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({ onImageSelect, canvasImages, on
                     controls={img.selected}
                   />
                 ) : (
-                  <img src={img.src} alt={img.name} className="w-full h-full object-cover" draggable={false} />
+                  <img
+                    src={img.src}
+                    alt={img.name}
+                    className="w-full h-full object-cover"
+                    draggable={false}
+                  />
                 )}
                 {/* Name label on hover */}
                 <div className="absolute bottom-0 left-0 right-0 bg-foreground/80 text-card px-2 py-0.5 text-[10px] font-mono opacity-0 group-hover:opacity-100 transition-opacity truncate">
-                  {img.type === "video" && <span className="text-accent-purple mr-1">▶</span>}
+                  {img.type === "video" && (
+                    <span className="text-accent-purple mr-1">▶</span>
+                  )}
                   {img.name}
                 </div>
               </div>

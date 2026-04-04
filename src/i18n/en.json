@@ -4,6 +4,22 @@
     "pricing": "Pricing",
     "workspace": "Workspace"
   },
+  "onboarding": {
+    "progress": "Step {{current}} of {{total}}",
+    "welcomeTitle": "Welcome to the workspace",
+    "welcomeBody": "Take a quick tour: top bar, left tools, center canvas, and the AI panel on the right. Press Next to continue. You will not see this again on future logins.",
+    "headerTitle": "Top bar",
+    "headerBody": "Switch between workspace and pricing, change language or theme, check credits, open your account, or sign out.",
+    "toolbarTitle": "Left toolbar & assets",
+    "toolbarBody": "Tools for background removal, layers, upscale, and more. The folder button opens the asset sidebar—drag items onto the canvas.",
+    "canvasTitle": "Canvas",
+    "canvasBody": "Arrange and select images or videos, or drop files to upload. Generated results are placed on the canvas.",
+    "hubTitle": "Right generation panel",
+    "hubBody": "Use Standard mode for prompt-based images/video, or switch to Agent mode for chat-style workflows. Recent generations appear in this panel for the session.",
+    "next": "Next",
+    "done": "Get started",
+    "skip": "Skip tour"
+  },
   "pricing": {
     "title": "PRICING",
     "subtitle": "From free exploration to professional creation. Upgrade or downgrade anytime.",
@@ -170,6 +186,10 @@
     "generatingHint": "AI is creating, please wait...",
     "generatingCost": "Generating... estimated cost {{cost}} pts",
     "generationResult": "GENERATION RESULT",
+    "sessionHistory": "This session",
+    "sessionHistoryHint": "In-memory only; cleared on refresh",
+    "standardPrompt": "Prompt",
+    "reuseHistoryPrompt": "Click to fill the input",
     "imageUploadFailed": "Image upload failed",
     "uploading": "Uploading...",
     "refImage": "Reference image",
