@@ -48,12 +48,9 @@ const Header: React.FC = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <header
-      id="onboarding-header"
-      className="h-14 bg-card border-b-brutal border-foreground flex items-center justify-between select-none"
-    >
+    <header className="h-14 bg-card border-b-brutal border-foreground flex items-center justify-between select-none">
       {/* Left: Logo + Nav */}
-      <div className="flex items-center gap-0">
+      <div id="onboarding-header-nav" className="flex items-center gap-0">
         <div
           className="w-16 h-14 flex items-center justify-center cursor-pointer group border-r-brutal border-foreground shrink-0"
           onClick={() => navigate("/")}
@@ -82,7 +79,7 @@ const Header: React.FC = () => {
       </div>
 
       {/* Right: Actions */}
-      <div className="flex items-center gap-2 pr-4">
+      <div id="onboarding-header-actions" className="flex items-center gap-2 pr-4">
         {/* Language */}
         <button
           onClick={toggleLanguage}

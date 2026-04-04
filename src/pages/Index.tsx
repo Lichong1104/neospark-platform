@@ -248,7 +248,7 @@ const Index = () => {
       <Header />
 
       <main className="flex-1 flex overflow-hidden">
-        <div id="onboarding-toolbar" className="relative flex-shrink-0">
+        <div className="relative flex-shrink-0">
           <LeftToolbar
             isActive={selectedImage !== null}
             onToolSelect={(toolId) => console.log("Tool selected:", toolId)}
@@ -265,7 +265,7 @@ const Index = () => {
           />
         </div>
 
-        <div id="onboarding-canvas" className="flex-1 relative">
+        <div className="flex-1 relative">
           {activeView === "canvas" ? (
             <CanvasArea
               onImageSelect={setSelectedImage}
@@ -278,7 +278,7 @@ const Index = () => {
           )}
         </div>
 
-        <aside id="onboarding-hub" className="w-[400px] flex-shrink-0">
+        <aside id="onboarding-hub-panel" className="w-[400px] flex-shrink-0">
           <IntelligenceHub
             onImagesGenerated={handleImagesGenerated}
             onVideoGenerated={handleVideoGenerated}

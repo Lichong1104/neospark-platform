@@ -132,6 +132,7 @@ const LeftToolbar: React.FC<LeftToolbarProps> = ({
       <div className="h-full w-16 bg-card border-r-brutal border-foreground flex flex-col select-none">
         {/* Assets Button */}
         <button
+          id="onboarding-toolbar-assets"
           onClick={onAssetClick}
           className={cn(
             "w-full h-14 flex flex-col items-center justify-center border-b-brutal border-foreground transition-none",
@@ -154,7 +155,7 @@ const LeftToolbar: React.FC<LeftToolbarProps> = ({
         )}
 
         {/* Process Section */}
-        <div className="flex flex-col">
+        <div id="onboarding-toolbar-process" className="flex flex-col">
           <div className="px-1 py-2 text-[10px] font-bold uppercase text-center text-muted-foreground border-b border-foreground/15">
             {t("workspace.process")}
           </div>
@@ -187,7 +188,7 @@ const LeftToolbar: React.FC<LeftToolbarProps> = ({
         </div>
 
         {/* Enhance Section */}
-        <div className="flex flex-col">
+        <div id="onboarding-toolbar-enhance" className="flex flex-col">
           <div className="px-1 py-2 text-[10px] font-bold uppercase text-center text-muted-foreground border-b border-foreground/15 bg-accent-cyan/10">
             {t("workspace.enhance")}
           </div>
@@ -220,7 +221,7 @@ const LeftToolbar: React.FC<LeftToolbarProps> = ({
         </div>
 
         {/* Quality Section - wired to Upscale API */}
-        <div className="border-t border-foreground/15 mt-auto">
+        <div id="onboarding-toolbar-quality" className="border-t border-foreground/15 mt-auto">
           <div className="px-1 py-2 text-[10px] font-bold uppercase text-center text-muted-foreground">
             {t("workspace.quality")}
           </div>

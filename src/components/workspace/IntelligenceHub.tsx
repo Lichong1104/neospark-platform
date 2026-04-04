@@ -346,7 +346,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
       ) : (
         <>
           {/* IMAGE / VIDEO sub-tabs */}
-          <div className="flex border-b border-foreground/10">
+          <div id="onboarding-hub-tabs" className="flex border-b border-foreground/10">
             <button
               onClick={() => setGenSubTab("IMAGE")}
               className={cn(
@@ -541,7 +541,7 @@ const ChatView: React.FC<ChatViewProps> = ({
           <Sparkles className="w-4 h-4 text-accent-pink" />
           {t("intelligenceHub.generationMode")}
         </div>
-        <div className="flex border-brutal border-foreground overflow-hidden">
+        <div id="onboarding-hub-mode" className="flex border-brutal border-foreground overflow-hidden">
           <button
             onClick={() => onModeToggle(false)}
             className="flex-1 py-2 font-bold text-sm uppercase tracking-wider transition-none bg-foreground text-card"
@@ -684,7 +684,10 @@ const ChatView: React.FC<ChatViewProps> = ({
         onSelectPreset={onSelectPreset}
       />
 
-      <div className="flex-1 flex flex-col p-4 border-t-brutal border-foreground bg-card">
+      <div
+        id="onboarding-hub-compose"
+        className="flex-1 flex flex-col p-4 border-t-brutal border-foreground bg-card"
+      >
         <button
           onClick={onTogglePresets}
           className="w-full mb-3 py-2 font-bold text-sm uppercase flex items-center justify-center gap-2 border-brutal border-foreground transition-none brutal-press bg-accent-pink text-foreground brutal-shadow hover:brightness-110"
@@ -753,7 +756,7 @@ const ChatView: React.FC<ChatViewProps> = ({
               }
             }}
             placeholder={t("intelligenceHub.inputPlaceholder")}
-            className="w-full h-full min-h-[120px] md:min-h-[160px] xl:min-h-[200px] p-3 border-brutal border-foreground bg-background font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-accent-cyan"
+            className="w-full h-full min-h-[72px] md:min-h-[96px] xl:min-h-[120px] p-3 border-brutal border-foreground bg-background font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-accent-cyan"
           />
         </div>
 

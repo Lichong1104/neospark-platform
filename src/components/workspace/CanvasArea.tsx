@@ -381,7 +381,10 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
       )}
 
       {/* Canvas Header Bar */}
-      <div className="absolute top-0 left-0 right-0 h-11 bg-card/95 backdrop-blur-sm border-b border-foreground/20 flex items-center justify-between px-3 z-10">
+      <div
+        id="onboarding-canvas-toolbar"
+        className="absolute top-0 left-0 right-0 h-11 bg-card/95 backdrop-blur-sm border-b border-foreground/20 flex items-center justify-between px-3 z-10"
+      >
         <div className="flex items-center gap-2 text-[11px] font-mono text-muted-foreground">
           <span className="px-2.5 py-1 bg-secondary/50 border border-foreground/10">
             {t("canvas.objects")}: {images.length}
@@ -457,6 +460,7 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
 
       {/* Canvas Area */}
       <div
+        id="onboarding-canvas-stage"
         ref={canvasRef}
         className={cn(
           "absolute inset-0 top-10 canvas-background",
