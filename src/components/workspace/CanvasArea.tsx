@@ -104,12 +104,9 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
     const multi = isMultiSelectGesture(e);
 
     if (!multi) {
-      // Single-select (toggle off if it's the only selection)
-      if (selectedIds.length === 1 && selectedIds[0] === id) {
-        setSelection([]);
-      } else {
-        setSelection([id]);
-      }
+      // Single-select: always keep this item selected.
+      // (Deselect via clicking empty canvas.)
+      setSelection([id]);
       return;
     }
 
