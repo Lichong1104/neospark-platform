@@ -62,7 +62,8 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
   const { t } = useTranslation();
   const images = canvasImages;
   const setImages = onCanvasImagesChange;
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const primarySelectedId = selectedIds.length > 0 ? selectedIds[selectedIds.length - 1] : null;
   const [annotatingImage, setAnnotatingImage] = useState<CanvasImage | null>(
     null
   );
@@ -79,20 +80,66 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
 
   const canvasRef = useRef<HTMLDivElement>(null);
 
+  const syncSelectionToImages = useCallback(
+    (nextSelectedIds: string[]) => {
+      const selectedSet = new Set(nextSelectedIds);
+      setImages(images.map((img) => ({ ...img, selected: selectedSet.has(img.id) })));
+    },
+    [images, setImages]
+  );
+
+  const setSelection = useCallback(
+    (nextSelectedIds: string[]) => {
+      setSelectedIds(nextSelectedIds);
+      syncSelectionToImages(nextSelectedIds);
+      onImageSelect?.(nextSelectedIds.length > 0 ? nextSelectedIds[nextSelectedIds.length - 1] : null);
+    },
+    [onImageSelect, syncSelectionToImages]
+  );
+
+  const isMultiSelectGesture = (e: React.MouseEvent) => !!(e.ctrlKey || e.metaKey || e.shiftKey);
+
   const handleImageClick = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    const newSelectedId = selectedId === id ? null : id;
-    setSelectedId(newSelectedId);
-    setImages(
-      images.map((img) => ({ ...img, selected: img.id === newSelectedId }))
-    );
-    onImageSelect?.(newSelectedId);
+    const multi = isMultiSelectGesture(e);
+
+    if (!multi) {
+      // Single-select (toggle off if it's the only selection)
+      if (selectedIds.length === 1 && selectedIds[0] === id) {
+        setSelection([]);
+      } else {
+        setSelection([id]);
+      }
+      return;
+    }
+
+    // Multi-select: toggle membership and keep order; last clicked becomes primary.
+    const exists = selectedIds.includes(id);
+    const next = exists ? selectedIds.filter((x) => x !== id) : [...selectedIds, id];
+    setSelection(next);
   };
 
   const handleImageMouseDown = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     const img = images.find((i) => i.id === id);
     if (!img) return;
+
+    // Ensure the dragged image is part of current selection.
+    // - Without modifiers: if clicking a non-selected image, select only it.
+    // - With modifiers: toggle like click behavior (so user can Ctrl+drag to add/remove).
+    const multi = isMultiSelectGesture(e);
+    if (!multi) {
+      if (!selectedIds.includes(id)) {
+        setSelection([id]);
+      } else if (selectedIds.length === 0) {
+        setSelection([id]);
+      }
+    } else {
+      const exists = selectedIds.includes(id);
+      const next = exists ? selectedIds.filter((x) => x !== id) : [...selectedIds, id];
+      setSelection(next);
+    }
+
     setIsDraggingImage(true);
     setDraggedImageId(id);
     setDragStart({ x: e.clientX, y: e.clientY });
@@ -106,9 +153,7 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
     ) {
       setIsPanning(true);
       setDragStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
-      setSelectedId(null);
-      setImages(images.map((img) => ({ ...img, selected: false })));
-      onImageSelect?.(null);
+      setSelection([]);
     }
   };
 
@@ -160,38 +205,53 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
   };
 
   const handleDeleteSelected = () => {
-    if (!selectedId) return;
-    const deletedImage = images.find((img) => img.id === selectedId);
-    setImages(images.filter((img) => img.id !== selectedId));
-    setSelectedId(null);
-    onImageSelect?.(null);
-    toast.success(t("canvas.deleted", { name: deletedImage?.name }));
+    if (selectedIds.length === 0) return;
+    const selectedSet = new Set(selectedIds);
+    const deletedPrimary = primarySelectedId
+      ? images.find((img) => img.id === primarySelectedId)
+      : undefined;
+    setImages(images.filter((img) => !selectedSet.has(img.id)));
+    setSelection([]);
+    toast.success(
+      t("canvas.deleted", {
+        name:
+          selectedIds.length === 1
+            ? deletedPrimary?.name
+            : `${selectedIds.length} items`,
+      })
+    );
   };
 
   const handleDuplicateSelected = () => {
-    if (!selectedId) return;
-    const original = images.find((img) => img.id === selectedId);
-    if (!original) return;
-    const duplicate: CanvasImage = {
+    if (selectedIds.length === 0) return;
+    const selectedSet = new Set(selectedIds);
+    const originals = images.filter((img) => selectedSet.has(img.id));
+    if (originals.length === 0) return;
+
+    const duplicates: CanvasImage[] = originals.map((original, idx) => ({
       ...original,
       id: Math.random().toString(36).substr(2, 8).toUpperCase(),
-      x: original.x + 30,
-      y: original.y + 30,
+      x: original.x + 30 + idx * 10,
+      y: original.y + 30 + idx * 10,
       selected: false,
       name: `${original.name}_copy`,
-    };
-    setImages([...images, duplicate]);
-    toast.success(t("canvas.duplicated", { name: original.name }));
+    }));
+    setImages([...images, ...duplicates]);
+    toast.success(
+      t("canvas.duplicated", {
+        name: originals.length === 1 ? originals[0].name : `${originals.length} items`,
+      })
+    );
   };
 
   const handleDownloadSelected = async () => {
-    if (!selectedId) return;
-    const img = images.find((i) => i.id === selectedId);
-    if (!img) return;
+    if (selectedIds.length === 0) return;
+    const selectedSet = new Set(selectedIds);
+    const items = images.filter((i) => selectedSet.has(i.id));
+    if (items.length === 0) return;
 
-    const fileName = `${img.name}.${img.type === "video" ? "mp4" : "jpg"}`;
-
-    try {
+    const downloadOne = async (img: CanvasImage) => {
+      const fileName = `${img.name}.${img.type === "video" ? "mp4" : "jpg"}`;
       const url = toFetchableAssetUrl(img.src);
       const response = await fetch(url, { credentials: "include" });
       if (!response.ok) {
@@ -206,15 +266,25 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
       link.click();
       link.remove();
       URL.revokeObjectURL(blobUrl);
-      toast.success(t("canvas.downloading", { name: img.name }));
+    };
+
+    try {
+      for (const img of items) {
+        await downloadOne(img);
+      }
+      toast.success(
+        t("canvas.downloading", {
+          name: items.length === 1 ? items[0].name : `${items.length} items`,
+        })
+      );
     } catch {
       toast.error(t("assetSidebar.downloadFailed"));
     }
   };
 
   const handleAnnotateSelected = () => {
-    if (!selectedId) return;
-    const img = images.find((i) => i.id === selectedId);
+    if (selectedIds.length !== 1) return;
+    const img = images.find((i) => i.id === selectedIds[0]);
     if (!img || img.type === "video") return;
     setAnnotatingImage(img);
   };
@@ -249,8 +319,8 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
     setZoom((prev) => Math.min(Math.max(prev + delta, 25), 200));
   }, []);
 
-  const selectedItem = selectedId
-    ? images.find((i) => i.id === selectedId)
+  const selectedItem = primarySelectedId
+    ? images.find((i) => i.id === primarySelectedId)
     : null;
 
   // ===== Drag & Drop file support =====
@@ -423,10 +493,10 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
             <Maximize2 className="w-4 h-4" />
           </button>
 
-          {selectedId && (
+          {selectedIds.length > 0 && (
             <>
               <div className="w-px h-5 bg-foreground/15 mx-1" />
-              {selectedItem?.type !== "video" && (
+              {selectedIds.length === 1 && selectedItem?.type !== "video" && (
                 <button
                   onClick={handleAnnotateSelected}
                   className="w-7 h-7 flex items-center justify-center bg-accent-yellow/20 hover:bg-accent-yellow/40 transition-none"
