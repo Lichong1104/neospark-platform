@@ -209,6 +209,7 @@
     "imageUploadFailed": "Image upload failed",
     "uploading": "Uploading...",
     "refImage": "Reference image",
+    "multiRefModelUnsupported": "gemini-2.5-flash-image does not support multi-image references. Please switch to gemini-3.1-flash-image-preview or gemini-3-pro-image-preview.",
     "presetWorkflows": "Preset Workflows",
     "nodeLibrary": "Node Library",
     "dragNodesHint": "Drag nodes to canvas to build workflows",

@@ -100,6 +100,10 @@ export interface GenerateImageParams {
   ref_image_path?: string;
   /** 来自 POST /storage/upload，与 ref_image_path 二选一 */
   ref_upload_id?: string;
+  /** 多张参考图 upload_id，仅 Gemini 3 Pro 支持 */
+  ref_upload_ids?: string[];
+  /** 多张参考图路径，仅 Gemini 3 Pro 支持 */
+  ref_image_paths?: string[];
   strength?: number;
   provider?: "ark" | "volcengine" | "gemini";
   optimize_prompt?: boolean;

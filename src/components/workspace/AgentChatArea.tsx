@@ -1,7 +1,13 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { 
-  Send, 
-  Sparkles, 
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
+import {
+  Send,
+  Sparkles,
   Grid3X3,
   User,
   Image as ImageIcon,
@@ -12,10 +18,13 @@ import {
   Check,
   Pencil,
   Upload,
-  Download
+  Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { BrutalDropdown, type DropdownOption } from "@/components/ui/brutal-dropdown";
+import {
+  BrutalDropdown,
+  type DropdownOption,
+} from "@/components/ui/brutal-dropdown";
 import { AgentResponseCard, type PromptConfig } from "./AgentResponseCard";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -23,11 +32,21 @@ import drawingApi from "@/api/drawing";
 import storageApi from "@/api/storage";
 import { STATIC_BASE_URL } from "@/api/request";
 import { useGenerationPolling } from "@/hooks/useGenerationPolling";
-import type { GenerateImageParams, MessageStatusResponse, ModelsConfigMap } from "@/types/drawing";
+import type {
+  GenerateImageParams,
+  MessageStatusResponse,
+  ModelsConfigMap,
+} from "@/types/drawing";
 import JSZip from "jszip";
 import { toFetchableAssetUrl } from "@/lib/assetFetchUrl";
+import type { CanvasImage } from "./CanvasArea";
 
-type StatusType = "ecommerce" | "optimizer" | "photographer" | "custom" | "offline";
+type StatusType =
+  | "ecommerce"
+  | "optimizer"
+  | "photographer"
+  | "custom"
+  | "offline";
 
 /** 电商详情页后端固定模型（文档） */
 const ECOMMERCE_MODEL = "gemini-3.1-flash-image-preview";
@@ -38,7 +57,11 @@ async function pollMessageUntilTerminal(
 ): Promise<MessageStatusResponse> {
   for (;;) {
     const res = await drawingApi.getMessageStatus(messageId);
-    if (res.status === "completed" || res.status === "failed" || res.status === "cancelled") {
+    if (
+      res.status === "completed" ||
+      res.status === "failed" ||
+      res.status === "cancelled"
+    ) {
       return res;
     }
     await new Promise((r) => setTimeout(r, intervalMs));
@@ -85,30 +108,63 @@ interface AgentChatAreaProps {
   agents: Agent[];
   onImagesGenerated?: (images: { url: string; local_path: string }[]) => void;
   /** 画布当前选中的图片，用于「使用画布图片」作为产品参考图 */
-  selectedCanvasImage?: { src: string; name: string; type?: "image" | "video" } | null;
+  selectedCanvasImage?: {
+    src: string;
+    name: string;
+    type?: "image" | "video";
+  } | null;
+  selectedCanvasImages?: CanvasImage[];
 }
 
 // ===== Ecommerce Welcome Message Component =====
-const EcommerceWelcome: React.FC<{ agentColor: string; agentIcon: React.ReactNode }> = ({ agentColor, agentIcon }) => {
+const EcommerceWelcome: React.FC<{
+  agentColor: string;
+  agentIcon: React.ReactNode;
+}> = ({ agentColor, agentIcon }) => {
   const { t } = useTranslation();
   return (
     <div className="flex items-start gap-3 animate-fade-in">
-      <div className={cn("w-10 h-10 border-brutal border-foreground flex items-center justify-center flex-shrink-0", agentColor)}>
+      <div
+        className={cn(
+          "w-10 h-10 border-brutal border-foreground flex items-center justify-center flex-shrink-0",
+          agentColor
+        )}
+      >
         {agentIcon}
       </div>
       <div className="flex-1">
         <div className="flex items-center gap-2 mb-1">
-          <span className="font-bold text-sm">{t("agents.ecommerce").toUpperCase()}_AGENT</span>
+          <span className="font-bold text-sm">
+            {t("agents.ecommerce").toUpperCase()}_AGENT
+          </span>
         </div>
         <div className="text-sm bg-secondary/30 border border-foreground/10 p-4 space-y-3 whitespace-pre-wrap">
           <p className="font-bold">{t("ecommerceAgent.greeting")}</p>
           <ol className="list-decimal list-inside space-y-1.5 text-muted-foreground">
-            <li><strong>{t("ecommerceAgent.field1Label")}</strong>：{t("ecommerceAgent.field1Example")}</li>
-            <li><strong>{t("ecommerceAgent.field2Label")}</strong>：{t("ecommerceAgent.field2Example")}</li>
-            <li><strong>{t("ecommerceAgent.field3Label")}</strong>：{t("ecommerceAgent.field3Example")}</li>
-            <li><strong>{t("ecommerceAgent.field4Label")}</strong>：{t("ecommerceAgent.field4Example")}</li>
-            <li><strong>{t("ecommerceAgent.field5Label")}</strong>：{t("ecommerceAgent.field5Example")}</li>
-            <li><strong>{t("ecommerceAgent.field6Label")}</strong>：{t("ecommerceAgent.field6Example")}</li>
+            <li>
+              <strong>{t("ecommerceAgent.field1Label")}</strong>：
+              {t("ecommerceAgent.field1Example")}
+            </li>
+            <li>
+              <strong>{t("ecommerceAgent.field2Label")}</strong>：
+              {t("ecommerceAgent.field2Example")}
+            </li>
+            <li>
+              <strong>{t("ecommerceAgent.field3Label")}</strong>：
+              {t("ecommerceAgent.field3Example")}
+            </li>
+            <li>
+              <strong>{t("ecommerceAgent.field4Label")}</strong>：
+              {t("ecommerceAgent.field4Example")}
+            </li>
+            <li>
+              <strong>{t("ecommerceAgent.field5Label")}</strong>：
+              {t("ecommerceAgent.field5Example")}
+            </li>
+            <li>
+              <strong>{t("ecommerceAgent.field6Label")}</strong>：
+              {t("ecommerceAgent.field6Example")}
+            </li>
           </ol>
         </div>
       </div>
@@ -146,15 +202,24 @@ const EcommerceResultGrid: React.FC<{
 
   return (
     <div className="flex items-start gap-3 animate-fade-in">
-      <div className={cn("w-10 h-10 border-brutal border-foreground flex items-center justify-center flex-shrink-0", agentColor)}>
+      <div
+        className={cn(
+          "w-10 h-10 border-brutal border-foreground flex items-center justify-center flex-shrink-0",
+          agentColor
+        )}
+      >
         {agentIcon}
       </div>
       <div className="flex-1 space-y-3">
         <div className="flex items-center gap-2 mb-1">
-          <span className="font-bold text-sm">{t("agents.ecommerce").toUpperCase()}_AGENT</span>
+          <span className="font-bold text-sm">
+            {t("agents.ecommerce").toUpperCase()}_AGENT
+          </span>
         </div>
-        <p className="text-sm text-muted-foreground">{t("ecommerceAgent.resultReady")}</p>
-        
+        <p className="text-sm text-muted-foreground">
+          {t("ecommerceAgent.resultReady")}
+        </p>
+
         {/* 10 panels: 5×2 */}
         <div className="grid grid-cols-5 gap-1.5 border-brutal border-foreground p-1.5 bg-secondary/10">
           {images.slice(0, 10).map((img, idx) => (
@@ -203,7 +268,9 @@ const EcommerceResultGrid: React.FC<{
             disabled={confirmDisabled}
             className={cn(
               "flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase border-brutal border-foreground bg-accent-cyan hover:brightness-110 brutal-press",
-              confirmDisabled ? "opacity-50 cursor-not-allowed hover:brightness-100" : ""
+              confirmDisabled
+                ? "opacity-50 cursor-not-allowed hover:brightness-100"
+                : ""
             )}
           >
             <Check className="w-3 h-3" />
@@ -224,7 +291,15 @@ const EcommercePreviewGrid: React.FC<{
   onModify: () => void;
   agentColor: string;
   agentIcon: React.ReactNode;
-}> = ({ previewImage, cost, onRegenerate, onConfirm, onModify, agentColor, agentIcon }) => {
+}> = ({
+  previewImage,
+  cost,
+  onRegenerate,
+  onConfirm,
+  onModify,
+  agentColor,
+  agentIcon,
+}) => {
   const { t } = useTranslation();
   const getImageUrl = (url: string) => {
     if (!url) return url;
@@ -237,14 +312,23 @@ const EcommercePreviewGrid: React.FC<{
 
   return (
     <div className="flex items-start gap-3 animate-fade-in">
-      <div className={cn("w-10 h-10 border-brutal border-foreground flex items-center justify-center flex-shrink-0", agentColor)}>
+      <div
+        className={cn(
+          "w-10 h-10 border-brutal border-foreground flex items-center justify-center flex-shrink-0",
+          agentColor
+        )}
+      >
         {agentIcon}
       </div>
       <div className="flex-1 space-y-3">
         <div className="flex items-center gap-2 mb-1">
-          <span className="font-bold text-sm">{t("agents.ecommerce").toUpperCase()}_AGENT</span>
+          <span className="font-bold text-sm">
+            {t("agents.ecommerce").toUpperCase()}_AGENT
+          </span>
         </div>
-        <p className="text-sm text-muted-foreground">{t("ecommerceAgent.resultReady")}</p>
+        <p className="text-sm text-muted-foreground">
+          {t("ecommerceAgent.resultReady")}
+        </p>
 
         <div className="border-brutal border-foreground p-1.5 bg-secondary/10 w-full max-w-xs overflow-hidden">
           <a
@@ -255,7 +339,9 @@ const EcommercePreviewGrid: React.FC<{
           >
             <img
               src={getImageUrl(previewImage.url)}
-              alt={t("ecommerceAgent.previewAlt", { defaultValue: "Ecommerce 9-grid preview" })}
+              alt={t("ecommerceAgent.previewAlt", {
+                defaultValue: "Ecommerce 9-grid preview",
+              })}
               className="block w-full max-h-96 object-contain hover:brightness-110 transition-none"
             />
           </a>
@@ -306,7 +392,10 @@ const PastedImagesPreview: React.FC<{
   return (
     <div className="flex items-center gap-2 mb-2 flex-wrap">
       {images.map((src, idx) => (
-        <div key={idx} className="relative w-14 h-14 border border-foreground/20 overflow-hidden group">
+        <div
+          key={idx}
+          className="relative w-14 h-14 border border-foreground/20 overflow-hidden group"
+        >
           <img src={src} alt="" className="w-full h-full object-cover" />
           <button
             onClick={() => onRemove(idx)}
@@ -330,6 +419,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
   agents,
   onImagesGenerated,
   selectedCanvasImage,
+  selectedCanvasImages: _selectedCanvasImages,
 }) => {
   const { t } = useTranslation();
   const [inputValue, setInputValue] = useState("");
@@ -337,28 +427,45 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [aspectRatio, setAspectRatio] = useState("1:1");
   const [resolution, setResolution] = useState("1K");
-  const [model, setModel] = useState("gemini-2.5-flash-image");
-  const [modelsConfig, setModelsConfig] = useState<ModelsConfigMap | null>(null);
+  const [model, setModel] = useState("gemini-3.1-flash-image-preview");
+  const [modelsConfig, setModelsConfig] = useState<ModelsConfigMap | null>(
+    null
+  );
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [pastedPreviews, setPastedPreviews] = useState<string[]>([]);
   const [pastedPaths, setPastedPaths] = useState<string[]>([]);
   /** 电商模式：产品参考图（粘贴/上传/画布），最多选 2 张；后端接口只需要其一的 ref_upload_id */
-  const [productRefs, setProductRefs] = useState<{ preview: string; uploadId: string }[]>([]);
+  const [productRefs, setProductRefs] = useState<
+    { preview: string; uploadId: string }[]
+  >([]);
   const [isUploadingPaste, setIsUploadingPaste] = useState(false);
-  const [ecommerceBatchProgress, setEcommerceBatchProgress] = useState<{ current: number; total: number } | null>(null);
+  const [ecommerceBatchProgress, setEcommerceBatchProgress] = useState<{
+    current: number;
+    total: number;
+  } | null>(null);
   const [lastUserContent, setLastUserContent] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const lastEcommerceCtxRef = useRef<{ refUploadId: string; prompt: string; phase1MessageId?: string } | null>(null);
+  const lastEcommerceCtxRef = useRef<{
+    refUploadId: string;
+    prompt: string;
+    phase1MessageId?: string;
+  } | null>(null);
   const polling = useGenerationPolling();
 
   const isEcommerce = agentStatus === "ecommerce";
-  const currentAgent = agents.find(a => a.id === agentStatus) || agents[0];
-  const currentModelConfig = useMemo(() => modelsConfig?.[model], [modelsConfig, model]);
+  const currentAgent = agents.find((a) => a.id === agentStatus) || agents[0];
+  const currentModelConfig = useMemo(
+    () => modelsConfig?.[model],
+    [modelsConfig, model]
+  );
 
   useEffect(() => {
-    drawingApi.getModelsConfig().then(setModelsConfig).catch(() => {});
+    drawingApi
+      .getModelsConfig()
+      .then(setModelsConfig)
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -368,8 +475,10 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
     if (!modelIds.length) return;
 
     if (!modelsConfig[model]) {
-      const firstModelId =
-        isEcommerce ? modelIds.find((id) => modelsConfig[id]?.provider === "gemini") ?? modelIds[0] : modelIds[0];
+      const firstModelId = isEcommerce
+        ? modelIds.find((id) => modelsConfig[id]?.provider === "gemini") ??
+          modelIds[0]
+        : modelIds[0];
       const firstModel = modelsConfig[firstModelId];
       setModel(firstModelId);
       setResolution(firstModel.supported_resolutions[0]?.value ?? "1K");
@@ -380,14 +489,20 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
   useEffect(() => {
     if (!currentModelConfig) return;
 
-    const hasResolution = currentModelConfig.supported_resolutions.some((r) => r.value === resolution);
+    const hasResolution = currentModelConfig.supported_resolutions.some(
+      (r) => r.value === resolution
+    );
     if (!hasResolution) {
       setResolution(currentModelConfig.supported_resolutions[0]?.value ?? "1K");
     }
 
-    const hasAspectRatio = currentModelConfig.supported_aspect_ratios.some((ar) => ar.value === aspectRatio);
+    const hasAspectRatio = currentModelConfig.supported_aspect_ratios.some(
+      (ar) => ar.value === aspectRatio
+    );
     if (!hasAspectRatio) {
-      setAspectRatio(currentModelConfig.supported_aspect_ratios[0]?.value ?? "1:1");
+      setAspectRatio(
+        currentModelConfig.supported_aspect_ratios[0]?.value ?? "1:1"
+      );
     }
   }, [currentModelConfig, resolution, aspectRatio]);
 
@@ -404,7 +519,10 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
         role: "agent",
         content: "",
         isWelcome: true,
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        timestamp: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
       };
       setMessages([welcomeMsg]);
     } else {
@@ -419,11 +537,14 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
         polling.reset();
         return;
       }
-      setMessages(prev => {
+      setMessages((prev) => {
         const updated = [...prev];
         let lastAgentIdx = -1;
         for (let i = updated.length - 1; i >= 0; i--) {
-          if (updated[i].role === "agent" && updated[i].status === "generating") {
+          if (
+            updated[i].role === "agent" &&
+            updated[i].status === "generating"
+          ) {
             lastAgentIdx = i;
             break;
           }
@@ -456,11 +577,14 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
         polling.reset();
         return;
       }
-      setMessages(prev => {
+      setMessages((prev) => {
         const updated = [...prev];
         let lastAgentIdx = -1;
         for (let i = updated.length - 1; i >= 0; i--) {
-          if (updated[i].role === "agent" && updated[i].status === "generating") {
+          if (
+            updated[i].role === "agent" &&
+            updated[i].status === "generating"
+          ) {
             lastAgentIdx = i;
             break;
           }
@@ -478,7 +602,14 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
       toast.error(polling.error || t("agentChat.generationFailed"));
       polling.reset();
     }
-  }, [polling.status, polling.images, polling.error, isEcommerce, t, onImagesGenerated]);
+  }, [
+    polling.status,
+    polling.images,
+    polling.error,
+    isEcommerce,
+    t,
+    onImagesGenerated,
+  ]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -493,22 +624,25 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
     setInputValue(value);
   };
 
-  const uploadProductFile = useCallback(async (file: File) => {
-    setIsUploadingPaste(true);
-    try {
-      const preview = URL.createObjectURL(file);
-      const res = await storageApi.uploadFile(file, "image");
-      setProductRefs((prev) => {
-        if (prev.length >= 2) return prev;
-        return [...prev, { preview, uploadId: res.upload_id }];
-      });
-      toast.success(t("intelligenceHub.imagePasted"));
-    } catch {
-      toast.error(t("intelligenceHub.imageUploadFailed"));
-    } finally {
-      setIsUploadingPaste(false);
-    }
-  }, [t]);
+  const uploadProductFile = useCallback(
+    async (file: File) => {
+      setIsUploadingPaste(true);
+      try {
+        const preview = URL.createObjectURL(file);
+        const res = await storageApi.uploadFile(file, "image");
+        setProductRefs((prev) => {
+          if (prev.length >= 2) return prev;
+          return [...prev, { preview, uploadId: res.upload_id }];
+        });
+        toast.success(t("intelligenceHub.imagePasted"));
+      } catch {
+        toast.error(t("intelligenceHub.imageUploadFailed"));
+      } finally {
+        setIsUploadingPaste(false);
+      }
+    },
+    [t]
+  );
 
   const handlePaste = useCallback(
     (e: React.ClipboardEvent) => {
@@ -551,9 +685,13 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
       const blob = await r.blob();
       const base = selectedCanvasImage.name?.trim() || "canvas";
       const safeName = base.replace(/[/\\?%*:|"<>]/g, "_");
-      const file = new File([blob], safeName.includes(".") ? safeName : `${safeName}.png`, {
-        type: blob.type || "image/png",
-      });
+      const file = new File(
+        [blob],
+        safeName.includes(".") ? safeName : `${safeName}.png`,
+        {
+          type: blob.type || "image/png",
+        }
+      );
       await uploadProductFile(file);
     } catch {
       toast.error(t("ecommerceAgent.useCanvasFailed"));
@@ -591,8 +729,13 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
       id: Date.now().toString(),
       role: "user",
       content: userContent,
-      userImages: isEcommerce ? productRefs.map((p) => p.preview) : [...pastedPreviews],
-      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      userImages: isEcommerce
+        ? productRefs.map((p) => p.preview)
+        : [...pastedPreviews],
+      timestamp: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
     };
 
     const savedPaths = [...pastedPaths];
@@ -616,7 +759,10 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
         content: t("ecommerceAgent.generatingDetail"),
         status: "generating",
         ecommercePhase: "phase1",
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        timestamp: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
       };
       setMessages((prev) => [...prev, agentMessage]);
 
@@ -643,11 +789,15 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
             type: 1,
           });
 
-          toast.info(`${t("ecommerceAgent.phase1")} · ≈ ${phase1Res.estimated_cost} pts`);
+          toast.info(
+            `${t("ecommerceAgent.phase1")} · ≈ ${phase1Res.estimated_cost} pts`
+          );
 
           const phase1 = await pollMessageUntilTerminal(phase1Res.message_id);
           if (phase1.status !== "completed" || !phase1.images?.length) {
-            throw new Error(phase1.error_msg || t("ecommerceAgent.phase1Failed"));
+            throw new Error(
+              phase1.error_msg || t("ecommerceAgent.phase1Failed")
+            );
           }
 
           const previewImg = phase1.images[0];
@@ -682,11 +832,18 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
         } catch (err: unknown) {
           setEcommerceBatchProgress(null);
           const msg =
-            (err as { response?: { data?: { detail?: string } } }).response?.data?.detail ||
+            (err as { response?: { data?: { detail?: string } } }).response
+              ?.data?.detail ||
             (err as Error).message ||
             t("agentChat.generationFailed");
 
-          setMessages((prev) => prev.map((m) => (m.id === agentMessageId ? { ...m, status: "failed", content: msg } : m)));
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === agentMessageId
+                ? { ...m, status: "failed", content: msg }
+                : m
+            )
+          );
           setIsGenerating(false);
           toast.error(msg);
         }
@@ -706,11 +863,16 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
         resolution,
         aspect_ratio: aspectRatio,
         num_images: 1,
-        provider: currentModelConfig?.provider ?? (model.startsWith("gemini") ? "gemini" : "ark"),
+        provider:
+          currentModelConfig?.provider ??
+          (model.startsWith("gemini") ? "gemini" : "ark"),
         optimize_prompt: true,
       };
 
-      if (uploadedPaths.length > 0 && currentModelConfig?.supports_image_to_image !== false) {
+      if (
+        uploadedPaths.length > 0 &&
+        currentModelConfig?.supports_image_to_image !== false
+      ) {
         params.ref_image_path = uploadedPaths[0];
       }
 
@@ -724,26 +886,37 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
         status: "generating",
         cost: res.estimated_cost,
         config: {
-          sceneName: userContent.slice(0, 30) + (userContent.length > 30 ? "..." : ""),
+          sceneName:
+            userContent.slice(0, 30) + (userContent.length > 30 ? "..." : ""),
           style: model,
           lighting: resolution,
           composition: aspectRatio,
           quality: `${res.estimated_cost} pts`,
         },
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        timestamp: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
       };
-      setMessages(prev => [...prev, agentMessage]);
+      setMessages((prev) => [...prev, agentMessage]);
       polling.startPolling(res.message_id);
     } catch (err: any) {
-      const errorMsg = err?.response?.data?.detail || err?.response?.data?.message || err?.message || t("agentChat.generationFailed");
+      const errorMsg =
+        err?.response?.data?.detail ||
+        err?.response?.data?.message ||
+        err?.message ||
+        t("agentChat.generationFailed");
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "agent",
         content: errorMsg,
         status: "failed",
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        timestamp: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
       };
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages((prev) => [...prev, errorMessage]);
       setIsGenerating(false);
       toast.error(errorMsg);
     }
@@ -760,7 +933,10 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
       content: t("ecommerceAgent.generatingDetail"),
       status: "generating",
       ecommercePhase: "phase1",
-      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      timestamp: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
     };
 
     setIsGenerating(true);
@@ -785,7 +961,9 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
           type: 1,
         });
 
-        toast.info(`${t("ecommerceAgent.phase1")} · ≈ ${phase1Res.estimated_cost} pts`);
+        toast.info(
+          `${t("ecommerceAgent.phase1")} · ≈ ${phase1Res.estimated_cost} pts`
+        );
 
         const phase1 = await pollMessageUntilTerminal(phase1Res.message_id);
         if (phase1.status !== "completed" || !phase1.images?.length) {
@@ -822,10 +1000,17 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
       } catch (err: unknown) {
         setEcommerceBatchProgress(null);
         const msg =
-          (err as { response?: { data?: { detail?: string } } }).response?.data?.detail ||
+          (err as { response?: { data?: { detail?: string } } }).response?.data
+            ?.detail ||
           (err as Error).message ||
           t("agentChat.generationFailed");
-        setMessages((prev) => prev.map((m) => (m.id === agentMessageId ? { ...m, status: "failed", content: msg } : m)));
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === agentMessageId
+              ? { ...m, status: "failed", content: msg }
+              : m
+          )
+        );
         setIsGenerating(false);
         toast.error(msg);
       }
@@ -841,20 +1026,29 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
         id: Date.now().toString(),
         role: "agent",
         content: t("ecommerceAgent.modifyHint"),
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        timestamp: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
       };
-      setMessages(prev => [...prev, hintMessage]);
+      setMessages((prev) => [...prev, hintMessage]);
     }
   };
 
-  const handleEcommerceConfirm = (images: { url: string; local_path: string }[]) => {
+  const handleEcommerceConfirm = (
+    images: { url: string; local_path: string }[]
+  ) => {
     onImagesGenerated?.(images);
     toast.success(t("ecommerceAgent.confirmed"));
   };
 
   const handleEcommerceConfirmPreview = async (targetMessage: Message) => {
-    const refUploadId = targetMessage.ecommerceRefUploadId || lastEcommerceCtxRef.current?.refUploadId;
-    const phase1MessageId = targetMessage.phase1MessageId || lastEcommerceCtxRef.current?.phase1MessageId;
+    const refUploadId =
+      targetMessage.ecommerceRefUploadId ||
+      lastEcommerceCtxRef.current?.refUploadId;
+    const phase1MessageId =
+      targetMessage.phase1MessageId ||
+      lastEcommerceCtxRef.current?.phase1MessageId;
     if (!refUploadId || !phase1MessageId || isGenerating) return;
 
     setIsGenerating(true);
@@ -892,7 +1086,11 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
         provider: "gemini",
       });
 
-      toast.info(`${t("ecommerceAgent.phase2")} · ≈ ${batchData.total_estimated_cost ?? "?"} pts`);
+      toast.info(
+        `${t("ecommerceAgent.phase2")} · ≈ ${
+          batchData.total_estimated_cost ?? "?"
+        } pts`
+      );
 
       const ids = batchData.messages.map((m) => m.message_id);
       let totalCost = targetMessage.cost ?? 0;
@@ -902,7 +1100,9 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
         setEcommerceBatchProgress({ current: i + 1, total: ids.length });
         const r = await pollMessageUntilTerminal(ids[i]);
         if (r.status !== "completed") {
-          throw new Error(r.error_msg || `${t("ecommerceAgent.panelFailed")} ${i + 1}`);
+          throw new Error(
+            r.error_msg || `${t("ecommerceAgent.panelFailed")} ${i + 1}`
+          );
         }
         totalCost += r.actual_cost ?? 0;
         const img = r.images?.[0];
@@ -936,10 +1136,15 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
     } catch (err: unknown) {
       setEcommerceBatchProgress(null);
       const msg =
-        (err as { response?: { data?: { detail?: string } } }).response?.data?.detail ||
+        (err as { response?: { data?: { detail?: string } } }).response?.data
+          ?.detail ||
         (err as Error).message ||
         t("agentChat.generationFailed");
-      setMessages((prev) => prev.map((m) => (m.id === agentMessageId ? { ...m, status: "failed", content: msg } : m)));
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === agentMessageId ? { ...m, status: "failed", content: msg } : m
+        )
+      );
       toast.error(msg);
     } finally {
       setIsGenerating(false);
@@ -947,10 +1152,13 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
   };
 
   const handleRegenerate = async (messageId: string) => {
-    const messageIndex = messages.findIndex(m => m.id === messageId);
+    const messageIndex = messages.findIndex((m) => m.id === messageId);
     if (messageIndex === -1) return;
     let userMessageIndex = messageIndex - 1;
-    while (userMessageIndex >= 0 && messages[userMessageIndex].role !== "user") {
+    while (
+      userMessageIndex >= 0 &&
+      messages[userMessageIndex].role !== "user"
+    ) {
       userMessageIndex--;
     }
     if (userMessageIndex < 0) return;
@@ -958,35 +1166,49 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
   };
 
   const handleModify = (messageId: string) => {
-    const message = messages.find(m => m.id === messageId);
+    const message = messages.find((m) => m.id === messageId);
     if (message?.config) {
       setInputValue(message.config.sceneName);
     }
   };
 
   const handleConfirm = (messageId: string) => {
-    const message = messages.find(m => m.id === messageId);
+    const message = messages.find((m) => m.id === messageId);
     if (message?.config) {
       const confirmMessage: Message = {
         id: Date.now().toString(),
         role: "agent",
-        content: t("agentChat.configConfirmed", { name: message.config.sceneName }),
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        content: t("agentChat.configConfirmed", {
+          name: message.config.sceneName,
+        }),
+        timestamp: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
       };
-      setMessages(prev => [...prev, confirmMessage]);
+      setMessages((prev) => [...prev, confirmMessage]);
     }
   };
 
   const handleViewDetails = (messageId: string) => {
-    const message = messages.find(m => m.id === messageId);
+    const message = messages.find((m) => m.id === messageId);
     if (message?.config) {
       const detailsMessage: Message = {
         id: Date.now().toString(),
         role: "agent",
-        content: `📋 ${t("agentResponse.sceneName")}: ${message.config.sceneName}\n🎨 ${t("agentResponse.style")}: ${message.config.style}\n💡 ${t("agentResponse.lighting")}: ${message.config.lighting}\n📐 ${message.config.composition}\n⚡ ${message.config.quality}`,
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        content: `📋 ${t("agentResponse.sceneName")}: ${
+          message.config.sceneName
+        }\n🎨 ${t("agentResponse.style")}: ${message.config.style}\n💡 ${t(
+          "agentResponse.lighting"
+        )}: ${message.config.lighting}\n📐 ${message.config.composition}\n⚡ ${
+          message.config.quality
+        }`,
+        timestamp: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
       };
-      setMessages(prev => [...prev, detailsMessage]);
+      setMessages((prev) => [...prev, detailsMessage]);
     }
   };
 
@@ -995,7 +1217,10 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
     return `${STATIC_BASE_URL}${url}`;
   };
 
-  const getDownloadFileName = (img: { url: string; local_path: string }, index: number) => {
+  const getDownloadFileName = (
+    img: { url: string; local_path: string },
+    index: number
+  ) => {
     const source = img.local_path || img.url || "";
     const segments = source.split("/");
     const lastPart = segments[segments.length - 1] || "";
@@ -1003,7 +1228,9 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
     return `detail_${index + 1}.jpg`;
   };
 
-  const handleDownloadEcommerceImages = async (images: { url: string; local_path: string }[]) => {
+  const handleDownloadEcommerceImages = async (
+    images: { url: string; local_path: string }[]
+  ) => {
     if (!images.length) return;
     const zip = new JSZip();
     let successCount = 0;
@@ -1061,27 +1288,42 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
 
   const aspectRatioOptions: DropdownOption[] = useMemo(() => {
     if (!currentModelConfig) return DEFAULT_ASPECT_RATIOS;
-    return currentModelConfig.supported_aspect_ratios.map((ar) => ({ value: ar.value, label: ar.value }));
+    return currentModelConfig.supported_aspect_ratios.map((ar) => ({
+      value: ar.value,
+      label: ar.value,
+    }));
   }, [currentModelConfig, DEFAULT_ASPECT_RATIOS]);
 
   const resolutionOptions: DropdownOption[] = useMemo(() => {
     if (!currentModelConfig) return DEFAULT_RESOLUTIONS;
-    return currentModelConfig.supported_resolutions.map((r) => ({ value: r.value, label: r.value }));
+    return currentModelConfig.supported_resolutions.map((r) => ({
+      value: r.value,
+      label: r.value,
+    }));
   }, [currentModelConfig, DEFAULT_RESOLUTIONS]);
 
   const modelOptions: DropdownOption[] = useMemo(() => {
     if (!modelsConfig) return [{ value: model, label: model }];
     const entries = Object.entries(modelsConfig);
-    const ecommerceEntries = isEcommerce ? entries.filter(([, cfg]) => cfg.provider === "gemini") : entries;
-    return (ecommerceEntries.length ? ecommerceEntries : entries).map(([id, cfg]) => ({
-      value: id,
-      label: cfg.name,
-      icon: <Sparkles className="w-3 h-3" />,
-    }));
+    const ecommerceEntries = isEcommerce
+      ? entries.filter(([, cfg]) => cfg.provider === "gemini")
+      : entries;
+    return (ecommerceEntries.length ? ecommerceEntries : entries).map(
+      ([id, cfg]) => ({
+        value: id,
+        label: cfg.name,
+        icon: <Sparkles className="w-3 h-3" />,
+      })
+    );
   }, [isEcommerce, modelsConfig, model]);
 
   const canSend = isEcommerce
-    ? Boolean(inputValue.trim() && productRefs.length > 0 && !isGenerating && !isUploadingPaste)
+    ? Boolean(
+        inputValue.trim() &&
+          productRefs.length > 0 &&
+          !isGenerating &&
+          !isUploadingPaste
+      )
     : Boolean(inputValue.trim() && !isGenerating);
 
   return (
@@ -1090,7 +1332,12 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
         {messages.length === 0 ? (
           <div className="flex flex-col justify-start pt-12 px-8">
             <div className="flex items-start gap-4">
-              <div className={cn("w-16 h-16 border-brutal border-foreground/30 flex items-center justify-center flex-shrink-0", currentAgent.color)}>
+              <div
+                className={cn(
+                  "w-16 h-16 border-brutal border-foreground/30 flex items-center justify-center flex-shrink-0",
+                  currentAgent.color
+                )}
+              >
                 {currentAgent.icon}
               </div>
               <div className="flex flex-col justify-center">
@@ -1109,7 +1356,10 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
               <div key={message.id} className="animate-fade-in">
                 {/* Welcome message for ecommerce */}
                 {message.isWelcome && isEcommerce ? (
-                  <EcommerceWelcome agentColor={currentAgent.color} agentIcon={currentAgent.icon} />
+                  <EcommerceWelcome
+                    agentColor={currentAgent.color}
+                    agentIcon={currentAgent.icon}
+                  />
                 ) : message.role === "user" ? (
                   <div className="flex items-start gap-3">
                     <div className="w-10 h-10 bg-accent-yellow border-brutal border-foreground flex items-center justify-center flex-shrink-0">
@@ -1117,15 +1367,26 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="font-bold text-sm">{t("agentChat.you")}</span>
-                        <span className="text-xs text-muted-foreground">{message.timestamp}</span>
+                        <span className="font-bold text-sm">
+                          {t("agentChat.you")}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {message.timestamp}
+                        </span>
                       </div>
                       {/* Show user uploaded images */}
                       {message.userImages && message.userImages.length > 0 && (
                         <div className="flex gap-1.5 mb-2">
                           {message.userImages.map((src, idx) => (
-                            <div key={idx} className="w-16 h-16 border border-foreground/20 overflow-hidden">
-                              <img src={src} alt="" className="w-full h-full object-cover" />
+                            <div
+                              key={idx}
+                              className="w-16 h-16 border border-foreground/20 overflow-hidden"
+                            >
+                              <img
+                                src={src}
+                                alt=""
+                                className="w-full h-full object-cover"
+                              />
                             </div>
                           ))}
                         </div>
@@ -1137,12 +1398,19 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
                   </div>
                 ) : message.isFinalResult && message.status === "generating" ? (
                   <div className="flex items-start gap-3 animate-fade-in">
-                    <div className={cn("w-10 h-10 border-brutal border-foreground flex items-center justify-center flex-shrink-0", currentAgent.color)}>
+                    <div
+                      className={cn(
+                        "w-10 h-10 border-brutal border-foreground flex items-center justify-center flex-shrink-0",
+                        currentAgent.color
+                      )}
+                    >
                       {currentAgent.icon}
                     </div>
                     <div className="flex-1 space-y-2">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="font-bold text-sm">{t("agents.ecommerce").toUpperCase()}_AGENT</span>
+                        <span className="font-bold text-sm">
+                          {t("agents.ecommerce").toUpperCase()}_AGENT
+                        </span>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -1151,16 +1419,27 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
                       <div className="w-full max-w-xs h-64 bg-secondary/20 border border-foreground/10 animate-pulse rounded" />
                     </div>
                   </div>
-                ) : message.isFinalResult && message.status === "completed" && message.images ? (
+                ) : message.isFinalResult &&
+                  message.status === "completed" &&
+                  message.images ? (
                   <div className="flex items-start gap-3 animate-fade-in">
-                    <div className={cn("w-10 h-10 border-brutal border-foreground flex items-center justify-center flex-shrink-0", currentAgent.color)}>
+                    <div
+                      className={cn(
+                        "w-10 h-10 border-brutal border-foreground flex items-center justify-center flex-shrink-0",
+                        currentAgent.color
+                      )}
+                    >
                       {currentAgent.icon}
                     </div>
                     <div className="flex-1 space-y-3">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="font-bold text-sm">{t("agents.ecommerce").toUpperCase()}_AGENT</span>
+                        <span className="font-bold text-sm">
+                          {t("agents.ecommerce").toUpperCase()}_AGENT
+                        </span>
                       </div>
-                      <p className="text-sm text-muted-foreground">{message.content}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {message.content}
+                      </p>
                       <div className="border-brutal border-foreground p-1.5 bg-secondary/10 w-full max-w-xs overflow-hidden">
                         <a
                           href={
@@ -1173,8 +1452,14 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
                           className="block"
                         >
                           <img
-                            src={message.images[0].url.startsWith("http") ? message.images[0].url : `${STATIC_BASE_URL}${message.images[0].url}`}
-                            alt={t("ecommerceAgent.finalDetailAlt", { defaultValue: "Final detail page" })}
+                            src={
+                              message.images[0].url.startsWith("http")
+                                ? message.images[0].url
+                                : `${STATIC_BASE_URL}${message.images[0].url}`
+                            }
+                            alt={t("ecommerceAgent.finalDetailAlt", {
+                              defaultValue: "Final detail page",
+                            })}
                             className="block w-full max-h-96 object-contain hover:brightness-110 transition-none"
                           />
                         </a>
@@ -1182,12 +1467,16 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
                       {message.cost && (
                         <div className="text-xs text-muted-foreground flex items-center gap-1">
                           <span>✅ {t("agentChat.generationComplete")}</span>
-                          <span className="text-accent-green font-bold">-{message.cost} pts</span>
+                          <span className="text-accent-green font-bold">
+                            -{message.cost} pts
+                          </span>
                         </div>
                       )}
                     </div>
                   </div>
-                ) : message.isEcommercePreview && message.status === "completed" && message.images ? (
+                ) : message.isEcommercePreview &&
+                  message.status === "completed" &&
+                  message.images ? (
                   <EcommercePreviewGrid
                     previewImage={message.images[0] ?? null}
                     cost={message.cost}
@@ -1197,23 +1486,37 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
                     agentColor={currentAgent.color}
                     agentIcon={currentAgent.icon}
                   />
-                ) : message.isEcommerceFinalAdded && message.status === "completed" ? (
+                ) : message.isEcommerceFinalAdded &&
+                  message.status === "completed" ? (
                   <div className="flex items-start gap-3 animate-fade-in">
-                    <div className={cn("w-10 h-10 border-brutal border-foreground flex items-center justify-center flex-shrink-0", currentAgent.color)}>
+                    <div
+                      className={cn(
+                        "w-10 h-10 border-brutal border-foreground flex items-center justify-center flex-shrink-0",
+                        currentAgent.color
+                      )}
+                    >
                       {currentAgent.icon}
                     </div>
                     <div className="flex-1 space-y-3">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="font-bold text-sm">{t("agents.ecommerce").toUpperCase()}_AGENT</span>
-                        <span className="text-xs text-muted-foreground">{message.timestamp}</span>
+                        <span className="font-bold text-sm">
+                          {t("agents.ecommerce").toUpperCase()}_AGENT
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {message.timestamp}
+                        </span>
                       </div>
                       <p className="text-sm bg-secondary/30 border border-foreground/10 p-3 whitespace-pre-wrap">
                         {message.content}
                       </p>
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => handleDownloadEcommerceImages(message.images ?? [])}
-                          disabled={!message.images || message.images.length === 0}
+                          onClick={() =>
+                            handleDownloadEcommerceImages(message.images ?? [])
+                          }
+                          disabled={
+                            !message.images || message.images.length === 0
+                          }
                           className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase border-brutal border-foreground bg-accent-cyan hover:brightness-110 brutal-press disabled:opacity-50"
                         >
                           <Download className="w-3 h-3" />
@@ -1238,52 +1541,75 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
                           <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground px-2">
                             <Loader2 className="w-3 h-3 animate-spin" />
                             <span>{t("agentChat.generating")}</span>
-                            {message.cost && <span className="text-accent-cyan">≈ {message.cost} pts</span>}
-                          </div>
-                        )}
-                        {message.status === "completed" && message.images && message.images.length > 0 && (
-                          <div className="mt-3 grid grid-cols-2 gap-2">
-                            {message.images.map((img, idx) => (
-                              <a
-                                key={idx}
-                                href={getImageUrl(img.url)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="block border-brutal border-foreground overflow-hidden hover:brightness-110 transition-none"
-                              >
-                                <img
-                                  src={getImageUrl(img.url)}
-                                  alt={`Generated ${idx + 1}`}
-                                  className="w-full h-auto object-cover"
-                                  loading="lazy"
-                                />
-                              </a>
-                            ))}
                             {message.cost && (
-                              <div className="col-span-2 text-xs text-muted-foreground flex items-center gap-1">
-                                <span>✅ {t("agentChat.generationComplete")}</span>
-                                <span className="text-accent-green font-bold">-{message.cost} pts</span>
-                              </div>
+                              <span className="text-accent-cyan">
+                                ≈ {message.cost} pts
+                              </span>
                             )}
                           </div>
                         )}
+                        {message.status === "completed" &&
+                          message.images &&
+                          message.images.length > 0 && (
+                            <div className="mt-3 grid grid-cols-2 gap-2">
+                              {message.images.map((img, idx) => (
+                                <a
+                                  key={idx}
+                                  href={getImageUrl(img.url)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="block border-brutal border-foreground overflow-hidden hover:brightness-110 transition-none"
+                                >
+                                  <img
+                                    src={getImageUrl(img.url)}
+                                    alt={`Generated ${idx + 1}`}
+                                    className="w-full h-auto object-cover"
+                                    loading="lazy"
+                                  />
+                                </a>
+                              ))}
+                              {message.cost && (
+                                <div className="col-span-2 text-xs text-muted-foreground flex items-center gap-1">
+                                  <span>
+                                    ✅ {t("agentChat.generationComplete")}
+                                  </span>
+                                  <span className="text-accent-green font-bold">
+                                    -{message.cost} pts
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          )}
                       </>
                     ) : (
                       <div className="flex items-start gap-3">
-                        <div className={cn("w-10 h-10 border-brutal border-foreground flex items-center justify-center flex-shrink-0", message.status === "failed" ? "bg-accent-red" : currentAgent.color)}>
+                        <div
+                          className={cn(
+                            "w-10 h-10 border-brutal border-foreground flex items-center justify-center flex-shrink-0",
+                            message.status === "failed"
+                              ? "bg-accent-red"
+                              : currentAgent.color
+                          )}
+                        >
                           {currentAgent.icon}
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="font-bold text-sm">{currentAgent.name.toUpperCase()}_AGENT</span>
-                            <span className="text-xs text-muted-foreground">{message.timestamp}</span>
+                            <span className="font-bold text-sm">
+                              {currentAgent.name.toUpperCase()}_AGENT
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {message.timestamp}
+                            </span>
                           </div>
                           {/* Ecommerce generating state */}
                           {isEcommerce && message.status === "generating" ? (
                             <div className="bg-secondary/30 border border-foreground/10 p-4 space-y-3">
                               <div className="flex items-center gap-2">
                                 <Loader2 className="w-4 h-4 animate-spin text-accent-orange" />
-                                <span className="text-sm font-bold">{t("ecommerceAgent.generatingDetail")}</span>
+                                <span className="text-sm font-bold">
+                                  {t("ecommerceAgent.generatingDetail")}
+                                </span>
                               </div>
                               {ecommerceBatchProgress && (
                                 <p className="text-xs font-mono text-muted-foreground">
@@ -1295,12 +1621,24 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
                               )}
                               {(() => {
                                 const phase = message.ecommercePhase;
-                                const skeletonCount = phase === "phase1" ? 1 : 10;
+                                const skeletonCount =
+                                  phase === "phase1" ? 1 : 10;
                                 return (
-                                  <div className={cn(phase === "phase1" ? "grid grid-cols-1 gap-1.5" : "grid grid-cols-5 gap-1.5")}>
-                                    {Array.from({ length: skeletonCount }).map((_, i) => (
-                                      <div key={i} className="aspect-square bg-foreground/5 border border-foreground/10 animate-pulse" />
-                                    ))}
+                                  <div
+                                    className={cn(
+                                      phase === "phase1"
+                                        ? "grid grid-cols-1 gap-1.5"
+                                        : "grid grid-cols-5 gap-1.5"
+                                    )}
+                                  >
+                                    {Array.from({ length: skeletonCount }).map(
+                                      (_, i) => (
+                                        <div
+                                          key={i}
+                                          className="aspect-square bg-foreground/5 border border-foreground/10 animate-pulse"
+                                        />
+                                      )
+                                    )}
                                   </div>
                                 );
                               })()}
@@ -1317,23 +1655,40 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
                 )}
               </div>
             ))}
-            {isGenerating && !messages.some(m => m.status === "generating") && (
-              <div className="flex items-start gap-3">
-                <div className={cn("w-10 h-10 border-brutal border-foreground flex items-center justify-center animate-pulse", currentAgent.color)}>
-                  {currentAgent.icon}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-bold text-sm">{currentAgent.name.toUpperCase()}_AGENT</span>
+            {isGenerating &&
+              !messages.some((m) => m.status === "generating") && (
+                <div className="flex items-start gap-3">
+                  <div
+                    className={cn(
+                      "w-10 h-10 border-brutal border-foreground flex items-center justify-center animate-pulse",
+                      currentAgent.color
+                    )}
+                  >
+                    {currentAgent.icon}
                   </div>
-                  <div className="flex gap-1 p-3">
-                    <span className="w-2 h-2 bg-foreground/50 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                    <span className="w-2 h-2 bg-foreground/50 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                    <span className="w-2 h-2 bg-foreground/50 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-bold text-sm">
+                        {currentAgent.name.toUpperCase()}_AGENT
+                      </span>
+                    </div>
+                    <div className="flex gap-1 p-3">
+                      <span
+                        className="w-2 h-2 bg-foreground/50 rounded-full animate-bounce"
+                        style={{ animationDelay: "0ms" }}
+                      />
+                      <span
+                        className="w-2 h-2 bg-foreground/50 rounded-full animate-bounce"
+                        style={{ animationDelay: "150ms" }}
+                      />
+                      <span
+                        className="w-2 h-2 bg-foreground/50 rounded-full animate-bounce"
+                        style={{ animationDelay: "300ms" }}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
             <div ref={messagesEndRef} />
           </>
         )}
@@ -1369,7 +1724,12 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
               <button
                 type="button"
                 onClick={() => void handleUseCanvasImage()}
-                disabled={isUploadingPaste || isGenerating || !selectedCanvasImage || selectedCanvasImage.type === "video"}
+                disabled={
+                  isUploadingPaste ||
+                  isGenerating ||
+                  !selectedCanvasImage ||
+                  selectedCanvasImage.type === "video"
+                }
                 className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold uppercase border-brutal border-foreground bg-accent-orange/15 hover:bg-accent-orange/25 brutal-press disabled:opacity-50"
               >
                 <ImageIcon className="w-3.5 h-3.5" />
@@ -1399,8 +1759,16 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
             value={inputValue}
             onChange={handleInputChange}
             onPaste={handlePaste}
-            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), handleSend())}
-            placeholder={isEcommerce ? t("ecommerceAgent.inputPlaceholder") : t("agentChat.inputPlaceholder")}
+            onKeyDown={(e) =>
+              e.key === "Enter" &&
+              !e.shiftKey &&
+              (e.preventDefault(), handleSend())
+            }
+            placeholder={
+              isEcommerce
+                ? t("ecommerceAgent.inputPlaceholder")
+                : t("agentChat.inputPlaceholder")
+            }
             className="w-full h-24 p-3 border-brutal border-foreground bg-background font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-accent-cyan"
           />
         </div>
@@ -1413,7 +1781,11 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
               onChange={setAspectRatio}
               icon={<Grid3X3 className="w-3.5 h-3.5" />}
             />
-            <BrutalDropdown options={resolutionOptions} value={resolution} onChange={setResolution} />
+            <BrutalDropdown
+              options={resolutionOptions}
+              value={resolution}
+              onChange={setResolution}
+            />
             <BrutalDropdown
               options={modelOptions}
               value={model}
@@ -1433,7 +1805,9 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
             disabled={!canSend}
             className={cn(
               "w-8 h-8 flex items-center justify-center border-brutal border-foreground brutal-press",
-              !canSend ? "bg-muted text-muted-foreground cursor-not-allowed" : "bg-accent-cyan text-foreground hover:brightness-110"
+              !canSend
+                ? "bg-muted text-muted-foreground cursor-not-allowed"
+                : "bg-accent-cyan text-foreground hover:brightness-110"
             )}
           >
             <Send className="w-4 h-4" />

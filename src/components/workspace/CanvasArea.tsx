@@ -29,8 +29,9 @@ export interface CanvasImage {
 
 interface CanvasAreaProps {
   onImageSelect?: (imageId: string | null) => void;
+  onSelectionChange?: (imageIds: string[]) => void;
   canvasImages: CanvasImage[];
-  onCanvasImagesChange: (images: CanvasImage[]) => void;
+  onCanvasImagesChange: React.Dispatch<React.SetStateAction<CanvasImage[]>>;
   onFileDrop?: (files: File[], position: { x: number; y: number }) => void;
 }
 
@@ -55,6 +56,7 @@ const toCanvasSize = (
 
 const CanvasArea: React.FC<CanvasAreaProps> = ({
   onImageSelect,
+  onSelectionChange,
   canvasImages,
   onCanvasImagesChange,
   onFileDrop,
@@ -63,7 +65,8 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
   const images = canvasImages;
   const setImages = onCanvasImagesChange;
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const primarySelectedId = selectedIds.length > 0 ? selectedIds[selectedIds.length - 1] : null;
+  const primarySelectedId =
+    selectedIds.length > 0 ? selectedIds[selectedIds.length - 1] : null;
   const [annotatingImage, setAnnotatingImage] = useState<CanvasImage | null>(
     null
   );
@@ -80,24 +83,27 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
 
   const canvasRef = useRef<HTMLDivElement>(null);
 
-  const syncSelectionToImages = useCallback(
-    (nextSelectedIds: string[]) => {
-      const selectedSet = new Set(nextSelectedIds);
-      setImages(images.map((img) => ({ ...img, selected: selectedSet.has(img.id) })));
-    },
-    [images, setImages]
-  );
-
   const setSelection = useCallback(
     (nextSelectedIds: string[]) => {
       setSelectedIds(nextSelectedIds);
-      syncSelectionToImages(nextSelectedIds);
-      onImageSelect?.(nextSelectedIds.length > 0 ? nextSelectedIds[nextSelectedIds.length - 1] : null);
+      onSelectionChange?.(nextSelectedIds);
+      setImages((prev) =>
+        prev.map((img) => ({
+          ...img,
+          selected: nextSelectedIds.includes(img.id),
+        }))
+      );
+      onImageSelect?.(
+        nextSelectedIds.length > 0
+          ? nextSelectedIds[nextSelectedIds.length - 1]
+          : null
+      );
     },
-    [onImageSelect, syncSelectionToImages]
+    [onImageSelect, onSelectionChange, setImages]
   );
 
-  const isMultiSelectGesture = (e: React.MouseEvent) => !!(e.ctrlKey || e.metaKey || e.shiftKey);
+  const isMultiSelectGesture = (e: React.MouseEvent) =>
+    !!(e.ctrlKey || e.metaKey || e.shiftKey);
 
   const handleImageClick = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
@@ -110,10 +116,18 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
       return;
     }
 
-    // Multi-select: toggle membership and keep order; last clicked becomes primary.
-    const exists = selectedIds.includes(id);
-    const next = exists ? selectedIds.filter((x) => x !== id) : [...selectedIds, id];
-    setSelection(next);
+    // Multi-select: toggle membership; last clicked becomes primary.
+    // Use functional update so this stays correct even if mousedown/click batch oddly.
+    setSelectedIds((prev) => {
+      const exists = prev.includes(id);
+      const next = exists ? prev.filter((x) => x !== id) : [...prev, id];
+      setImages((imgs) =>
+        imgs.map((img) => ({ ...img, selected: next.includes(img.id) }))
+      );
+      onImageSelect?.(next.length > 0 ? next[next.length - 1] : null);
+      onSelectionChange?.(next);
+      return next;
+    });
   };
 
   const handleImageMouseDown = (e: React.MouseEvent, id: string) => {
@@ -121,20 +135,14 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
     const img = images.find((i) => i.id === id);
     if (!img) return;
 
-    // Ensure the dragged image is part of current selection.
-    // - Without modifiers: if clicking a non-selected image, select only it.
-    // - With modifiers: toggle like click behavior (so user can Ctrl+drag to add/remove).
     const multi = isMultiSelectGesture(e);
+    // Ctrl/Shift: selection is handled in onClick only (avoids double-toggle with mousedown+click).
     if (!multi) {
       if (!selectedIds.includes(id)) {
         setSelection([id]);
       } else if (selectedIds.length === 0) {
         setSelection([id]);
       }
-    } else {
-      const exists = selectedIds.includes(id);
-      const next = exists ? selectedIds.filter((x) => x !== id) : [...selectedIds, id];
-      setSelection(next);
     }
 
     setIsDraggingImage(true);
@@ -236,7 +244,10 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
     setImages([...images, ...duplicates]);
     toast.success(
       t("canvas.duplicated", {
-        name: originals.length === 1 ? originals[0].name : `${originals.length} items`,
+        name:
+          originals.length === 1
+            ? originals[0].name
+            : `${originals.length} items`,
       })
     );
   };

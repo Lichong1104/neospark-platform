@@ -105,8 +105,7 @@
     "paymentSuccess": "支付成功",
     "creditsAdded": "积分已到账。",
     "paymentNotCompleted": "支付未完成",
-    "tryAgain": "如仍需购买，请重试。"
-    ,
+    "tryAgain": "如仍需购买，请重试。",
     "yearlyBillingNotice": "🔥 年付最高省 35% — Growth 每年省 $72！",
     "yearlySave_starter": "年付省 $48",
     "yearlySave_growth": "年付省 $72",
@@ -210,6 +209,7 @@
     "imageUploadFailed": "图片上传失败",
     "uploading": "上传中...",
     "refImage": "参考图",
+    "multiRefModelUnsupported": "gemini-2.5-flash-image 不支持多张参考图，请切换到 gemini-3.1-flash-image-preview 或 gemini-3-pro-image-preview。",
     "presetWorkflows": "预设工作流",
     "nodeLibrary": "节点库",
     "dragNodesHint": "将节点拖到画布上来构建工作流",

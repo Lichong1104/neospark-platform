@@ -61,6 +61,7 @@ const Index = () => {
   const { userInfo, isLoading: authLoading } = useAuth();
   const [showWorkspaceOnboarding, setShowWorkspaceOnboarding] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedImageIds, setSelectedImageIds] = useState<string[]>([]);
   const [activeView, setActiveView] = useState<"canvas" | "workflow">("canvas");
   const [isAssetSidebarOpen, setIsAssetSidebarOpen] = useState(false);
   const [canvasImages, setCanvasImages] = useState<CanvasImage[]>([]);
@@ -68,6 +69,9 @@ const Index = () => {
   // Get selected canvas image info
   const selectedCanvasImage = canvasImages.find(
     (img) => img.id === selectedImage
+  );
+  const selectedCanvasImages = canvasImages.filter((img) =>
+    selectedImageIds.includes(img.id)
   );
 
   const addResultsToCanvas = useCallback(
@@ -244,52 +248,54 @@ const Index = () => {
 
   return (
     <>
-    <div className="h-screen flex flex-col overflow-hidden">
-      <Header />
+      <div className="h-screen flex flex-col overflow-hidden">
+        <Header />
 
-      <main className="flex-1 flex overflow-hidden">
-        <div className="relative flex-shrink-0">
-          <LeftToolbar
-            isActive={selectedImage !== null}
-            onToolSelect={(toolId) => console.log("Tool selected:", toolId)}
-            onAssetClick={() => setIsAssetSidebarOpen(!isAssetSidebarOpen)}
-            processingState={processingState}
-            onBgRemove={handleBgRemove}
-            onLayerSplit={handleLayerSplit}
-            onUpscale={handleUpscale}
-          />
-          <AssetSidebar
-            isOpen={isAssetSidebarOpen}
-            onClose={() => setIsAssetSidebarOpen(false)}
-            onAddToCanvas={handleAddToCanvas}
-          />
-        </div>
-
-        <div className="flex-1 relative">
-          {activeView === "canvas" ? (
-            <CanvasArea
-              onImageSelect={setSelectedImage}
-              canvasImages={canvasImages}
-              onCanvasImagesChange={setCanvasImages}
-              onFileDrop={handleFileDrop}
+        <main className="flex-1 flex overflow-hidden">
+          <div className="relative flex-shrink-0">
+            <LeftToolbar
+              isActive={selectedImageIds.length === 1}
+              onToolSelect={(toolId) => console.log("Tool selected:", toolId)}
+              onAssetClick={() => setIsAssetSidebarOpen(!isAssetSidebarOpen)}
+              processingState={processingState}
+              onBgRemove={handleBgRemove}
+              onLayerSplit={handleLayerSplit}
+              onUpscale={handleUpscale}
             />
-          ) : (
-            <WorkflowCanvas />
-          )}
-        </div>
+            <AssetSidebar
+              isOpen={isAssetSidebarOpen}
+              onClose={() => setIsAssetSidebarOpen(false)}
+              onAddToCanvas={handleAddToCanvas}
+            />
+          </div>
 
-        <aside id="onboarding-hub-panel" className="w-[400px] flex-shrink-0">
-          <IntelligenceHub
-            onImagesGenerated={handleImagesGenerated}
-            onVideoGenerated={handleVideoGenerated}
-            selectedCanvasImage={selectedCanvasImage ?? null}
-          />
-        </aside>
-      </main>
-    </div>
-    {showWorkspaceOnboarding && (
-      <WorkspaceOnboarding onComplete={completeWorkspaceOnboarding} />
-    )}
+          <div className="flex-1 relative">
+            {activeView === "canvas" ? (
+              <CanvasArea
+                onImageSelect={setSelectedImage}
+                onSelectionChange={setSelectedImageIds}
+                canvasImages={canvasImages}
+                onCanvasImagesChange={setCanvasImages}
+                onFileDrop={handleFileDrop}
+              />
+            ) : (
+              <WorkflowCanvas />
+            )}
+          </div>
+
+          <aside id="onboarding-hub-panel" className="w-[400px] flex-shrink-0">
+            <IntelligenceHub
+              onImagesGenerated={handleImagesGenerated}
+              onVideoGenerated={handleVideoGenerated}
+              selectedCanvasImage={selectedCanvasImage ?? null}
+              selectedCanvasImages={selectedCanvasImages}
+            />
+          </aside>
+        </main>
+      </div>
+      {showWorkspaceOnboarding && (
+        <WorkspaceOnboarding onComplete={completeWorkspaceOnboarding} />
+      )}
     </>
   );
 };
