@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useState } from "react";
+import React, { useRef, useCallback, useEffect, useState } from "react";
 import {
   ZoomIn,
   ZoomOut,
@@ -201,6 +201,22 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
     setIsDraggingImage(false);
     setDraggedImageId(null);
   };
+
+  useEffect(() => {
+    const stopDragging = () => {
+      setIsPanning(false);
+      setIsDraggingImage(false);
+      setDraggedImageId(null);
+    };
+
+    window.addEventListener("mouseup", stopDragging);
+    window.addEventListener("blur", stopDragging);
+
+    return () => {
+      window.removeEventListener("mouseup", stopDragging);
+      window.removeEventListener("blur", stopDragging);
+    };
+  }, []);
 
   const handleZoomIn = () => setZoom((prev) => Math.min(prev + 10, 200));
   const handleZoomOut = () => setZoom((prev) => Math.max(prev - 10, 25));

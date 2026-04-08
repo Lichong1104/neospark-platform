@@ -483,6 +483,7 @@
     "zh": "中文"
   },
   "video": {
+    "model": "模型",
     "mode": "生成模式",
     "textToVideo": "文生视频",
     "imageToVideo": "图生视频",
@@ -503,12 +504,23 @@
     "generatingHint": "请耐心等待，视频生成需要一些时间...",
     "completed": "视频生成完成！",
     "failed": "视频生成失败",
+    "fetchFailed": "获取任务状态失败",
     "result": "生成结果",
     "download": "下载视频",
     "newTask": "新任务",
     "retry": "重试",
     "generate": "生成视频",
     "prompt": "提示词",
-    "selectCanvasImageHint": "请在画布中选中一张图片作为参考图"
+    "selectCanvasImageHint": "请在画布中选中一张图片作为参考图",
+    "canvasImageDetected": "已检测到画布选中图片，可直接作为首帧 URL 使用",
+    "firstFrameUrl": "首帧图片 URL",
+    "firstFrameUrlPlaceholder": "https://example.com/first.jpg 或 /uploads/..",
+    "lastFrameUrl": "尾帧图片 URL",
+    "lastFrameUrlPlaceholder": "https://example.com/last.jpg",
+    "referenceImageUrls": "参考图片 URL（每行一条）",
+    "referenceVideoUrls": "参考视频 URL（每行一条）",
+    "referenceAudioUrl": "参考音频 URL",
+    "assetGroupName": "资产组名称（可选）",
+    "multiUrlHint": "每行一个 URL，例如 https://example.com/a.jpg"
   }
 }

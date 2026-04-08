@@ -532,12 +532,13 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
               {t("intelligenceHub.imageTab")}
             </button>
             <button
-              disabled
+              onClick={() => setGenSubTab("VIDEO")}
               className={cn(
                 "flex-1 py-2.5 font-mono font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-none border-l border-foreground/10",
-                "bg-card text-muted-foreground opacity-50 cursor-not-allowed"
+                genSubTab === "VIDEO"
+                  ? "bg-accent-yellow text-foreground border-b-2 border-foreground"
+                  : "bg-card text-muted-foreground hover:text-foreground"
               )}
-              title="Coming soon"
             >
               <Video className="w-3.5 h-3.5" />
               {t("intelligenceHub.videoTab")}

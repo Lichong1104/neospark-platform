@@ -1,19 +1,12 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import {
-  Video,
-  Film,
-  Download,
-  RotateCcw,
-  Sparkles,
-} from "lucide-react";
+import { Video, Film, Download, RotateCcw, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
-import { createVideoTask } from "@/api/video";
-import { useVideoWebSocket } from "@/hooks/useVideoWebSocket";
-import { BASE_URL, STATIC_BASE_URL } from "@/api/request";
-import type { CreateVideoParams } from "@/types/video";
+import { createVideoTask, getVideoModels, getVideoTask } from "@/api/video";
+import { STATIC_BASE_URL } from "@/api/request";
+import type { CreateVideoParams, VideoModelConfig, VideoTaskStatus } from "@/types/video";
 import { VideoConfigForm } from "./VideoConfigForm";
 
 interface VideoGenerationPanelProps {
@@ -38,78 +31,165 @@ const toServerPath = (fullUrl: string) => {
 
 const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({ onVideoGenerated, selectedCanvasImage }) => {
   const { t } = useTranslation();
-  const ws = useVideoWebSocket();
-
   const [prompt, setPrompt] = useState("");
-  const [negativePrompt, setNegativePrompt] = useState("");
-  const [mode, setMode] = useState<"text_to_video" | "image_to_video">("text_to_video");
-  const [resolution, setResolution] = useState("720p");
+  const [model, setModel] = useState("AiVideoMax");
   const [ratio, setRatio] = useState("16:9");
   const [duration, setDuration] = useState("5");
-  const [generateAudio, setGenerateAudio] = useState(true);
-  const [seed, setSeed] = useState("-1");
-  const [refImagePath, setRefImagePath] = useState("");
+  const [generateAudio, setGenerateAudio] = useState(false);
+  const [firstFrameUrl, setFirstFrameUrl] = useState("");
+  const [lastFrameUrl, setLastFrameUrl] = useState("");
+  const [referenceImageUrls, setReferenceImageUrls] = useState("");
+  const [referenceVideoUrls, setReferenceVideoUrls] = useState("");
+  const [referenceAudioUrl, setReferenceAudioUrl] = useState("");
+  const [assetGroupName, setAssetGroupName] = useState("");
+  const [modelOptions, setModelOptions] = useState<VideoModelConfig[]>([]);
+  const [ratioOptions, setRatioOptions] = useState<string[]>(["16:9", "1:1", "9:16"]);
+  const [durationOptions, setDurationOptions] = useState<string[]>(["4", "5", "6", "8", "10", "12", "15"]);
   const [estimatedCost, setEstimatedCost] = useState<number | null>(null);
+  const [taskId, setTaskId] = useState("");
+  const [status, setStatus] = useState<"idle" | VideoTaskStatus>("idle");
+  const [progress, setProgress] = useState(0);
+  const [videoUrl, setVideoUrl] = useState("");
+  const [error, setError] = useState("");
+  const activePollingTaskIdRef = useRef<string | null>(null);
+  const deliveredTaskIdsRef = useRef<Set<string>>(new Set());
 
-  // Auto-sync refImagePath from selected canvas image
   React.useEffect(() => {
-    if (mode === "image_to_video" && selectedCanvasImage && selectedCanvasImage.type !== "video") {
-      setRefImagePath(toServerPath(selectedCanvasImage.src));
-    }
-  }, [mode, selectedCanvasImage]);
+    getVideoModels()
+      .then((res) => {
+        setModelOptions(res.models ?? []);
+        if (res.models?.length) setModel((prev) => prev || res.models[0].id);
+        if (res.ratios?.length) {
+          setRatioOptions(res.ratios);
+          setRatio(res.ratios[0]);
+        }
+        const min = res.durations?.min ?? 4;
+        const max = res.durations?.max ?? 15;
+        const defaultDuration = String(res.durations?.default ?? 5);
+        const values = Array.from({ length: max - min + 1 }, (_, i) => String(min + i));
+        setDurationOptions(values);
+        setDuration(defaultDuration);
+      })
+      .catch(() => {});
+  }, []);
 
-  const isGenerating = ws.status === "pending" || ws.status === "processing" || ws.status === "connected";
-  const showForm = !isGenerating && ws.status !== "completed" && ws.status !== "failed";
+  React.useEffect(() => {
+    if (!firstFrameUrl && selectedCanvasImage && selectedCanvasImage.type !== "video") {
+      setFirstFrameUrl(toServerPath(selectedCanvasImage.src));
+    }
+  }, [selectedCanvasImage, firstFrameUrl]);
+
+  React.useEffect(() => {
+    if (!taskId) return;
+    activePollingTaskIdRef.current = taskId;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    const pollOnce = async () => {
+      if (cancelled || activePollingTaskIdRef.current !== taskId) return;
+      try {
+        const detail = await getVideoTask(taskId);
+        if (cancelled || activePollingTaskIdRef.current !== taskId) return;
+
+        setStatus(detail.status);
+        setProgress(detail.progress ?? 0);
+        if (detail.video_url) setVideoUrl(detail.video_url);
+
+        if (detail.status === "completed") {
+          const responseTaskId = detail.task_id || taskId;
+          if (!deliveredTaskIdsRef.current.has(responseTaskId)) {
+            deliveredTaskIdsRef.current.add(responseTaskId);
+            const fullUrl = getVideoFullUrl(detail.video_url || "");
+            toast.success(t("video.completed"));
+            onVideoGenerated?.(fullUrl);
+          }
+          return;
+        }
+
+        if (detail.status === "failed" || detail.status === "cancelled") {
+          if (detail.status === "failed") {
+            setError(detail.error_msg || t("video.failed"));
+          }
+          return;
+        }
+
+        timer = window.setTimeout(() => {
+          void pollOnce();
+        }, 3000);
+      } catch {
+        if (cancelled || activePollingTaskIdRef.current !== taskId) return;
+        setError(t("video.fetchFailed"));
+        setStatus("failed");
+      }
+    };
+
+    void pollOnce();
+
+    return () => {
+      cancelled = true;
+      if (timer) window.clearTimeout(timer);
+    };
+  }, [taskId, t, onVideoGenerated]);
+
+  const isGenerating = status === "pending" || status === "processing";
+  const showForm = !isGenerating && status !== "completed" && status !== "failed";
+
+  const parseMultiLineUrls = (value: string) =>
+    value
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
 
   const handleGenerate = useCallback(async () => {
     if (!prompt.trim() || isGenerating) return;
 
     const params: CreateVideoParams = {
       prompt: prompt.trim(),
-      negative_prompt: negativePrompt.trim() || undefined,
-      mode,
-      model: "doubao-seedance-1-5-pro-251215",
+      model,
       duration: Number(duration),
-      resolution: resolution as CreateVideoParams["resolution"],
       ratio,
       generate_audio: generateAudio,
-      seed: Number(seed),
+      first_frame_url: firstFrameUrl.trim() || undefined,
+      last_frame_url: lastFrameUrl.trim() || undefined,
+      reference_image_urls: parseMultiLineUrls(referenceImageUrls),
+      reference_video_urls: parseMultiLineUrls(referenceVideoUrls),
+      reference_audio_url: referenceAudioUrl.trim() || undefined,
+      asset_group_name: assetGroupName.trim() || undefined,
     };
 
-    if (mode === "image_to_video") {
-      if (!refImagePath.trim()) {
-        toast.error(t("video.refImageRequired"));
-        return;
-      }
-      params.ref_image_path = refImagePath.trim();
-    }
+    if (!params.reference_image_urls?.length) delete params.reference_image_urls;
+    if (!params.reference_video_urls?.length) delete params.reference_video_urls;
 
     try {
       const res = await createVideoTask(params);
-      setEstimatedCost(res.estimated_cost);
-      toast.info(t("video.taskCreated", { cost: res.estimated_cost }));
-      ws.connect(res.task_id);
+      const cost = res.pricing?.estimated_cost ?? null;
+      setEstimatedCost(cost);
+      setTaskId(res.task_id);
+      setStatus(res.status);
+      setProgress(res.progress ?? 0);
+      setError("");
+      setVideoUrl("");
+      toast.info(t("video.taskCreated", { cost: cost ?? "-" }));
     } catch (err: any) {
       const msg = err?.response?.data?.detail || err?.message || t("video.createFailed");
       toast.error(msg);
     }
-  }, [prompt, negativePrompt, mode, resolution, ratio, duration, generateAudio, seed, refImagePath, isGenerating, ws, t]);
-
-  React.useEffect(() => {
-    if (ws.status === "completed" && ws.videoUrl) {
-      const fullUrl = getVideoFullUrl(ws.videoUrl);
-      toast.success(t("video.completed"));
-      onVideoGenerated?.(fullUrl);
-    } else if (ws.status === "failed") {
-      toast.error(ws.error || t("video.failed"));
-    }
-  }, [ws.status, ws.videoUrl, ws.error]);
+  }, [prompt, isGenerating, model, duration, ratio, generateAudio, firstFrameUrl, lastFrameUrl, referenceImageUrls, referenceVideoUrls, referenceAudioUrl, assetGroupName, t]);
 
   const handleNewTask = () => {
-    ws.reset();
+    activePollingTaskIdRef.current = null;
+    setTaskId("");
+    setStatus("idle");
+    setProgress(0);
+    setVideoUrl("");
+    setError("");
     setPrompt("");
-    setNegativePrompt("");
-    setRefImagePath("");
+    setFirstFrameUrl("");
+    setLastFrameUrl("");
+    setReferenceImageUrls("");
+    setReferenceVideoUrls("");
+    setReferenceAudioUrl("");
+    setAssetGroupName("");
     setEstimatedCost(null);
   };
 
@@ -129,9 +209,9 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({ onVideoGene
               <p className="text-[10px] text-muted-foreground font-mono">{t("video.generatingHint")}</p>
             </div>
             <div className="w-full max-w-[260px] space-y-2">
-              <Progress value={ws.progress} className="h-2 border border-foreground/20" />
+              <Progress value={progress} className="h-2 border border-foreground/20" />
               <div className="flex justify-between text-[10px] font-mono text-muted-foreground">
-                <span>{ws.progress}%</span>
+                <span>{progress}%</span>
                 {estimatedCost && <span className="text-accent-orange">~{estimatedCost} pts</span>}
               </div>
             </div>
@@ -145,7 +225,7 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({ onVideoGene
               ))}
             </div>
           </div>
-        ) : ws.status === "completed" && ws.videoUrl ? (
+        ) : status === "completed" && videoUrl ? (
           <div className="space-y-4 px-4 pt-4 animate-fade-in">
             <div className="flex items-center gap-2 text-xs font-bold uppercase text-accent-green">
               <Video className="w-4 h-4" />
@@ -153,13 +233,13 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({ onVideoGene
               <span className="ml-auto text-[10px] text-muted-foreground font-normal">✓ {t("video.completed")}</span>
             </div>
             <div className="border-brutal border-foreground overflow-hidden bg-foreground/5 brutal-shadow">
-              <video src={getVideoFullUrl(ws.videoUrl)} controls className="w-full" autoPlay muted />
+              <video src={getVideoFullUrl(videoUrl)} controls className="w-full" autoPlay muted />
             </div>
             <div className="flex gap-2">
               <button
                 onClick={() => {
                   const a = document.createElement("a");
-                  a.href = getVideoFullUrl(ws.videoUrl!);
+                  a.href = getVideoFullUrl(videoUrl);
                   a.download = `video_${Date.now()}.mp4`;
                   a.click();
                 }}
@@ -177,13 +257,13 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({ onVideoGene
               </button>
             </div>
           </div>
-        ) : ws.status === "failed" ? (
+        ) : status === "failed" ? (
           <div className="flex flex-col items-center justify-center pt-12 gap-4 px-4 animate-fade-in">
             <div className="w-20 h-20 border-brutal border-accent-red/30 flex items-center justify-center bg-accent-red/10">
               <Film className="w-10 h-10 text-accent-red" />
             </div>
             <p className="text-sm font-bold uppercase tracking-wider text-accent-red">{t("video.failed")}</p>
-            <p className="text-xs text-muted-foreground text-center max-w-[260px]">{ws.error}</p>
+            <p className="text-xs text-muted-foreground text-center max-w-[260px]">{error}</p>
             <button
               onClick={handleNewTask}
               className="px-6 py-2.5 text-xs font-bold uppercase border-brutal border-foreground bg-card brutal-press hover:bg-secondary flex items-center gap-1.5"
@@ -194,23 +274,30 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({ onVideoGene
           </div>
         ) : (
           <VideoConfigForm
-            mode={mode}
-            setMode={setMode}
-            resolution={resolution}
-            setResolution={setResolution}
+            model={model}
+            setModel={setModel}
             ratio={ratio}
             setRatio={setRatio}
             duration={duration}
             setDuration={setDuration}
             generateAudio={generateAudio}
             setGenerateAudio={setGenerateAudio}
-            seed={seed}
-            setSeed={setSeed}
-            negativePrompt={negativePrompt}
-            setNegativePrompt={setNegativePrompt}
-            refImagePath={refImagePath}
-            setRefImagePath={setRefImagePath}
+            firstFrameUrl={firstFrameUrl}
+            setFirstFrameUrl={setFirstFrameUrl}
+            lastFrameUrl={lastFrameUrl}
+            setLastFrameUrl={setLastFrameUrl}
+            referenceImageUrls={referenceImageUrls}
+            setReferenceImageUrls={setReferenceImageUrls}
+            referenceVideoUrls={referenceVideoUrls}
+            setReferenceVideoUrls={setReferenceVideoUrls}
+            referenceAudioUrl={referenceAudioUrl}
+            setReferenceAudioUrl={setReferenceAudioUrl}
+            assetGroupName={assetGroupName}
+            setAssetGroupName={setAssetGroupName}
             selectedCanvasImage={selectedCanvasImage ?? null}
+            modelOptions={modelOptions}
+            ratioOptions={ratioOptions}
+            durationOptions={durationOptions}
           />
         )}
       </div>

@@ -483,6 +483,7 @@
     "zh": "中文"
   },
   "video": {
+    "model": "Model",
     "mode": "Mode",
     "textToVideo": "Text → Video",
     "imageToVideo": "Image → Video",
@@ -503,12 +504,23 @@
     "generatingHint": "Please be patient, video generation takes some time...",
     "completed": "Video generation complete!",
     "failed": "Video generation failed",
+    "fetchFailed": "Failed to fetch task status",
     "result": "RESULT",
     "download": "Download",
     "newTask": "New Task",
     "retry": "Retry",
     "generate": "GENERATE",
     "prompt": "Prompt",
-    "selectCanvasImageHint": "Please select an image on the canvas as reference"
+    "selectCanvasImageHint": "Please select an image on the canvas as reference",
+    "canvasImageDetected": "Selected canvas image detected. You can use it as first-frame URL.",
+    "firstFrameUrl": "First Frame URL",
+    "firstFrameUrlPlaceholder": "https://example.com/first.jpg or /uploads/..",
+    "lastFrameUrl": "Last Frame URL",
+    "lastFrameUrlPlaceholder": "https://example.com/last.jpg",
+    "referenceImageUrls": "Reference Image URLs (one per line)",
+    "referenceVideoUrls": "Reference Video URLs (one per line)",
+    "referenceAudioUrl": "Reference Audio URL",
+    "assetGroupName": "Asset Group Name (optional)",
+    "multiUrlHint": "One URL per line, e.g. https://example.com/a.jpg"
   }
 }

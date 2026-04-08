@@ -1,22 +1,28 @@
 import http from "./request";
-import { getToken } from "./token";
-import { BASE_URL } from "./request";
 import type {
   CreateVideoParams,
   CreateVideoResponse,
   VideoTaskDetail,
   ListVideoTasksParams,
   VideoTaskListData,
-  VideoWsMessage,
+  VideoModelsData,
 } from "@/types/video";
 import type { ApiResponse } from "@/types/common";
 
 /**
- * 创建视频生成任务
+ * 获取视频模型配置
+ */
+export async function getVideoModels(): Promise<VideoModelsData> {
+  const res = await http.get<VideoModelsData>("/video/models");
+  return res.data;
+}
+
+/**
+ * 创建视频生成任务（文生视频 / 图生视频 / 多模态）
  */
 export async function createVideoTask(params: CreateVideoParams): Promise<CreateVideoResponse> {
   const res = await http.post<CreateVideoResponse>("/video/generations", params);
-  return res.data ?? (res as unknown as CreateVideoResponse);
+  return res.data;
 }
 
 /**
@@ -45,48 +51,11 @@ export async function deleteVideoTask(taskId: string): Promise<ApiResponse<unkno
   return http.del(`/video/generations/${taskId}`);
 }
 
-/**
- * 创建视频任务的 WebSocket 连接
- * @param taskId 任务 ID
- * @param onMessage 消息回调
- * @returns WebSocket 实例
- */
-export function connectVideoWs(
-  taskId: string,
-  onMessage: (data: VideoWsMessage) => void
-): WebSocket {
-  const token = getToken();
-  const wsBase = BASE_URL.replace(/^http/, "ws");
-  const url = `${wsBase}/video/ws?task_id=${taskId}${token ? `&token=${token}` : ""}`;
-
-  const ws = new WebSocket(url);
-
-  ws.onmessage = (event) => {
-    try {
-      const data: VideoWsMessage = JSON.parse(event.data);
-      onMessage(data);
-    } catch {
-      // ignore parse errors
-    }
-  };
-
-  // 心跳保持连接
-  const heartbeat = setInterval(() => {
-    if (ws.readyState === WebSocket.OPEN) {
-      ws.send("ping");
-    }
-  }, 30000);
-
-  ws.onclose = () => clearInterval(heartbeat);
-
-  return ws;
-}
-
 const videoApi = {
+  getVideoModels,
   createVideoTask,
   getVideoTask,
   listVideoTasks,
   deleteVideoTask,
-  connectVideoWs,
 };
 export default videoApi;
