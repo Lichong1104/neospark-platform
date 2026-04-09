@@ -482,6 +482,97 @@
     "en": "EN",
     "zh": "中文"
   },
+  "common": {
+    "cancel": "Cancel",
+    "close": "Close",
+    "save": "Save",
+    "copy": "Copy",
+    "comingSoon": "Coming soon",
+    "loading": "Loading..."
+  },
+  "apiKeys": {
+    "title": "API KEYS",
+    "subtitle": "Create, rename, enable/disable, and delete API Keys for scripts/servers. The raw key is shown only once when created.",
+    "badge": {
+      "oneTimeReveal": "One-time reveal",
+      "frontendNotUse": "Frontend won't use them"
+    },
+    "stats": {
+      "total": "TOTAL",
+      "totalHint": "ALL KEYS",
+      "active": "ACTIVE",
+      "activeHint": "ENABLED",
+      "expired": "EXPIRED",
+      "expiredHint": "RENEW"
+    },
+    "list": {
+      "title": "KEY LIST",
+      "searchPlaceholder": "Search name / id / status",
+      "includeInactive": "Include inactive"
+    },
+    "table": {
+      "name": "Name",
+      "status": "Status",
+      "lastUsed": "Last used",
+      "expires": "Expires",
+      "created": "Created",
+      "actions": "Actions",
+      "never": "Never"
+    },
+    "status": {
+      "active": "ACTIVE",
+      "inactive": "INACTIVE",
+      "expired": "EXPIRED",
+      "unknown": "UNKNOWN"
+    },
+    "empty": "No keys found.",
+    "actions": {
+      "refresh": "REFRESH",
+      "create": "CREATE",
+      "edit": "EDIT",
+      "enable": "ENABLE",
+      "disable": "DISABLE",
+      "delete": "DELETE"
+    },
+    "deleteDialog": {
+      "title": "Delete API Key",
+      "descPrefix": "This will permanently delete",
+      "descSuffix": "Any external integration using this key will stop working."
+    },
+    "createDialog": {
+      "title": "CREATE API KEY",
+      "desc": "The raw key is displayed only once. This page stores nothing for authentication in the frontend.",
+      "keyOnce": "YOUR API KEY (SHOWS ONCE)",
+      "warning": "Copy it now. If you lose it, you must create a new key."
+    },
+    "editDialog": {
+      "title": "EDIT API KEY",
+      "desc": "Rename the key. The raw key cannot be retrieved."
+    },
+    "form": {
+      "name": "Name",
+      "namePlaceholder": "e.g. \"Production automation\"",
+      "nameHint": "1-128 characters. Choose a clear purpose.",
+      "expiresDays": "Expires (days)",
+      "expiresDaysPlaceholder": "Optional, 1-365",
+      "expiresDaysHint": "Leave empty for never expires."
+    },
+    "toast": {
+      "loadFailed": "Failed to load API Keys",
+      "nameRequired": "Name is required",
+      "expiresDaysRange": "Expires days must be 1-365",
+      "created": "API Key created",
+      "createFailed": "Failed to create API Key",
+      "saved": "Saved",
+      "updateFailed": "Failed to update",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "deleted": "Deleted",
+      "deleteFailed": "Failed to delete",
+      "copied": "Copied",
+      "copyFailed": "Copy failed"
+    }
+  },
   "video": {
     "model": "Model",
     "mode": "Mode",

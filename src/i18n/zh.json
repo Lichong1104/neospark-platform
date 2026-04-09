@@ -482,6 +482,97 @@
     "en": "EN",
     "zh": "中文"
   },
+  "common": {
+    "cancel": "取消",
+    "close": "关闭",
+    "save": "保存",
+    "copy": "复制",
+    "comingSoon": "敬请期待",
+    "loading": "加载中..."
+  },
+  "apiKeys": {
+    "title": "API 密钥",
+    "subtitle": "用于脚本/服务器调用的 API Key 管理：创建、重命名、启用/禁用、删除。原始 key 仅在创建时展示一次。",
+    "badge": {
+      "oneTimeReveal": "仅创建时展示一次",
+      "frontendNotUse": "前端不使用该 Key"
+    },
+    "stats": {
+      "total": "总数",
+      "totalHint": "全部 Key",
+      "active": "可用",
+      "activeHint": "已启用",
+      "expired": "过期",
+      "expiredHint": "需重建"
+    },
+    "list": {
+      "title": "密钥列表",
+      "searchPlaceholder": "搜索 名称 / id / 状态",
+      "includeInactive": "包含已禁用"
+    },
+    "table": {
+      "name": "名称",
+      "status": "状态",
+      "lastUsed": "最近使用",
+      "expires": "过期时间",
+      "created": "创建时间",
+      "actions": "操作",
+      "never": "永不过期"
+    },
+    "status": {
+      "active": "可用",
+      "inactive": "已禁用",
+      "expired": "已过期",
+      "unknown": "未知"
+    },
+    "empty": "暂无 API Key。",
+    "actions": {
+      "refresh": "刷新",
+      "create": "创建",
+      "edit": "编辑",
+      "enable": "启用",
+      "disable": "禁用",
+      "delete": "删除"
+    },
+    "deleteDialog": {
+      "title": "删除 API Key",
+      "descPrefix": "将永久删除",
+      "descSuffix": "所有使用该 key 的外部集成将立即失效。"
+    },
+    "createDialog": {
+      "title": "创建 API Key",
+      "desc": "原始 key 仅展示一次。本页面不会在前端参与认证使用。",
+      "keyOnce": "你的 API Key（仅展示一次）",
+      "warning": "请立即复制保存。若丢失，只能重新创建。"
+    },
+    "editDialog": {
+      "title": "编辑 API Key",
+      "desc": "仅支持修改名称，原始 key 无法找回。"
+    },
+    "form": {
+      "name": "名称",
+      "namePlaceholder": "例如：生产环境自动化",
+      "nameHint": "1-128 个字符，建议清晰描述用途。",
+      "expiresDays": "过期（天）",
+      "expiresDaysPlaceholder": "可选，1-365",
+      "expiresDaysHint": "留空表示永不过期。"
+    },
+    "toast": {
+      "loadFailed": "加载 API Key 失败",
+      "nameRequired": "请填写名称",
+      "expiresDaysRange": "过期天数需为 1-365",
+      "created": "API Key 已创建",
+      "createFailed": "创建 API Key 失败",
+      "saved": "已保存",
+      "updateFailed": "更新失败",
+      "enabled": "已启用",
+      "disabled": "已禁用",
+      "deleted": "已删除",
+      "deleteFailed": "删除失败",
+      "copied": "已复制",
+      "copyFailed": "复制失败"
+    }
+  },
   "video": {
     "model": "模型",
     "mode": "生成模式",

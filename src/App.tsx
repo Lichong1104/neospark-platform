@@ -12,6 +12,7 @@ import UserCenter from "./pages/UserCenter";
 import Pricing from "./pages/Pricing";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
+import ApiKeys from "./pages/ApiKeys";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +53,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <UserCenter />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/api-keys"
+              element={
+                <ProtectedRoute>
+                  <ApiKeys />
                 </ProtectedRoute>
               }
             />

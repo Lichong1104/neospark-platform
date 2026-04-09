@@ -4,5 +4,6 @@ export { default as storageApi } from "./storage";
 export { default as videoApi } from "./video";
 export { default as imageLayerApi } from "./imageLayer";
 export { default as wechatPayApi } from "./wechatPay";
+export { default as apiKeysApi } from "./apiKeys";
 export { default as http } from "./request";
 export { getToken, setToken, clearToken } from "./token";

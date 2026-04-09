@@ -13,12 +13,10 @@ const brutalButtonVariants = cva(
           "bg-foreground text-card brutal-shadow brutal-press hover:bg-foreground/90",
         yellow:
           "bg-accent-yellow text-foreground brutal-shadow-yellow brutal-press hover:brightness-110",
-        cyan:
-          "bg-accent-cyan text-foreground brutal-shadow-cyan brutal-press hover:brightness-110",
+        cyan: "bg-accent-cyan text-foreground brutal-shadow-cyan brutal-press hover:brightness-110",
         green:
           "bg-accent-green text-foreground brutal-shadow-green brutal-press hover:brightness-110",
-        red:
-          "bg-accent-red text-card brutal-shadow-red brutal-press hover:brightness-110",
+        red: "bg-accent-red text-card brutal-shadow-red brutal-press hover:brightness-110",
         purple:
           "bg-accent-purple text-card brutal-shadow-purple brutal-press hover:brightness-110",
         orange:
