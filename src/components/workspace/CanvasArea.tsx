@@ -80,6 +80,7 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
   const [draggedImageId, setDraggedImageId] = useState<string | null>(null);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [imageDragStart, setImageDragStart] = useState({ x: 0, y: 0 });
+  const activePointerIdRef = useRef<number | null>(null);
 
   const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -151,6 +152,37 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
     setImageDragStart({ x: img.x, y: img.y });
   };
 
+  const handleImagePointerDown = (e: React.PointerEvent, id: string) => {
+    // Only left click / primary pointer
+    if (e.button !== 0) return;
+    e.stopPropagation();
+    // Keep focus / selection behaviors consistent
+    // (Selection itself is still handled by click for multi-select.)
+    const img = images.find((i) => i.id === id);
+    if (!img) return;
+
+    const multi = isMultiSelectGesture(e as unknown as React.MouseEvent);
+    if (!multi) {
+      if (!selectedIds.includes(id)) {
+        setSelection([id]);
+      } else if (selectedIds.length === 0) {
+        setSelection([id]);
+      }
+    }
+
+    activePointerIdRef.current = e.pointerId;
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {
+      /* ignore */
+    }
+
+    setIsDraggingImage(true);
+    setDraggedImageId(id);
+    setDragStart({ x: e.clientX, y: e.clientY });
+    setImageDragStart({ x: img.x, y: img.y });
+  };
+
   const handleCanvasMouseDown = (e: React.MouseEvent) => {
     if (
       e.target === canvasRef.current ||
@@ -162,8 +194,59 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
     }
   };
 
+  const handleCanvasPointerDown = (e: React.PointerEvent) => {
+    if (e.button !== 0) return;
+    const target = e.target as HTMLElement;
+    if (target === canvasRef.current || target.classList.contains("canvas-background")) {
+      activePointerIdRef.current = e.pointerId;
+      try {
+        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+      } catch {
+        /* ignore */
+      }
+      setIsPanning(true);
+      setDragStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
+      setSelection([]);
+    }
+  };
+
   const handleMouseMove = useCallback(
     (e: React.MouseEvent) => {
+      if (isPanning) {
+        setPanOffset({
+          x: e.clientX - dragStart.x,
+          y: e.clientY - dragStart.y,
+        });
+      } else if (isDraggingImage && draggedImageId) {
+        const scale = zoom / 100;
+        const deltaX = (e.clientX - dragStart.x) / scale;
+        const deltaY = (e.clientY - dragStart.y) / scale;
+        setImages(
+          images.map((img) =>
+            img.id === draggedImageId
+              ? {
+                  ...img,
+                  x: imageDragStart.x + deltaX,
+                  y: imageDragStart.y + deltaY,
+                }
+              : img
+          )
+        );
+      }
+    },
+    [
+      isPanning,
+      isDraggingImage,
+      draggedImageId,
+      dragStart,
+      imageDragStart,
+      zoom,
+    ]
+  );
+
+  const handlePointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      if (activePointerIdRef.current != null && e.pointerId !== activePointerIdRef.current) return;
       if (isPanning) {
         setPanOffset({
           x: e.clientX - dragStart.x,
@@ -207,13 +290,20 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
       setIsPanning(false);
       setIsDraggingImage(false);
       setDraggedImageId(null);
+      activePointerIdRef.current = null;
     };
 
     window.addEventListener("mouseup", stopDragging);
+    window.addEventListener("pointerup", stopDragging);
+    window.addEventListener("pointercancel", stopDragging);
+    window.addEventListener("lostpointercapture", stopDragging as any);
     window.addEventListener("blur", stopDragging);
 
     return () => {
       window.removeEventListener("mouseup", stopDragging);
+      window.removeEventListener("pointerup", stopDragging);
+      window.removeEventListener("pointercancel", stopDragging);
+      window.removeEventListener("lostpointercapture", stopDragging as any);
       window.removeEventListener("blur", stopDragging);
     };
   }, []);
@@ -456,6 +546,9 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handleMouseUp}
+      onPointerCancel={handleMouseUp}
       onWheel={handleWheel}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -561,6 +654,7 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
           isPanning ? "cursor-grabbing" : "cursor-grab"
         )}
         onMouseDown={handleCanvasMouseDown}
+        onPointerDown={handleCanvasPointerDown}
         style={{ backgroundPosition: `${panOffset.x}px ${panOffset.y}px` }}
       >
         <div
@@ -577,6 +671,7 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
               key={img.id}
               onClick={(e) => handleImageClick(e, img.id)}
               onMouseDown={(e) => handleImageMouseDown(e, img.id)}
+              onPointerDown={(e) => handleImagePointerDown(e, img.id)}
               className={cn(
                 "absolute pointer-events-auto",
                 img.selected

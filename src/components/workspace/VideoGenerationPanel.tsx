@@ -31,6 +31,7 @@ const toServerPath = (fullUrl: string) => {
 
 const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({ onVideoGenerated, selectedCanvasImage }) => {
   const { t } = useTranslation();
+  const [isCreating, setIsCreating] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [model, setModel] = useState("AiVideoMax");
   const [ratio, setRatio] = useState("16:9");
@@ -131,7 +132,7 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({ onVideoGene
     };
   }, [taskId, t, onVideoGenerated]);
 
-  const isGenerating = status === "pending" || status === "processing";
+  const isGenerating = isCreating || status === "pending" || status === "processing";
   const showForm = !isGenerating && status !== "completed" && status !== "failed";
 
   const parseMultiLineUrls = (value: string) =>
@@ -161,6 +162,13 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({ onVideoGene
     if (!params.reference_video_urls?.length) delete params.reference_video_urls;
 
     try {
+      // Enter loading immediately when calling /video/generations
+      setIsCreating(true);
+      setStatus("pending");
+      setProgress(0);
+      setError("");
+      setVideoUrl("");
+
       const res = await createVideoTask(params);
       const cost = res.pricing?.estimated_cost ?? null;
       setEstimatedCost(cost);
@@ -171,13 +179,17 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({ onVideoGene
       setVideoUrl("");
       toast.info(t("video.taskCreated", { cost: cost ?? "-" }));
     } catch (err: any) {
+      setStatus("idle");
       const msg = err?.response?.data?.detail || err?.message || t("video.createFailed");
       toast.error(msg);
+    } finally {
+      setIsCreating(false);
     }
   }, [prompt, isGenerating, model, duration, ratio, generateAudio, firstFrameUrl, lastFrameUrl, referenceImageUrls, referenceVideoUrls, referenceAudioUrl, assetGroupName, t]);
 
   const handleNewTask = () => {
     activePollingTaskIdRef.current = null;
+    setIsCreating(false);
     setTaskId("");
     setStatus("idle");
     setProgress(0);
