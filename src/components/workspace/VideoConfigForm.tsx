@@ -73,10 +73,10 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
   setReferenceImageUrls,
   referenceVideoUrls,
   setReferenceVideoUrls,
-  referenceAudioUrl,
-  setReferenceAudioUrl,
-  assetGroupName,
-  setAssetGroupName,
+  referenceAudioUrl: _referenceAudioUrl,
+  setReferenceAudioUrl: _setReferenceAudioUrl,
+  assetGroupName: _assetGroupName,
+  setAssetGroupName: _setAssetGroupName,
   selectedCanvasImage,
   modelOptions,
   ratioOptions,
@@ -202,28 +202,6 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
               onChange={(e) => setReferenceVideoUrls(e.target.value)}
               placeholder={t("video.multiUrlHint")}
               className="w-full min-h-[64px] px-2.5 py-2 text-[11px] font-mono border border-foreground/20 bg-background focus:outline-none focus:border-accent-purple resize-y"
-            />
-          </div>
-          <div>
-            <label className="text-[10px] font-bold uppercase text-muted-foreground mb-1 block">
-              {t("video.referenceAudioUrl")}
-            </label>
-            <input
-              value={referenceAudioUrl}
-              onChange={(e) => setReferenceAudioUrl(e.target.value)}
-              placeholder="https://example.com/audio.mp3"
-              className="w-full px-2.5 py-2 text-[11px] font-mono border border-foreground/20 bg-background focus:outline-none focus:border-accent-purple"
-            />
-          </div>
-          <div>
-            <label className="text-[10px] font-bold uppercase text-muted-foreground mb-1 block">
-              {t("video.assetGroupName")}
-            </label>
-            <input
-              value={assetGroupName}
-              onChange={(e) => setAssetGroupName(e.target.value)}
-              placeholder="MyCharacter_01"
-              className="w-full px-2.5 py-2 text-[11px] font-mono border border-foreground/20 bg-background focus:outline-none focus:border-accent-purple"
             />
           </div>
         </div>
