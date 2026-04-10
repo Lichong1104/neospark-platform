@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import storageApi from "@/api/storage";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/errorMessage";
 import { useGenerationPolling } from "@/hooks/useGenerationPolling";
 import { STATIC_BASE_URL } from "@/api/request";
 import {
@@ -468,10 +469,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
       );
       polling.startPolling(res.message_id);
     } catch (err: any) {
-      const msg =
-        err?.response?.data?.detail ||
-        err?.message ||
-        t("intelligenceHub.generateFailed");
+      const msg = getErrorMessage(err, t("intelligenceHub.generateFailed"));
       toast.error(msg);
       setIsStandardGenerating(false);
       setPendingStandardPrompt(null);

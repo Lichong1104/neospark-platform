@@ -32,6 +32,7 @@ import drawingApi from "@/api/drawing";
 import storageApi from "@/api/storage";
 import { STATIC_BASE_URL } from "@/api/request";
 import { useGenerationPolling } from "@/hooks/useGenerationPolling";
+import { getErrorMessage } from "@/lib/errorMessage";
 import type {
   GenerateImageParams,
   MessageStatusResponse,
@@ -831,11 +832,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
           setIsGenerating(false);
         } catch (err: unknown) {
           setEcommerceBatchProgress(null);
-          const msg =
-            (err as { response?: { data?: { detail?: string } } }).response
-              ?.data?.detail ||
-            (err as Error).message ||
-            t("agentChat.generationFailed");
+          const msg = getErrorMessage(err, t("agentChat.generationFailed"));
 
           setMessages((prev) =>
             prev.map((m) =>
@@ -901,11 +898,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
       setMessages((prev) => [...prev, agentMessage]);
       polling.startPolling(res.message_id);
     } catch (err: any) {
-      const errorMsg =
-        err?.response?.data?.detail ||
-        err?.response?.data?.message ||
-        err?.message ||
-        t("agentChat.generationFailed");
+      const errorMsg = getErrorMessage(err, t("agentChat.generationFailed"));
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "agent",
@@ -999,11 +992,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
         setIsGenerating(false);
       } catch (err: unknown) {
         setEcommerceBatchProgress(null);
-        const msg =
-          (err as { response?: { data?: { detail?: string } } }).response?.data
-            ?.detail ||
-          (err as Error).message ||
-          t("agentChat.generationFailed");
+        const msg = getErrorMessage(err, t("agentChat.generationFailed"));
         setMessages((prev) =>
           prev.map((m) =>
             m.id === agentMessageId
@@ -1135,11 +1124,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
       toast.success(t("ecommerceAgent.finalReady"));
     } catch (err: unknown) {
       setEcommerceBatchProgress(null);
-      const msg =
-        (err as { response?: { data?: { detail?: string } } }).response?.data
-          ?.detail ||
-        (err as Error).message ||
-        t("agentChat.generationFailed");
+      const msg = getErrorMessage(err, t("agentChat.generationFailed"));
       setMessages((prev) =>
         prev.map((m) =>
           m.id === agentMessageId ? { ...m, status: "failed", content: msg } : m

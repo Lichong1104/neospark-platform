@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Sparkles, Zap, Globe } from "lucide-react";
 import { toast } from "sonner";
 import { googleLogin, sendCode, login as apiLogin } from "@/api/auth";
+import { getErrorMessage } from "@/lib/errorMessage";
 
 const Login = () => {
   const { t, i18n } = useTranslation();
@@ -56,7 +57,7 @@ const Login = () => {
       toast.success(t("login.codeSent", { email }));
       setTimeout(() => inputRefs.current[0]?.focus(), 100);
     } catch (err: any) {
-      const msg = err?.response?.data?.detail || err?.response?.data?.message || err?.message || "Failed";
+      const msg = getErrorMessage(err, "Failed");
       toast.error(msg);
     } finally {
       setIsLoading(false);
@@ -115,7 +116,7 @@ const Login = () => {
       toast.success(t("login.loginSuccess"));
       navigate(redirectTo, { replace: true });
     } catch (err: any) {
-      const msg = err?.response?.data?.detail || err?.response?.data?.message || err?.message || "验证失败";
+      const msg = getErrorMessage(err, "验证失败");
       toast.error(msg);
       setCode(["", "", "", "", "", ""]);
       inputRefs.current[0]?.focus();
@@ -131,7 +132,7 @@ const Login = () => {
       setCountdown(60);
       toast.success(t("login.codeSent", { email }));
     } catch (err: any) {
-      const msg = err?.response?.data?.detail || err?.response?.data?.message || "发送失败，请重试";
+      const msg = getErrorMessage(err, "发送失败，请重试");
       toast.error(msg);
     }
   };

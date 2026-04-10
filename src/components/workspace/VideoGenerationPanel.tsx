@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import { createVideoTask, getVideoModels, getVideoTask } from "@/api/video";
 import { STATIC_BASE_URL } from "@/api/request";
+import { getErrorMessage } from "@/lib/errorMessage";
 import type {
   CreateVideoParams,
   VideoModelConfig,
@@ -234,8 +235,7 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
       toast.info(t("video.taskCreated", { cost: cost ?? "-" }));
     } catch (err: any) {
       setStatus("idle");
-      const msg =
-        err?.response?.data?.detail || err?.message || t("video.createFailed");
+      const msg = getErrorMessage(err, t("video.createFailed"));
       toast.error(msg);
     } finally {
       setIsCreating(false);
