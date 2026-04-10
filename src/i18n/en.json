@@ -611,6 +611,7 @@
     "referenceImageUrls": "Reference Image URLs (one per line)",
     "referenceVideoUrls": "Reference Video URLs (one per line)",
     "referenceAudioUrl": "Reference Audio URL",
+    "referenceAudioRequiresRef": "Reference Audio URL requires a reference image/video (or first/last frame).",
     "assetGroupName": "Asset Group Name (optional)",
     "multiUrlHint": "One URL per line, e.g. https://example.com/a.jpg"
   }

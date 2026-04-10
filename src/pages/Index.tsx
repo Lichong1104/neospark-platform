@@ -39,6 +39,24 @@ const getImageSize = (
     img.src = src;
   });
 
+const getVideoSize = (
+  src: string
+): Promise<{ width: number; height: number }> =>
+  new Promise((resolve) => {
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    video.onloadedmetadata = () => {
+      resolve({
+        width: video.videoWidth || CANVAS_IMAGE_MAX_SIZE,
+        height: video.videoHeight || CANVAS_IMAGE_MAX_SIZE,
+      });
+    };
+    video.onerror = () => {
+      resolve({ width: CANVAS_IMAGE_MAX_SIZE, height: CANVAS_IMAGE_MAX_SIZE });
+    };
+    video.src = src;
+  });
+
 const toCanvasSize = (
   width: number,
   height: number
@@ -54,6 +72,21 @@ const toCanvasSize = (
     width: Math.round(width * scale),
     height: Math.round(height * scale),
   };
+};
+
+const getCanvasCenterPlacement = (
+  width: number,
+  height: number,
+  indexOffset = 0
+): { x: number; y: number } => {
+  const stage = document.getElementById("onboarding-canvas-stage");
+  if (!stage) return { x: 120 + indexOffset * 40, y: 60 + indexOffset * 40 };
+  const rect = stage.getBoundingClientRect();
+
+  // Place in the visible center of the stage (in canvas coordinates at default zoom/pan).
+  const x = Math.max(0, Math.round(rect.width / 2 - width / 2 + indexOffset * 24));
+  const y = Math.max(0, Math.round(rect.height / 2 - height / 2 + indexOffset * 24));
+  return { x, y };
 };
 
 const Index = () => {
@@ -151,10 +184,11 @@ const Index = () => {
               : `${STATIC_BASE_URL}${img.url}`;
             const natural = await getImageSize(src);
             const size = toCanvasSize(natural.width, natural.height);
+            const pos = getCanvasCenterPlacement(size.width, size.height, idx);
             return {
               id: Math.random().toString(36).substr(2, 8).toUpperCase(),
-              x: 120 + idx * 40,
-              y: 60 + idx * 40,
+              x: pos.x,
+              y: pos.y,
               width: size.width,
               height: size.height,
               selected: false,
@@ -171,18 +205,23 @@ const Index = () => {
   );
 
   const handleVideoGenerated = useCallback((videoUrl: string) => {
-    const newItem: CanvasImage = {
-      id: Math.random().toString(36).substr(2, 8).toUpperCase(),
-      x: 120 + Math.random() * 100,
-      y: 60 + Math.random() * 100,
-      width: 320,
-      height: 180,
-      selected: false,
-      src: videoUrl,
-      name: `Video_${Date.now()}`,
-      type: "video",
-    };
-    setCanvasImages((prev) => [...prev, newItem]);
+    (async () => {
+      const natural = await getVideoSize(videoUrl);
+      const size = toCanvasSize(natural.width, natural.height);
+      const pos = getCanvasCenterPlacement(size.width, size.height, 0);
+      const newItem: CanvasImage = {
+        id: Math.random().toString(36).substr(2, 8).toUpperCase(),
+        x: pos.x,
+        y: pos.y,
+        width: size.width,
+        height: size.height,
+        selected: false,
+        src: videoUrl,
+        name: `Video_${Date.now()}`,
+        type: "video",
+      };
+      setCanvasImages((prev) => [...prev, newItem]);
+    })();
   }, []);
 
   const handleAddToCanvas = useCallback(
@@ -190,8 +229,6 @@ const Index = () => {
       (async () => {
         const base = {
           id: Math.random().toString(36).substr(2, 8).toUpperCase(),
-          x: 120 + Math.random() * 100,
-          y: 60 + Math.random() * 100,
           selected: false,
           src: item.src,
           name: item.name,
@@ -199,15 +236,21 @@ const Index = () => {
         } as const;
 
         if (item.type === "video") {
-          const newItem: CanvasImage = { ...base, width: 320, height: 180 };
+          const natural = await getVideoSize(item.src);
+          const size = toCanvasSize(natural.width, natural.height);
+          const pos = getCanvasCenterPlacement(size.width, size.height, 0);
+          const newItem: CanvasImage = { ...base, x: pos.x, y: pos.y, width: size.width, height: size.height };
           setCanvasImages((prev) => [...prev, newItem]);
           return;
         }
 
         const natural = await getImageSize(item.src);
         const size = toCanvasSize(natural.width, natural.height);
+        const pos = getCanvasCenterPlacement(size.width, size.height, 0);
         const newItem: CanvasImage = {
           ...base,
+          x: pos.x,
+          y: pos.y,
           width: size.width,
           height: size.height,
         };

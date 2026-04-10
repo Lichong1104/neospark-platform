@@ -5,6 +5,9 @@ export type VideoTaskStatus =
   | "failed"
   | "cancelled";
 
+/** Output resolution for video generation (API `resolution` field) */
+export type VideoResolution = "480p" | "720p";
+
 /** GET /video/models */
 export interface VideoModelConfig {
   id: string;
@@ -29,6 +32,8 @@ export interface CreateVideoParams {
   model?: string;
   duration?: number;
   ratio?: string;
+  /** Defaults to 720p when omitted (server / client convention) */
+  resolution?: VideoResolution;
   generate_audio?: boolean;
   first_frame_url?: string;
   last_frame_url?: string;
@@ -46,6 +51,7 @@ export interface CreateVideoResponse {
   model: string;
   duration: number;
   ratio: string;
+  resolution?: VideoResolution;
   pricing?: {
     estimated_cost: number;
     currency?: string;
@@ -64,6 +70,7 @@ export interface VideoTaskDetail {
   model?: string;
   duration?: number;
   ratio?: string;
+  resolution?: VideoResolution;
   generate_audio?: boolean;
   video_url?: string;
   estimated_cost?: number;

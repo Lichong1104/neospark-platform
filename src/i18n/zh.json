@@ -611,6 +611,7 @@
     "referenceImageUrls": "参考图片 URL（每行一条）",
     "referenceVideoUrls": "参考视频 URL（每行一条）",
     "referenceAudioUrl": "参考音频 URL",
+    "referenceAudioRequiresRef": "参考音频 URL 必须配合参考图/参考视频（或首/尾帧）使用",
     "assetGroupName": "资产组名称（可选）",
     "multiUrlHint": "每行一个 URL，例如 https://example.com/a.jpg"
   }
