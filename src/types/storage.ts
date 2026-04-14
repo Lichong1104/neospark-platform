@@ -1,3 +1,5 @@
+import type { VideoTaskStatus } from "./video";
+
 /** 文件元信息 */
 export interface FileMeta {
   width?: number;
@@ -80,6 +82,58 @@ export interface UserImagesData {
   offset: number;
   limit: number;
   images: UserImageItem[];
+}
+
+/** GET /storage/user-videos 查询参数 */
+export interface ListUserVideosParams {
+  source?: "upload" | "generation";
+  /** 生成视频状态筛选（仅对 type=generation 有意义） */
+  status?: VideoTaskStatus;
+  limit?: number;
+  offset?: number;
+}
+
+/** 用户视频列表项 — 生成视频 */
+export interface UserVideoGenerationItem {
+  id: string;
+  type: "generation";
+  filename: string;
+  path: string;
+  url: string;
+  size: number;
+  prompt?: string;
+  model?: string;
+  duration?: number;
+  resolution?: string;
+  ratio?: string;
+  task_type?: "text_to_video" | "image_to_video";
+  task_status: VideoTaskStatus;
+  progress: number;
+  created_at: string;
+  completed_at?: string;
+}
+
+/** 用户视频列表项 — 上传视频 */
+export interface UserVideoUploadItem {
+  id: string;
+  type: "upload";
+  filename: string;
+  path: string;
+  url: string;
+  size: number;
+  content_type: string;
+  status: string;
+  created_at: string;
+}
+
+export type UserVideoItem = UserVideoGenerationItem | UserVideoUploadItem;
+
+/** GET /storage/user-videos 响应 data */
+export interface UserVideosData {
+  total: number;
+  offset: number;
+  limit: number;
+  items: UserVideoItem[];
 }
 
 /** 文件使用记录 */

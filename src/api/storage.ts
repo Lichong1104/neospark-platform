@@ -5,6 +5,8 @@ import type {
   FileListData,
   ListUserImagesParams,
   UserImagesData,
+  ListUserVideosParams,
+  UserVideosData,
   FileDetail,
   FileUrlData,
 } from "@/types/storage";
@@ -115,6 +117,69 @@ export async function listAllUserImages(
 }
 
 /**
+ * 获取用户所有视频（上传 + 生成）
+ * GET /api/v1/storage/user-videos
+ */
+export async function listUserVideos(
+  params?: ListUserVideosParams
+): Promise<UserVideosData> {
+  const res = await http.get<UserVideosData>(
+    "/storage/user-videos",
+    params as Record<string, unknown>
+  );
+  return res.data;
+}
+
+export type ListAllUserVideosParams = Omit<
+  ListUserVideosParams,
+  "limit" | "offset"
+> & {
+  pageSize?: number;
+  pageSizeMax?: number;
+  maxPages?: number;
+};
+
+/**
+ * 获取用户全部视频（自动翻页，避免默认 limit=20 只返回一页）
+ */
+export async function listAllUserVideos(
+  params?: ListAllUserVideosParams
+): Promise<UserVideosData> {
+  const { pageSize = 20, pageSizeMax = 100, maxPages = 200, ...rest } =
+    params ?? {};
+  const effectivePageSize = Math.max(1, Math.min(pageSize, pageSizeMax));
+
+  let offset = 0;
+  let total: number | null = null;
+  const items: UserVideosData["items"] = [];
+
+  for (let page = 0; page < maxPages; page++) {
+    const data = await listUserVideos({
+      ...(rest as Omit<ListUserVideosParams, "limit" | "offset">),
+      limit: effectivePageSize,
+      offset,
+    });
+
+    if (total === null) total = data.total ?? 0;
+
+    const batch = data.items ?? [];
+    if (batch.length === 0) break;
+
+    items.push(...batch);
+    offset += batch.length;
+
+    if (items.length >= (total ?? 0)) break;
+  }
+
+  return {
+    total: total ?? items.length,
+    offset: 0,
+    limit: items.length,
+    items,
+  };
+}
+
+/**
  * 获取文件（下载/访问）
  * GET /api/v1/storage/file/{path}
  * 也可直接使用静态 URL: /uploads/{path}
@@ -154,6 +219,8 @@ const storageApi = {
   listFiles,
   listUserImages,
   listAllUserImages,
+  listUserVideos,
+  listAllUserVideos,
   getFileAccessUrl,
   deleteFile,
   getFileDetail,

@@ -17,7 +17,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import storageApi from "@/api/storage";
 import { STATIC_BASE_URL } from "@/api/request";
-import type { UserImageItem, FileItem } from "@/types/storage";
+import type { UserImageItem, UserVideoItem } from "@/types/storage";
 
 interface AssetSidebarProps {
   isOpen: boolean;
@@ -45,7 +45,7 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
   >("all");
   const [isLoadingImages, setIsLoadingImages] = useState(false);
 
-  const [videoFiles, setVideoFiles] = useState<FileItem[]>([]);
+  const [videoFiles, setVideoFiles] = useState<UserVideoItem[]>([]);
   const [isLoadingVideos, setIsLoadingVideos] = useState(false);
 
   const [isUploading, setIsUploading] = useState(false);
@@ -53,6 +53,9 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
 
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [previewItem, setPreviewItem] = useState<UserImageItem | null>(null);
+  const [previewVideoItem, setPreviewVideoItem] = useState<UserVideoItem | null>(
+    null
+  );
 
   const getImageUrl = useCallback((url: string) => {
     if (!url) return "";
@@ -75,8 +78,8 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
   const loadVideos = useCallback(async () => {
     setIsLoadingVideos(true);
     try {
-      const data = await storageApi.listFiles({ file_type: "video" });
-      setVideoFiles(data.files || []);
+      const data = await storageApi.listAllUserVideos();
+      setVideoFiles(data.items || []);
     } catch {
       setVideoFiles([]);
     } finally {
@@ -119,7 +122,7 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
       await storageApi.deleteFile(path);
       toast.success(t("assetSidebar.deleted"));
       setUserImages((prev) => prev.filter((img) => img.id !== id));
-      setVideoFiles((prev) => prev.filter((f) => f.upload_id !== id));
+      setVideoFiles((prev) => prev.filter((f) => f.id !== id));
       setConfirmDeleteId(null);
       if (previewItem?.id === id) setPreviewItem(null);
     } catch {
@@ -136,8 +139,8 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
     toast.success(t("assetSidebar.addedToCanvas"));
   };
 
-  const handleClickVideo = (file: FileItem) => {
-    const url = file.path ? `${STATIC_BASE_URL}/storage/file/${file.path}` : "";
+  const handleClickVideo = (file: UserVideoItem) => {
+    const url = getImageUrl(file.url);
     onAddToCanvas?.({
       src: url,
       name: file.filename,
@@ -253,6 +256,92 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
               onClick={() => {
                 handleDelete(previewItem.path, previewItem.id);
               }}
+              className="py-2 px-3 border-brutal border-foreground bg-accent-red text-card font-bold text-xs uppercase flex items-center justify-center brutal-press"
+            >
+              <Trash2 className="w-3 h-3" />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (previewVideoItem) {
+    return (
+      <div className="absolute left-16 top-0 bottom-0 w-80 bg-card border-r-brutal border-foreground z-40 flex flex-col">
+        <div className="flex items-center justify-between px-4 py-3 border-b-brutal border-foreground">
+          <h2 className="text-xs font-bold uppercase tracking-wider">
+            {t("assetSidebar.fileDetail")}
+          </h2>
+          <button
+            onClick={() => setPreviewVideoItem(null)}
+            className="p-1 hover:bg-secondary transition-none"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-3 space-y-3">
+          <div className="border-brutal border-foreground overflow-hidden bg-muted">
+            <video
+              src={getImageUrl(previewVideoItem.url)}
+              className="w-full h-auto object-contain"
+              controls
+              playsInline
+            />
+          </div>
+          <div className="space-y-1.5 text-[11px] font-mono">
+            <div className="flex justify-between py-1 border-b border-foreground/10">
+              <span className="text-muted-foreground uppercase">
+                {t("assetSidebar.fileName")}
+              </span>
+              <span className="font-bold truncate ml-2 max-w-[150px]">
+                {previewVideoItem.filename}
+              </span>
+            </div>
+            <div className="flex justify-between py-1 border-b border-foreground/10">
+              <span className="text-muted-foreground uppercase">
+                {t("assetSidebar.source")}
+              </span>
+              <span
+                className={cn(
+                  "font-bold",
+                  previewVideoItem.type === "generation"
+                    ? "text-accent-purple"
+                    : "text-accent-cyan"
+                )}
+              >
+                {previewVideoItem.type === "generation"
+                  ? `🎬 ${t("assetSidebar.generated")}`
+                  : `📤 ${t("assetSidebar.upload")}`}
+              </span>
+            </div>
+            <div className="flex justify-between py-1 border-b border-foreground/10">
+              <span className="text-muted-foreground uppercase">
+                {t("assetSidebar.size")}
+              </span>
+              <span className="font-bold">
+                {(previewVideoItem.size / 1024 / 1024).toFixed(1)} MB
+              </span>
+            </div>
+            {"task_status" in previewVideoItem && (
+              <div className="flex justify-between py-1 border-b border-foreground/10">
+                <span className="text-muted-foreground uppercase">status</span>
+                <span className="font-bold">{previewVideoItem.task_status}</span>
+              </div>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                handleClickVideo(previewVideoItem);
+                setPreviewVideoItem(null);
+              }}
+              className="flex-1 py-2 border-brutal border-foreground bg-accent-cyan font-bold text-xs uppercase flex items-center justify-center gap-1 brutal-press"
+            >
+              <Plus className="w-3 h-3" /> {t("assetSidebar.addToCanvas")}
+            </button>
+            <button
+              onClick={() => handleDelete(previewVideoItem.path, previewVideoItem.id)}
               className="py-2 px-3 border-brutal border-foreground bg-accent-red text-card font-bold text-xs uppercase flex items-center justify-center brutal-press"
             >
               <Trash2 className="w-3 h-3" />
@@ -488,8 +577,8 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
               <div className="space-y-1.5">
                 {videoFiles.map((file) => (
                   <div
-                    key={file.upload_id}
-                    onClick={() => handleClickVideo(file)}
+                    key={file.id}
+                    onClick={() => setPreviewVideoItem(file)}
                     className="flex items-center gap-2 p-2 border border-foreground/20 hover:border-accent-purple cursor-pointer group transition-colors"
                   >
                     <div className="w-8 h-8 bg-accent-purple/10 flex items-center justify-center flex-shrink-0">
@@ -501,6 +590,7 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
                       </div>
                       <div className="text-[9px] text-muted-foreground">
                         {(file.size / 1024 / 1024).toFixed(1)} MB
+                        {file.type === "generation" ? " · AI" : " · UP"}
                       </div>
                     </div>
                     <div
@@ -508,10 +598,24 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
                       onClick={(e) => e.stopPropagation()}
                     >
                       <button
-                        onClick={() => handleDelete(file.path, file.upload_id)}
+                        onClick={() => setPreviewVideoItem(file)}
+                        className="p-1 transition-none hover:bg-accent-cyan hover:text-foreground"
+                        title={t("assetSidebar.viewDetail")}
+                      >
+                        <Eye className="w-3 h-3" />
+                      </button>
+                      <button
+                        onClick={() => handleClickVideo(file)}
+                        className="p-1 transition-none hover:bg-accent-cyan hover:text-foreground"
+                        title={t("assetSidebar.addToCanvas")}
+                      >
+                        <Plus className="w-3 h-3" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(file.path, file.id)}
                         className={cn(
                           "p-1 transition-none",
-                          confirmDeleteId === file.upload_id
+                          confirmDeleteId === file.id
                             ? "bg-accent-red text-card"
                             : "hover:bg-accent-red hover:text-card"
                         )}
