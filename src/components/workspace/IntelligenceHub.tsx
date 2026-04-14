@@ -228,6 +228,7 @@ interface IntelligenceHubProps {
     type?: "image" | "video";
   } | null;
   selectedCanvasImages?: CanvasImage[];
+  canvasImages?: CanvasImage[];
 }
 
 const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
@@ -235,6 +236,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
   onVideoGenerated,
   selectedCanvasImage,
   selectedCanvasImages = [],
+  canvasImages = [],
 }) => {
   const { t } = useTranslation();
   const AGENTS = useAgents();
@@ -581,6 +583,8 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
             <VideoGenerationPanel
               onVideoGenerated={onVideoGenerated}
               selectedCanvasImage={selectedCanvasImage ?? null}
+              selectedCanvasImages={selectedCanvasImages}
+              canvasImages={canvasImages}
             />
           )}
         </>

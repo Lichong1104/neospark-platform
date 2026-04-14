@@ -332,6 +332,7 @@ const Index = () => {
               onVideoGenerated={handleVideoGenerated}
               selectedCanvasImage={selectedCanvasImage ?? null}
               selectedCanvasImages={selectedCanvasImages}
+              canvasImages={canvasImages}
             />
           </aside>
         </main>

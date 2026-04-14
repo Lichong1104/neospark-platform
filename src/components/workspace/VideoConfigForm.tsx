@@ -1,7 +1,8 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Image, Volume2, VolumeX, Clock, Maximize2 } from "lucide-react";
+import { Image, Volume2, VolumeX, Clock, Maximize2, Upload, Link2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { STATIC_BASE_URL } from "@/api/request";
 import type { VideoModelConfig, VideoResolution } from "@/types/video";
 
 interface VideoConfigFormProps {
@@ -32,9 +33,23 @@ interface VideoConfigFormProps {
     name: string;
     type?: "image" | "video";
   } | null;
+  selectedCanvasImages?: {
+    src: string;
+    name: string;
+    type?: "image" | "video";
+  }[];
+  canvasImages?: {
+    src: string;
+    name: string;
+    type?: "image" | "video";
+  }[];
   modelOptions: VideoModelConfig[];
   ratioOptions: string[];
   durationOptions: string[];
+  onUploadReference: (kind: "image" | "video" | "audio", file: File) => void;
+  onUseSelectedCanvasRefs: () => void;
+  onUseCanvasAsFirstFrame: () => void;
+  onUseCanvasAsLastFrame: () => void;
 }
 
 const ChipSelect: React.FC<{
@@ -86,11 +101,161 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
   assetGroupName: _assetGroupName,
   setAssetGroupName: _setAssetGroupName,
   selectedCanvasImage,
+  selectedCanvasImages = [],
+  canvasImages = [],
   modelOptions,
   ratioOptions,
   durationOptions,
+  onUploadReference,
+  onUseSelectedCanvasRefs,
+  onUseCanvasAsFirstFrame,
+  onUseCanvasAsLastFrame,
 }) => {
   const { t } = useTranslation();
+  const imageUploadRef = React.useRef<HTMLInputElement>(null);
+  const videoUploadRef = React.useRef<HTMLInputElement>(null);
+  const audioUploadRef = React.useRef<HTMLInputElement>(null);
+  const selectedCanvasCount = selectedCanvasImages.length;
+  type MentionField =
+    | "firstFrameUrl"
+    | "lastFrameUrl"
+    | "referenceImageUrls"
+    | "referenceVideoUrls";
+  const [mention, setMention] = React.useState<{
+    field: MentionField;
+    query: string;
+  } | null>(null);
+
+  const normalizeCanvasPath = React.useCallback((src: string) => {
+    if (!src) return "";
+    if (src.startsWith(STATIC_BASE_URL)) return src.slice(STATIC_BASE_URL.length);
+    if (src.startsWith("http")) {
+      try {
+        return new URL(src).pathname;
+      } catch {
+        return src;
+      }
+    }
+    return src;
+  }, []);
+
+  const getMentionQuery = React.useCallback((value: string) => {
+    const idx = value.lastIndexOf("@");
+    if (idx < 0) return null;
+    const tail = value.slice(idx + 1);
+    if (/\s/.test(tail)) return null;
+    return tail;
+  }, []);
+
+  const replaceLastAtToken = React.useCallback((value: string, replacement: string) => {
+    const idx = value.lastIndexOf("@");
+    if (idx < 0) return value;
+    const tail = value.slice(idx + 1);
+    if (/\s/.test(tail)) return value;
+    return `${value.slice(0, idx)}${replacement}`;
+  }, []);
+
+  const updateMentionState = React.useCallback(
+    (field: MentionField, value: string) => {
+      const q = getMentionQuery(value);
+      if (q === null) {
+        if (mention?.field === field) setMention(null);
+        return;
+      }
+      setMention({ field, query: q });
+    },
+    [getMentionQuery, mention?.field]
+  );
+
+  const visibleCanvasItems = React.useMemo(() => {
+    if (!mention) return [];
+    const expectedType =
+      mention.field === "referenceVideoUrls" ? "video" : "image";
+    const normalizedQuery = mention.query.trim().toLowerCase();
+    return canvasImages
+      .filter((item) => (item.type ?? "image") === expectedType)
+      .filter((item) =>
+        !normalizedQuery
+          ? true
+          : item.name.toLowerCase().includes(normalizedQuery) ||
+            normalizeCanvasPath(item.src).toLowerCase().includes(normalizedQuery)
+      )
+      .slice(0, 20);
+  }, [mention, canvasImages, normalizeCanvasPath]);
+
+  const applyMentionPick = React.useCallback(
+    (field: MentionField, src: string) => {
+      const path = normalizeCanvasPath(src);
+      if (!path) return;
+      if (field === "firstFrameUrl") {
+        setFirstFrameUrl(replaceLastAtToken(firstFrameUrl, path));
+      } else if (field === "lastFrameUrl") {
+        setLastFrameUrl(replaceLastAtToken(lastFrameUrl, path));
+      } else if (field === "referenceImageUrls") {
+        setReferenceImageUrls(replaceLastAtToken(referenceImageUrls, path));
+      } else if (field === "referenceVideoUrls") {
+        setReferenceVideoUrls(replaceLastAtToken(referenceVideoUrls, path));
+      }
+      setMention(null);
+    },
+    [
+      normalizeCanvasPath,
+      replaceLastAtToken,
+      firstFrameUrl,
+      lastFrameUrl,
+      referenceImageUrls,
+      referenceVideoUrls,
+      setFirstFrameUrl,
+      setLastFrameUrl,
+      setReferenceImageUrls,
+      setReferenceVideoUrls,
+    ]
+  );
+
+  const renderMentionPanel = (field: MentionField) => {
+    if (!mention || mention.field !== field) return null;
+    return (
+      <div className="absolute left-0 right-0 top-full mt-1 z-20 max-h-44 overflow-y-auto border border-foreground/20 bg-card brutal-shadow">
+        {visibleCanvasItems.length === 0 ? (
+          <div className="px-2.5 py-2 text-[10px] text-muted-foreground">
+            {t("video.noCanvasResourceMatch")}
+          </div>
+        ) : (
+          visibleCanvasItems.map((item, idx) => (
+            <button
+              key={`${item.name}-${idx}`}
+              type="button"
+              onClick={() => applyMentionPick(field, item.src)}
+              className="w-full px-2.5 py-2 text-left border-b border-foreground/10 last:border-b-0 hover:bg-secondary transition-none flex items-center gap-2"
+            >
+              {(item.type ?? "image") === "image" ? (
+                <img
+                  src={
+                    item.src.startsWith("http")
+                      ? item.src
+                      : `${STATIC_BASE_URL}${item.src}`
+                  }
+                  alt={item.name}
+                  className="w-7 h-7 object-cover border border-foreground/20"
+                />
+              ) : (
+                <div className="w-7 h-7 flex items-center justify-center border border-foreground/20 text-[10px] font-bold">
+                  V
+                </div>
+              )}
+              <div className="min-w-0">
+                <div className="text-[11px] font-bold truncate">{item.name}</div>
+                <div className="text-[9px] text-muted-foreground truncate">
+                  {normalizeCanvasPath(item.src)}
+                </div>
+              </div>
+            </button>
+          ))
+        )}
+      </div>
+    );
+  };
+  const triggerUseCanvasRefs = () => onUseSelectedCanvasRefs();
   const chipRatios = ratioOptions.map((item) => ({ value: item, label: item }));
   const chipDurations = durationOptions.map((item) => ({
     value: item,
@@ -205,60 +370,271 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
 
         <div className="px-2.5 pb-2.5 pt-1 border-t border-foreground/15 space-y-2.5">
           <div>
-            <label className="text-[10px] font-bold uppercase text-muted-foreground mb-1 block">
-              {t("video.firstFrameUrl")}
-            </label>
-            <input
-              value={firstFrameUrl}
-              onChange={(e) => setFirstFrameUrl(e.target.value)}
-              placeholder={t("video.firstFrameUrlPlaceholder")}
-              className="w-full px-2.5 py-2 text-[11px] font-mono border border-foreground/20 bg-background focus:outline-none focus:border-accent-purple"
-            />
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-[10px] font-bold uppercase text-muted-foreground">
+                {t("video.firstFrameUrl")}
+              </label>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={onUseCanvasAsFirstFrame}
+                  title={t("video.useCanvasRefs", { count: selectedCanvasCount })}
+                  className="p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none"
+                >
+                  <Link2 className="w-3 h-3" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => imageUploadRef.current?.click()}
+                  title={t("video.uploadRefImage")}
+                  className="p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none"
+                >
+                  <Upload className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+            <div className="relative group">
+              <input
+                value={firstFrameUrl}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setFirstFrameUrl(v);
+                  updateMentionState("firstFrameUrl", v);
+                }}
+                onFocus={(e) => updateMentionState("firstFrameUrl", e.target.value)}
+                placeholder={t("video.firstFrameUrlPlaceholder")}
+                className="w-full px-2.5 py-2 pr-8 text-[11px] font-mono border border-foreground/20 bg-background focus:outline-none focus:border-accent-purple"
+              />
+              {firstFrameUrl.trim() && (
+                <button
+                  type="button"
+                  onClick={() => setFirstFrameUrl("")}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none opacity-0 group-hover:opacity-100"
+                  title={t("video.clearInput")}
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+              {renderMentionPanel("firstFrameUrl")}
+            </div>
           </div>
           <div>
-            <label className="text-[10px] font-bold uppercase text-muted-foreground mb-1 block">
-              {t("video.lastFrameUrl")}
-            </label>
-            <input
-              value={lastFrameUrl}
-              onChange={(e) => setLastFrameUrl(e.target.value)}
-              placeholder={t("video.lastFrameUrlPlaceholder")}
-              className="w-full px-2.5 py-2 text-[11px] font-mono border border-foreground/20 bg-background focus:outline-none focus:border-accent-purple"
-            />
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-[10px] font-bold uppercase text-muted-foreground">
+                {t("video.lastFrameUrl")}
+              </label>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={onUseCanvasAsLastFrame}
+                  title={t("video.useCanvasRefs", { count: selectedCanvasCount })}
+                  className="p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none"
+                >
+                  <Link2 className="w-3 h-3" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => imageUploadRef.current?.click()}
+                  title={t("video.uploadRefImage")}
+                  className="p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none"
+                >
+                  <Upload className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+            <div className="relative group">
+              <input
+                value={lastFrameUrl}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setLastFrameUrl(v);
+                  updateMentionState("lastFrameUrl", v);
+                }}
+                onFocus={(e) => updateMentionState("lastFrameUrl", e.target.value)}
+                placeholder={t("video.lastFrameUrlPlaceholder")}
+                className="w-full px-2.5 py-2 pr-8 text-[11px] font-mono border border-foreground/20 bg-background focus:outline-none focus:border-accent-purple"
+              />
+              {lastFrameUrl.trim() && (
+                <button
+                  type="button"
+                  onClick={() => setLastFrameUrl("")}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none opacity-0 group-hover:opacity-100"
+                  title={t("video.clearInput")}
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+              {renderMentionPanel("lastFrameUrl")}
+            </div>
           </div>
           <div>
-            <label className="text-[10px] font-bold uppercase text-muted-foreground mb-1 block">
-              {t("video.referenceImageUrls")}
-            </label>
-            <textarea
-              value={referenceImageUrls}
-              onChange={(e) => setReferenceImageUrls(e.target.value)}
-              placeholder={t("video.multiUrlHint")}
-              className="w-full min-h-[64px] px-2.5 py-2 text-[11px] font-mono border border-foreground/20 bg-background focus:outline-none focus:border-accent-purple resize-y"
-            />
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-[10px] font-bold uppercase text-muted-foreground">
+                {t("video.referenceImageUrls")}
+              </label>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={triggerUseCanvasRefs}
+                  title={t("video.useCanvasRefs", { count: selectedCanvasCount })}
+                  className="p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none"
+                >
+                  <Link2 className="w-3 h-3" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => imageUploadRef.current?.click()}
+                  title={t("video.uploadRefImage")}
+                  className="p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none"
+                >
+                  <Upload className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+            <div className="relative group">
+              <textarea
+                value={referenceImageUrls}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setReferenceImageUrls(v);
+                  updateMentionState("referenceImageUrls", v);
+                }}
+                onFocus={(e) =>
+                  updateMentionState("referenceImageUrls", e.target.value)
+                }
+                placeholder={t("video.multiUrlHint")}
+                className="w-full min-h-[64px] px-2.5 py-2 pr-8 text-[11px] font-mono border border-foreground/20 bg-background focus:outline-none focus:border-accent-purple resize-y"
+              />
+              {referenceImageUrls.trim() && (
+                <button
+                  type="button"
+                  onClick={() => setReferenceImageUrls("")}
+                  className="absolute right-1 top-1 p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none opacity-0 group-hover:opacity-100"
+                  title={t("video.clearInput")}
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+              {renderMentionPanel("referenceImageUrls")}
+            </div>
           </div>
           <div>
-            <label className="text-[10px] font-bold uppercase text-muted-foreground mb-1 block">
-              {t("video.referenceVideoUrls")}
-            </label>
-            <textarea
-              value={referenceVideoUrls}
-              onChange={(e) => setReferenceVideoUrls(e.target.value)}
-              placeholder={t("video.multiUrlHint")}
-              className="w-full min-h-[64px] px-2.5 py-2 text-[11px] font-mono border border-foreground/20 bg-background focus:outline-none focus:border-accent-purple resize-y"
-            />
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-[10px] font-bold uppercase text-muted-foreground">
+                {t("video.referenceVideoUrls")}
+              </label>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={triggerUseCanvasRefs}
+                  title={t("video.useCanvasRefs", { count: selectedCanvasCount })}
+                  className="p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none"
+                >
+                  <Link2 className="w-3 h-3" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => videoUploadRef.current?.click()}
+                  title={t("video.uploadRefVideo")}
+                  className="p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none"
+                >
+                  <Upload className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+            <div className="relative group">
+              <textarea
+                value={referenceVideoUrls}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setReferenceVideoUrls(v);
+                  updateMentionState("referenceVideoUrls", v);
+                }}
+                onFocus={(e) =>
+                  updateMentionState("referenceVideoUrls", e.target.value)
+                }
+                placeholder={t("video.multiUrlHint")}
+                className="w-full min-h-[64px] px-2.5 py-2 pr-8 text-[11px] font-mono border border-foreground/20 bg-background focus:outline-none focus:border-accent-purple resize-y"
+              />
+              {referenceVideoUrls.trim() && (
+                <button
+                  type="button"
+                  onClick={() => setReferenceVideoUrls("")}
+                  className="absolute right-1 top-1 p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none opacity-0 group-hover:opacity-100"
+                  title={t("video.clearInput")}
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+              {renderMentionPanel("referenceVideoUrls")}
+            </div>
           </div>
 
           <div>
-            <label className="text-[10px] font-bold uppercase text-muted-foreground mb-1 block">
-              {t("video.referenceAudioUrl")}
-            </label>
-            <input
-              value={referenceAudioUrl}
-              onChange={(e) => setReferenceAudioUrl(e.target.value)}
-              className="w-full px-2.5 py-2 text-[11px] font-mono border border-foreground/20 bg-background focus:outline-none focus:border-accent-purple"
-            />
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-[10px] font-bold uppercase text-muted-foreground">
+                {t("video.referenceAudioUrl")}
+              </label>
+              <button
+                type="button"
+                onClick={() => audioUploadRef.current?.click()}
+                title={t("video.uploadRefAudio")}
+                className="p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none"
+              >
+                <Upload className="w-3 h-3" />
+              </button>
+            </div>
+            <div className="relative group">
+              <input
+                value={referenceAudioUrl}
+                onChange={(e) => setReferenceAudioUrl(e.target.value)}
+                className="w-full px-2.5 py-2 pr-8 text-[11px] font-mono border border-foreground/20 bg-background focus:outline-none focus:border-accent-purple"
+              />
+              {referenceAudioUrl.trim() && (
+                <button
+                  type="button"
+                  onClick={() => setReferenceAudioUrl("")}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none opacity-0 group-hover:opacity-100"
+                  title={t("video.clearInput")}
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </div>
           </div>
+          <input
+            ref={imageUploadRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) onUploadReference("image", file);
+              e.currentTarget.value = "";
+            }}
+          />
+          <input
+            ref={videoUploadRef}
+            type="file"
+            accept="video/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) onUploadReference("video", file);
+              e.currentTarget.value = "";
+            }}
+          />
+          <input
+            ref={audioUploadRef}
+            type="file"
+            accept="audio/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) onUploadReference("audio", file);
+              e.currentTarget.value = "";
+            }}
+          />
         </div>
       </section>
     </div>

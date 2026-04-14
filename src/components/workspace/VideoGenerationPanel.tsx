@@ -5,6 +5,7 @@ import { Video, Film, Download, RotateCcw, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import { createVideoTask, getVideoModels, getVideoTask } from "@/api/video";
+import storageApi from "@/api/storage";
 import { STATIC_BASE_URL } from "@/api/request";
 import { getErrorMessage } from "@/lib/errorMessage";
 import type {
@@ -22,6 +23,16 @@ interface VideoGenerationPanelProps {
     name: string;
     type?: "image" | "video";
   } | null;
+  selectedCanvasImages?: {
+    src: string;
+    name: string;
+    type?: "image" | "video";
+  }[];
+  canvasImages?: {
+    src: string;
+    name: string;
+    type?: "image" | "video";
+  }[];
 }
 
 const getVideoFullUrl = (url: string) => {
@@ -47,6 +58,8 @@ const toServerPath = (fullUrl: string) => {
 const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
   onVideoGenerated,
   selectedCanvasImage,
+  selectedCanvasImages = [],
+  canvasImages = [],
 }) => {
   const { t } = useTranslation();
   const [isCreating, setIsCreating] = useState(false);
@@ -106,16 +119,6 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
       })
       .catch(() => {});
   }, []);
-
-  React.useEffect(() => {
-    if (
-      !firstFrameUrl &&
-      selectedCanvasImage &&
-      selectedCanvasImage.type !== "video"
-    ) {
-      setFirstFrameUrl(toServerPath(selectedCanvasImage.src));
-    }
-  }, [selectedCanvasImage, firstFrameUrl]);
 
   React.useEffect(() => {
     if (!taskId) return;
@@ -179,6 +182,87 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
       .split("\n")
       .map((line) => line.trim())
       .filter(Boolean);
+
+  const appendMultiLineValue = (prev: string, value: string) => {
+    const line = value.trim();
+    if (!line) return prev;
+    if (!prev.trim()) return line;
+    const existing = parseMultiLineUrls(prev);
+    if (existing.includes(line)) return prev;
+    return `${prev.trim()}\n${line}`;
+  };
+
+  const handleUploadReference = useCallback(
+    async (kind: "image" | "video" | "audio", file: File) => {
+      const fileType = kind === "image" ? "image" : kind === "video" ? "video" : "other";
+      const uploaded = await storageApi.uploadFile(file, fileType);
+      const uploadedPath = uploaded.url || uploaded.path || "";
+      const normalizedPath = uploadedPath.startsWith("/")
+        ? uploadedPath
+        : `/${uploadedPath}`;
+      if (!normalizedPath) return;
+
+      if (kind === "image") {
+        setReferenceImageUrls((prev) => appendMultiLineValue(prev, normalizedPath));
+      } else if (kind === "video") {
+        setReferenceVideoUrls((prev) => appendMultiLineValue(prev, normalizedPath));
+      } else {
+        setReferenceAudioUrl(normalizedPath);
+      }
+      toast.success(t("video.refUploaded"));
+    },
+    [t]
+  );
+
+  const handleUseSelectedCanvasRefs = useCallback(() => {
+    const selectedImages = selectedCanvasImages.filter((item) => item.type !== "video");
+    const selectedVideos = selectedCanvasImages.filter((item) => item.type === "video");
+
+    if (!selectedImages.length && !selectedVideos.length) {
+      toast.error(t("video.noCanvasRefSelected"));
+      return;
+    }
+
+    if (selectedImages.length > 0) {
+      setReferenceImageUrls((prev) => {
+        let next = prev;
+        selectedImages.forEach((item) => {
+          next = appendMultiLineValue(next, toServerPath(item.src));
+        });
+        return next;
+      });
+    }
+
+    if (selectedVideos.length > 0) {
+      setReferenceVideoUrls((prev) => {
+        let next = prev;
+        selectedVideos.forEach((item) => {
+          next = appendMultiLineValue(next, toServerPath(item.src));
+        });
+        return next;
+      });
+    }
+
+    toast.success(t("video.canvasRefsApplied"));
+  }, [selectedCanvasImages, t]);
+
+  const handleUseCanvasAsFirstFrame = useCallback(() => {
+    const source = selectedCanvasImage?.src;
+    if (!source) {
+      toast.error(t("video.noCanvasRefSelected"));
+      return;
+    }
+    setFirstFrameUrl(toServerPath(source));
+  }, [selectedCanvasImage, t]);
+
+  const handleUseCanvasAsLastFrame = useCallback(() => {
+    const source = selectedCanvasImage?.src;
+    if (!source) {
+      toast.error(t("video.noCanvasRefSelected"));
+      return;
+    }
+    setLastFrameUrl(toServerPath(source));
+  }, [selectedCanvasImage, t]);
 
   const handleGenerate = useCallback(async () => {
     if (!prompt.trim() || isGenerating) return;
@@ -406,9 +490,15 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
             assetGroupName={assetGroupName}
             setAssetGroupName={setAssetGroupName}
             selectedCanvasImage={selectedCanvasImage ?? null}
+            selectedCanvasImages={selectedCanvasImages}
+            canvasImages={canvasImages}
             modelOptions={modelOptions}
             ratioOptions={ratioOptions}
             durationOptions={durationOptions}
+            onUploadReference={handleUploadReference}
+            onUseSelectedCanvasRefs={handleUseSelectedCanvasRefs}
+            onUseCanvasAsFirstFrame={handleUseCanvasAsFirstFrame}
+            onUseCanvasAsLastFrame={handleUseCanvasAsLastFrame}
           />
         )}
       </div>

@@ -613,6 +613,15 @@
     "referenceAudioUrl": "参考音频 URL",
     "referenceAudioRequiresRef": "参考音频 URL 必须配合参考图/参考视频（或首/尾帧）使用",
     "assetGroupName": "资产组名称（可选）",
-    "multiUrlHint": "每行一个 URL，例如 https://example.com/a.jpg"
+    "multiUrlHint": "每行一个 URL，例如 https://example.com/a.jpg",
+    "uploadRefImage": "上传参考图",
+    "uploadRefVideo": "上传参考视频",
+    "uploadRefAudio": "上传参考音频",
+    "useCanvasRefs": "引用画布资源 ({{count}})",
+    "refUploaded": "参考资源已上传并填入输入框",
+    "noCanvasRefSelected": "请先在画布中选中要引用的资源",
+    "canvasRefsApplied": "已将选中画布资源填入参考输入框",
+    "clearInput": "清空输入",
+    "noCanvasResourceMatch": "没有匹配的画布资源"
   }
 }

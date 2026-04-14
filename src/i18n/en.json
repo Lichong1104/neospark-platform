@@ -613,6 +613,15 @@
     "referenceAudioUrl": "Reference Audio URL",
     "referenceAudioRequiresRef": "Reference Audio URL requires a reference image/video (or first/last frame).",
     "assetGroupName": "Asset Group Name (optional)",
-    "multiUrlHint": "One URL per line, e.g. https://example.com/a.jpg"
+    "multiUrlHint": "One URL per line, e.g. https://example.com/a.jpg",
+    "uploadRefImage": "Upload ref image",
+    "uploadRefVideo": "Upload ref video",
+    "uploadRefAudio": "Upload ref audio",
+    "useCanvasRefs": "Use canvas refs ({{count}})",
+    "refUploaded": "Reference uploaded and filled into input",
+    "noCanvasRefSelected": "Select canvas assets to use as references first",
+    "canvasRefsApplied": "Selected canvas assets were filled into reference inputs",
+    "clearInput": "Clear input",
+    "noCanvasResourceMatch": "No matching canvas resources"
   }
 }
