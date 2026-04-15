@@ -98,6 +98,7 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
   const [error, setError] = useState("");
   const activePollingTaskIdRef = useRef<string | null>(null);
   const deliveredTaskIdsRef = useRef<Set<string>>(new Set());
+  const completedNoUrlTriesRef = useRef(0);
 
   React.useEffect(() => {
     getVideoModels()
@@ -123,6 +124,7 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
   React.useEffect(() => {
     if (!taskId) return;
     activePollingTaskIdRef.current = taskId;
+    completedNoUrlTriesRef.current = 0;
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
 
@@ -137,6 +139,25 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
         if (detail.video_url) setVideoUrl(detail.video_url);
 
         if (detail.status === "completed") {
+          // Some backends may mark completed before video_url is ready.
+          // Keep polling briefly to avoid losing the result + hiding the prompt box.
+          if (!detail.video_url) {
+            completedNoUrlTriesRef.current += 1;
+            // If it's taking too long, surface an error instead of getting stuck.
+            if (completedNoUrlTriesRef.current > 30) {
+              setError(detail.error_msg || t("video.fetchFailed"));
+              setStatus("failed");
+              return;
+            }
+            // Keep UI in generating state while we wait for the final URL.
+            setStatus("processing");
+            setProgress((p) => Math.max(p, 99));
+            timer = window.setTimeout(() => {
+              void pollOnce();
+            }, 1500);
+            return;
+          }
+
           const responseTaskId = detail.task_id || taskId;
           if (!deliveredTaskIdsRef.current.has(responseTaskId)) {
             deliveredTaskIdsRef.current.add(responseTaskId);
@@ -175,7 +196,7 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
   const isGenerating =
     isCreating || status === "pending" || status === "processing";
   const showForm =
-    !isGenerating && status !== "completed" && status !== "failed";
+    !isGenerating && status !== "failed" && !(status === "completed" && !!videoUrl);
 
   const parseMultiLineUrls = (value: string) =>
     value
