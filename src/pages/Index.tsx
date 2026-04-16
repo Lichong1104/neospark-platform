@@ -74,6 +74,9 @@ const toCanvasSize = (
   };
 };
 
+const toStorageUrl = (url: string): string =>
+  url.startsWith("http") ? url : `${STATIC_BASE_URL}${url}`;
+
 const getCanvasCenterPlacement = (
   width: number,
   height: number,
@@ -98,6 +101,7 @@ const Index = () => {
   const [activeView, setActiveView] = useState<"canvas" | "workflow">("canvas");
   const [isAssetSidebarOpen, setIsAssetSidebarOpen] = useState(false);
   const [canvasImages, setCanvasImages] = useState<CanvasImage[]>([]);
+  const [isFileDropUploading, setIsFileDropUploading] = useState(false);
 
   // Get selected canvas image info
   const selectedCanvasImage = canvasImages.find(
@@ -227,8 +231,28 @@ const Index = () => {
   const handleAddToCanvas = useCallback(
     (item: { src: string; name: string; type: "image" | "video" }) => {
       (async () => {
+        const id = Math.random().toString(36).substr(2, 8).toUpperCase();
+        const tempPos = getCanvasCenterPlacement(
+          CANVAS_IMAGE_MAX_SIZE,
+          CANVAS_IMAGE_MAX_SIZE,
+          0
+        );
+        const tempItem: CanvasImage = {
+          id,
+          x: tempPos.x,
+          y: tempPos.y,
+          width: CANVAS_IMAGE_MAX_SIZE,
+          height: CANVAS_IMAGE_MAX_SIZE,
+          selected: false,
+          src: item.src,
+          name: item.name,
+          type: item.type,
+          loading: true,
+        };
+        setCanvasImages((prev) => [...prev, tempItem]);
+
         const base = {
-          id: Math.random().toString(36).substr(2, 8).toUpperCase(),
+          id,
           selected: false,
           src: item.src,
           name: item.name,
@@ -239,22 +263,42 @@ const Index = () => {
           const natural = await getVideoSize(item.src);
           const size = toCanvasSize(natural.width, natural.height);
           const pos = getCanvasCenterPlacement(size.width, size.height, 0);
-          const newItem: CanvasImage = { ...base, x: pos.x, y: pos.y, width: size.width, height: size.height };
-          setCanvasImages((prev) => [...prev, newItem]);
+          setCanvasImages((prev) =>
+            prev.map((img) =>
+              img.id === id
+                ? {
+                    ...img,
+                    ...base,
+                    x: pos.x,
+                    y: pos.y,
+                    width: size.width,
+                    height: size.height,
+                    loading: false,
+                  }
+                : img
+            )
+          );
           return;
         }
 
         const natural = await getImageSize(item.src);
         const size = toCanvasSize(natural.width, natural.height);
         const pos = getCanvasCenterPlacement(size.width, size.height, 0);
-        const newItem: CanvasImage = {
-          ...base,
-          x: pos.x,
-          y: pos.y,
-          width: size.width,
-          height: size.height,
-        };
-        setCanvasImages((prev) => [...prev, newItem]);
+        setCanvasImages((prev) =>
+          prev.map((img) =>
+            img.id === id
+              ? {
+                  ...img,
+                  ...base,
+                  x: pos.x,
+                  y: pos.y,
+                  width: size.width,
+                  height: size.height,
+                  loading: false,
+                }
+              : img
+          )
+        );
       })();
     },
     []
@@ -273,17 +317,72 @@ const Index = () => {
   }, [userInfo?.id]);
 
   const handleFileDrop = useCallback(
-    async (files: File[]) => {
-      for (const file of files) {
-        try {
-          const fileType = file.type.startsWith("video") ? "video" : "image";
-          await storageApi.uploadFile(file, fileType);
-        } catch {
-          toast.error(t("workspace.uploadFailedWithName", { name: file.name }));
+    async (files: File[], position?: { x: number; y: number }) => {
+      setIsFileDropUploading(true);
+      try {
+        for (const [index, file] of files.entries()) {
+          const id = Math.random().toString(36).substr(2, 8).toUpperCase();
+          const initialPos = position
+            ? {
+                x: Math.max(0, Math.round(position.x + index * 30)),
+                y: Math.max(0, Math.round(position.y + index * 30)),
+              }
+            : getCanvasCenterPlacement(
+                CANVAS_IMAGE_MAX_SIZE,
+                CANVAS_IMAGE_MAX_SIZE,
+                index
+              );
+          const tempItem: CanvasImage = {
+            id,
+            x: initialPos.x,
+            y: initialPos.y,
+            width: CANVAS_IMAGE_MAX_SIZE,
+            height: CANVAS_IMAGE_MAX_SIZE,
+            selected: false,
+            src: "",
+            name: file.name,
+            type: file.type.startsWith("video/") ? "video" : "image",
+            loading: true,
+          };
+          setCanvasImages((prev) => [...prev, tempItem]);
+
+          try {
+            const fileType = file.type.startsWith("video") ? "video" : "image";
+            const uploaded = await storageApi.uploadFile(file, fileType);
+            const src = toStorageUrl(uploaded.url);
+            const itemType: "image" | "video" =
+              fileType === "video" ? "video" : "image";
+            const natural =
+              itemType === "video"
+                ? await getVideoSize(src)
+                : await getImageSize(src);
+            const size = toCanvasSize(natural.width, natural.height);
+
+            setCanvasImages((prev) =>
+              prev.map((img) =>
+                img.id === id
+                  ? {
+                      ...img,
+                      src,
+                      name: uploaded.filename || file.name,
+                      type: itemType,
+                      width: size.width,
+                      height: size.height,
+                      loading: false,
+                    }
+                  : img
+              )
+            );
+          } catch {
+            setCanvasImages((prev) => prev.filter((img) => img.id !== id));
+            toast.error(t("workspace.uploadFailedWithName", { name: file.name }));
+          }
         }
-      }
-      if (files.length > 0) {
-        toast.success(t("workspace.uploadedFiles", { count: files.length }));
+        if (files.length > 0) {
+          toast.success(t("workspace.uploadedFiles", { count: files.length }));
+        }
+      } finally {
+        setIsFileDropUploading(false);
       }
     },
     [t]
@@ -320,6 +419,7 @@ const Index = () => {
                 canvasImages={canvasImages}
                 onCanvasImagesChange={setCanvasImages}
                 onFileDrop={handleFileDrop}
+                isFileDropLoading={isFileDropUploading}
               />
             ) : (
               <WorkflowCanvas />

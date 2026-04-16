@@ -8,6 +8,11 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import wechatPayApi from "@/api/wechatPay";
+import billingApi, {
+  type BillingInterval,
+  type BillingPlanKey,
+  type BillingSubscriptionSummary,
+} from "@/api/billing";
 import type {
   WeChatPayOrder,
   WeChatPayPlan,
@@ -67,12 +72,15 @@ function formatCnyFen(amountFen: number): string {
 
 const Pricing = () => {
   const [billing, setBilling] = useState<BillingCycle>("monthly");
-  // Temporarily hide subscription tier cards; keep WeChat Pay only.
-  const showSubscriptionPlans = false;
+  const showSubscriptionPlans = true;
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { refreshUser } = useAuth();
+  const { isAuthenticated, refreshUser } = useAuth();
   const { toast } = useToast();
+  const [activeSubscription, setActiveSubscription] = useState<BillingSubscriptionSummary | null>(
+    null
+  );
+  const [subscriptionSubmittingPlan, setSubscriptionSubmittingPlan] = useState<string | null>(null);
 
   const [wechatPlans, setWechatPlans] = useState<WeChatPayPlan[] | null>(null);
   const [wechatPlansLoading, setWechatPlansLoading] = useState(false);
@@ -82,6 +90,15 @@ const Pricing = () => {
   const [wxOrder, setWxOrder] = useState<WeChatPayOrder | null>(null);
   const [wxSubmitting, setWxSubmitting] = useState(false);
   const pollTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    billingApi
+      .getState()
+      .then((state) => setActiveSubscription(state.subscription))
+      .catch(() => {
+        setActiveSubscription(null);
+      });
+  }, []);
 
   useEffect(() => {
     setWechatPlansLoading(true);
@@ -150,6 +167,67 @@ const Pricing = () => {
       });
     } finally {
       setWxSubmitting(false);
+    }
+  }
+
+  async function startSubscriptionCheckout(planKey: BillingPlanKey) {
+    if (subscriptionSubmittingPlan) return;
+    if (!isAuthenticated) {
+      toast({
+        title: t("pricing.loginRequired", { defaultValue: "Login required" }),
+        description: t("pricing.loginRequiredDesc", {
+          defaultValue: "Please login first, then try again.",
+        }),
+        variant: "destructive",
+      });
+      navigate("/login");
+      return;
+    }
+
+    try {
+      setSubscriptionSubmittingPlan(planKey);
+
+      if (activeSubscription) {
+        const { url } = await billingApi.createPortalSession();
+        window.location.href = url;
+        return;
+      }
+
+      const interval: BillingInterval = billing === "yearly" ? "yearly" : "monthly";
+      const { url } = await billingApi.createCheckoutSession(planKey, interval);
+      window.location.href = url;
+    } catch (e: any) {
+      const status = e?.response?.status;
+      const detail = e?.response?.data?.detail || e?.message || "Failed to create checkout session";
+      if (status === 401) {
+        toast({
+          title: t("pricing.loginRequired", { defaultValue: "Login required" }),
+          description: t("pricing.loginRequiredDesc", {
+            defaultValue: "Please login first, then try again.",
+          }),
+          variant: "destructive",
+        });
+        navigate("/login");
+        return;
+      }
+      if (status === 409) {
+        try {
+          const { url } = await billingApi.createPortalSession();
+          window.location.href = url;
+          return;
+        } catch {
+          // fallback to toast below
+        }
+      }
+      toast({
+        title: t("pricing.checkoutCreateFailed", {
+          defaultValue: "Unable to start checkout",
+        }),
+        description: String(detail),
+        variant: "destructive",
+      });
+    } finally {
+      setSubscriptionSubmittingPlan(null);
     }
   }
 
@@ -541,6 +619,21 @@ const Pricing = () => {
                         variant={plan.buttonVariant}
                         className="w-full"
                         size="default"
+                        disabled={!!subscriptionSubmittingPlan && plan.key !== "free"}
+                        onClick={() => {
+                          if (plan.key === "free") {
+                            navigate(isAuthenticated ? "/" : "/login");
+                            return;
+                          }
+                          if (
+                            plan.key === "starter" ||
+                            plan.key === "growth" ||
+                            plan.key === "pro" ||
+                            plan.key === "ultimate"
+                          ) {
+                            void startSubscriptionCheckout(plan.key);
+                          }
+                        }}
                       >
                         {plan.buttonText}
                       </BrutalButton>

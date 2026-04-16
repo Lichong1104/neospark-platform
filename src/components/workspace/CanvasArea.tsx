@@ -8,6 +8,7 @@ import {
   Copy,
   Download,
   PenTool,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -25,6 +26,7 @@ export interface CanvasImage {
   src: string;
   name: string;
   type?: "image" | "video";
+  loading?: boolean;
 }
 
 interface CanvasAreaProps {
@@ -33,6 +35,7 @@ interface CanvasAreaProps {
   canvasImages: CanvasImage[];
   onCanvasImagesChange: React.Dispatch<React.SetStateAction<CanvasImage[]>>;
   onFileDrop?: (files: File[], position: { x: number; y: number }) => void;
+  isFileDropLoading?: boolean;
 }
 
 const CANVAS_IMAGE_MAX_SIZE = 256;
@@ -60,6 +63,7 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
   canvasImages,
   onCanvasImagesChange,
   onFileDrop,
+  isFileDropLoading = false,
 }) => {
   const { t } = useTranslation();
   const images = canvasImages;
@@ -471,70 +475,10 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
         ? (e.clientY - rect.top - 40 - panOffset.y) / scale
         : 60; // 40 = header height
 
-      // For immediate preview: read files as data URLs and add to canvas
-      files.forEach((file, idx) => {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          const dataUrl = ev.target?.result as string;
-          const isVideo = file.type.startsWith("video/");
-          if (isVideo) {
-            const newItem: CanvasImage = {
-              id: Math.random().toString(36).substr(2, 8).toUpperCase(),
-              x: dropX + idx * 30,
-              y: dropY + idx * 30,
-              width: 320,
-              height: 180,
-              selected: false,
-              src: dataUrl,
-              name: file.name,
-              type: "video",
-            };
-            onCanvasImagesChange([...canvasImages, newItem]);
-            return;
-          }
-
-          const preview = new Image();
-          preview.onload = () => {
-            const size = toCanvasSize(
-              preview.naturalWidth,
-              preview.naturalHeight
-            );
-            const newItem: CanvasImage = {
-              id: Math.random().toString(36).substr(2, 8).toUpperCase(),
-              x: dropX + idx * 30,
-              y: dropY + idx * 30,
-              width: size.width,
-              height: size.height,
-              selected: false,
-              src: dataUrl,
-              name: file.name,
-              type: "image",
-            };
-            onCanvasImagesChange([...canvasImages, newItem]);
-          };
-          preview.onerror = () => {
-            const newItem: CanvasImage = {
-              id: Math.random().toString(36).substr(2, 8).toUpperCase(),
-              x: dropX + idx * 30,
-              y: dropY + idx * 30,
-              width: CANVAS_IMAGE_MAX_SIZE,
-              height: CANVAS_IMAGE_MAX_SIZE,
-              selected: false,
-              src: dataUrl,
-              name: file.name,
-              type: "image",
-            };
-            onCanvasImagesChange([...canvasImages, newItem]);
-          };
-          preview.src = dataUrl;
-        };
-        reader.readAsDataURL(file);
-      });
-
-      // Also trigger upload callback so files get persisted to backend
+      // Upload first, then add to canvas from persisted URL (no base64 local preview).
       onFileDrop?.(files, { x: dropX, y: dropY });
     },
-    [zoom, panOffset, canvasImages, onCanvasImagesChange, onFileDrop]
+    [zoom, panOffset, onFileDrop]
   );
 
   return (
@@ -563,6 +507,16 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
             <p className="text-sm font-bold uppercase tracking-wider text-accent-cyan">
               {t("canvas.dropToAdd")}
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Uploading overlay */}
+      {isFileDropLoading && (
+        <div className="absolute inset-0 z-40 bg-card/35 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
+          <div className="flex items-center gap-2 border-brutal border-foreground bg-card px-4 py-3 text-xs font-bold uppercase tracking-wider">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            {t("workspace.uploading")}
           </div>
         </div>
       )}
@@ -689,7 +643,14 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
               }}
             >
               <div className="w-full h-full overflow-hidden relative group shadow-lg">
-                {img.type === "video" ? (
+                {img.loading ? (
+                  <div className="w-full h-full bg-secondary flex flex-col items-center justify-center gap-2 text-muted-foreground">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider">
+                      {t("common.loading")}
+                    </span>
+                  </div>
+                ) : img.type === "video" ? (
                   <video
                     src={img.src}
                     className="w-full h-full object-cover"

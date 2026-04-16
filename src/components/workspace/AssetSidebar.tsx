@@ -52,6 +52,7 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deletingIds, setDeletingIds] = useState<Record<string, boolean>>({});
   const [previewItem, setPreviewItem] = useState<UserImageItem | null>(null);
   const [previewVideoItem, setPreviewVideoItem] = useState<UserVideoItem | null>(
     null
@@ -119,6 +120,7 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
       return;
     }
     try {
+      setDeletingIds((prev) => ({ ...prev, [id]: true }));
       await storageApi.deleteFile(path);
       toast.success(t("assetSidebar.deleted"));
       setUserImages((prev) => prev.filter((img) => img.id !== id));
@@ -127,6 +129,12 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
       if (previewItem?.id === id) setPreviewItem(null);
     } catch {
       toast.error(t("assetSidebar.deleteFailed"));
+    } finally {
+      setDeletingIds((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
     }
   };
 
@@ -256,9 +264,14 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
               onClick={() => {
                 handleDelete(previewItem.path, previewItem.id);
               }}
+              disabled={!!deletingIds[previewItem.id]}
               className="py-2 px-3 border-brutal border-foreground bg-accent-red text-card font-bold text-xs uppercase flex items-center justify-center brutal-press"
             >
-              <Trash2 className="w-3 h-3" />
+              {deletingIds[previewItem.id] ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <Trash2 className="w-3 h-3" />
+              )}
             </button>
           </div>
         </div>
@@ -510,6 +523,7 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
                       </button>
                       <button
                         onClick={() => handleDelete(img.path, img.id)}
+                        disabled={!!deletingIds[img.id]}
                         className={cn(
                           "flex-1 py-1.5 flex items-center justify-center transition-none border-l border-card/20",
                           confirmDeleteId === img.id
@@ -522,7 +536,9 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
                             : t("assetSidebar.delete")
                         }
                       >
-                        {confirmDeleteId === img.id ? (
+                        {deletingIds[img.id] ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : confirmDeleteId === img.id ? (
                           <span className="text-[8px] font-bold uppercase">
                             {t("assetSidebar.confirm")}
                           </span>
@@ -543,9 +559,17 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
                         </button>
                         <button
                           onClick={() => handleDelete(img.path, img.id)}
+                          disabled={!!deletingIds[img.id]}
                           className="flex-1 py-1.5 text-[9px] font-bold uppercase bg-accent-red text-card hover:brightness-110 transition-none border-l border-card/20"
                         >
-                          {t("assetSidebar.confirmDelete")}
+                          {deletingIds[img.id] ? (
+                            <span className="inline-flex items-center gap-1">
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                              {t("common.loading")}
+                            </span>
+                          ) : (
+                            t("assetSidebar.confirmDelete")
+                          )}
                         </button>
                       </div>
                     )}
@@ -613,6 +637,7 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
                       </button>
                       <button
                         onClick={() => handleDelete(file.path, file.id)}
+                        disabled={!!deletingIds[file.id]}
                         className={cn(
                           "p-1 transition-none",
                           confirmDeleteId === file.id
@@ -620,7 +645,11 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
                             : "hover:bg-accent-red hover:text-card"
                         )}
                       >
-                        <Trash2 className="w-3 h-3" />
+                        {deletingIds[file.id] ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-3 h-3" />
+                        )}
                       </button>
                     </div>
                   </div>
