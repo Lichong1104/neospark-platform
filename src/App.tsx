@@ -15,6 +15,8 @@ import NotFound from "./pages/NotFound";
 import ApiKeys from "./pages/ApiKeys";
 import Success from "./pages/Success";
 import Cancel from "./pages/Cancel";
+import Invoices from "./pages/Invoices";
+import Account from "./pages/Account";
 
 const queryClient = new QueryClient();
 
@@ -59,10 +61,26 @@ const App = () => (
               }
             />
             <Route
+              path="/account"
+              element={
+                <ProtectedRoute>
+                  <Account />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/api-keys"
               element={
                 <ProtectedRoute>
                   <ApiKeys />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/invoices"
+              element={
+                <ProtectedRoute>
+                  <Invoices />
                 </ProtectedRoute>
               }
             />

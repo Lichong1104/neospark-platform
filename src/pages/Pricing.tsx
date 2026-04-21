@@ -29,6 +29,12 @@ import {
 import { cn } from "@/lib/utils";
 
 type BillingCycle = "monthly" | "yearly";
+const ACTIVE_SUBSCRIPTION_STATUSES = new Set([
+  "active",
+  "trialing",
+  "past_due",
+  "incomplete",
+]);
 
 const WECHAT_STANDARD_ORDER: WeChatPayPlanKey[] = [
   "light",
@@ -77,10 +83,11 @@ const Pricing = () => {
   const navigate = useNavigate();
   const { isAuthenticated, refreshUser } = useAuth();
   const { toast } = useToast();
-  const [activeSubscription, setActiveSubscription] = useState<BillingSubscriptionSummary | null>(
-    null
-  );
-  const [subscriptionSubmittingPlan, setSubscriptionSubmittingPlan] = useState<string | null>(null);
+  const [activeSubscription, setActiveSubscription] =
+    useState<BillingSubscriptionSummary | null>(null);
+  const [subscriptionSubmittingPlan, setSubscriptionSubmittingPlan] = useState<
+    string | null
+  >(null);
 
   const [wechatPlans, setWechatPlans] = useState<WeChatPayPlan[] | null>(null);
   const [wechatPlansLoading, setWechatPlansLoading] = useState(false);
@@ -186,19 +193,28 @@ const Pricing = () => {
 
     try {
       setSubscriptionSubmittingPlan(planKey);
+      const latestState = await billingApi.getState();
+      const latestSubscription = latestState.subscription;
+      setActiveSubscription(latestSubscription);
+      const latestStatus = latestSubscription?.status?.toLowerCase?.() ?? "";
+      const hasManagedActiveSubscription = ACTIVE_SUBSCRIPTION_STATUSES.has(latestStatus);
 
-      if (activeSubscription) {
+      if (hasManagedActiveSubscription) {
         const { url } = await billingApi.createPortalSession();
         window.location.href = url;
         return;
       }
 
-      const interval: BillingInterval = billing === "yearly" ? "yearly" : "monthly";
+      const interval: BillingInterval =
+        billing === "yearly" ? "yearly" : "monthly";
       const { url } = await billingApi.createCheckoutSession(planKey, interval);
       window.location.href = url;
     } catch (e: any) {
       const status = e?.response?.status;
-      const detail = e?.response?.data?.detail || e?.message || "Failed to create checkout session";
+      const detail =
+        e?.response?.data?.detail ||
+        e?.message ||
+        "Failed to create checkout session";
       if (status === 401) {
         toast({
           title: t("pricing.loginRequired", { defaultValue: "Login required" }),
@@ -323,7 +339,9 @@ const Pricing = () => {
       key: "starter",
       icon: <Star className="w-5 h-5" />,
       badge: {
-        text: t("pricing.beginnerChoice", { defaultValue: "Beginner's Choice" }),
+        text: t("pricing.beginnerChoice", {
+          defaultValue: "Beginner's Choice",
+        }),
         color: "bg-accent-yellow",
       },
       price: { monthly: 18, yearly: 14 },
@@ -422,7 +440,9 @@ const Pricing = () => {
         color: "bg-accent-purple",
       },
       price: { monthly: 148, yearly: 98 },
-      yearlySave: t("pricing.yearlySave_ultimate", { defaultValue: "Save $600" }),
+      yearlySave: t("pricing.yearlySave_ultimate", {
+        defaultValue: "Save $600",
+      }),
       credits: { monthly: "27,000", yearly: "27,000" },
       images: "~3,857 Nano banana 2",
       videos: "~135 clips",
@@ -549,12 +569,15 @@ const Pricing = () => {
                         {plan.title ??
                           t(`pricing.plan_${plan.key}`, {
                             defaultValue:
-                              plan.key.charAt(0).toUpperCase() + plan.key.slice(1),
+                              plan.key.charAt(0).toUpperCase() +
+                              plan.key.slice(1),
                           })}
                       </h3>
                       <p className="text-xs text-muted-foreground text-center mt-1 mb-4">
                         {plan.description ??
-                          t(`pricing.plan_${plan.key}_desc`, { defaultValue: "" })}
+                          t(`pricing.plan_${plan.key}_desc`, {
+                            defaultValue: "",
+                          })}
                       </p>
 
                       {/* Divider */}
@@ -584,7 +607,9 @@ const Pricing = () => {
                           {plan.credits[billing]}
                           {plan.key === "free"
                             ? ""
-                            : `/${t("pricing.month", { defaultValue: "month" })}`}
+                            : `/${t("pricing.month", {
+                                defaultValue: "month",
+                              })}`}
                         </div>
                       </div>
 
@@ -594,20 +619,27 @@ const Pricing = () => {
                           <span className="flex items-center gap-1">
                             🖼️ {t("pricing.images", { defaultValue: "Images" })}
                           </span>
-                          <span className="font-bold font-mono">{plan.images}</span>
+                          <span className="font-bold font-mono">
+                            {plan.images}
+                          </span>
                         </div>
                         <div className="flex justify-between text-xs px-2 py-1.5 bg-secondary border-brutal border-foreground">
                           <span className="flex items-center gap-1">
                             🎬 {t("pricing.videos", { defaultValue: "Videos" })}
                           </span>
-                          <span className="font-bold font-mono">{plan.videos}</span>
+                          <span className="font-bold font-mono">
+                            {plan.videos}
+                          </span>
                         </div>
                       </div>
 
                       {/* Features */}
                       <div className="flex-1 space-y-2 mb-5">
                         {plan.features.map((feat, i) => (
-                          <div key={i} className="flex items-start gap-2 text-xs">
+                          <div
+                            key={i}
+                            className="flex items-start gap-2 text-xs"
+                          >
                             <Check className="w-3.5 h-3.5 text-accent-green mt-0.5 shrink-0" />
                             <span>{feat}</span>
                           </div>
@@ -619,7 +651,9 @@ const Pricing = () => {
                         variant={plan.buttonVariant}
                         className="w-full"
                         size="default"
-                        disabled={!!subscriptionSubmittingPlan && plan.key !== "free"}
+                        disabled={
+                          !!subscriptionSubmittingPlan && plan.key !== "free"
+                        }
                         onClick={() => {
                           if (plan.key === "free") {
                             navigate(isAuthenticated ? "/" : "/login");
@@ -710,7 +744,9 @@ const Pricing = () => {
                           <span className="text-muted-foreground">
                             {t("pricing.credits", { defaultValue: "Credits" })}:
                           </span>{" "}
-                          <span className="font-bold font-mono">{p.points.toLocaleString()}</span>
+                          <span className="font-bold font-mono">
+                            {p.points.toLocaleString()}
+                          </span>
                         </div>
                         <BrutalButton
                           variant="green"
@@ -747,7 +783,7 @@ const Pricing = () => {
                   <div className="mx-auto w-full max-w-3xl">
                     <BrutalCard
                       className={cn(
-                        "relative overflow-hidden border-2 border-accent-yellow bg-gradient-to-br from-neutral-950 via-zinc-950 to-black text-zinc-100 brutal-shadow-yellow shadow-none ring-1 ring-inset ring-accent-yellow/30",
+                        "relative overflow-hidden border-2 border-accent-yellow bg-gradient-to-br from-neutral-950 via-zinc-950 to-black text-zinc-100 brutal-shadow-yellow shadow-none ring-1 ring-inset ring-accent-yellow/30"
                       )}
                     >
                       <div
@@ -762,7 +798,7 @@ const Pricing = () => {
                               <h3
                                 className={cn(
                                   "text-xl font-bold uppercase tracking-wider sm:text-2xl",
-                                  "bg-gradient-to-r from-amber-100 via-yellow-300 to-amber-200 bg-clip-text text-transparent",
+                                  "bg-gradient-to-r from-amber-100 via-yellow-300 to-amber-200 bg-clip-text text-transparent"
                                 )}
                               >
                                 {wechatBlackGoldPlan.name}
@@ -776,12 +812,15 @@ const Pricing = () => {
                               {wechatBlackGoldPlan.description}
                             </p>
                             <div className="text-[12px] font-bold text-amber-200/90">
-                              {wechatBlackGoldPlan.discountLabel} · {wechatBlackGoldPlan.validDays}{" "}
-                              天有效
+                              {wechatBlackGoldPlan.discountLabel} ·{" "}
+                              {wechatBlackGoldPlan.validDays} 天有效
                             </div>
                             <div className="text-sm">
                               <span className="text-zinc-500">
-                                {t("pricing.credits", { defaultValue: "Credits" })}:
+                                {t("pricing.credits", {
+                                  defaultValue: "Credits",
+                                })}
+                                :
                               </span>{" "}
                               <span className="font-bold font-mono text-accent-yellow drop-shadow-[0_0_12px_rgba(250,204,21,0.3)]">
                                 {wechatBlackGoldPlan.points.toLocaleString()}
@@ -794,9 +833,12 @@ const Pricing = () => {
                               <div className="border-brutal border-accent-yellow bg-black/50 px-3 py-2 text-base font-bold font-mono text-accent-yellow shadow-[3px_3px_0_0_hsl(var(--accent-yellow))]">
                                 {formatCnyFen(wechatBlackGoldPlan.amountFen)}
                               </div>
-                              {wechatBlackGoldPlan.originalAmountFen > wechatBlackGoldPlan.amountFen && (
+                              {wechatBlackGoldPlan.originalAmountFen >
+                                wechatBlackGoldPlan.amountFen && (
                                 <div className="text-xs font-mono text-amber-200/70 line-through">
-                                  {formatCnyFen(wechatBlackGoldPlan.originalAmountFen)}
+                                  {formatCnyFen(
+                                    wechatBlackGoldPlan.originalAmountFen
+                                  )}
                                 </div>
                               )}
                             </div>
@@ -804,7 +846,9 @@ const Pricing = () => {
                               variant="yellow"
                               size="default"
                               disabled={wxSubmitting}
-                              onClick={() => startWechatPay(wechatBlackGoldPlan.planKey)}
+                              onClick={() =>
+                                startWechatPay(wechatBlackGoldPlan.planKey)
+                              }
                               className="w-full border-accent-yellow font-extrabold md:w-auto md:min-w-[11rem]"
                             >
                               {t("pricing.wechatPayBuy", {

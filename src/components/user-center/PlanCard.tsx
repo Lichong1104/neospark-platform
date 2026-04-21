@@ -3,16 +3,43 @@ import { BrutalCard, BrutalCardHeader, BrutalCardTitle, BrutalCardContent } from
 import { BrutalButton } from "@/components/ui/brutal-button";
 import { Crown, Zap, Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
+import type { BillingSubscriptionSummary } from "@/api/billing";
 
-export const PlanCard: React.FC = () => {
+interface PlanCardProps {
+  subscription: BillingSubscriptionSummary | null;
+  loading?: boolean;
+}
+
+export const PlanCard: React.FC<PlanCardProps> = ({
+  subscription,
+  loading = false,
+}) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const hasSubscription = !!subscription;
+  const features = hasSubscription
+    ? [
+        `${t("billing.status", { defaultValue: "Status" })}: ${subscription.status}`,
+        `${t("pricing.yearly", { defaultValue: "Yearly" })}/${t("pricing.monthly", { defaultValue: "Monthly" })}: ${
+          subscription.billingInterval
+        }`,
+        `${t("billing.currentPeriodEnd", { defaultValue: "Current Period End" })}: ${new Date(
+          subscription.currentPeriodEnd
+        ).toLocaleDateString()}`,
+        subscription.cancelAtPeriodEnd
+          ? t("billing.cancelAtPeriodEndSuccess", {
+              defaultValue: "Subscription will cancel at period end.",
+            })
+          : t("uc.planDesc"),
+      ]
+    : [t("uc.feat1"), t("uc.feat2"), t("uc.feat3"), t("uc.feat4")];
 
-  const features = [
-    t("uc.feat1"),
-    t("uc.feat2"),
-    t("uc.feat3"),
-    t("uc.feat4"),
-  ];
+  const badgeText = loading
+    ? t("common.loading", { defaultValue: "Loading..." })
+    : hasSubscription
+    ? subscription.planKey.toUpperCase()
+    : "FREE";
 
   return (
     <BrutalCard shadow="default" className="h-full overflow-hidden">
@@ -25,13 +52,17 @@ export const PlanCard: React.FC = () => {
             {t("uc.currentPlan")}
           </BrutalCardTitle>
           <span className="px-2.5 py-1 bg-secondary text-xs font-bold uppercase border border-foreground/20">
-            FREE
+            {badgeText}
           </span>
         </div>
       </BrutalCardHeader>
       <BrutalCardContent className="space-y-4 px-4 pb-4 pt-2">
         <p className="text-xs text-muted-foreground leading-relaxed">
-          {t("uc.planDesc")}
+          {hasSubscription
+            ? t("billing.invoiceRecordsDesc", {
+                defaultValue: "View your Stripe billing history and open invoice PDFs.",
+              })
+            : t("uc.planDesc")}
         </p>
 
         <div className="space-y-2">
@@ -56,9 +87,16 @@ export const PlanCard: React.FC = () => {
           </div>
         </div>
 
-        <BrutalButton variant="yellow" size="sm" className="w-full">
+        <BrutalButton
+          variant="yellow"
+          size="sm"
+          className="w-full"
+          onClick={() => navigate("/pricing")}
+        >
           <Zap className="w-3.5 h-3.5 mr-1.5" />
-          {t("uc.upgradePro")}
+          {hasSubscription
+            ? t("billing.manageSubscription", { defaultValue: "Manage Subscription" })
+            : t("uc.upgradePro")}
         </BrutalButton>
       </BrutalCardContent>
     </BrutalCard>

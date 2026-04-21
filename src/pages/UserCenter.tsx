@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Header } from "@/components/layout/Header";
 import { ProfileHeader } from "@/components/user-center/ProfileHeader";
 import { PlanCard } from "@/components/user-center/PlanCard";
@@ -8,19 +8,47 @@ import { QuickActions } from "@/components/user-center/QuickActions";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import drawingApi from "@/api/drawing";
+import billingApi, { type BillingSubscriptionSummary } from "@/api/billing";
 import type { BillingTransaction } from "@/types/drawing";
 
 const UserCenter = () => {
   const { t } = useTranslation();
-  const { userEmail, userInfo } = useAuth();
+  const { userEmail, userInfo, refreshUser } = useAuth();
   const [credits, setCredits] = useState(0);
   const [usageLogs, setUsageLogs] = useState<{ action: string; amount: number; time: string }[]>([]);
+  const [subscription, setSubscription] = useState<BillingSubscriptionSummary | null>(null);
+  const [subscriptionLoading, setSubscriptionLoading] = useState(true);
+
+  const loadBillingState = useCallback(async () => {
+    setSubscriptionLoading(true);
+    try {
+      const state = await billingApi.getState();
+      setSubscription(state.subscription);
+    } catch {
+      setSubscription(null);
+    } finally {
+      setSubscriptionLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (typeof userInfo?.balance === "number") {
       setCredits(userInfo.balance);
     }
   }, [userInfo?.balance]);
+
+  useEffect(() => {
+    void loadBillingState();
+  }, [loadBillingState]);
+
+  useEffect(() => {
+    const onFocus = () => {
+      void refreshUser();
+      void loadBillingState();
+    };
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [loadBillingState, refreshUser]);
 
   useEffect(() => {
     // 获取扣费历史
@@ -61,13 +89,13 @@ const UserCenter = () => {
       <main className="flex-1 p-6 md:p-8 bg-background overflow-y-auto">
         <div className="max-w-5xl mx-auto space-y-6">
           {/* Profile Header */}
-          <ProfileHeader email={userEmail} credits={credits} />
+          <ProfileHeader email={userEmail} credits={credits} subscription={subscription} />
 
           {/* Main Grid */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
             {/* Plan Card */}
             <div className="md:col-span-7">
-              <PlanCard />
+              <PlanCard subscription={subscription} loading={subscriptionLoading} />
             </div>
 
             {/* Credit Vault */}
@@ -82,7 +110,7 @@ const UserCenter = () => {
 
             {/* Quick Actions */}
             <div className="md:col-span-4">
-              <QuickActions />
+              <QuickActions onSubscriptionChanged={loadBillingState} />
             </div>
           </div>
         </div>

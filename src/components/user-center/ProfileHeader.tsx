@@ -1,15 +1,48 @@
 import React from "react";
 import { BrutalCard, BrutalCardContent } from "@/components/ui/brutal-card";
-import { User, Coins, Calendar, Shield } from "lucide-react";
+import { User, Coins, Calendar, Shield, BadgeCheck, AlertTriangle, ShieldAlert } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import type { BillingSubscriptionSummary } from "@/api/billing";
 
 interface ProfileHeaderProps {
   email: string | null;
   credits: number;
+  subscription: BillingSubscriptionSummary | null;
 }
 
-export const ProfileHeader: React.FC<ProfileHeaderProps> = ({ email, credits }) => {
+export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
+  email,
+  credits,
+  subscription,
+}) => {
   const { t } = useTranslation();
+  const planLabel = subscription
+    ? subscription.planKey.toUpperCase()
+    : t("uc.planFree");
+  const normalizedStatus = subscription?.status?.toLowerCase() ?? "";
+  const isSubscriptionActive =
+    !!subscription &&
+    (normalizedStatus === "active" || normalizedStatus === "trialing");
+  const isEndingSoon = isSubscriptionActive && !!subscription?.cancelAtPeriodEnd;
+  const statusToneClass = !subscription || !isSubscriptionActive
+    ? "bg-accent-red/15 text-accent-red border-accent-red/40"
+    : isEndingSoon
+    ? "bg-accent-orange/20 text-accent-orange border-accent-orange/40"
+    : "bg-accent-green/15 text-accent-green border-accent-green/40";
+  const statusIcon = !subscription || !isSubscriptionActive ? (
+    <ShieldAlert className="w-3 h-3" />
+  ) : isEndingSoon ? (
+    <AlertTriangle className="w-3 h-3" />
+  ) : (
+    <BadgeCheck className="w-3 h-3" />
+  );
+  const statusText = !subscription || !isSubscriptionActive
+    ? t("billing.subscriptionStatusInactive", { defaultValue: "Inactive" })
+    : isEndingSoon
+    ? t("billing.subscriptionStatusEndingSoon", {
+        defaultValue: "Active (Ends at period end)",
+      })
+    : t("billing.subscriptionStatusActive", { defaultValue: "Active" });
 
   return (
     <BrutalCard shadow="default" className="overflow-hidden">
@@ -27,7 +60,11 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({ email, credits }) 
           <div className="flex flex-wrap items-center gap-3 mt-2">
             <span className="px-2 py-0.5 bg-accent-yellow text-foreground text-[11px] font-bold uppercase border border-foreground/30">
               <Shield className="w-3 h-3 inline mr-1" />
-              {t("uc.planFree")}
+              {planLabel}
+            </span>
+            <span className={`px-2 py-0.5 text-[11px] font-bold uppercase border flex items-center gap-1 ${statusToneClass}`}>
+              {statusIcon}
+              {statusText}
             </span>
             <span className="text-xs text-muted-foreground flex items-center gap-1">
               <Calendar className="w-3 h-3" />
