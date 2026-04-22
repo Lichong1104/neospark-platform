@@ -2,7 +2,11 @@
   "header": {
     "credits": "Credits",
     "pricing": "Pricing",
-    "workspace": "Workspace"
+    "workspace": "Workspace",
+    "switchToChinese": "Switch to Chinese",
+    "switchToEnglish": "Switch to English",
+    "lightMode": "Light mode",
+    "darkMode": "Dark mode"
   },
   "onboarding": {
     "progress": "Step {{current}} of {{total}}",
@@ -111,7 +115,39 @@
     "yearlySave_starter": "Save $48",
     "yearlySave_growth": "Save $72",
     "yearlySave_pro": "Save $288",
-    "yearlySave_ultimate": "Save $600"
+    "yearlySave_ultimate": "Save $600",
+    "validDays": "{{days}} days valid",
+    "flagshipTier": "Flagship tier",
+    "blackGoldTitle": "Black Gold · Premium credits",
+    "blackGoldBadge": "BLACK",
+    "wechatPayQrAlt": "WeChat Pay QR code",
+    "wechatPlans": {
+      "light": {
+        "name": "Light Pack",
+        "desc": "{{points}} credits",
+        "discount": "Base"
+      },
+      "creator": {
+        "name": "Creator Pack",
+        "desc": "{{points}} credits",
+        "discount": "21% off"
+      },
+      "team": {
+        "name": "Team Pack",
+        "desc": "{{points}} credits",
+        "discount": "31% off"
+      },
+      "enterprise": {
+        "name": "Enterprise Pack",
+        "desc": "{{points}} credits",
+        "discount": "35% off"
+      },
+      "black": {
+        "name": "Black Gold",
+        "desc": "{{points}} credits",
+        "discount": "40% off"
+      }
+    }
   },
   "billing": {
     "successTitle": "Payment Successful",
@@ -399,7 +435,8 @@
     "noVideos": "No videos yet",
     "imageCount": "{{count}} images",
     "videoCount": "{{count}} videos",
-    "footerHint": "Click an asset to add to canvas"
+    "footerHint": "Click an asset to add to canvas",
+    "status": "Status"
   },
   "assetsPage": {
     "directory": "DIRECTORY",
@@ -528,7 +565,9 @@
     "logout": "Logout",
     "logoutConfirm": "Are you sure you want to log out?",
     "logoutConfirmBtn": "Confirm Logout",
-    "logoutCancel": "Cancel"
+    "logoutCancel": "Cancel",
+    "verifyFailed": "Verification failed",
+    "sendFailed": "Failed to send, please try again."
   },
   "language": {
     "en": "EN",
@@ -541,6 +580,25 @@
     "copy": "Copy",
     "comingSoon": "Coming soon",
     "loading": "Loading..."
+  },
+  "imageProcessing": {
+    "insufficientCredits": "Insufficient credits",
+    "bgRemovalCreated": "Background removal task created...",
+    "bgRemovalCompleted": "Background removal completed",
+    "bgRemovalFailed": "Background removal failed",
+    "bgRemovalStatusFailed": "Failed to fetch background removal status",
+    "bgRemovalCreateFailed": "Failed to create background removal task",
+    "layerSplitCreated": "Layer split task created ({{layers}} layers), estimated cost {{cost}}",
+    "layerSplitCompleted": "Layer split completed ({{count}} layers)",
+    "layerSplitNoResult": "Layer split completed, but no results returned",
+    "layerSplitFailed": "Layer split failed",
+    "layerSplitStatusFailed": "Failed to fetch layer split status",
+    "layerSplitCreateFailed": "Failed to create layer split task",
+    "upscaleCreated": "Upscale task created ({{targetResolution}}), estimated cost {{cost}}",
+    "upscaleCompleted": "Upscale completed ({{width}}×{{height}})",
+    "upscaleFailed": "Upscale failed",
+    "upscaleStatusFailed": "Failed to fetch upscale status",
+    "upscaleCreateFailed": "Failed to create upscale task"
   },
   "apiKeys": {
     "title": "API KEYS",
@@ -675,5 +733,7 @@
     "canvasRefsApplied": "Selected canvas assets were filled into reference inputs",
     "clearInput": "Clear input",
     "noCanvasResourceMatch": "No matching canvas resources"
+    ,
+    "shiftEnterHint": "Shift + Enter for newline"
   }
 }

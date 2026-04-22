@@ -2,7 +2,11 @@
   "header": {
     "credits": "积分",
     "pricing": "定价",
-    "workspace": "工作台"
+    "workspace": "工作台",
+    "switchToChinese": "切换为中文",
+    "switchToEnglish": "切换为英文",
+    "lightMode": "浅色模式",
+    "darkMode": "深色模式"
   },
   "onboarding": {
     "progress": "第 {{current}} 步，共 {{total}} 步",
@@ -111,7 +115,39 @@
     "yearlySave_starter": "年付省 $48",
     "yearlySave_growth": "年付省 $72",
     "yearlySave_pro": "年付省 $288",
-    "yearlySave_ultimate": "年付省 $600"
+    "yearlySave_ultimate": "年付省 $600",
+    "validDays": "{{days}} 天有效",
+    "flagshipTier": "旗舰档位",
+    "blackGoldTitle": "黑金版 · 顶配积分",
+    "blackGoldBadge": "黑金",
+    "wechatPayQrAlt": "微信支付二维码",
+    "wechatPlans": {
+      "light": {
+        "name": "轻量包",
+        "desc": "{{points}} 积分",
+        "discount": "基准"
+      },
+      "creator": {
+        "name": "创作包",
+        "desc": "{{points}} 积分",
+        "discount": "7.9 折"
+      },
+      "team": {
+        "name": "团队包",
+        "desc": "{{points}} 积分",
+        "discount": "6.9 折"
+      },
+      "enterprise": {
+        "name": "企业包",
+        "desc": "{{points}} 积分",
+        "discount": "6.5 折"
+      },
+      "black": {
+        "name": "黑金版",
+        "desc": "{{points}} 积分",
+        "discount": "6 折"
+      }
+    }
   },
   "billing": {
     "successTitle": "支付成功",
@@ -399,7 +435,8 @@
     "noVideos": "暂无视频",
     "imageCount": "{{count}} 张图片",
     "videoCount": "{{count}} 个视频",
-    "footerHint": "点击素材添加到画布"
+    "footerHint": "点击素材添加到画布",
+    "status": "状态"
   },
   "assetsPage": {
     "directory": "目录",
@@ -528,7 +565,9 @@
     "logout": "退出登录",
     "logoutConfirm": "确定要退出登录吗？",
     "logoutConfirmBtn": "确认退出",
-    "logoutCancel": "取消"
+    "logoutCancel": "取消",
+    "verifyFailed": "验证失败",
+    "sendFailed": "发送失败，请重试"
   },
   "language": {
     "en": "EN",
@@ -541,6 +580,25 @@
     "copy": "复制",
     "comingSoon": "敬请期待",
     "loading": "加载中..."
+  },
+  "imageProcessing": {
+    "insufficientCredits": "余额不足",
+    "bgRemovalCreated": "背景移除任务已创建，正在处理...",
+    "bgRemovalCompleted": "背景移除完成！",
+    "bgRemovalFailed": "背景移除失败",
+    "bgRemovalStatusFailed": "查询背景移除状态失败",
+    "bgRemovalCreateFailed": "创建背景移除任务失败",
+    "layerSplitCreated": "分层任务已创建（{{layers}} 层），预计消耗 {{cost}} 积分",
+    "layerSplitCompleted": "分层完成！共 {{count}} 层",
+    "layerSplitNoResult": "分层完成，但未返回分层结果",
+    "layerSplitFailed": "图片分层失败",
+    "layerSplitStatusFailed": "查询分层状态失败",
+    "layerSplitCreateFailed": "创建分层任务失败",
+    "upscaleCreated": "画质增强任务已创建（{{targetResolution}}），预计消耗 {{cost}} 积分",
+    "upscaleCompleted": "画质增强完成！{{width}}×{{height}}",
+    "upscaleFailed": "画质增强失败",
+    "upscaleStatusFailed": "查询画质增强状态失败",
+    "upscaleCreateFailed": "创建画质增强任务失败"
   },
   "apiKeys": {
     "title": "API 密钥",
@@ -675,5 +733,7 @@
     "canvasRefsApplied": "已将选中画布资源填入参考输入框",
     "clearInput": "清空输入",
     "noCanvasResourceMatch": "没有匹配的画布资源"
+    ,
+    "shiftEnterHint": "Shift + Enter 换行"
   }
 }

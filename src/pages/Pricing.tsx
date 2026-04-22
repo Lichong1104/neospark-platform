@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Header } from "@/components/layout/Header";
 import { BrutalCard, BrutalCardContent } from "@/components/ui/brutal-card";
 import { BrutalButton } from "@/components/ui/brutal-button";
@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import wechatPayApi from "@/api/wechatPay";
+import wechatPayApi, { WECHAT_PAY_PLANS } from "@/api/wechatPay";
 import billingApi, {
   type BillingInterval,
   type BillingPlanKey,
@@ -15,7 +15,6 @@ import billingApi, {
 } from "@/api/billing";
 import type {
   WeChatPayOrder,
-  WeChatPayPlan,
   WeChatPayPlanKey,
 } from "@/api/wechatPay";
 import {
@@ -89,10 +88,6 @@ const Pricing = () => {
     string | null
   >(null);
 
-  const [wechatPlans, setWechatPlans] = useState<WeChatPayPlan[] | null>(null);
-  const [wechatPlansLoading, setWechatPlansLoading] = useState(false);
-  const [wechatPlansError, setWechatPlansError] = useState<string | null>(null);
-
   const [wxDialogOpen, setWxDialogOpen] = useState(false);
   const [wxOrder, setWxOrder] = useState<WeChatPayOrder | null>(null);
   const [wxSubmitting, setWxSubmitting] = useState(false);
@@ -107,26 +102,10 @@ const Pricing = () => {
       });
   }, []);
 
-  useEffect(() => {
-    setWechatPlansLoading(true);
-    setWechatPlansError(null);
-    wechatPayApi
-      .getPlans()
-      .then((list) => setWechatPlans(list))
-      .catch((e) => {
-        const msg =
-          e?.response?.data?.detail ||
-          e?.message ||
-          "Failed to load WeChat plans";
-        setWechatPlansError(String(msg));
-      })
-      .finally(() => setWechatPlansLoading(false));
-  }, []);
-
-  const activeWechatPlans = useMemo(() => {
-    const list = wechatPlans ?? [];
-    return list.filter((p) => p.isActive);
-  }, [wechatPlans]);
+  const activeWechatPlans = useMemo(
+    () => WECHAT_PAY_PLANS.filter((p) => p.isActive),
+    [],
+  );
 
   const { wechatStandardPlans, wechatBlackGoldPlan } = useMemo(() => {
     const rank = (k: WeChatPayPlanKey) => {
@@ -140,6 +119,24 @@ const Pricing = () => {
       .sort((a, b) => rank(a.planKey) - rank(b.planKey));
     return { wechatStandardPlans: standard, wechatBlackGoldPlan: black };
   }, [activeWechatPlans]);
+
+  const wechatPlanText = useCallback(
+    (planKey: WeChatPayPlanKey) => {
+      const base = `pricing.wechatPlans.${planKey}` as const;
+      return {
+        name: t(`${base}.name`, { defaultValue: planKey }),
+        desc: (points: number, days: number) =>
+          t(`${base}.desc`, {
+            points: points.toLocaleString(),
+            days,
+            defaultValue: "",
+          }),
+        discount: t(`${base}.discount`, { defaultValue: "" }),
+        badge: t(`${base}.badge`, { defaultValue: "" }),
+      };
+    },
+    [t]
+  );
 
   async function startWechatPay(planKey: WeChatPayPlanKey) {
     if (wxSubmitting) return;
@@ -694,20 +691,7 @@ const Pricing = () => {
                   })}
                 </p>
               </div>
-              <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                {wechatPlansLoading
-                  ? t("pricing.loading", { defaultValue: "Loading..." })
-                  : wechatPlansError
-                  ? t("pricing.loadFailed", { defaultValue: "Load failed" })
-                  : ""}
-              </div>
             </div>
-
-            {wechatPlansError && (
-              <div className="mb-4 p-3 bg-accent-red text-card border-brutal border-foreground font-bold text-sm">
-                {wechatPlansError}
-              </div>
-            )}
 
             <div className="space-y-8">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
@@ -718,12 +702,16 @@ const Pricing = () => {
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <div className="text-base font-bold uppercase tracking-wider">
-                            {p.name}
+                            {wechatPlanText(p.planKey).name}
                           </div>
                           <div className="mt-1 text-xs text-muted-foreground">
-                            {p.description}
+                            {wechatPlanText(p.planKey).desc(p.points, p.validDays)}
                             <div className="mt-1 text-[10px] font-bold text-foreground/80">
-                              {p.discountLabel} · {p.validDays} 天有效
+                              {wechatPlanText(p.planKey).discount} ·{" "}
+                              {t("pricing.validDays", {
+                                days: p.validDays,
+                                defaultValue: "{{days}} days valid",
+                              })}
                             </div>
                           </div>
                         </div>
@@ -770,13 +758,15 @@ const Pricing = () => {
                     <div className="flex w-full max-w-xl items-center gap-3">
                       <div className="h-px flex-1 bg-gradient-to-r from-transparent via-foreground/25 to-transparent" />
                       <span className="shrink-0 text-[10px] font-bold uppercase tracking-[0.35em] text-muted-foreground">
-                        旗舰档位
+                        {t("pricing.flagshipTier", { defaultValue: "Flagship tier" })}
                       </span>
                       <div className="h-px flex-1 bg-gradient-to-r from-transparent via-foreground/25 to-transparent" />
                     </div>
                     <div className="inline-flex items-center gap-2 rounded-sm border border-accent-yellow/60 bg-gradient-to-r from-amber-950/50 to-zinc-950/40 px-3 py-1 text-[11px] font-bold tracking-wide text-accent-yellow">
                       <Crown className="h-4 w-4 shrink-0" />
-                      黑金版 · 顶配积分
+                      {t("pricing.blackGoldTitle", {
+                        defaultValue: "Black Gold · Premium credits",
+                      })}
                     </div>
                   </div>
 
@@ -801,19 +791,25 @@ const Pricing = () => {
                                   "bg-gradient-to-r from-amber-100 via-yellow-300 to-amber-200 bg-clip-text text-transparent"
                                 )}
                               >
-                                {wechatBlackGoldPlan.name}
+                                {wechatPlanText(wechatBlackGoldPlan.planKey).name}
                               </h3>
                               <Crown className="h-6 w-6 shrink-0 text-accent-yellow drop-shadow-[0_0_10px_rgba(250,204,21,0.5)]" />
                               <span className="rounded-sm border border-accent-yellow/90 bg-black/50 px-2 py-0.5 text-[10px] font-bold tracking-widest text-accent-yellow">
-                                黑金
+                                {t("pricing.blackGoldBadge", { defaultValue: "BLACK" })}
                               </span>
                             </div>
                             <p className="text-sm leading-relaxed text-zinc-400">
-                              {wechatBlackGoldPlan.description}
+                              {wechatPlanText(wechatBlackGoldPlan.planKey).desc(
+                                wechatBlackGoldPlan.points,
+                                wechatBlackGoldPlan.validDays
+                              )}
                             </p>
                             <div className="text-[12px] font-bold text-amber-200/90">
-                              {wechatBlackGoldPlan.discountLabel} ·{" "}
-                              {wechatBlackGoldPlan.validDays} 天有效
+                              {wechatPlanText(wechatBlackGoldPlan.planKey).discount} ·{" "}
+                              {t("pricing.validDays", {
+                                days: wechatBlackGoldPlan.validDays,
+                                defaultValue: "{{days}} days valid",
+                              })}
                             </div>
                             <div className="text-sm">
                               <span className="text-zinc-500">
@@ -931,7 +927,7 @@ const Pricing = () => {
                 <div className="p-3 bg-background border-brutal border-foreground brutal-shadow">
                   <img
                     src={wxOrder.qrCodeDataUrl}
-                    alt="WeChat Pay QR"
+                    alt={t("pricing.wechatPayQrAlt", { defaultValue: "WeChat Pay QR code" })}
                     className="w-56 h-56"
                   />
                 </div>

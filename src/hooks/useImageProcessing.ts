@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from "react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import imageLayerApi from "@/api/imageLayer";
 import { BASE_URL, STATIC_BASE_URL } from "@/api/request";
 import type { BgRemovalTaskDetail, LayerTaskDetail, UpscaleTaskDetail } from "@/types/imageLayer";
@@ -21,6 +22,7 @@ interface ProcessedResult {
 export function useImageProcessing(
   onResult: (result: ProcessedResult) => void
 ) {
+  const { t } = useTranslation();
   const [state, setState] = useState<ProcessingState>({
     isProcessing: false,
     type: null,
@@ -70,7 +72,7 @@ export function useImageProcessing(
       stopPolling();
       activeTaskIdRef.current = taskId;
       setState(s => ({ ...s, taskId }));
-      toast.info("背景移除任务已创建，正在处理...");
+      toast.info(t("imageProcessing.bgRemovalCreated", { defaultValue: "Background removal task created..." }));
 
       const poll = async () => {
         if (activeTaskIdRef.current !== taskId) return;
@@ -88,12 +90,12 @@ export function useImageProcessing(
                 type: "bg-remover",
                 images: [{ src: fullUrl(detail.local_path), name: `${imageName}_nobg` }],
               });
-              toast.success("背景移除完成！");
+              toast.success(t("imageProcessing.bgRemovalCompleted", { defaultValue: "Background removal completed" }));
             }
           } else if (detail.status === "failed") {
             stopPolling();
             setState({ isProcessing: false, type: null, taskId: null, progress: 0 });
-            toast.error("背景移除失败");
+            toast.error(t("imageProcessing.bgRemovalFailed", { defaultValue: "Background removal failed" }));
           } else {
             pollingRef.current = setTimeout(() => {
               void poll();
@@ -102,19 +104,19 @@ export function useImageProcessing(
         } catch {
           stopPolling();
           setState({ isProcessing: false, type: null, taskId: null, progress: 0 });
-          toast.error("查询背景移除状态失败");
+          toast.error(t("imageProcessing.bgRemovalStatusFailed", { defaultValue: "Failed to fetch background removal status" }));
         }
       };
       void poll();
     } catch (err: any) {
       setState({ isProcessing: false, type: null, taskId: null, progress: 0 });
       if (err?.response?.status === 402) {
-        toast.error("余额不足，无法执行背景移除");
+        toast.error(t("imageProcessing.insufficientCredits", { defaultValue: "Insufficient credits" }));
       } else {
-        toast.error("创建背景移除任务失败");
+        toast.error(t("imageProcessing.bgRemovalCreateFailed", { defaultValue: "Failed to create background removal task" }));
       }
     }
-  }, [onResult, stopPolling]);
+  }, [onResult, stopPolling, t]);
 
   // ========== Layer Split ==========
   const startLayerSplit = useCallback(async (imageSrc: string, imageName: string, numLayers = 4) => {
@@ -127,7 +129,11 @@ export function useImageProcessing(
       stopPolling();
       activeTaskIdRef.current = taskId;
       setState(s => ({ ...s, taskId }));
-      toast.info(`分层任务已创建 (${numLayers}层)，预计消耗 ${res.pricing.estimated_cost} 积分`);
+      toast.info(t("imageProcessing.layerSplitCreated", {
+        layers: numLayers,
+        cost: res.pricing.estimated_cost,
+        defaultValue: "Layer split task created ({{layers}} layers), estimated cost {{cost}}",
+      }));
 
       const poll = async () => {
         if (activeTaskIdRef.current !== taskId) return;
@@ -163,15 +169,18 @@ export function useImageProcessing(
 
               if (images.length > 0) {
                 onResult({ type: "layer-split", images });
-                toast.success(`分层完成！共 ${images.length} 层`);
+                toast.success(t("imageProcessing.layerSplitCompleted", {
+                  count: images.length,
+                  defaultValue: "Layer split completed ({{count}} layers)",
+                }));
               } else {
-                toast.warning("分层完成，但未返回分层结果");
+                toast.warning(t("imageProcessing.layerSplitNoResult", { defaultValue: "Layer split completed, but no results returned" }));
               }
             }
           } else if (detail.status === "failed") {
             stopPolling();
             setState({ isProcessing: false, type: null, taskId: null, progress: 0 });
-            toast.error("图片分层失败");
+            toast.error(t("imageProcessing.layerSplitFailed", { defaultValue: "Layer split failed" }));
           } else {
             pollingRef.current = setTimeout(() => {
               void poll();
@@ -180,19 +189,19 @@ export function useImageProcessing(
         } catch {
           stopPolling();
           setState({ isProcessing: false, type: null, taskId: null, progress: 0 });
-          toast.error("查询分层状态失败");
+          toast.error(t("imageProcessing.layerSplitStatusFailed", { defaultValue: "Failed to fetch layer split status" }));
         }
       };
       void poll();
     } catch (err: any) {
       setState({ isProcessing: false, type: null, taskId: null, progress: 0 });
       if (err?.response?.status === 402) {
-        toast.error("余额不足，无法执行图片分层");
+        toast.error(t("imageProcessing.insufficientCredits", { defaultValue: "Insufficient credits" }));
       } else {
-        toast.error("创建分层任务失败");
+        toast.error(t("imageProcessing.layerSplitCreateFailed", { defaultValue: "Failed to create layer split task" }));
       }
     }
-  }, [onResult, stopPolling]);
+  }, [onResult, stopPolling, t]);
 
   // ========== Upscale ==========
   const startUpscale = useCallback(async (
@@ -214,7 +223,11 @@ export function useImageProcessing(
       stopPolling();
       activeTaskIdRef.current = taskId;
       setState(s => ({ ...s, taskId }));
-      toast.info(`画质增强任务已创建 (${targetResolution})，预计消耗 ${res.estimated_cost} 积分`);
+      toast.info(t("imageProcessing.upscaleCreated", {
+        targetResolution,
+        cost: res.estimated_cost,
+        defaultValue: "Upscale task created ({{targetResolution}}), estimated cost {{cost}}",
+      }));
 
       const poll = async () => {
         if (activeTaskIdRef.current !== taskId) return;
@@ -235,12 +248,16 @@ export function useImageProcessing(
                   name: `${imageName}_${targetResolution}`,
                 }],
               });
-              toast.success(`画质增强完成！${detail.result.width}×${detail.result.height}`);
+              toast.success(t("imageProcessing.upscaleCompleted", {
+                width: detail.result.width,
+                height: detail.result.height,
+                defaultValue: "Upscale completed ({{width}}×{{height}})",
+              }));
             }
           } else if (detail.status === "failed") {
             stopPolling();
             setState({ isProcessing: false, type: null, taskId: null, progress: 0 });
-            toast.error("画质增强失败");
+            toast.error(t("imageProcessing.upscaleFailed", { defaultValue: "Upscale failed" }));
           } else {
             pollingRef.current = setTimeout(() => {
               void poll();
@@ -249,19 +266,19 @@ export function useImageProcessing(
         } catch {
           stopPolling();
           setState({ isProcessing: false, type: null, taskId: null, progress: 0 });
-          toast.error("查询画质增强状态失败");
+          toast.error(t("imageProcessing.upscaleStatusFailed", { defaultValue: "Failed to fetch upscale status" }));
         }
       };
       void poll();
     } catch (err: any) {
       setState({ isProcessing: false, type: null, taskId: null, progress: 0 });
       if (err?.response?.status === 402) {
-        toast.error("余额不足，无法执行画质增强");
+        toast.error(t("imageProcessing.insufficientCredits", { defaultValue: "Insufficient credits" }));
       } else {
-        toast.error("创建画质增强任务失败");
+        toast.error(t("imageProcessing.upscaleCreateFailed", { defaultValue: "Failed to create upscale task" }));
       }
     }
-  }, [onResult, stopPolling]);
+  }, [onResult, stopPolling, t]);
 
   const cancel = useCallback(() => {
     stopPolling();

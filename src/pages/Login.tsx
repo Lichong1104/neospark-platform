@@ -17,7 +17,8 @@ const Login = () => {
     ((location.state as { from?: string } | null | undefined)?.from as string | undefined) || "/";
 
   const toggleLanguage = () => {
-    const newLang = i18n.language === "en" ? "zh" : "en";
+    const currentBase = (i18n.resolvedLanguage || i18n.language || "en").split("-")[0];
+    const newLang = currentBase === "en" ? "zh" : "en";
     i18n.changeLanguage(newLang);
     localStorage.setItem("language", newLang);
   };
@@ -116,7 +117,10 @@ const Login = () => {
       toast.success(t("login.loginSuccess"));
       navigate(redirectTo, { replace: true });
     } catch (err: any) {
-      const msg = getErrorMessage(err, "验证失败");
+      const msg = getErrorMessage(
+        err,
+        t("login.verifyFailed", { defaultValue: "Verification failed" })
+      );
       toast.error(msg);
       setCode(["", "", "", "", "", ""]);
       inputRefs.current[0]?.focus();
@@ -132,7 +136,10 @@ const Login = () => {
       setCountdown(60);
       toast.success(t("login.codeSent", { email }));
     } catch (err: any) {
-      const msg = getErrorMessage(err, "发送失败，请重试");
+      const msg = getErrorMessage(
+        err,
+        t("login.sendFailed", { defaultValue: "Failed to send, please try again." })
+      );
       toast.error(msg);
     }
   };
@@ -149,7 +156,9 @@ const Login = () => {
         className="fixed top-5 right-5 h-8 px-2.5 flex items-center gap-1.5 bg-card border-brutal border-foreground hover:bg-secondary brutal-press text-[10px] font-bold uppercase z-50"
       >
         <Globe className="w-3 h-3" />
-        {i18n.language === "en" ? "EN" : "中"}
+        {(i18n.resolvedLanguage || i18n.language || "en").split("-")[0] === "en"
+          ? t("language.en", { defaultValue: "EN" })
+          : t("language.zh", { defaultValue: "中文" })}
       </button>
 
       {/* Decorative elements — more subtle */}

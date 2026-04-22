@@ -76,6 +76,10 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
   );
   const [isDragOver, setIsDragOver] = useState(false);
 
+  const ZOOM_MIN = 25;
+  const ZOOM_MAX = 300;
+  const ZOOM_STEP = 10;
+
   const [zoom, setZoom] = useState(100);
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
 
@@ -312,8 +316,8 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
     };
   }, []);
 
-  const handleZoomIn = () => setZoom((prev) => Math.min(prev + 10, 200));
-  const handleZoomOut = () => setZoom((prev) => Math.max(prev - 10, 25));
+  const handleZoomIn = () => setZoom((prev) => Math.min(prev + ZOOM_STEP, ZOOM_MAX));
+  const handleZoomOut = () => setZoom((prev) => Math.max(prev - ZOOM_STEP, ZOOM_MIN));
   const handleResetView = () => {
     setZoom(100);
     setPanOffset({ x: 0, y: 0 });
@@ -431,11 +435,40 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
     }
   };
 
-  const handleWheel = useCallback((e: React.WheelEvent) => {
-    e.preventDefault();
-    const delta = e.deltaY > 0 ? -5 : 5;
-    setZoom((prev) => Math.min(Math.max(prev + delta, 25), 200));
-  }, []);
+  const handleWheel = useCallback(
+    (e: React.WheelEvent) => {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -5 : 5;
+
+      const rect = canvasRef.current?.getBoundingClientRect();
+      if (!rect) {
+        setZoom((prev) => Math.min(Math.max(prev + delta, ZOOM_MIN), ZOOM_MAX));
+        return;
+      }
+
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      setZoom((prevZoom) => {
+        const nextZoom = Math.min(Math.max(prevZoom + delta, ZOOM_MIN), ZOOM_MAX);
+        const prevScale = prevZoom / 100;
+        const nextScale = nextZoom / 100;
+
+        // Keep the canvas point under cursor stationary while zooming.
+        setPanOffset((prevPan) => {
+          const worldX = (mouseX - prevPan.x) / prevScale;
+          const worldY = (mouseY - prevPan.y) / prevScale;
+          return {
+            x: mouseX - worldX * nextScale,
+            y: mouseY - worldY * nextScale,
+          };
+        });
+
+        return nextZoom;
+      });
+    },
+    [ZOOM_MAX, ZOOM_MIN]
+  );
 
   const selectedItem = primarySelectedId
     ? images.find((i) => i.id === primarySelectedId)

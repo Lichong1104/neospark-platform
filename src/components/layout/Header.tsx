@@ -84,17 +84,27 @@ const Header: React.FC = () => {
         <button
           onClick={toggleLanguage}
           className="h-9 px-2.5 flex items-center gap-1.5 bg-card border-brutal border-foreground hover:bg-secondary brutal-press text-xs font-bold uppercase"
-          title={i18n.language === "en" ? "Switch to Chinese" : "切换为英文"}
+          title={
+            (i18n.resolvedLanguage || i18n.language || "en").split("-")[0] === "en"
+              ? t("header.switchToChinese", { defaultValue: "Switch to Chinese" })
+              : t("header.switchToEnglish", { defaultValue: "Switch to English" })
+          }
         >
           <Globe className="w-4 h-4" />
-          {i18n.language === "en" ? "EN" : "中"}
+          {(i18n.resolvedLanguage || i18n.language || "en").split("-")[0] === "en"
+            ? t("language.en", { defaultValue: "EN" })
+            : t("language.zh", { defaultValue: "中文" })}
         </button>
 
         {/* Theme Toggle */}
         <button
           onClick={() => setIsDark(!isDark)}
           className="w-9 h-9 flex items-center justify-center bg-card border-brutal border-foreground hover:bg-secondary brutal-press"
-          title={isDark ? "Light mode" : "Dark mode"}
+          title={
+            isDark
+              ? t("header.lightMode", { defaultValue: "Light mode" })
+              : t("header.darkMode", { defaultValue: "Dark mode" })
+          }
         >
           {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </button>

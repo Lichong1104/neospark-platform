@@ -560,7 +560,7 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
                   </span>
                   <span className="text-[10px] text-muted-foreground">·</span>
                   <span className="text-[10px] text-muted-foreground">
-                    Shift + Enter 换行
+                    {t("video.shiftEnterHint", { defaultValue: "Shift + Enter for newline" })}
                   </span>
                 </div>
 

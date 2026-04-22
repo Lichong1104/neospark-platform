@@ -4,15 +4,55 @@ export type WeChatPayPlanKey = "light" | "creator" | "team" | "enterprise" | "bl
 
 export interface WeChatPayPlan {
   planKey: WeChatPayPlanKey;
-  name: string;
-  description: string;
   amountFen: number;
   originalAmountFen: number;
-  discountLabel: string;
   validDays: number;
   points: number;
   isActive: boolean;
 }
+
+export const WECHAT_PAY_PLANS: WeChatPayPlan[] = [
+  {
+    planKey: "light",
+    amountFen: 7200,
+    originalAmountFen: 7200,
+    validDays: 90,
+    points: 1000,
+    isActive: true,
+  },
+  {
+    planKey: "creator",
+    amountFen: 19800,
+    originalAmountFen: 25200,
+    validDays: 90,
+    points: 3500,
+    isActive: true,
+  },
+  {
+    planKey: "team",
+    amountFen: 49800,
+    originalAmountFen: 72000,
+    validDays: 90,
+    points: 10000,
+    isActive: true,
+  },
+  {
+    planKey: "enterprise",
+    amountFen: 117000,
+    originalAmountFen: 180000,
+    validDays: 90,
+    points: 25000,
+    isActive: true,
+  },
+  {
+    planKey: "black",
+    amountFen: 432000,
+    originalAmountFen: 720000,
+    validDays: 365,
+    points: 100000,
+    isActive: true,
+  },
+];
 
 export type WeChatPayOrderStatus = "pending" | "paid" | "failed" | "closed";
 
@@ -36,11 +76,6 @@ function unwrap<T>(res: unknown): T {
   return res as T;
 }
 
-async function getPlans(): Promise<WeChatPayPlan[]> {
-  const res = await http.get<WeChatPayPlan[]>("/wechat-pay/plans");
-  return unwrap<WeChatPayPlan[]>(res);
-}
-
 async function createNativeOrder(planKey: WeChatPayPlanKey): Promise<WeChatPayOrder> {
   const res = await http.post<WeChatPayOrder, { planKey: WeChatPayPlanKey }>(
     "/wechat-pay/native/orders",
@@ -59,7 +94,7 @@ async function closeOrder(orderId: string): Promise<WeChatPayOrder> {
   return unwrap<WeChatPayOrder>(res);
 }
 
-const wechatPayApi = { getPlans, createNativeOrder, getOrder, closeOrder };
+const wechatPayApi = { createNativeOrder, getOrder, closeOrder };
 
 export default wechatPayApi;
 
