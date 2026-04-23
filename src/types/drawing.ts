@@ -14,7 +14,7 @@ export interface AspectRatioOption {
 /** 单个模型配置 */
 export interface ModelConfig {
   name: string;
-  provider: "ark" | "volcengine" | "gemini";
+  provider: "gemini" | "tengda";
   description: string;
   supported_resolutions: ResolutionOption[];
   supported_aspect_ratios: AspectRatioOption[];
@@ -97,15 +97,17 @@ export interface GenerateImageParams {
   aspect_ratio: string;
   negative_prompt?: string;
   num_images?: number;
+  /** 【单张，向后兼容】参考图路径，通常传已有结果的 `/uploads/...` 路径 */
   ref_image_path?: string;
-  /** 来自 POST /storage/upload，与 ref_image_path 二选一 */
+  /** 【单张，向后兼容】来自 `POST /storage/upload` 的 upload_id，与 `ref_image_path` 二选一 */
   ref_upload_id?: string;
-  /** 多张参考图 upload_id，仅 Gemini 3 Pro 支持 */
+  /** 【多张】参考图 upload_id 列表（最多 14 张，Gemini 3 Pro / 3.1 Flash 以及 Tengda 全系列支持） */
   ref_upload_ids?: string[];
-  /** 多张参考图路径，仅 Gemini 3 Pro 支持 */
+  /** 【多张】参考图路径列表（最多 14 张，Gemini 3 Pro / 3.1 Flash 以及 Tengda 全系列支持） */
   ref_image_paths?: string[];
   strength?: number;
-  provider?: "ark" | "volcengine" | "gemini";
+  /** 提供商：默认 gemini */
+  provider?: "gemini" | "tengda";
   optimize_prompt?: boolean;
   /** `1` = 电商详情页九宫格第一阶段 */
   type?: number;
@@ -120,7 +122,7 @@ export interface GenerateBatchParams {
   aspect_ratio: string;
   negative_prompt?: string;
   strength?: number;
-  provider?: "ark" | "volcengine" | "gemini";
+  provider?: "gemini" | "tengda";
 }
 
 export interface GenerateBatchMessageItem {

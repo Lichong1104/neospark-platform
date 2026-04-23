@@ -862,7 +862,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
         num_images: 1,
         provider:
           currentModelConfig?.provider ??
-          (model.startsWith("gemini") ? "gemini" : "ark"),
+          (model.startsWith("gemini") ? "gemini" : "tengda"),
         optimize_prompt: true,
       };
 

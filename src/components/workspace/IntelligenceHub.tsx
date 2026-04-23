@@ -87,18 +87,23 @@ const DEFAULT_RESOLUTIONS: DropdownOption[] = [
 
 const DEFAULT_MODELS: DropdownOption[] = [
   {
-    value: "doubao-seedream-5-0-260128",
-    label: "Seedream 5.0 Lite",
+    value: "gemini-3.1-flash-image-preview",
+    label: "Gemini 3.1 Flash (Image)",
     icon: <Sparkles className="w-3 h-3" />,
   },
   {
-    value: "doubao-seedream-4-5-251128",
-    label: "Seedream 4.5",
+    value: "gemini-3-pro-image-preview",
+    label: "Gemini 3 Pro (Image)",
     icon: <Zap className="w-3 h-3" />,
   },
   {
-    value: "doubao-seedream-4-0-250828",
-    label: "Seedream 4.0",
+    value: "gemini-2.5-flash-image",
+    label: "Gemini 2.5 Flash (Image)",
+    icon: <Image className="w-3 h-3" />,
+  },
+  {
+    value: "gpt-image-2",
+    label: "GPT Image 2 (Tengda)",
     icon: <Image className="w-3 h-3" />,
   },
 ];
@@ -444,7 +449,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
         num_images: 1,
         provider:
           currentModelConfig?.provider ??
-          (model.startsWith("gemini") ? "gemini" : "ark"),
+          (model.startsWith("gemini") ? "gemini" : "tengda"),
         optimize_prompt: true,
       };
       if (hasSelectedRefs && currentModelConfig?.supports_image_to_image !== false) {
