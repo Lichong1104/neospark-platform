@@ -429,6 +429,9 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
   const [aspectRatio, setAspectRatio] = useState("1:1");
   const [resolution, setResolution] = useState("1K");
   const [model, setModel] = useState("gemini-3.1-flash-image-preview");
+  const [tengdaQuality, setTengdaQuality] = useState<"standard" | "high">(
+    "standard"
+  );
   const [modelsConfig, setModelsConfig] = useState<ModelsConfigMap | null>(
     null
   );
@@ -461,6 +464,15 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
     () => modelsConfig?.[model],
     [modelsConfig, model]
   );
+  const isGptImage2 = model === "gpt-image-2";
+
+  const tengdaQualityOptions: DropdownOption[] = useMemo(
+    () => [
+      { value: "standard", label: t("agentChat.gptImageQualityStandard") },
+      { value: "high", label: t("agentChat.gptImageQualityHigh") },
+    ],
+    [t]
+  );
 
   useEffect(() => {
     drawingApi
@@ -468,6 +480,10 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
       .then(setModelsConfig)
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!isGptImage2) setTengdaQuality("standard");
+  }, [isGptImage2]);
 
   useEffect(() => {
     if (!modelsConfig) return;
@@ -865,6 +881,10 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
           (model.startsWith("gemini") ? "gemini" : "tengda"),
         optimize_prompt: true,
       };
+
+      if (isGptImage2) {
+        params.quality = tengdaQuality;
+      }
 
       if (
         uploadedPaths.length > 0 &&
@@ -1771,6 +1791,13 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
               value={resolution}
               onChange={setResolution}
             />
+            {isGptImage2 && (
+              <BrutalDropdown
+                options={tengdaQualityOptions}
+                value={tengdaQuality}
+                onChange={(v) => setTengdaQuality(v as "standard" | "high")}
+              />
+            )}
             <BrutalDropdown
               options={modelOptions}
               value={model}

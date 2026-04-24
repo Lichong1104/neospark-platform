@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Moon, Sun, User, Globe, CreditCard, Sparkles, LogOut } from "lucide-react";
+import { Moon, Sun, User, Globe, CreditCard, Sparkles, LogOut, Shield } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,7 +19,7 @@ const Header: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { i18n, t } = useTranslation();
-  const { logout } = useAuth();
+  const { logout, userInfo } = useAuth();
   const [isDark, setIsDark] = useState(() => {
     if (typeof window !== "undefined") {
       return document.documentElement.classList.contains("dark") ||
@@ -80,6 +80,23 @@ const Header: React.FC = () => {
 
       {/* Right: Actions */}
       <div id="onboarding-header-actions" className="flex items-center gap-2 pr-4">
+        {/* Admin */}
+        {userInfo?.is_admin ? (
+          <Link to="/admin">
+            <button
+              className={`h-9 px-2.5 flex items-center gap-1.5 border-brutal border-foreground brutal-press text-xs font-bold uppercase ${
+                isActive("/admin")
+                  ? "bg-accent-green text-foreground brutal-shadow-green"
+                  : "bg-card hover:bg-secondary"
+              }`}
+              title={t("header.admin", { defaultValue: "Admin" })}
+            >
+              <Shield className="w-4 h-4" />
+              {t("header.admin", { defaultValue: "Admin" })}
+            </button>
+          </Link>
+        ) : null}
+
         {/* Language */}
         <button
           onClick={toggleLanguage}

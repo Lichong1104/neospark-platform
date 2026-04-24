@@ -3,10 +3,133 @@
     "credits": "积分",
     "pricing": "定价",
     "workspace": "工作台",
+    "admin": "管理后台",
     "switchToChinese": "切换为中文",
     "switchToEnglish": "切换为英文",
     "lightMode": "浅色模式",
     "darkMode": "深色模式"
+  },
+  "admin": {
+    "title": "管理后台",
+    "subtitle": "用户、使用记录与支付记录管理。",
+    "tabs": {
+      "overview": "概览",
+      "users": "用户列表",
+      "userDetail": "用户详情",
+      "payments": "支付记录",
+      "points": "积分与维护"
+    },
+    "actions": {
+      "refresh": "刷新",
+      "search": "搜索",
+      "reset": "重置",
+      "prev": "上一页",
+      "next": "下一页",
+      "addPoints": "加积分",
+      "inspect": "查看",
+      "load": "加载",
+      "submit": "提交",
+      "useSelectedUserId": "使用当前选中 user_id",
+      "runDry": "仅检查（dry-run）",
+      "runProcessing": "执行处理"
+    },
+    "state": {
+      "loading": "加载中...",
+      "noData": "暂无数据。",
+      "noRecords": "暂无记录。"
+    },
+    "overview": {
+      "title": "概览",
+      "tipsTitle": "使用提示",
+      "tipAdminMissing": "如果顶部没有“管理后台”按钮，请确保后端在 GET /api/v1/auth/me 返回 is_admin，或配置 ADMIN_EMAILS。",
+      "tip403": "403 表示已登录但不是管理员。",
+      "tipBase": "所有后台接口都在 /api/v1/admin 下。",
+      "stats": {
+        "totalUsers": "注册用户总数",
+        "todayNewUsers": "今日新增用户",
+        "stripeSubs": "Stripe 订阅总数",
+        "wechatPaidOrders": "微信已付订单总数",
+        "todayDrawing": "今日生图次数",
+        "todayVideo": "今日视频生成次数"
+      }
+    },
+    "users": {
+      "title": "用户列表",
+      "searchPlaceholder": "按邮箱或昵称模糊搜索...",
+      "page": "页码",
+      "total": "总数",
+      "pageSize": "每页条数",
+      "columns": {
+        "id": "ID",
+        "email": "邮箱",
+        "name": "昵称",
+        "role": "角色",
+        "available": "可用积分",
+        "frozen": "冻结积分",
+        "totalPoints": "总积分",
+        "action": "操作"
+      },
+      "roleAdmin": "管理员",
+      "roleUser": "用户",
+      "empty": "暂无用户。"
+    },
+    "userDetail": {
+      "title": "目标用户",
+      "hint": "输入 user_id，或先到“用户列表”里选择。",
+      "userIdPlaceholder": "user_id",
+      "profileTitle": "基础信息",
+      "pointsTitle": "积分信息",
+      "drawingTitle": "生图记录",
+      "videoTitle": "视频记录",
+      "openImage": "打开图片",
+      "openVideo": "打开视频",
+      "status": "状态",
+      "model": "模型"
+    },
+    "payments": {
+      "stripeTitle": "Stripe 付款记录",
+      "wechatTitle": "微信支付记录",
+      "columnsStripe": {
+        "user": "用户",
+        "plan": "套餐",
+        "interval": "周期",
+        "status": "状态",
+        "periodEnd": "到期时间"
+      },
+      "columnsWechat": {
+        "user": "用户",
+        "plan": "套餐",
+        "amountFen": "金额（分）",
+        "points": "积分",
+        "paidAt": "支付时间"
+      }
+    },
+    "points": {
+      "addTitle": "人工加积分",
+      "userId": "user_id",
+      "points": "points",
+      "note": "备注",
+      "notePlaceholder": "可选，例如：补偿积分",
+      "amountPlaceholder": "例如：1000（支持负数扣减）",
+      "response": "响应结果",
+      "expiryTitle": "积分过期检查/处理",
+      "expiryDescPrefix": "该操作调用",
+      "dryRun": "dry_run"
+    },
+    "toast": {
+      "overviewFailed": "概览加载失败",
+      "usersFailed": "用户列表加载失败",
+      "userDetailFailed": "用户详情加载失败",
+      "recordsFailed": "使用记录加载失败",
+      "paymentsFailed": "支付记录加载失败",
+      "pointsInvalidUserId": "请输入正确的 user_id",
+      "pointsInvalidAmount": "请输入正确的积分数（且不能为 0）",
+      "pointsUpdated": "积分已更新",
+      "pointsAddFailed": "加积分失败",
+      "expiryDryDone": "dry-run 已完成",
+      "expiryDone": "处理已完成",
+      "expiryFailed": "执行失败"
+    }
   },
   "onboarding": {
     "progress": "第 {{current}} 步，共 {{total}} 步",
@@ -266,6 +389,7 @@
     "helpHint": "拖拽画布平移 | 滚轮缩放 | 点击图片选中 | 拖拽文件到画布上传",
     "dropToAdd": "松开以添加到画布",
     "annotate": "标注",
+    "preview": "预览",
     "annotateCancel": "取消",
     "annotateExport": "导出",
     "annotationExported": "标注已导出：{{name}}",
@@ -343,7 +467,9 @@
     "regenerated": "已重新生成配置：",
     "understood": "已理解你的需求，以下是生成的配置：",
     "modifyConfig": "修改配置：{{name}}\n描述你想要更改的内容...",
-    "configDetails": "📋 当前配置详情：\n\n场景：{{scene}}\n风格：{{style}}\n光照：{{lighting}}\n构图：{{composition}}\n质量：{{quality}}\n负面提示词：{{negative}}"
+    "configDetails": "📋 当前配置详情：\n\n场景：{{scene}}\n风格：{{style}}\n光照：{{lighting}}\n构图：{{composition}}\n质量：{{quality}}\n负面提示词：{{negative}}",
+    "gptImageQualityStandard": "普通版",
+    "gptImageQualityHigh": "高清版"
   },
   "agentResponse": {
     "promptConfigPreview": "提示词配置预览",

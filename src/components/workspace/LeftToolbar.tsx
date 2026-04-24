@@ -1,14 +1,10 @@
 import React from "react";
-import { 
-  Eraser, 
-  Layers, 
-  Layers2, 
-  Maximize,
+import {
+  Eraser,
+  Layers,
   Wand2,
-  Palette,
-  Sparkles,
   FolderOpen,
-  Loader2
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -37,16 +33,30 @@ interface ToolItem {
 }
 
 const processTools: ToolItem[] = [
-  { id: "bg-remover", icon: <Eraser className="w-5 h-5" />, label: "BG", cost: 1, descriptionKey: "workspace.removeBackground" },
-  { id: "layer-split", icon: <Layers className="w-5 h-5" />, label: "Split", cost: 2, descriptionKey: "workspace.splitLayers" },
-  { id: "layers", icon: <Layers2 className="w-5 h-5" />, label: "Layers", descriptionKey: "workspace.layerManagement" },
-  { id: "expand", icon: <Maximize className="w-5 h-5" />, label: "Expand", descriptionKey: "workspace.expandCanvas" },
+  {
+    id: "bg-remover",
+    icon: <Eraser className="w-5 h-5" />,
+    label: "BG",
+    cost: 1,
+    descriptionKey: "workspace.removeBackground",
+  },
+  {
+    id: "layer-split",
+    icon: <Layers className="w-5 h-5" />,
+    label: "Split",
+    cost: 2,
+    descriptionKey: "workspace.splitLayers",
+  },
 ];
 
 const enhanceTools: ToolItem[] = [
-  { id: "enhance", icon: <Wand2 className="w-5 h-5" />, label: "Enhance", cost: 15, descriptionKey: "workspace.aiEnhance" },
-  { id: "colorize", icon: <Palette className="w-5 h-5" />, label: "Color", cost: 10, descriptionKey: "workspace.autoColorize" },
-  { id: "upscale", icon: <Sparkles className="w-5 h-5" />, label: "Upscale", cost: 1, descriptionKey: "workspace.aiUpscale" },
+  {
+    id: "enhance",
+    icon: <Wand2 className="w-5 h-5" />,
+    label: "Enhance",
+    cost: 15,
+    descriptionKey: "workspace.aiEnhance",
+  },
 ];
 
 const qualityLevels = [
@@ -68,7 +78,9 @@ const LeftToolbar: React.FC<LeftToolbarProps> = ({
   const { t } = useTranslation();
   const [selectedQuality, setSelectedQuality] = React.useState("ORIGINAL");
   const [showCostWarning, setShowCostWarning] = React.useState(false);
-  const [pendingQuality, setPendingQuality] = React.useState<string | null>(null);
+  const [pendingQuality, setPendingQuality] = React.useState<string | null>(
+    null
+  );
   const [activeTool, setActiveTool] = React.useState<string | null>(null);
 
   const isProcessing = processingState?.isProcessing ?? false;
@@ -78,7 +90,7 @@ const LeftToolbar: React.FC<LeftToolbarProps> = ({
       if (!isActive) toast.error(t("workspace.selectImageFirst"));
       return;
     }
-    const qualityItem = qualityLevels.find(q => q.label === quality);
+    const qualityItem = qualityLevels.find((q) => q.label === quality);
     if (quality === "ORIGINAL") {
       setSelectedQuality(quality);
       onToolSelect?.(`quality-original`);
@@ -117,7 +129,8 @@ const LeftToolbar: React.FC<LeftToolbarProps> = ({
       onLayerSplit?.();
       return;
     }
-    if (tool.id === "upscale") {
+    // NOTE: "AI enhance" and "AI upscale" click actions are swapped per product UI.
+    if (tool.id === "enhance") {
       onUpscale?.("4K");
       return;
     }
@@ -141,7 +154,9 @@ const LeftToolbar: React.FC<LeftToolbarProps> = ({
           title={t("workspace.assets")}
         >
           <FolderOpen className="w-5 h-5" />
-          <span className="text-[10px] font-bold mt-1 uppercase">{t("workspace.assets")}</span>
+          <span className="text-[10px] font-bold mt-1 uppercase">
+            {t("workspace.assets")}
+          </span>
         </button>
 
         {/* Processing Indicator */}
@@ -154,14 +169,15 @@ const LeftToolbar: React.FC<LeftToolbarProps> = ({
           </div>
         )}
 
-        {/* Process Section */}
+        {/* Process Section (no sub-categories) */}
         <div id="onboarding-toolbar-process" className="flex flex-col">
           <div className="px-1 py-2 text-[10px] font-bold uppercase text-center text-muted-foreground border-b border-foreground/15">
             {t("workspace.process")}
           </div>
-          
-          {processTools.map((tool) => {
-            const isToolProcessing = isProcessing && processingState?.type === tool.id;
+
+          {[...processTools, ...enhanceTools].map((tool) => {
+            const isToolProcessing =
+              isProcessing && processingState?.type === tool.id;
             return (
               <button
                 key={tool.id}
@@ -170,13 +186,19 @@ const LeftToolbar: React.FC<LeftToolbarProps> = ({
                 className={cn(
                   "relative w-full h-11 flex items-center justify-center border-b border-foreground/10 transition-none",
                   isToolProcessing && "bg-accent-cyan/20 animate-pulse",
-                  activeTool === tool.id && !isToolProcessing && "bg-foreground text-card",
+                  activeTool === tool.id &&
+                    !isToolProcessing &&
+                    "bg-foreground text-card",
                   isActive && !isProcessing
                     ? "hover:bg-foreground hover:text-card cursor-pointer"
                     : !isToolProcessing && "opacity-30 cursor-not-allowed"
                 )}
               >
-                {isToolProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : tool.icon}
+                {isToolProcessing ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  tool.icon
+                )}
                 {tool.cost && !isToolProcessing && (
                   <span className="absolute top-1 right-1 text-[8px] font-bold bg-accent-cyan text-foreground px-1 leading-tight border border-foreground/30">
                     -{tool.cost}
@@ -186,46 +208,8 @@ const LeftToolbar: React.FC<LeftToolbarProps> = ({
             );
           })}
         </div>
-
-        {/* Enhance Section */}
-        <div id="onboarding-toolbar-enhance" className="flex flex-col">
-          <div className="px-1 py-2 text-[10px] font-bold uppercase text-center text-muted-foreground border-b border-foreground/15 bg-accent-cyan/10">
-            {t("workspace.enhance")}
-          </div>
-          
-          {enhanceTools.map((tool) => {
-            const isToolProcessing = isProcessing && processingState?.type === tool.id;
-            return (
-              <button
-                key={tool.id}
-                onClick={() => handleToolClick(tool)}
-                title={t(tool.descriptionKey)}
-                className={cn(
-                  "relative w-full h-11 flex items-center justify-center border-b border-foreground/10 transition-none",
-                  isToolProcessing && "bg-accent-purple/20 animate-pulse",
-                  activeTool === tool.id && !isToolProcessing && "bg-foreground text-card",
-                  isActive && !isProcessing
-                    ? "hover:bg-foreground hover:text-card cursor-pointer"
-                    : !isToolProcessing && "opacity-30 cursor-not-allowed"
-                )}
-              >
-                {isToolProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : tool.icon}
-                {tool.cost && !isToolProcessing && (
-                  <span className="absolute top-1 right-1 text-[8px] font-bold bg-accent-purple text-card px-1 leading-tight border border-foreground/30">
-                    -{tool.cost}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Quality Section - wired to Upscale API */}
-        <div id="onboarding-toolbar-quality" className="border-t border-foreground/15 mt-auto">
-          <div className="px-1 py-2 text-[10px] font-bold uppercase text-center text-muted-foreground">
-            {t("workspace.quality")}
-          </div>
-          
+        {/* Quality presets - also belong to Process */}
+        <div id="onboarding-toolbar-quality" className="mt-auto">
           {qualityLevels.map((quality) => (
             <button
               key={quality.label}
@@ -260,9 +244,16 @@ const LeftToolbar: React.FC<LeftToolbarProps> = ({
           <div className="bg-card border-brutal-heavy border-foreground brutal-shadow-heavy p-5 max-w-xs animate-scale-in">
             <div className="text-center mb-3">
               <div className="text-3xl mb-2">⚠️</div>
-              <div className="text-sm font-bold uppercase text-accent-red">{t("workspace.highCostWarning")}</div>
+              <div className="text-sm font-bold uppercase text-accent-red">
+                {t("workspace.highCostWarning")}
+              </div>
             </div>
-            <p className="text-xs text-center mb-5 font-mono" dangerouslySetInnerHTML={{ __html: t("workspace.highCostMessage") }} />
+            <p
+              className="text-xs text-center mb-5 font-mono"
+              dangerouslySetInnerHTML={{
+                __html: t("workspace.highCostMessage"),
+              }}
+            />
             <div className="flex gap-2">
               <button
                 onClick={() => setShowCostWarning(false)}

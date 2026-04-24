@@ -17,6 +17,8 @@ import Success from "./pages/Success";
 import Cancel from "./pages/Cancel";
 import Invoices from "./pages/Invoices";
 import Account from "./pages/Account";
+import Admin from "./pages/Admin";
+import AdminRouteGuard from "@/components/auth/AdminRouteGuard";
 
 const queryClient = new QueryClient();
 
@@ -89,6 +91,16 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Pricing />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <AdminRouteGuard>
+                    <Admin />
+                  </AdminRouteGuard>
                 </ProtectedRoute>
               }
             />

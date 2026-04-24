@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
 import { getToken, clearToken } from "@/api/token";
 import authApi from "@/api/auth";
+import adminApi from "@/api/admin";
 import type { UserInfo } from "@/types/auth";
 
 interface AuthContextType {
@@ -37,9 +38,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     authApi
       .getCurrentUser()
-      .then((info) => {
-        setUserInfo(info);
-        setUserEmail(info.email);
+      .then(async (info) => {
+        let merged: UserInfo = info;
+
+        // /auth/me 已包含 is_admin（文档说明），若后端暂未返回则用 /admin/check 补齐
+        if (typeof info.is_admin !== "boolean") {
+          try {
+            const admin = await adminApi.checkAdmin();
+            merged = { ...info, is_admin: admin.is_admin };
+          } catch {
+            merged = { ...info, is_admin: false };
+          }
+        }
+
+        setUserInfo(merged);
+        setUserEmail(merged.email);
         setIsAuthenticated(true);
       })
       .catch(() => {
@@ -59,7 +72,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUserEmail(email);
     localStorage.setItem("auth_email", email);
     // 获取完整用户信息
-    authApi.getCurrentUser().then(setUserInfo).catch(() => {});
+    authApi
+      .getCurrentUser()
+      .then(async (info) => {
+        if (typeof info.is_admin === "boolean") return info;
+        try {
+          const admin = await adminApi.checkAdmin();
+          return { ...info, is_admin: admin.is_admin };
+        } catch {
+          return { ...info, is_admin: false };
+        }
+      })
+      .then(setUserInfo)
+      .catch(() => {});
   }, []);
 
   const logout = useCallback(async () => {
@@ -78,8 +103,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const refreshUser = useCallback(async () => {
     try {
       const info = await authApi.getCurrentUser();
-      setUserInfo(info);
-      setUserEmail(info.email);
+      let merged: UserInfo = info;
+      if (typeof info.is_admin !== "boolean") {
+        try {
+          const admin = await adminApi.checkAdmin();
+          merged = { ...info, is_admin: admin.is_admin };
+        } catch {
+          merged = { ...info, is_admin: false };
+        }
+      }
+      setUserInfo(merged);
+      setUserEmail(merged.email);
     } catch {
       // silent
     }

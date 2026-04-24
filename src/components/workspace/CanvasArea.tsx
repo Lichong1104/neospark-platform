@@ -74,6 +74,7 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
   const [annotatingImage, setAnnotatingImage] = useState<CanvasImage | null>(
     null
   );
+  const [previewImage, setPreviewImage] = useState<CanvasImage | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
 
   const ZOOM_MIN = 25;
@@ -315,6 +316,15 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
       window.removeEventListener("blur", stopDragging);
     };
   }, []);
+
+  useEffect(() => {
+    if (!previewImage) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setPreviewImage(null);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [previewImage]);
 
   const handleZoomIn = () => setZoom((prev) => Math.min(prev + ZOOM_STEP, ZOOM_MAX));
   const handleZoomOut = () => setZoom((prev) => Math.max(prev - ZOOM_STEP, ZOOM_MIN));
@@ -657,6 +667,12 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
             <div
               key={img.id}
               onClick={(e) => handleImageClick(e, img.id)}
+              onDoubleClick={(e) => {
+                e.stopPropagation();
+                if (!img.loading && img.type !== "video") {
+                  setPreviewImage(img);
+                }
+              }}
               onMouseDown={(e) => handleImageMouseDown(e, img.id)}
               onPointerDown={(e) => handleImagePointerDown(e, img.id)}
               className={cn(
@@ -700,6 +716,19 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
                     className="w-full h-full object-cover"
                     draggable={false}
                   />
+                )}
+                {!img.loading && img.type !== "video" && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPreviewImage(img);
+                    }}
+                    className="absolute top-1 right-1 w-6 h-6 flex items-center justify-center bg-foreground/80 text-card opacity-0 group-hover:opacity-100 transition-opacity"
+                    title={t("canvas.preview")}
+                  >
+                    <ZoomIn className="w-3.5 h-3.5" />
+                  </button>
                 )}
                 {/* Name label on hover */}
                 <div className="absolute bottom-0 left-0 right-0 bg-foreground/80 text-card px-2 py-0.5 text-[10px] font-mono opacity-0 group-hover:opacity-100 transition-opacity truncate">
@@ -749,6 +778,33 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
           onComplete={handleAnnotationComplete}
           onCancel={() => setAnnotatingImage(null)}
         />
+      )}
+
+      {/* Image Preview (Antd-like lightbox) */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 z-50 bg-foreground/85 flex items-center justify-center p-6"
+          onClick={() => setPreviewImage(null)}
+        >
+          <button
+            type="button"
+            className="absolute top-4 right-4 w-9 h-9 border border-card/30 text-card hover:bg-card/20"
+            onClick={(e) => {
+              e.stopPropagation();
+              setPreviewImage(null);
+            }}
+            aria-label="Close preview"
+          >
+            ×
+          </button>
+          <img
+            src={previewImage.src}
+            alt={previewImage.name}
+            className="max-w-[92vw] max-h-[88vh] object-contain shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+            draggable={false}
+          />
+        </div>
       )}
     </div>
   );

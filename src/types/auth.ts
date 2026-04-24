@@ -32,6 +32,8 @@ export interface LogoutResponse {
 export interface UserInfo {
   id: number;
   email: string;
+  /** 是否管理员（来自 /auth/me） */
+  is_admin?: boolean;
   is_logged_in: boolean;
   last_login_at: string;
   created_at: string;

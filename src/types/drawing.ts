@@ -108,6 +108,12 @@ export interface GenerateImageParams {
   strength?: number;
   /** 提供商：默认 gemini */
   provider?: "gemini" | "tengda";
+  /**
+   * 画质档位：仅 Tengda `gpt-image-2` 支持
+   * - standard: 普通（6 积分）
+   * - high: 高级（12 积分）
+   */
+  quality?: "standard" | "high";
   optimize_prompt?: boolean;
   /** `1` = 电商详情页九宫格第一阶段 */
   type?: number;

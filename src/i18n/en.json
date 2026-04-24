@@ -3,10 +3,133 @@
     "credits": "Credits",
     "pricing": "Pricing",
     "workspace": "Workspace",
+    "admin": "Admin",
     "switchToChinese": "Switch to Chinese",
     "switchToEnglish": "Switch to English",
     "lightMode": "Light mode",
     "darkMode": "Dark mode"
+  },
+  "admin": {
+    "title": "Admin Console",
+    "subtitle": "Manage users, usage, and payments.",
+    "tabs": {
+      "overview": "Overview",
+      "users": "Users",
+      "userDetail": "User Detail",
+      "payments": "Payments",
+      "points": "Points & Maintenance"
+    },
+    "actions": {
+      "refresh": "Refresh",
+      "search": "Search",
+      "reset": "Reset",
+      "prev": "Prev",
+      "next": "Next",
+      "addPoints": "Add points",
+      "inspect": "Inspect",
+      "load": "Load",
+      "submit": "Submit",
+      "useSelectedUserId": "Use selected user_id",
+      "runDry": "Run dry-run",
+      "runProcessing": "Run processing"
+    },
+    "state": {
+      "loading": "Loading...",
+      "noData": "No data.",
+      "noRecords": "No records."
+    },
+    "overview": {
+      "title": "Overview",
+      "tipsTitle": "Tips",
+      "tipAdminMissing": "If the Admin button is missing, ensure backend returns is_admin in GET /api/v1/auth/me, or configure ADMIN_EMAILS.",
+      "tip403": "403 means you are logged in but not an admin.",
+      "tipBase": "All admin APIs are under /api/v1/admin.",
+      "stats": {
+        "totalUsers": "Total users",
+        "todayNewUsers": "New users (today)",
+        "stripeSubs": "Stripe subs",
+        "wechatPaidOrders": "WeChat paid orders",
+        "todayDrawing": "Draw count (today)",
+        "todayVideo": "Video count (today)"
+      }
+    },
+    "users": {
+      "title": "Users",
+      "searchPlaceholder": "Search by email or name...",
+      "page": "Page",
+      "total": "Total",
+      "pageSize": "Page size",
+      "columns": {
+        "id": "ID",
+        "email": "Email",
+        "name": "Name",
+        "role": "Role",
+        "available": "Available",
+        "frozen": "Frozen",
+        "totalPoints": "Total",
+        "action": "Action"
+      },
+      "roleAdmin": "ADMIN",
+      "roleUser": "USER",
+      "empty": "No users."
+    },
+    "userDetail": {
+      "title": "Target User",
+      "hint": "Enter a user id, or pick one from the Users tab.",
+      "userIdPlaceholder": "user_id",
+      "profileTitle": "Profile",
+      "pointsTitle": "Points",
+      "drawingTitle": "Drawing records",
+      "videoTitle": "Video records",
+      "openImage": "Open image",
+      "openVideo": "Open video",
+      "status": "status",
+      "model": "model"
+    },
+    "payments": {
+      "stripeTitle": "Stripe payments",
+      "wechatTitle": "WeChat payments",
+      "columnsStripe": {
+        "user": "User",
+        "plan": "Plan",
+        "interval": "Interval",
+        "status": "Status",
+        "periodEnd": "Period end"
+      },
+      "columnsWechat": {
+        "user": "User",
+        "plan": "Plan",
+        "amountFen": "Amount (fen)",
+        "points": "Points",
+        "paidAt": "Paid at"
+      }
+    },
+    "points": {
+      "addTitle": "Add points",
+      "userId": "user_id",
+      "points": "points",
+      "note": "note",
+      "notePlaceholder": "Optional, e.g. compensation",
+      "amountPlaceholder": "e.g. 1000 (negative allowed)",
+      "response": "Response",
+      "expiryTitle": "Points expiry",
+      "expiryDescPrefix": "This calls",
+      "dryRun": "dry_run"
+    },
+    "toast": {
+      "overviewFailed": "Failed to load admin overview",
+      "usersFailed": "Failed to load users",
+      "userDetailFailed": "Failed to load user detail",
+      "recordsFailed": "Failed to load usage records",
+      "paymentsFailed": "Failed to load payments",
+      "pointsInvalidUserId": "Please enter a valid user_id",
+      "pointsInvalidAmount": "Please enter a valid points amount (non-zero)",
+      "pointsUpdated": "Points updated",
+      "pointsAddFailed": "Failed to add points",
+      "expiryDryDone": "Dry-run finished",
+      "expiryDone": "Expiry processing finished",
+      "expiryFailed": "Failed to run expiry check"
+    }
   },
   "onboarding": {
     "progress": "Step {{current}} of {{total}}",
@@ -266,6 +389,7 @@
     "helpHint": "Drag canvas to pan | Scroll to zoom | Click to select | Drop files to upload",
     "dropToAdd": "Drop to add to canvas",
     "annotate": "ANNOTATE",
+    "preview": "PREVIEW",
     "annotateCancel": "CANCEL",
     "annotateExport": "EXPORT",
     "annotationExported": "Annotation exported: {{name}}",
@@ -343,7 +467,9 @@
     "regenerated": "Regenerated configuration:",
     "understood": "Understood your requirements. Here's the generated configuration:",
     "modifyConfig": "Modify config: {{name}}\nDescribe what you want to change...",
-    "configDetails": "📋 Current Configuration Details:\n\nScene: {{scene}}\nStyle: {{style}}\nLighting: {{lighting}}\nComposition: {{composition}}\nQuality: {{quality}}\nNegative Prompt: {{negative}}"
+    "configDetails": "📋 Current Configuration Details:\n\nScene: {{scene}}\nStyle: {{style}}\nLighting: {{lighting}}\nComposition: {{composition}}\nQuality: {{quality}}\nNegative Prompt: {{negative}}",
+    "gptImageQualityStandard": "Standard",
+    "gptImageQualityHigh": "HD"
   },
   "agentResponse": {
     "promptConfigPreview": "Prompt Configuration Preview",

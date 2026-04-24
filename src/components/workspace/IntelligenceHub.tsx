@@ -258,6 +258,9 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
   const [aspectRatio, setAspectRatio] = useState("1:1");
   const [resolution, setResolution] = useState("1K");
   const [model, setModel] = useState("gemini-3.1-flash-image-preview");
+  const [tengdaQuality, setTengdaQuality] = useState<"standard" | "high">(
+    "standard"
+  );
   const [standardSessionId, setStandardSessionId] = useState<string | null>(
     null
   );
@@ -347,6 +350,14 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
   }, [modelsConfig]);
 
   const currentModelConfig = modelsConfig?.[model];
+  const isGptImage2 = model === "gpt-image-2";
+  const tengdaQualityOptions: DropdownOption[] = useMemo(
+    () => [
+      { value: "standard", label: t("agentChat.gptImageQualityStandard") },
+      { value: "high", label: t("agentChat.gptImageQualityHigh") },
+    ],
+    [t]
+  );
 
   useEffect(() => {
     if (!modelsConfig) return;
@@ -362,6 +373,10 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
       setAspectRatio(firstModel.supported_aspect_ratios[0]?.value ?? "1:1");
     }
   }, [modelsConfig, model]);
+
+  useEffect(() => {
+    if (!isGptImage2) setTengdaQuality("standard");
+  }, [isGptImage2]);
 
   useEffect(() => {
     if (!currentModelConfig) return;
@@ -387,7 +402,8 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
     if (!currentModelConfig) return DEFAULT_RESOLUTIONS;
     return currentModelConfig.supported_resolutions.map((r) => ({
       value: r.value,
-      label: r.label,
+      // Keep the dropdown compact (e.g. avoid "1K (1024px)").
+      label: r.value,
     }));
   }, [currentModelConfig]);
 
@@ -452,6 +468,9 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
           (model.startsWith("gemini") ? "gemini" : "tengda"),
         optimize_prompt: true,
       };
+      if (isGptImage2) {
+        params.quality = tengdaQuality;
+      }
       if (hasSelectedRefs && currentModelConfig?.supports_image_to_image !== false) {
         const refPaths = selectedRefImages
           .slice(0, 14)
@@ -559,6 +578,9 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
               aspectRatio={aspectRatio}
               resolution={resolution}
               model={model}
+              isGptImage2={model === "gpt-image-2"}
+              tengdaQuality={tengdaQuality}
+              onTengdaQualityChange={setTengdaQuality}
               aspectRatioOptions={aspectRatioOptions}
               resolutionOptions={resolutionOptions}
               modelOptions={modelOptions}
@@ -606,6 +628,9 @@ interface ChatViewProps {
   aspectRatio: string;
   resolution: string;
   model: string;
+  isGptImage2: boolean;
+  tengdaQuality: "standard" | "high";
+  onTengdaQualityChange: (value: "standard" | "high") => void;
   aspectRatioOptions: DropdownOption[];
   resolutionOptions: DropdownOption[];
   modelOptions: DropdownOption[];
@@ -641,6 +666,9 @@ const ChatView: React.FC<ChatViewProps> = ({
   aspectRatio,
   resolution,
   model,
+  isGptImage2,
+  tengdaQuality,
+  onTengdaQualityChange,
   aspectRatioOptions,
   resolutionOptions,
   modelOptions,
@@ -668,6 +696,13 @@ const ChatView: React.FC<ChatViewProps> = ({
   const currentAgent = AGENTS.find((a) => a.id === agentStatus) || AGENTS[0];
   const historyBottomRef = useRef<HTMLDivElement>(null);
   const promptInputRef = useRef<HTMLTextAreaElement>(null);
+  const tengdaQualityOptions: DropdownOption[] = useMemo(
+    () => [
+      { value: "standard", label: t("agentChat.gptImageQualityStandard") },
+      { value: "high", label: t("agentChat.gptImageQualityHigh") },
+    ],
+    [t]
+  );
 
   const fillPromptFromHistory = useCallback(
     (prompt: string) => {
@@ -1001,6 +1036,15 @@ const ChatView: React.FC<ChatViewProps> = ({
               value={resolution}
               onChange={onResolutionChange}
             />
+            {isGptImage2 && (
+              <BrutalDropdown
+                options={tengdaQualityOptions}
+                value={tengdaQuality}
+                onChange={(v) =>
+                  onTengdaQualityChange(v as "standard" | "high")
+                }
+              />
+            )}
             <BrutalDropdown
               options={modelOptions}
               value={model}
