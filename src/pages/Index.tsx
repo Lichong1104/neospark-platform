@@ -16,11 +16,22 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { WorkspaceOnboarding } from "@/components/onboarding/WorkspaceOnboarding";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
   isWorkspaceOnboardingDone,
   setWorkspaceOnboardingDone,
 } from "@/lib/workspaceOnboarding";
 
 const CANVAS_IMAGE_MAX_SIZE = 256;
+const FIRST_LOGIN_VIDEO_URL =
+  "https://quantrisk.oss-cn-shenzhen.aliyuncs.com/demo_canva_chinese.mp4";
+const getFirstLoginVideoShownKey = (userId: string | number) =>
+  `first_login_video_shown_${String(userId)}`;
 
 const getImageSize = (
   src: string
@@ -102,6 +113,7 @@ const Index = () => {
   const [isAssetSidebarOpen, setIsAssetSidebarOpen] = useState(false);
   const [canvasImages, setCanvasImages] = useState<CanvasImage[]>([]);
   const [isFileDropUploading, setIsFileDropUploading] = useState(false);
+  const [showFirstLoginVideo, setShowFirstLoginVideo] = useState(false);
 
   // Get selected canvas image info
   const selectedCanvasImage = canvasImages.find(
@@ -311,6 +323,16 @@ const Index = () => {
     }
   }, [authLoading, userInfo?.id]);
 
+  useEffect(() => {
+    if (authLoading || !userInfo?.id) return;
+    const storageKey = getFirstLoginVideoShownKey(userInfo.id);
+    const hasShown = localStorage.getItem(storageKey) === "1";
+    if (!hasShown) {
+      setShowFirstLoginVideo(true);
+      localStorage.setItem(storageKey, "1");
+    }
+  }, [authLoading, userInfo?.id]);
+
   const completeWorkspaceOnboarding = useCallback(() => {
     if (userInfo?.id) setWorkspaceOnboardingDone(userInfo.id);
     setShowWorkspaceOnboarding(false);
@@ -440,6 +462,26 @@ const Index = () => {
       {showWorkspaceOnboarding && (
         <WorkspaceOnboarding onComplete={completeWorkspaceOnboarding} />
       )}
+      <Dialog open={showFirstLoginVideo} onOpenChange={setShowFirstLoginVideo}>
+        <DialogContent className="max-w-4xl p-4">
+          <DialogHeader>
+            <DialogTitle>欢迎使用 Neospark Canvas</DialogTitle>
+            <DialogDescription>
+              首次登录引导视频，建议先看 1-2 分钟快速上手。
+            </DialogDescription>
+          </DialogHeader>
+          <div className="w-full overflow-hidden rounded-md border">
+            <video
+              className="h-auto w-full"
+              src={FIRST_LOGIN_VIDEO_URL}
+              controls
+              autoPlay
+              playsInline
+              preload="metadata"
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
