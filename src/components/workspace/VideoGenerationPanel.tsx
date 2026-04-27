@@ -61,6 +61,8 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
   selectedCanvasImages = [],
   canvasImages = [],
 }) => {
+  const VIDEO_TUTORIAL_URL =
+    "https://quantrisk.oss-cn-shenzhen.aliyuncs.com/neospark_video.mp4";
   const { t } = useTranslation();
   const [isCreating, setIsCreating] = useState(false);
   const [prompt, setPrompt] = useState("");
@@ -531,9 +533,19 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
               <span className="text-[10px] font-bold uppercase text-muted-foreground">
                 {t("video.prompt")}
               </span>
-              <span className="text-[10px] font-bold text-accent-orange">
-                {t("video.estimatedCost")}: ~{estimatedCost ?? 50} pts
-              </span>
+              <div className="flex items-center gap-2">
+                <a
+                  href={VIDEO_TUTORIAL_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[10px] font-bold uppercase border border-foreground/30 px-2 py-1 hover:bg-secondary"
+                >
+                  {t("video.tutorial")}
+                </a>
+                <span className="text-[10px] font-bold text-accent-orange">
+                  {t("video.estimatedCost")}: ~{estimatedCost ?? 50} pts
+                </span>
+              </div>
             </div>
 
             <div className="p-3 space-y-2.5">

@@ -3,6 +3,7 @@ import { BrutalCard, BrutalCardHeader, BrutalCardTitle, BrutalCardContent } from
 import { BrutalButton } from "@/components/ui/brutal-button";
 import { Coins, TrendingDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 
 interface CreditVaultProps {
   credits: number;
@@ -10,6 +11,7 @@ interface CreditVaultProps {
 
 export const CreditVault: React.FC<CreditVaultProps> = ({ credits }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const isLow = credits < 200;
   const pct = Math.min((credits / 1000) * 100, 100);
 
@@ -51,7 +53,12 @@ export const CreditVault: React.FC<CreditVaultProps> = ({ credits }) => {
           <span>1000</span>
         </div>
 
-        <BrutalButton variant="green" className="mt-4 w-full" size="sm">
+        <BrutalButton
+          variant="green"
+          className="mt-4 w-full"
+          size="sm"
+          onClick={() => navigate("/pricing")}
+        >
           {t("uc.recharge")}
         </BrutalButton>
       </BrutalCardContent>

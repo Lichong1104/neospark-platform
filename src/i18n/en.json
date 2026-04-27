@@ -824,6 +824,7 @@
     "refImage": "Reference Image Path",
     "refImageRequired": "Reference image is required for image-to-video mode",
     "estimatedCost": "Estimated Cost",
+    "tutorial": "Tutorial",
     "promptPlaceholder": "Describe the video you want to generate...",
     "taskCreated": "Video task created, estimated cost {{cost}} pts",
     "createFailed": "Failed to create video task",

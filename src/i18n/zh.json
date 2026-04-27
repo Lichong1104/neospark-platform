@@ -824,6 +824,7 @@
     "refImage": "参考图路径",
     "refImageRequired": "图生视频模式需要提供参考图",
     "estimatedCost": "预估消耗",
+    "tutorial": "视频教程",
     "promptPlaceholder": "描述你想要生成的视频效果...",
     "taskCreated": "视频任务已创建，预估消耗 {{cost}} 积分",
     "createFailed": "创建视频任务失败",
