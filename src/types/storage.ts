@@ -69,6 +69,7 @@ export interface UserImageItem {
   filename: string;
   path: string;
   url: string;
+  thumbnail_url?: string;
   size?: number;
   prompt?: string;
   model?: string;

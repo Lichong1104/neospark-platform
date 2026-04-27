@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { Moon, Sun, User, Globe, CreditCard, Sparkles, LogOut, Shield } from "lucide-react";
+import {
+  Moon,
+  Sun,
+  User,
+  Globe,
+  CreditCard,
+  Sparkles,
+  LogOut,
+  Shield,
+  CirclePlay,
+} from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,7 +25,15 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-const Header: React.FC = () => {
+interface HeaderProps {
+  onOpenVideoGuide?: () => void;
+  showVideoGuideEntry?: boolean;
+}
+
+const Header: React.FC<HeaderProps> = ({
+  onOpenVideoGuide,
+  showVideoGuideEntry = true,
+}) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { i18n, t } = useTranslation();
@@ -74,6 +92,18 @@ const Header: React.FC = () => {
               <CreditCard className="w-3.5 h-3.5" />
               {t("header.pricing", { defaultValue: "Pricing" })}
             </NavButton>
+            {showVideoGuideEntry ? (
+              <button
+                type="button"
+                onClick={onOpenVideoGuide}
+                className="h-8 px-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider transition-none border-brutal border-foreground brutal-press bg-card text-foreground hover:bg-accent-yellow"
+                title="打开引导视频"
+                aria-label="打开引导视频"
+              >
+                <CirclePlay className="w-3.5 h-3.5" />
+                视频
+              </button>
+            ) : null}
           </nav>
         </div>
       </div>

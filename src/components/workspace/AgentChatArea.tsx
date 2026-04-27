@@ -19,6 +19,7 @@ import {
   Pencil,
   Upload,
   Download,
+  CirclePlay,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -26,6 +27,13 @@ import {
   type DropdownOption,
 } from "@/components/ui/brutal-dropdown";
 import { AgentResponseCard, type PromptConfig } from "./AgentResponseCard";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import drawingApi from "@/api/drawing";
@@ -49,8 +57,8 @@ type StatusType =
   | "custom"
   | "offline";
 
-/** 电商详情页后端固定模型（文档） */
-const ECOMMERCE_MODEL = "gemini-3.1-flash-image-preview";
+const ECOMMERCE_GUIDE_VIDEO_URL =
+  "https://quantrisk.oss-cn-shenzhen.aliyuncs.com/neospark_ecomm.mp4";
 
 async function pollMessageUntilTerminal(
   messageId: string,
@@ -122,54 +130,91 @@ const EcommerceWelcome: React.FC<{
   agentColor: string;
   agentIcon: React.ReactNode;
 }> = ({ agentColor, agentIcon }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const [showGuideVideo, setShowGuideVideo] = useState(false);
+  const isChineseLanguage = (i18n.resolvedLanguage || i18n.language || "en")
+    .split("-")[0]
+    .toLowerCase() === "zh";
   return (
-    <div className="flex items-start gap-3 animate-fade-in">
-      <div
-        className={cn(
-          "w-10 h-10 border-brutal border-foreground flex items-center justify-center flex-shrink-0",
-          agentColor
-        )}
-      >
-        {agentIcon}
-      </div>
-      <div className="flex-1">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="font-bold text-sm">
-            {t("agents.ecommerce").toUpperCase()}_AGENT
-          </span>
+    <>
+      <div className="flex items-start gap-3 animate-fade-in">
+        <div
+          className={cn(
+            "w-10 h-10 border-brutal border-foreground flex items-center justify-center flex-shrink-0",
+            agentColor
+          )}
+        >
+          {agentIcon}
         </div>
-        <div className="text-sm bg-secondary/30 border border-foreground/10 p-4 space-y-3 whitespace-pre-wrap">
-          <p className="font-bold">{t("ecommerceAgent.greeting")}</p>
-          <ol className="list-decimal list-inside space-y-1.5 text-muted-foreground">
-            <li>
-              <strong>{t("ecommerceAgent.field1Label")}</strong>：
-              {t("ecommerceAgent.field1Example")}
-            </li>
-            <li>
-              <strong>{t("ecommerceAgent.field2Label")}</strong>：
-              {t("ecommerceAgent.field2Example")}
-            </li>
-            <li>
-              <strong>{t("ecommerceAgent.field3Label")}</strong>：
-              {t("ecommerceAgent.field3Example")}
-            </li>
-            <li>
-              <strong>{t("ecommerceAgent.field4Label")}</strong>：
-              {t("ecommerceAgent.field4Example")}
-            </li>
-            <li>
-              <strong>{t("ecommerceAgent.field5Label")}</strong>：
-              {t("ecommerceAgent.field5Example")}
-            </li>
-            <li>
-              <strong>{t("ecommerceAgent.field6Label")}</strong>：
-              {t("ecommerceAgent.field6Example")}
-            </li>
-          </ol>
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="font-bold text-sm">
+              {t("agents.ecommerce").toUpperCase()}_AGENT
+            </span>
+            {isChineseLanguage ? (
+              <button
+                type="button"
+                onClick={() => setShowGuideVideo(true)}
+                className="inline-flex items-center justify-center w-7 h-7 border-brutal border-foreground bg-accent-cyan text-foreground hover:brightness-110 brutal-press"
+                title="电商详情页大师指导视频"
+                aria-label="打开电商详情页大师指导视频"
+              >
+                <CirclePlay className="w-4 h-4" />
+              </button>
+            ) : null}
+          </div>
+          <div className="text-sm bg-secondary/30 border border-foreground/10 p-4 space-y-3 whitespace-pre-wrap">
+            <p className="font-bold">{t("ecommerceAgent.greeting")}</p>
+            <ol className="list-decimal list-inside space-y-1.5 text-muted-foreground">
+              <li>
+                <strong>{t("ecommerceAgent.field1Label")}</strong>：
+                {t("ecommerceAgent.field1Example")}
+              </li>
+              <li>
+                <strong>{t("ecommerceAgent.field2Label")}</strong>：
+                {t("ecommerceAgent.field2Example")}
+              </li>
+              <li>
+                <strong>{t("ecommerceAgent.field3Label")}</strong>：
+                {t("ecommerceAgent.field3Example")}
+              </li>
+              <li>
+                <strong>{t("ecommerceAgent.field4Label")}</strong>：
+                {t("ecommerceAgent.field4Example")}
+              </li>
+              <li>
+                <strong>{t("ecommerceAgent.field5Label")}</strong>：
+                {t("ecommerceAgent.field5Example")}
+              </li>
+              <li>
+                <strong>{t("ecommerceAgent.field6Label")}</strong>：
+                {t("ecommerceAgent.field6Example")}
+              </li>
+            </ol>
+          </div>
         </div>
       </div>
-    </div>
+      <Dialog open={showGuideVideo} onOpenChange={setShowGuideVideo}>
+        <DialogContent className="max-w-4xl p-4">
+          <DialogHeader>
+            <DialogTitle>电商详情页大师指导视频</DialogTitle>
+            <DialogDescription>
+              建议先看 1-2 分钟，快速了解电商详情页大师的填写方式与产出流程。
+            </DialogDescription>
+          </DialogHeader>
+          <div className="w-full overflow-hidden rounded-md border">
+            <video
+              className="h-auto w-full"
+              src={ECOMMERCE_GUIDE_VIDEO_URL}
+              controls
+              autoPlay
+              playsInline
+              preload="metadata"
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
@@ -492,10 +537,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
     if (!modelIds.length) return;
 
     if (!modelsConfig[model]) {
-      const firstModelId = isEcommerce
-        ? modelIds.find((id) => modelsConfig[id]?.provider === "gemini") ??
-          modelIds[0]
-        : modelIds[0];
+      const firstModelId = modelIds[0];
       const firstModel = modelsConfig[firstModelId];
       setModel(firstModelId);
       setResolution(firstModel.supported_resolutions[0]?.value ?? "1K");
@@ -792,19 +834,25 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
           const sid = await ensureSession();
 
           // Phase 1: grid preview (type=1)
-          const phase1Res = await drawingApi.generateImage(sid, {
+          const phase1Params: GenerateImageParams = {
             prompt: userContent,
-            model: ECOMMERCE_MODEL,
+            model,
             resolution: "1K",
             aspect_ratio: "1:1",
             negative_prompt: "",
             num_images: 1,
-            provider: "gemini",
+            provider:
+              currentModelConfig?.provider ??
+              (model.startsWith("gemini") ? "gemini" : "tengda"),
             optimize_prompt: true,
             ref_upload_id: refUploadId,
             strength: 0.7,
             type: 1,
-          });
+          };
+          if (model === "gpt-image-2") {
+            phase1Params.quality = tengdaQuality;
+          }
+          const phase1Res = await drawingApi.generateImage(sid, phase1Params);
 
           toast.info(
             `${t("ecommerceAgent.phase1")} · ≈ ${phase1Res.estimated_cost} pts`
@@ -960,19 +1008,25 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
       try {
         const sid = await ensureSession();
 
-        const phase1Res = await drawingApi.generateImage(sid, {
+        const phase1Params: GenerateImageParams = {
           prompt: ctx.prompt,
-          model: ECOMMERCE_MODEL,
+          model,
           resolution: "1K",
           aspect_ratio: "1:1",
           negative_prompt: "",
           num_images: 1,
-          provider: "gemini",
+          provider:
+            currentModelConfig?.provider ??
+            (model.startsWith("gemini") ? "gemini" : "tengda"),
           optimize_prompt: true,
           ref_upload_id: ctx.refUploadId,
           strength: 0.7,
           type: 1,
-        });
+        };
+        if (model === "gpt-image-2") {
+          phase1Params.quality = tengdaQuality;
+        }
+        const phase1Res = await drawingApi.generateImage(sid, phase1Params);
 
         toast.info(
           `${t("ecommerceAgent.phase1")} · ≈ ${phase1Res.estimated_cost} pts`
@@ -1084,16 +1138,22 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
     try {
       const sid = await ensureSession();
 
-      const batchData = await drawingApi.generateBatch(sid, {
+      const batchParams: GenerateBatchParams = {
         assistant_message_id: phase1MessageId,
         ref_upload_id: refUploadId,
-        model: ECOMMERCE_MODEL,
+        model,
         resolution: "1K",
         aspect_ratio: "1:1",
         negative_prompt: "",
         strength: 0.7,
-        provider: "gemini",
-      });
+        provider:
+          currentModelConfig?.provider ??
+          (model.startsWith("gemini") ? "gemini" : "tengda"),
+      };
+      if (model === "gpt-image-2") {
+        batchParams.quality = tengdaQuality;
+      }
+      const batchData = await drawingApi.generateBatch(sid, batchParams);
 
       toast.info(
         `${t("ecommerceAgent.phase2")} · ≈ ${
@@ -1309,18 +1369,12 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
 
   const modelOptions: DropdownOption[] = useMemo(() => {
     if (!modelsConfig) return [{ value: model, label: model }];
-    const entries = Object.entries(modelsConfig);
-    const ecommerceEntries = isEcommerce
-      ? entries.filter(([, cfg]) => cfg.provider === "gemini")
-      : entries;
-    return (ecommerceEntries.length ? ecommerceEntries : entries).map(
-      ([id, cfg]) => ({
-        value: id,
-        label: cfg.name,
-        icon: <Sparkles className="w-3 h-3" />,
-      })
-    );
-  }, [isEcommerce, modelsConfig, model]);
+    return Object.entries(modelsConfig).map(([id, cfg]) => ({
+      value: id,
+      label: cfg.name,
+      icon: <Sparkles className="w-3 h-3" />,
+    }));
+  }, [modelsConfig, model]);
 
   const canSend = isEcommerce
     ? Boolean(

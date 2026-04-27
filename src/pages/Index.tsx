@@ -104,7 +104,7 @@ const getCanvasCenterPlacement = (
 };
 
 const Index = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { userInfo, isLoading: authLoading } = useAuth();
   const [showWorkspaceOnboarding, setShowWorkspaceOnboarding] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -114,6 +114,11 @@ const Index = () => {
   const [canvasImages, setCanvasImages] = useState<CanvasImage[]>([]);
   const [isFileDropUploading, setIsFileDropUploading] = useState(false);
   const [showFirstLoginVideo, setShowFirstLoginVideo] = useState(false);
+  const [hasResolvedOnboardingState, setHasResolvedOnboardingState] =
+    useState(false);
+  const isChineseLanguage = (i18n.resolvedLanguage || i18n.language || "en")
+    .split("-")[0]
+    .toLowerCase() === "zh";
 
   // Get selected canvas image info
   const selectedCanvasImage = canvasImages.find(
@@ -320,18 +325,29 @@ const Index = () => {
     if (authLoading || !userInfo?.id) return;
     if (!isWorkspaceOnboardingDone(userInfo.id)) {
       setShowWorkspaceOnboarding(true);
+    } else {
+      setShowWorkspaceOnboarding(false);
     }
+    setHasResolvedOnboardingState(true);
   }, [authLoading, userInfo?.id]);
 
   useEffect(() => {
-    if (authLoading || !userInfo?.id) return;
+    if (authLoading || !userInfo?.id || !hasResolvedOnboardingState) return;
+    if (showWorkspaceOnboarding) return;
+    if (!isChineseLanguage) return;
     const storageKey = getFirstLoginVideoShownKey(userInfo.id);
     const hasShown = localStorage.getItem(storageKey) === "1";
     if (!hasShown) {
       setShowFirstLoginVideo(true);
       localStorage.setItem(storageKey, "1");
     }
-  }, [authLoading, userInfo?.id]);
+  }, [
+    authLoading,
+    userInfo?.id,
+    hasResolvedOnboardingState,
+    showWorkspaceOnboarding,
+    isChineseLanguage,
+  ]);
 
   const completeWorkspaceOnboarding = useCallback(() => {
     if (userInfo?.id) setWorkspaceOnboardingDone(userInfo.id);
@@ -413,7 +429,14 @@ const Index = () => {
   return (
     <>
       <div className="h-screen flex flex-col overflow-hidden">
-        <Header />
+        <Header
+          showVideoGuideEntry={isChineseLanguage}
+          onOpenVideoGuide={() => {
+            if (isChineseLanguage) {
+              setShowFirstLoginVideo(true);
+            }
+          }}
+        />
 
         <main className="flex-1 flex overflow-hidden">
           <div className="relative flex-shrink-0">

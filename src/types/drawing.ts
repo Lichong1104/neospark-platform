@@ -129,6 +129,12 @@ export interface GenerateBatchParams {
   negative_prompt?: string;
   strength?: number;
   provider?: "gemini" | "tengda";
+  /**
+   * 画质档位：仅 Tengda `gpt-image-2` 支持
+   * - standard: 普通
+   * - high: 高级
+   */
+  quality?: "standard" | "high";
 }
 
 export interface GenerateBatchMessageItem {

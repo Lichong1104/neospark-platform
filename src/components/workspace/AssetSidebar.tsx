@@ -36,6 +36,7 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
   onClose,
   onAddToCanvas,
 }) => {
+  const IMAGE_PAGE_SIZE = 30;
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<AssetTab>("images");
 
@@ -44,12 +45,15 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
     "all" | "upload" | "generation"
   >("all");
   const [isLoadingImages, setIsLoadingImages] = useState(false);
+  const [isLoadingMoreImages, setIsLoadingMoreImages] = useState(false);
+  const [imageTotal, setImageTotal] = useState(0);
 
   const [videoFiles, setVideoFiles] = useState<UserVideoItem[]>([]);
   const [isLoadingVideos, setIsLoadingVideos] = useState(false);
 
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const listContainerRef = useRef<HTMLDivElement>(null);
 
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deletingIds, setDeletingIds] = useState<Record<string, boolean>>({});
@@ -57,24 +61,71 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
   const [previewVideoItem, setPreviewVideoItem] = useState<UserVideoItem | null>(
     null
   );
+  const [visibleImageCount, setVisibleImageCount] = useState(IMAGE_PAGE_SIZE);
 
   const getImageUrl = useCallback((url: string) => {
     if (!url) return "";
     return url.startsWith("http") ? url : `${STATIC_BASE_URL}${url}`;
   }, []);
 
+  const getThumbnailUrl = useCallback((img: UserImageItem) => {
+    if (img.thumbnail_url) {
+      return img.thumbnail_url.startsWith("http")
+        ? img.thumbnail_url
+        : `${STATIC_BASE_URL}${img.thumbnail_url}`;
+    }
+    return getImageUrl(img.url);
+  }, [getImageUrl]);
+
   const loadImages = useCallback(async () => {
     setIsLoadingImages(true);
     try {
-      const params = imageSource === "all" ? {} : { source: imageSource };
-      const data = await storageApi.listAllUserImages(params);
+      const params = {
+        ...(imageSource === "all" ? {} : { source: imageSource }),
+        limit: IMAGE_PAGE_SIZE,
+        offset: 0,
+      };
+      const data = await storageApi.listUserImages(params);
       setUserImages(data.images || []);
+      setImageTotal(data.total || 0);
+      setVisibleImageCount(IMAGE_PAGE_SIZE);
     } catch {
       setUserImages([]);
+      setImageTotal(0);
     } finally {
       setIsLoadingImages(false);
     }
-  }, [imageSource]);
+  }, [imageSource, IMAGE_PAGE_SIZE]);
+
+  const loadMoreImages = useCallback(async () => {
+    if (isLoadingImages || isLoadingMoreImages) return;
+    if (userImages.length >= imageTotal) return;
+
+    setIsLoadingMoreImages(true);
+    try {
+      const params = {
+        ...(imageSource === "all" ? {} : { source: imageSource }),
+        limit: IMAGE_PAGE_SIZE,
+        offset: userImages.length,
+      };
+      const data = await storageApi.listUserImages(params);
+      const next = data.images || [];
+      if (next.length > 0) {
+        setUserImages((prev) => [...prev, ...next]);
+      }
+      setImageTotal(data.total || imageTotal);
+      setVisibleImageCount((prev) => prev + IMAGE_PAGE_SIZE);
+    } finally {
+      setIsLoadingMoreImages(false);
+    }
+  }, [
+    isLoadingImages,
+    isLoadingMoreImages,
+    userImages.length,
+    imageTotal,
+    imageSource,
+    IMAGE_PAGE_SIZE,
+  ]);
 
   const loadVideos = useCallback(async () => {
     setIsLoadingVideos(true);
@@ -93,6 +144,18 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
     if (activeTab === "images") loadImages();
     if (activeTab === "videos") loadVideos();
   }, [isOpen, activeTab, loadImages, loadVideos]);
+
+  const handleListScroll = useCallback(() => {
+    if (activeTab !== "images") return;
+    const container = listContainerRef.current;
+    if (!container) return;
+
+    const distanceToBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
+    if (distanceToBottom > 120) return;
+
+    loadMoreImages();
+  }, [activeTab, loadMoreImages]);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -457,7 +520,11 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
         </div>
 
         {/* Scrollable list */}
-        <div className="flex-1 overflow-y-auto p-3">
+        <div
+          ref={listContainerRef}
+          onScroll={handleListScroll}
+          className="flex-1 overflow-y-auto p-3"
+        >
           {/* Image grid — flat, no groups */}
           {activeTab === "images" && (
             <>
@@ -482,17 +549,18 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-3 gap-1.5">
-                {userImages.map((img) => (
-                  <div
-                    key={img.id}
-                    className={cn(
-                      "group relative aspect-square overflow-hidden border border-foreground/20 hover:border-accent-cyan",
-                      confirmDeleteId === img.id && "border-accent-red"
-                    )}
-                  >
+              <>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {userImages.map((img) => (
+                    <div
+                      key={img.id}
+                      className={cn(
+                        "group relative aspect-square overflow-hidden border border-foreground/20 hover:border-accent-cyan",
+                        confirmDeleteId === img.id && "border-accent-red"
+                      )}
+                    >
                     <img
-                      src={getImageUrl(img.url)}
+                      src={getThumbnailUrl(img)}
                       alt={img.filename}
                       className="w-full h-full object-cover cursor-pointer"
                       loading="lazy"
@@ -578,9 +646,22 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
                         </button>
                       </div>
                     )}
+                    </div>
+                  ))}
+                </div>
+                {(isLoadingMoreImages || userImages.length < imageTotal) && (
+                  <div className="flex items-center justify-center py-3 text-[10px] font-bold uppercase text-muted-foreground">
+                    {isLoadingMoreImages ? (
+                      <span className="inline-flex items-center gap-1.5">
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                        {t("assetSidebar.loading")}
+                      </span>
+                    ) : (
+                      t("assetSidebar.loading")
+                    )}
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
           </>
         )}
