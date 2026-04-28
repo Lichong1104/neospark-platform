@@ -225,26 +225,6 @@ const Index = () => {
     []
   );
 
-  const handleVideoGenerated = useCallback((videoUrl: string) => {
-    (async () => {
-      const natural = await getVideoSize(videoUrl);
-      const size = toCanvasSize(natural.width, natural.height);
-      const pos = getCanvasCenterPlacement(size.width, size.height, 0);
-      const newItem: CanvasImage = {
-        id: Math.random().toString(36).substr(2, 8).toUpperCase(),
-        x: pos.x,
-        y: pos.y,
-        width: size.width,
-        height: size.height,
-        selected: false,
-        src: videoUrl,
-        name: `Video_${Date.now()}`,
-        type: "video",
-      };
-      setCanvasImages((prev) => [...prev, newItem]);
-    })();
-  }, []);
-
   const handleAddToCanvas = useCallback(
     (item: { src: string; name: string; type: "image" | "video" }) => {
       (async () => {
@@ -474,7 +454,6 @@ const Index = () => {
           <aside id="onboarding-hub-panel" className="w-[400px] flex-shrink-0">
             <IntelligenceHub
               onImagesGenerated={handleImagesGenerated}
-              onVideoGenerated={handleVideoGenerated}
               selectedCanvasImage={selectedCanvasImage ?? null}
               selectedCanvasImages={selectedCanvasImages}
               canvasImages={canvasImages}
@@ -488,9 +467,16 @@ const Index = () => {
       <Dialog open={showFirstLoginVideo} onOpenChange={setShowFirstLoginVideo}>
         <DialogContent className="max-w-4xl p-4">
           <DialogHeader>
-            <DialogTitle>欢迎使用 Neospark Canvas</DialogTitle>
+            <DialogTitle>
+              {t("intelligenceHub.firstLoginVideoTitle", {
+                defaultValue: "Welcome to Neospark Canvas",
+              })}
+            </DialogTitle>
             <DialogDescription>
-              首次登录引导视频，建议先看 1-2 分钟快速上手。
+              {t("intelligenceHub.firstLoginVideoDesc", {
+                defaultValue:
+                  "First-login onboarding video. A quick 1-2 minute watch is recommended.",
+              })}
             </DialogDescription>
           </DialogHeader>
           <div className="w-full overflow-hidden rounded-md border">

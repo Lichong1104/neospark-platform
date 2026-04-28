@@ -117,6 +117,29 @@ export async function getBillingHistory(params?: BillingHistoryParams): Promise<
   return res.data;
 }
 
+/**
+ * 批量打包图片为 ZIP 下载（返回 blob，需自行触发下载）
+ */
+export async function downloadZip(
+  urls: string[],
+  filename?: string
+): Promise<Blob> {
+  const { default: axios } = await import("axios");
+  const { BASE_URL } = await import("./request");
+  const { getToken } = await import("./token");
+  const token = getToken();
+  const response = await axios.post(
+    `${BASE_URL}/drawing/download-zip`,
+    { urls, filename },
+    {
+      responseType: "blob",
+      withCredentials: true,
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    }
+  );
+  return response.data;
+}
+
 const drawingApi = {
   getModelsConfig,
   createSession,

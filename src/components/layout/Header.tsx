@@ -97,11 +97,11 @@ const Header: React.FC<HeaderProps> = ({
                 type="button"
                 onClick={onOpenVideoGuide}
                 className="h-8 px-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider transition-none border-brutal border-foreground brutal-press bg-card text-foreground hover:bg-accent-yellow"
-                title="打开引导视频"
-                aria-label="打开引导视频"
+                title={t("header.tutorial", { defaultValue: "Tutorial" })}
+                aria-label={t("header.tutorial", { defaultValue: "Tutorial" })}
               >
                 <CirclePlay className="w-3.5 h-3.5" />
-                视频
+                {t("header.tutorial", { defaultValue: "Tutorial" })}
               </button>
             ) : null}
           </nav>

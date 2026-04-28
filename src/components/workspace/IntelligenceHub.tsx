@@ -22,7 +22,6 @@ import {
   Expand,
   Image,
   Image as ImageIcon,
-  Video,
   Bookmark,
   Plus,
   ChevronDown,
@@ -45,7 +44,6 @@ import { useTranslation } from "react-i18next";
 import drawingApi from "@/api/drawing";
 import type { CanvasImage } from "./CanvasArea";
 import type { ModelsConfigMap } from "@/types/drawing";
-import { VideoGenerationPanel } from "./VideoGenerationPanel";
 
 type StatusType =
   | "ecommerce"
@@ -124,33 +122,6 @@ const toServerPath = (fullUrl: string) => {
   return fullUrl;
 };
 
-const PRESET_PROMPTS = [
-  {
-    id: "1",
-    name: "Cyberpunk",
-    color: "bg-accent-cyan",
-    preview: "Neon-lit dystopian cityscape, rain-soaked streets...",
-  },
-  {
-    id: "2",
-    name: "Ukiyo-e",
-    color: "bg-accent-red",
-    preview: "Traditional Japanese woodblock print style...",
-  },
-  {
-    id: "3",
-    name: "Retro Future",
-    color: "bg-accent-orange",
-    preview: "1970s vision of the future, chrome and curves...",
-  },
-  {
-    id: "4",
-    name: "Film Noir",
-    color: "bg-accent-purple",
-    preview: "High contrast black and white, dramatic shadows...",
-  },
-];
-
 const NODE_CATEGORY_DEFS = [
   {
     id: "agents",
@@ -226,7 +197,6 @@ const useAgents = () => {
 
 interface IntelligenceHubProps {
   onImagesGenerated?: (images: { url: string; local_path: string }[]) => void;
-  onVideoGenerated?: (videoUrl: string) => void;
   selectedCanvasImage?: {
     src: string;
     name: string;
@@ -238,7 +208,6 @@ interface IntelligenceHubProps {
 
 const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
   onImagesGenerated,
-  onVideoGenerated,
   selectedCanvasImage,
   selectedCanvasImages = [],
   canvasImages = [],
@@ -246,7 +215,6 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
   const { t } = useTranslation();
   const AGENTS = useAgents();
   const [activeTab, setActiveTab] = useState<"CHAT" | "WORKFLOW">("CHAT");
-  const [genSubTab, setGenSubTab] = useState<"IMAGE" | "VIDEO">("IMAGE");
   const [isAgentMode, setIsAgentMode] = useState(false);
   const [agentStatus, setAgentStatus] = useState<StatusType>("offline");
   const [showPresets, setShowPresets] = useState(false);
@@ -538,82 +506,42 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
         <WorkflowView />
       ) : (
         <>
-          {/* IMAGE / VIDEO sub-tabs */}
-          <div
-            id="onboarding-hub-tabs"
-            className="flex border-b border-foreground/10"
-          >
-            <button
-              onClick={() => setGenSubTab("IMAGE")}
-              className={cn(
-                "flex-1 py-2.5 font-mono font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-none",
-                genSubTab === "IMAGE"
-                  ? "bg-accent-yellow text-foreground border-b-2 border-foreground"
-                  : "bg-card text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <ImageIcon className="w-3.5 h-3.5" />
-              {t("intelligenceHub.imageTab")}
-            </button>
-            <button
-              onClick={() => setGenSubTab("VIDEO")}
-              className={cn(
-                "flex-1 py-2.5 font-mono font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-none border-l border-foreground/10",
-                genSubTab === "VIDEO"
-                  ? "bg-accent-yellow text-foreground border-b-2 border-foreground"
-                  : "bg-card text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <Video className="w-3.5 h-3.5" />
-              {t("intelligenceHub.videoTab")}
-            </button>
-          </div>
-
-          {genSubTab === "IMAGE" ? (
-            <ChatView
-              isAgentMode={isAgentMode}
-              agentStatus={agentStatus}
-              inputValue={inputValue}
-              showPresets={showPresets}
-              aspectRatio={aspectRatio}
-              resolution={resolution}
-              model={model}
-              isGptImage2={model === "gpt-image-2"}
-              tengdaQuality={tengdaQuality}
-              onTengdaQualityChange={setTengdaQuality}
-              aspectRatioOptions={aspectRatioOptions}
-              resolutionOptions={resolutionOptions}
-              modelOptions={modelOptions}
-              isGenerating={isStandardGenerating}
-              standardGenHistory={standardGenHistory}
-              pendingStandardPrompt={pendingStandardPrompt}
-              onAspectRatioChange={setAspectRatio}
-              onResolutionChange={setResolution}
-              onModelChange={setModel}
-              onModeToggle={handleModeToggle}
-              onInputChange={handleInputChange}
-              onSend={handleSend}
-              onTogglePresets={() => setShowPresets(!showPresets)}
-              onSelectPreset={(prompt) => {
-                setInputValue(prompt);
-                setShowPresets(false);
-              }}
-              onReuseHistoryPrompt={setInputValue}
-              onImagesGenerated={onImagesGenerated}
-              pastedImage={pastedImage}
-              onPasteImage={setPastedImage}
-              isUploadingPaste={isUploadingPaste}
-              selectedCanvasImage={selectedCanvasImage ?? null}
-              selectedCanvasImages={selectedCanvasImages}
-            />
-          ) : (
-            <VideoGenerationPanel
-              onVideoGenerated={onVideoGenerated}
-              selectedCanvasImage={selectedCanvasImage ?? null}
-              selectedCanvasImages={selectedCanvasImages}
-              canvasImages={canvasImages}
-            />
-          )}
+          <ChatView
+            isAgentMode={isAgentMode}
+            agentStatus={agentStatus}
+            inputValue={inputValue}
+            showPresets={showPresets}
+            aspectRatio={aspectRatio}
+            resolution={resolution}
+            model={model}
+            isGptImage2={model === "gpt-image-2"}
+            tengdaQuality={tengdaQuality}
+            onTengdaQualityChange={setTengdaQuality}
+            aspectRatioOptions={aspectRatioOptions}
+            resolutionOptions={resolutionOptions}
+            modelOptions={modelOptions}
+            isGenerating={isStandardGenerating}
+            standardGenHistory={standardGenHistory}
+            pendingStandardPrompt={pendingStandardPrompt}
+            onAspectRatioChange={setAspectRatio}
+            onResolutionChange={setResolution}
+            onModelChange={setModel}
+            onModeToggle={handleModeToggle}
+            onInputChange={handleInputChange}
+            onSend={handleSend}
+            onTogglePresets={() => setShowPresets(!showPresets)}
+            onSelectPreset={(prompt) => {
+              setInputValue(prompt);
+              setShowPresets(false);
+            }}
+            onReuseHistoryPrompt={setInputValue}
+            onImagesGenerated={onImagesGenerated}
+            pastedImage={pastedImage}
+            onPasteImage={setPastedImage}
+            isUploadingPaste={isUploadingPaste}
+            selectedCanvasImage={selectedCanvasImage ?? null}
+            selectedCanvasImages={selectedCanvasImages}
+          />
         </>
       )}
     </div>

@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/dialog";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import drawingApi from "@/api/drawing";
+import drawingApi, { downloadZip } from "@/api/drawing";
 import storageApi from "@/api/storage";
 import { STATIC_BASE_URL } from "@/api/request";
 import { useGenerationPolling } from "@/hooks/useGenerationPolling";
@@ -46,8 +46,6 @@ import type {
   MessageStatusResponse,
   ModelsConfigMap,
 } from "@/types/drawing";
-import JSZip from "jszip";
-import { toFetchableAssetUrl } from "@/lib/assetFetchUrl";
 import type { CanvasImage } from "./CanvasArea";
 
 type StatusType =
@@ -471,6 +469,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
   const [inputValue, setInputValue] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [downloadingMessageId, setDownloadingMessageId] = useState<string | null>(null);
   const [aspectRatio, setAspectRatio] = useState("1:1");
   const [resolution, setResolution] = useState("1K");
   const [model, setModel] = useState("gemini-3.1-flash-image-preview");
@@ -1282,54 +1281,31 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
     return `${STATIC_BASE_URL}${url}`;
   };
 
-  const getDownloadFileName = (
-    img: { url: string; local_path: string },
-    index: number
-  ) => {
-    const source = img.local_path || img.url || "";
-    const segments = source.split("/");
-    const lastPart = segments[segments.length - 1] || "";
-    if (lastPart.includes(".")) return lastPart;
-    return `detail_${index + 1}.jpg`;
-  };
-
   const handleDownloadEcommerceImages = async (
-    images: { url: string; local_path: string }[]
+    images: { url: string; local_path: string }[],
+    messageId: string
   ) => {
-    if (!images.length) return;
-    const zip = new JSZip();
-    let successCount = 0;
-    for (let idx = 0; idx < images.length; idx++) {
-      const img = images[idx];
-      try {
-        const source = img.local_path || img.url;
-        const downloadUrl = toFetchableAssetUrl(source);
-        const response = await fetch(downloadUrl, { credentials: "include" });
-        if (!response.ok) {
-          throw new Error(`Download failed: ${response.status}`);
-        }
-        const blob = await response.blob();
-        zip.file(getDownloadFileName(img, idx), blob);
-        successCount += 1;
-      } catch {
-        // Continue downloading remaining files even if one fails
-      }
-    }
-    if (successCount === 0) {
+    if (!images.length || downloadingMessageId) return;
+    setDownloadingMessageId(messageId);
+    try {
+      const urls = images.map((img) => img.local_path || img.url);
+      const blob = await downloadZip(urls, "ecommerce_images");
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = `ecommerce_images_${Date.now()}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(blobUrl);
+      toast.success(
+        t("ecommerceAgent.downloadAllDone", { count: images.length })
+      );
+    } catch {
       toast.error(t("assetSidebar.downloadFailed"));
-      return;
+    } finally {
+      setDownloadingMessageId(null);
     }
-
-    const zipBlob = await zip.generateAsync({ type: "blob" });
-    const zipUrl = URL.createObjectURL(zipBlob);
-    const link = document.createElement("a");
-    link.href = zipUrl;
-    link.download = `ecommerce_images_${Date.now()}.zip`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(zipUrl);
-    toast.success(t("ecommerceAgent.downloadAllDone", { count: successCount }));
   };
 
   const DEFAULT_ASPECT_RATIOS: DropdownOption[] = useMemo(
@@ -1571,15 +1547,28 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() =>
-                            handleDownloadEcommerceImages(message.images ?? [])
+                            handleDownloadEcommerceImages(
+                              message.images ?? [],
+                              message.message_id
+                            )
                           }
                           disabled={
-                            !message.images || message.images.length === 0
+                            !message.images ||
+                            message.images.length === 0 ||
+                            downloadingMessageId === message.message_id
                           }
-                          className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase border-brutal border-foreground bg-accent-cyan hover:brightness-110 brutal-press disabled:opacity-50"
+                          className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold border-brutal border-foreground bg-accent-cyan hover:brightness-110 brutal-press disabled:opacity-50"
                         >
-                          <Download className="w-3 h-3" />
-                          {t("ecommerceAgent.downloadAll")}
+                          {downloadingMessageId === message.message_id ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <Download className="w-3 h-3" />
+                          )}
+                          {downloadingMessageId === message.message_id
+                            ? t("ecommerceAgent.downloading", {
+                                defaultValue: "Downloading...",
+                              })
+                            : t("ecommerceAgent.downloadAll")}
                         </button>
                       </div>
                     </div>

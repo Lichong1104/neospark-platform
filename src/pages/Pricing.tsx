@@ -311,14 +311,25 @@ const Pricing = () => {
       icon: <Gift className="w-5 h-5" />,
       price: { monthly: 0, yearly: 0 },
       credits: {
-        monthly: "100 credits / 7 days",
-        yearly: "100 credits / 7 days",
+        monthly: t("pricing.freeCreditsCycle", {
+          amount: "100",
+          days: 7,
+          defaultValue: "{{amount}} credits / {{days}} days",
+        }),
+        yearly: t("pricing.freeCreditsCycle", {
+          amount: "100",
+          days: 7,
+          defaultValue: "{{amount}} credits / {{days}} days",
+        }),
       },
-      images: "~14 Nano banana 2",
-      videos: "~3 clips",
+      images: t("pricing.usageNanoBanana", {
+        count: 14,
+        defaultValue: "~{{count}} Nano banana 2",
+      }),
+      videos: t("pricing.usageClips", { count: 3, defaultValue: "~{{count}} clips" }),
       features: [
         t("pricing.feat_credits", {
-          amount: "200",
+          amount: "100",
           defaultValue: "{{amount}} credits/month",
         }),
         t("pricing.feat_basicModels", { defaultValue: "Basic AI models" }),
@@ -344,11 +355,14 @@ const Pricing = () => {
       price: { monthly: 18, yearly: 14 },
       yearlySave: t("pricing.yearlySave_starter", { defaultValue: "Save $48" }),
       credits: { monthly: "2,000", yearly: "2,000" },
-      images: "~285 Nano banana 2",
-      videos: "~10 clips",
+      images: t("pricing.usageNanoBanana", {
+        count: 285,
+        defaultValue: "~{{count}} Nano banana 2",
+      }),
+      videos: t("pricing.usageClips", { count: 10, defaultValue: "~{{count}} clips" }),
       features: [
         t("pricing.feat_credits", {
-          amount: "2,500",
+          amount: "2,000",
           defaultValue: "{{amount}} credits/month",
         }),
         t("pricing.feat_allModels", { defaultValue: "All AI models unlocked" }),
@@ -372,11 +386,14 @@ const Pricing = () => {
       price: { monthly: 31, yearly: 25 },
       yearlySave: t("pricing.yearlySave_growth", { defaultValue: "Save $72" }),
       credits: { monthly: "3,500", yearly: "3,500" },
-      images: "~500 Nano banana 2",
-      videos: "~17 clips",
+      images: t("pricing.usageNanoBanana", {
+        count: 500,
+        defaultValue: "~{{count}} Nano banana 2",
+      }),
+      videos: t("pricing.usageClips", { count: 17, defaultValue: "~{{count}} clips" }),
       features: [
         t("pricing.feat_credits", {
-          amount: "6,000",
+          amount: "3,500",
           defaultValue: "{{amount}} credits/month",
         }),
         t("pricing.feat_commercial", {
@@ -409,11 +426,14 @@ const Pricing = () => {
       price: { monthly: 68, yearly: 44 },
       yearlySave: t("pricing.yearlySave_pro", { defaultValue: "Save $288" }),
       credits: { monthly: "11,000", yearly: "11,000" },
-      images: "~1,571 Nano banana 2",
-      videos: "~55 clips",
+      images: t("pricing.usageNanoBanana", {
+        count: "1,571",
+        defaultValue: "~{{count}} Nano banana 2",
+      }),
+      videos: t("pricing.usageClips", { count: 55, defaultValue: "~{{count}} clips" }),
       features: [
         t("pricing.feat_credits", {
-          amount: "15,000",
+          amount: "11,000",
           defaultValue: "{{amount}} credits/month",
         }),
         t("pricing.feat_batchApiFree", { defaultValue: "Batch API FREE" }),
@@ -441,11 +461,14 @@ const Pricing = () => {
         defaultValue: "Save $600",
       }),
       credits: { monthly: "27,000", yearly: "27,000" },
-      images: "~3,857 Nano banana 2",
-      videos: "~135 clips",
+      images: t("pricing.usageNanoBanana", {
+        count: "3,857",
+        defaultValue: "~{{count}} Nano banana 2",
+      }),
+      videos: t("pricing.usageClips", { count: 135, defaultValue: "~{{count}} clips" }),
       features: [
         t("pricing.feat_credits", {
-          amount: "40,000",
+          amount: "27,000",
           defaultValue: "{{amount}} credits/month",
         }),
         t("pricing.feat_batchApiFree", { defaultValue: "Batch API FREE" }),

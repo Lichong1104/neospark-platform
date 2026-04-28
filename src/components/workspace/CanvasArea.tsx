@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { ImageAnnotator } from "./ImageAnnotator";
 import { toFetchableAssetUrl } from "@/lib/assetFetchUrl";
+import { BASE_URL } from "@/api/request";
 
 export interface CanvasImage {
   id: string;
@@ -76,6 +77,7 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
   );
   const [previewImage, setPreviewImage] = useState<CanvasImage | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const ZOOM_MIN = 25;
   const ZOOM_MAX = 300;
@@ -377,15 +379,21 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
   };
 
   const handleDownloadSelected = async () => {
-    if (selectedIds.length === 0) return;
+    if (selectedIds.length === 0 || isDownloading) return;
     const selectedSet = new Set(selectedIds);
     const items = images.filter((i) => selectedSet.has(i.id));
     if (items.length === 0) return;
+    setIsDownloading(true);
 
     const downloadOne = async (img: CanvasImage) => {
       const fileName = `${img.name}.${img.type === "video" ? "mp4" : "jpg"}`;
-      const url = toFetchableAssetUrl(img.src);
-      const response = await fetch(url, { credentials: "include" });
+      const url = `${BASE_URL}/drawing/download?url=${encodeURIComponent(img.src)}&name=${encodeURIComponent(fileName)}`;
+      const { getToken } = await import("@/api/token");
+      const token = getToken();
+      const response = await fetch(url, {
+        credentials: "include",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       if (!response.ok) {
         throw new Error(`Download failed: ${response.status}`);
       }
@@ -411,6 +419,8 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
       );
     } catch {
       toast.error(t("assetSidebar.downloadFailed"));
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -559,7 +569,7 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
         <div className="absolute inset-0 z-40 bg-card/35 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
           <div className="flex items-center gap-2 border-brutal border-foreground bg-card px-4 py-3 text-xs font-bold uppercase tracking-wider">
             <Loader2 className="w-4 h-4 animate-spin" />
-            {t("workspace.uploading")}
+            {t("common.loading")}
           </div>
         </div>
       )}
@@ -627,9 +637,14 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
               </button>
               <button
                 onClick={handleDownloadSelected}
-                className="w-7 h-7 flex items-center justify-center hover:bg-accent-green/20 transition-none"
+                disabled={isDownloading}
+                className="w-7 h-7 flex items-center justify-center hover:bg-accent-green/20 transition-none disabled:opacity-50"
               >
-                <Download className="w-3.5 h-3.5" />
+                {isDownloading ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-accent-green" />
+                ) : (
+                  <Download className="w-3.5 h-3.5" />
+                )}
               </button>
               <button
                 onClick={handleDeleteSelected}
