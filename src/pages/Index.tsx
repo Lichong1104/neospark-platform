@@ -301,6 +301,18 @@ const Index = () => {
     []
   );
 
+  const handleVideoGenerated = useCallback(
+    (videoUrl: string) => {
+      if (!videoUrl) return;
+      handleAddToCanvas({
+        src: videoUrl,
+        name: `GeneratedVideo_${Date.now()}`,
+        type: "video",
+      });
+    },
+    [handleAddToCanvas]
+  );
+
   useEffect(() => {
     if (authLoading || !userInfo?.id) return;
     if (!isWorkspaceOnboardingDone(userInfo.id)) {
@@ -454,6 +466,7 @@ const Index = () => {
           <aside id="onboarding-hub-panel" className="w-[400px] flex-shrink-0">
             <IntelligenceHub
               onImagesGenerated={handleImagesGenerated}
+              onVideoGenerated={handleVideoGenerated}
               selectedCanvasImage={selectedCanvasImage ?? null}
               selectedCanvasImages={selectedCanvasImages}
               canvasImages={canvasImages}

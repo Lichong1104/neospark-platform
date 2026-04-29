@@ -22,6 +22,7 @@ import {
   Expand,
   Image,
   Image as ImageIcon,
+  Video,
   Bookmark,
   Plus,
   ChevronDown,
@@ -40,6 +41,7 @@ import {
 } from "@/components/ui/brutal-dropdown";
 import { PresetLibrary } from "./PresetLibrary";
 import { AgentChatArea } from "./AgentChatArea";
+import { VideoGenerationPanel } from "./VideoGenerationPanel";
 import { useTranslation } from "react-i18next";
 import drawingApi from "@/api/drawing";
 import type { CanvasImage } from "./CanvasArea";
@@ -197,6 +199,7 @@ const useAgents = () => {
 
 interface IntelligenceHubProps {
   onImagesGenerated?: (images: { url: string; local_path: string }[]) => void;
+  onVideoGenerated?: (videoUrl: string) => void;
   selectedCanvasImage?: {
     src: string;
     name: string;
@@ -208,13 +211,14 @@ interface IntelligenceHubProps {
 
 const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
   onImagesGenerated,
+  onVideoGenerated,
   selectedCanvasImage,
   selectedCanvasImages = [],
   canvasImages = [],
 }) => {
   const { t } = useTranslation();
   const AGENTS = useAgents();
-  const [activeTab, setActiveTab] = useState<"CHAT" | "WORKFLOW">("CHAT");
+  const [activeTab, setActiveTab] = useState<"IMAGE" | "VIDEO">("IMAGE");
   const [isAgentMode, setIsAgentMode] = useState(false);
   const [agentStatus, setAgentStatus] = useState<StatusType>("offline");
   const [showPresets, setShowPresets] = useState(false);
@@ -472,38 +476,43 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
 
   return (
     <div className="flex flex-col h-full bg-card border-l-brutal border-foreground overflow-hidden">
-      {/* Tabs (temporarily hidden) */}
-      {false && (
+      {/* Tabs */}
+      {
         <div className="flex border-b-brutal border-foreground">
           <button
-            onClick={() => setActiveTab("CHAT")}
+            onClick={() => setActiveTab("IMAGE")}
             className={cn(
               "flex-1 px-6 py-4 font-mono font-bold text-sm uppercase tracking-wider transition-none flex items-center justify-center gap-2",
-              activeTab === "CHAT"
+              activeTab === "IMAGE"
                 ? "bg-foreground text-card"
                 : "bg-card text-foreground/50 hover:text-foreground"
             )}
           >
-            <Terminal className="w-4 h-4" />
-            {t("intelligenceHub.chat")}
+            <ImageIcon className="w-4 h-4" />
+            {t("intelligenceHub.imageTab")}
           </button>
           <button
-            onClick={() => setActiveTab("WORKFLOW")}
+            onClick={() => setActiveTab("VIDEO")}
             className={cn(
               "flex-1 px-6 py-4 font-mono font-bold text-sm uppercase tracking-wider transition-none flex items-center justify-center gap-2 border-l-brutal border-foreground",
-              activeTab === "WORKFLOW"
+              activeTab === "VIDEO"
                 ? "bg-foreground text-card"
                 : "bg-card text-foreground/50 hover:text-foreground"
             )}
           >
-            <GitBranch className="w-4 h-4" />
-            {t("intelligenceHub.workflow")}
+            <Video className="w-4 h-4" />
+            {t("intelligenceHub.videoTab")}
           </button>
         </div>
-      )}
+      }
 
-      {activeTab === "WORKFLOW" ? (
-        <WorkflowView />
+      {activeTab === "VIDEO" ? (
+        <VideoGenerationPanel
+          onVideoGenerated={onVideoGenerated}
+          selectedCanvasImage={selectedCanvasImage ?? null}
+          selectedCanvasImages={selectedCanvasImages}
+          canvasImages={canvasImages}
+        />
       ) : (
         <>
           <ChatView
