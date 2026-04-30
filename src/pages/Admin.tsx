@@ -48,6 +48,12 @@ type TabKey = "overview" | "users" | "userDetail" | "payments";
 const toStorageUrl = (url: string): string =>
   url.startsWith("http") ? url : `${STATIC_BASE_URL}${url}`;
 
+const formatCnyFen = (amountFen: number): string => {
+  // 后端返回的是“分”，这里换算成人民币元展示
+  if (!Number.isFinite(amountFen)) return "\u00A5--";
+  return `\u00A5${(amountFen / 100).toFixed(2)}`;
+};
+
 const Admin: React.FC = () => {
   const { t } = useTranslation();
   const tabLabels = useMemo(
@@ -1004,7 +1010,7 @@ const Admin: React.FC = () => {
                               </TableCell>
                               <TableCell>{p.plan_key}</TableCell>
                               <TableCell className="text-right font-mono">
-                                {p.amount_fen}
+                                {formatCnyFen(p.amount_fen)}
                               </TableCell>
                               <TableCell className="text-right font-mono">
                                 {p.points}

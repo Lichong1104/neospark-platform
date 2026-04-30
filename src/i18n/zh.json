@@ -100,7 +100,7 @@
       "columnsWechat": {
         "user": "用户",
         "plan": "套餐",
-        "amountFen": "金额（分）",
+        "amountFen": "金额（元）",
         "points": "积分",
         "paidAt": "支付时间"
       }

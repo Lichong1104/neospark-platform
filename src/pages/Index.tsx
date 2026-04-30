@@ -195,44 +195,17 @@ const Index = () => {
     [selectedCanvasImage, startUpscale, t]
   );
 
-  const handleImagesGenerated = useCallback(
-    (images: { url: string; local_path: string }[]) => {
-      (async () => {
-        const newCanvasImages: CanvasImage[] = await Promise.all(
-          images.map(async (img, idx) => {
-            const src = img.url.startsWith("http")
-              ? img.url
-              : `${STATIC_BASE_URL}${img.url}`;
-            const natural = await getImageSize(src);
-            const size = toCanvasSize(natural.width, natural.height);
-            const pos = getCanvasCenterPlacement(size.width, size.height, idx);
-            return {
-              id: Math.random().toString(36).substr(2, 8).toUpperCase(),
-              x: pos.x,
-              y: pos.y,
-              width: size.width,
-              height: size.height,
-              selected: false,
-              src,
-              name: `Generated_${Date.now()}_${idx + 1}`,
-              type: "image" as const,
-            };
-          })
-        );
-        setCanvasImages((prev) => [...prev, ...newCanvasImages]);
-      })();
-    },
-    []
-  );
-
   const handleAddToCanvas = useCallback(
-    (item: { src: string; name: string; type: "image" | "video" }) => {
+    (
+      item: { src: string; name: string; type: "image" | "video" },
+      placementOffset = 0
+    ) => {
       (async () => {
         const id = Math.random().toString(36).substr(2, 8).toUpperCase();
         const tempPos = getCanvasCenterPlacement(
           CANVAS_IMAGE_MAX_SIZE,
           CANVAS_IMAGE_MAX_SIZE,
-          0
+          placementOffset
         );
         const tempItem: CanvasImage = {
           id,
@@ -259,7 +232,11 @@ const Index = () => {
         if (item.type === "video") {
           const natural = await getVideoSize(item.src);
           const size = toCanvasSize(natural.width, natural.height);
-          const pos = getCanvasCenterPlacement(size.width, size.height, 0);
+          const pos = getCanvasCenterPlacement(
+            size.width,
+            size.height,
+            placementOffset
+          );
           setCanvasImages((prev) =>
             prev.map((img) =>
               img.id === id
@@ -280,7 +257,11 @@ const Index = () => {
 
         const natural = await getImageSize(item.src);
         const size = toCanvasSize(natural.width, natural.height);
-        const pos = getCanvasCenterPlacement(size.width, size.height, 0);
+        const pos = getCanvasCenterPlacement(
+          size.width,
+          size.height,
+          placementOffset
+        );
         setCanvasImages((prev) =>
           prev.map((img) =>
             img.id === id
@@ -299,6 +280,23 @@ const Index = () => {
       })();
     },
     []
+  );
+
+  const handleImagesGenerated = useCallback(
+    (images: { url: string; local_path: string }[]) => {
+      const now = Date.now();
+      images.forEach((img, idx) => {
+        const src = img.url.startsWith("http")
+          ? img.url
+          : `${STATIC_BASE_URL}${img.url}`;
+        handleAddToCanvas({
+          src,
+          name: `Generated_${now}_${idx + 1}`,
+          type: "image",
+        }, idx);
+      });
+    },
+    [handleAddToCanvas]
   );
 
   const handleVideoGenerated = useCallback(

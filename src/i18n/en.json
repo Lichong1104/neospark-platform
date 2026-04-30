@@ -100,7 +100,7 @@
       "columnsWechat": {
         "user": "User",
         "plan": "Plan",
-        "amountFen": "Amount (fen)",
+        "amountFen": "Amount (CNY)",
         "points": "Points",
         "paidAt": "Paid at"
       }
