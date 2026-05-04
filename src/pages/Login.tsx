@@ -13,12 +13,19 @@ const Login = () => {
   const location = useLocation();
   const { login, isAuthenticated } = useAuth();
 
-  const redirectTo =
-    ((location.state as { from?: string } | null | undefined)?.from as string | undefined) || "/";
+  const stateFrom =
+    ((location.state as { from?: string } | null | undefined)?.from as string | undefined) || "";
+  const redirectTo = stateFrom || "/";
 
-  // 从 URL 读取推广码
+  // 从 URL 或 state.from 读取推广码
+  // 兼容场景: 未登录用户访问 /?ref=npX 时, ProtectedRoute 会重定向到 /login,
+  // 此时新 URL 不带 ?ref=, 推广码只保留在 state.from 里
   const searchParams = new URLSearchParams(location.search);
-  const referralCode = searchParams.get("ref") || undefined;
+  const fromQuery = stateFrom.includes("?") ? stateFrom.slice(stateFrom.indexOf("?")) : "";
+  const referralCode =
+    searchParams.get("ref") ||
+    new URLSearchParams(fromQuery).get("ref") ||
+    undefined;
 
   const toggleLanguage = () => {
     const currentBase = (i18n.resolvedLanguage || i18n.language || "en").split("-")[0];
