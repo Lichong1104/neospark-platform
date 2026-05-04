@@ -876,5 +876,26 @@
     "noCanvasResourceMatch": "没有匹配的画布资源"
     ,
     "shiftEnterHint": "Shift + Enter 换行"
+  },
+  "affiliate": {
+    "title": "推广计划",
+    "referralLink": "你的推广链接",
+    "codeLabel": "推广码",
+    "balance": "余额",
+    "referrals": "推荐人数",
+    "totalEarned": "累计获得",
+    "totalConverted": "累计转换",
+    "convertTitle": "转换为普通积分",
+    "convertPlaceholder": "输入积分数...",
+    "convert": "转换",
+    "convertHint": "1 推广积分 = 1 普通积分",
+    "copied": "已复制到剪贴板",
+    "copyFailed": "复制失败",
+    "invalidAmount": "请输入有效的积分数",
+    "insufficientBalance": "推广积分余额不足",
+    "convertSuccess": "成功转换 {{points}} 积分",
+    "convertFailed": "转换失败",
+    "loadFailed": "加载推广信息失败",
+    "unavailable": "推广系统暂不可用"
   }
 }

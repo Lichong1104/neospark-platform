@@ -876,5 +876,26 @@
     "noCanvasResourceMatch": "No matching canvas resources"
     ,
     "shiftEnterHint": "Shift + Enter for newline"
+  },
+  "affiliate": {
+    "title": "Affiliate Program",
+    "referralLink": "Your Referral Link",
+    "codeLabel": "Code",
+    "balance": "Balance",
+    "referrals": "Referrals",
+    "totalEarned": "Total Earned",
+    "totalConverted": "Converted",
+    "convertTitle": "Convert to Regular Credits",
+    "convertPlaceholder": "Enter amount...",
+    "convert": "Convert",
+    "convertHint": "1 affiliate credit = 1 regular credit",
+    "copied": "Copied to clipboard",
+    "copyFailed": "Copy failed",
+    "invalidAmount": "Please enter a valid amount",
+    "insufficientBalance": "Insufficient affiliate balance",
+    "convertSuccess": "Converted {{points}} points successfully",
+    "convertFailed": "Convert failed",
+    "loadFailed": "Failed to load affiliate info",
+    "unavailable": "Affiliate system unavailable"
   }
 }

@@ -53,11 +53,16 @@ export async function getCurrentUser(): Promise<UserInfo> {
 /**
  * Google OAuth 登录入口（浏览器重定向 + 后端回调写 Cookie）
  * @param next 登录成功后跳回的前端站内路径
+ * @param ref 推广码（可选）
  */
-export function googleLogin(next: string = "/"): void {
+export function googleLogin(next: string = "/", ref?: string): void {
   if (typeof window === "undefined") return;
-  const redirectTo = "/";
-  const url = `${BASE_URL}/auth/google/login?next=/`;
+  const params = new URLSearchParams();
+  params.set("next", next);
+  if (ref) {
+    params.set("ref", ref);
+  }
+  const url = `${BASE_URL}/auth/google/login?${params.toString()}`;
   window.location.href = url;
 }
 

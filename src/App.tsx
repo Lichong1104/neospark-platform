@@ -18,6 +18,7 @@ import Cancel from "./pages/Cancel";
 import Invoices from "./pages/Invoices";
 import Account from "./pages/Account";
 import Admin from "./pages/Admin";
+import Affiliate from "./pages/Affiliate";
 import AdminRouteGuard from "@/components/auth/AdminRouteGuard";
 
 const queryClient = new QueryClient();
@@ -83,6 +84,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Invoices />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/affiliate"
+              element={
+                <ProtectedRoute>
+                  <Affiliate />
                 </ProtectedRoute>
               }
             />

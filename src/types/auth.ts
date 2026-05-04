@@ -10,6 +10,7 @@ export type SendCodeResponse = void;
 export interface LoginParams {
   email: string;
   code?: string;
+  referral_code?: string;
 }
 
 /** 登录响应 */

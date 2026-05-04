@@ -19,6 +19,7 @@ import {
   Clock3,
   Zap,
   CheckCircle2,
+  Gift,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
@@ -272,6 +273,19 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        <button
+          onClick={() => navigate("/affiliate")}
+          className="w-full text-left px-3 py-2.5 bg-card border-brutal border-foreground font-mono text-xs hover:bg-secondary brutal-shadow brutal-press transition-none flex items-center gap-3 group"
+        >
+          <div className="w-6 h-6 bg-accent-green/80 border border-foreground/30 flex items-center justify-center text-card">
+            <Gift className="w-3.5 h-3.5" />
+          </div>
+          <span className="flex-1 font-bold text-xs uppercase tracking-wider">
+            {t("affiliate.title", { defaultValue: "Affiliate Program" })}
+          </span>
+          <ExternalLink className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100" />
+        </button>
 
         <div className="mt-auto pt-2">
           <AlertDialog>

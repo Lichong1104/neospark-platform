@@ -16,6 +16,10 @@ const Login = () => {
   const redirectTo =
     ((location.state as { from?: string } | null | undefined)?.from as string | undefined) || "/";
 
+  // 从 URL 读取推广码
+  const searchParams = new URLSearchParams(location.search);
+  const referralCode = searchParams.get("ref") || undefined;
+
   const toggleLanguage = () => {
     const currentBase = (i18n.resolvedLanguage || i18n.language || "en").split("-")[0];
     const newLang = currentBase === "en" ? "zh" : "en";
@@ -112,7 +116,14 @@ const Login = () => {
     }
     setIsLoading(true);
     try {
-      const res = await apiLogin({ email, code: codeStr });
+      const params: { email: string; code: string; referral_code?: string } = {
+        email,
+        code: codeStr,
+      };
+      if (referralCode) {
+        params.referral_code = referralCode;
+      }
+      const res = await apiLogin(params);
       login(email, res.access_token || "");
       toast.success(t("login.loginSuccess"));
       navigate(redirectTo, { replace: true });
@@ -145,7 +156,7 @@ const Login = () => {
   };
 
   const handleGoogle = () => {
-    googleLogin(redirectTo);
+    googleLogin(redirectTo, referralCode);
   };
 
   return (
