@@ -482,8 +482,10 @@
     "understood": "Understood your requirements. Here's the generated configuration:",
     "modifyConfig": "Modify config: {{name}}\nDescribe what you want to change...",
     "configDetails": "📋 Current Configuration Details:\n\nScene: {{scene}}\nStyle: {{style}}\nLighting: {{lighting}}\nComposition: {{composition}}\nQuality: {{quality}}\nNegative Prompt: {{negative}}",
-    "gptImageQualityStandard": "Standard",
-    "gptImageQualityHigh": "HD"
+    "gptImageQualityAuto": "Auto",
+    "gptImageQualityLow": "Low",
+    "gptImageQualityMedium": "Medium",
+    "gptImageQualityHigh": "High"
   },
   "agentResponse": {
     "promptConfigPreview": "Prompt Configuration Preview",
@@ -861,9 +863,8 @@
     "lastFrameUrlPlaceholder": "https://example.com/last.jpg",
     "referenceImageUrls": "Reference Image URLs (one per line)",
     "referenceVideoUrls": "Reference Video URLs (one per line)",
-    "referenceAudioUrl": "Reference Audio URL",
-    "referenceAudioRequiresRef": "Reference Audio URL requires a reference image/video (or first/last frame).",
-    "assetGroupName": "Asset Group Name (optional)",
+    "referenceAudioUrls": "Reference Audio URLs (one per line)",
+    "referenceAudioRequiresRef": "Reference Audio requires a reference image/video (or first/last frame).",
     "multiUrlHint": "One URL per line, e.g. https://example.com/a.jpg",
     "uploadRefImage": "Upload ref image",
     "uploadRefVideo": "Upload ref video",
@@ -879,6 +880,11 @@
   },
   "affiliate": {
     "title": "Affiliate Program",
+    "rulesTitle": "Program Rules",
+    "ruleRegisterBonus": "When a new user signs up via your referral link, they receive 10 affiliate credits.",
+    "rulePaymentReward": "For each successful payment made by referred users, you earn affiliate credits equal to 30% of the paid credits.",
+    "ruleSettlement": "Rewards are issued after payment is completed, and affiliate credits can be converted 1:1 to regular credits.",
+    "ruleFraud": "Fraud, self-referrals, or abusive behavior may result in reward rollback and account restrictions.",
     "referralLink": "Your Referral Link",
     "codeLabel": "Code",
     "balance": "Balance",

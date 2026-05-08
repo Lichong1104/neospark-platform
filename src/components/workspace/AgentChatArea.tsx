@@ -473,9 +473,9 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
   const [aspectRatio, setAspectRatio] = useState("1:1");
   const [resolution, setResolution] = useState("1K");
   const [model, setModel] = useState("gemini-3.1-flash-image-preview");
-  const [tengdaQuality, setTengdaQuality] = useState<"standard" | "high">(
-    "standard"
-  );
+  const [tengdaQuality, setTengdaQuality] = useState<
+    "low" | "medium" | "high"
+  >("low");
   const [modelsConfig, setModelsConfig] = useState<ModelsConfigMap | null>(
     null
   );
@@ -512,7 +512,8 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
 
   const tengdaQualityOptions: DropdownOption[] = useMemo(
     () => [
-      { value: "standard", label: t("agentChat.gptImageQualityStandard") },
+      { value: "low", label: t("agentChat.gptImageQualityLow") },
+      { value: "medium", label: t("agentChat.gptImageQualityMedium") },
       { value: "high", label: t("agentChat.gptImageQualityHigh") },
     ],
     [t]
@@ -526,7 +527,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
   }, []);
 
   useEffect(() => {
-    if (!isGptImage2) setTengdaQuality("standard");
+    if (!isGptImage2) setTengdaQuality("low");
   }, [isGptImage2]);
 
   useEffect(() => {
@@ -1838,7 +1839,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
               <BrutalDropdown
                 options={tengdaQualityOptions}
                 value={tengdaQuality}
-                onChange={(v) => setTengdaQuality(v as "standard" | "high")}
+                onChange={(v) => setTengdaQuality(v as "low" | "medium" | "high")}
               />
             )}
             <BrutalDropdown

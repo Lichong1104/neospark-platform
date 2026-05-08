@@ -482,8 +482,10 @@
     "understood": "已理解你的需求，以下是生成的配置：",
     "modifyConfig": "修改配置：{{name}}\n描述你想要更改的内容...",
     "configDetails": "📋 当前配置详情：\n\n场景：{{scene}}\n风格：{{style}}\n光照：{{lighting}}\n构图：{{composition}}\n质量：{{quality}}\n负面提示词：{{negative}}",
-    "gptImageQualityStandard": "普通版",
-    "gptImageQualityHigh": "高清版"
+    "gptImageQualityAuto": "自动",
+    "gptImageQualityLow": "低质量",
+    "gptImageQualityMedium": "中等质量",
+    "gptImageQualityHigh": "高质量"
   },
   "agentResponse": {
     "promptConfigPreview": "提示词配置预览",
@@ -861,9 +863,8 @@
     "lastFrameUrlPlaceholder": "https://example.com/last.jpg",
     "referenceImageUrls": "参考图片 URL（每行一条）",
     "referenceVideoUrls": "参考视频 URL（每行一条）",
-    "referenceAudioUrl": "参考音频 URL",
-    "referenceAudioRequiresRef": "参考音频 URL 必须配合参考图/参考视频（或首/尾帧）使用",
-    "assetGroupName": "资产组名称（可选）",
+    "referenceAudioUrls": "参考音频 URL（每行一条）",
+    "referenceAudioRequiresRef": "参考音频必须配合参考图/参考视频（或首/尾帧）使用",
     "multiUrlHint": "每行一个 URL，例如 https://example.com/a.jpg",
     "uploadRefImage": "上传参考图",
     "uploadRefVideo": "上传参考视频",
@@ -879,6 +880,11 @@
   },
   "affiliate": {
     "title": "推广计划",
+    "rulesTitle": "推广规则",
+    "ruleRegisterBonus": "新用户通过推广链接注册后，可获得 10 推广积分。",
+    "rulePaymentReward": "被邀请用户每笔成功付费，你可获得实付金额对应积分的 30% 作为推广积分。",
+    "ruleSettlement": "奖励在支付成功后发放，推广积分可按 1:1 转为普通积分。",
+    "ruleFraud": "如存在作弊、自邀或异常行为，平台有权回收奖励并限制账户功能。",
     "referralLink": "你的推广链接",
     "codeLabel": "推广码",
     "balance": "余额",

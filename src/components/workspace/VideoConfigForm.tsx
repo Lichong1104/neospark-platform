@@ -16,6 +16,8 @@ interface VideoConfigFormProps {
   setResolution: (v: VideoResolution) => void;
   generateAudio: boolean;
   setGenerateAudio: (v: boolean) => void;
+  watermark: boolean;
+  setWatermark: (v: boolean) => void;
   firstFrameUrl: string;
   setFirstFrameUrl: (v: string) => void;
   lastFrameUrl: string;
@@ -24,10 +26,8 @@ interface VideoConfigFormProps {
   setReferenceImageUrls: (v: string) => void;
   referenceVideoUrls: string;
   setReferenceVideoUrls: (v: string) => void;
-  referenceAudioUrl: string;
-  setReferenceAudioUrl: (v: string) => void;
-  assetGroupName: string;
-  setAssetGroupName: (v: string) => void;
+  referenceAudioUrls: string;
+  setReferenceAudioUrls: (v: string) => void;
   selectedCanvasImage?: {
     src: string;
     name: string;
@@ -46,6 +46,7 @@ interface VideoConfigFormProps {
   modelOptions: VideoModelConfig[];
   ratioOptions: string[];
   durationOptions: string[];
+  resolutionOptions: string[];
   onUploadReference: (kind: "image" | "video" | "audio", file: File) => void;
   onUseSelectedCanvasRefs: () => void;
   onUseCanvasAsFirstFrame: () => void;
@@ -88,6 +89,8 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
   setResolution,
   generateAudio,
   setGenerateAudio,
+  watermark,
+  setWatermark,
   firstFrameUrl,
   setFirstFrameUrl,
   lastFrameUrl,
@@ -96,16 +99,15 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
   setReferenceImageUrls,
   referenceVideoUrls,
   setReferenceVideoUrls,
-  referenceAudioUrl,
-  setReferenceAudioUrl,
-  assetGroupName: _assetGroupName,
-  setAssetGroupName: _setAssetGroupName,
+  referenceAudioUrls,
+  setReferenceAudioUrls,
   selectedCanvasImage,
   selectedCanvasImages = [],
   canvasImages = [],
   modelOptions,
   ratioOptions,
   durationOptions,
+  resolutionOptions,
   onUploadReference,
   onUseSelectedCanvasRefs,
   onUseCanvasAsFirstFrame,
@@ -116,6 +118,7 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
   const videoUploadRef = React.useRef<HTMLInputElement>(null);
   const audioUploadRef = React.useRef<HTMLInputElement>(null);
   const selectedCanvasCount = selectedCanvasImages.length;
+
   type MentionField =
     | "firstFrameUrl"
     | "lastFrameUrl"
@@ -255,16 +258,17 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
       </div>
     );
   };
+
   const triggerUseCanvasRefs = () => onUseSelectedCanvasRefs();
   const chipRatios = ratioOptions.map((item) => ({ value: item, label: item }));
   const chipDurations = durationOptions.map((item) => ({
     value: item,
     label: `${item}s`,
   }));
-  const resolutionOptions: { value: VideoResolution; label: string }[] = [
-    { value: "720p", label: "720p" },
-    { value: "480p", label: "480p" },
-  ];
+  const chipResolutions = resolutionOptions.map((item) => ({
+    value: item,
+    label: item,
+  }));
 
   return (
     <div className="space-y-3.5 px-4 pt-4 pb-2">
@@ -282,24 +286,11 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
           >
             {modelOptions.map((item) => (
               <option key={item.id} value={item.id}>
-                {item.name} ({item.price_per_5s} pts / 5s)
+                {item.name} ({item.price_per_second * 5} pts / 5s)
               </option>
             ))}
           </select>
         </div>
-
-        {selectedCanvasImage &&
-          selectedCanvasImage.type !== "video" &&
-          !firstFrameUrl && (
-            <div className="px-2.5 pb-2.5">
-              <div className="flex items-center gap-2 p-3 border border-accent-cyan/30 bg-accent-cyan/5 text-center">
-                <Image className="w-4 h-4 text-accent-cyan shrink-0" />
-                <span className="text-[11px] text-muted-foreground">
-                  {t("video.canvasImageDetected")}
-                </span>
-              </div>
-            </div>
-          )}
       </section>
 
       <section className="border-brutal border-foreground bg-card brutal-shadow animate-fade-in">
@@ -315,11 +306,7 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
             <span className="text-[10px] font-bold uppercase text-muted-foreground w-16 shrink-0 pt-1">
               {t("video.ratio")}
             </span>
-            <ChipSelect
-              options={chipRatios}
-              value={ratio}
-              onChange={setRatio}
-            />
+            <ChipSelect options={chipRatios} value={ratio} onChange={setRatio} />
           </div>
 
           <div className="flex items-start gap-3">
@@ -339,7 +326,7 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
               {t("video.resolution")}
             </span>
             <ChipSelect
-              options={resolutionOptions}
+              options={chipResolutions}
               value={resolution}
               onChange={(v) => setResolution(v as VideoResolution)}
             />
@@ -348,7 +335,7 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
       </section>
 
       <section className="border-brutal border-foreground bg-card brutal-shadow animate-fade-in">
-        <div className="p-2.5 flex items-center gap-2">
+        <div className="p-2.5 flex items-center gap-2 flex-wrap">
           <button
             type="button"
             onClick={() => setGenerateAudio(!generateAudio)}
@@ -366,9 +353,33 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
             )}
             {generateAudio ? t("video.audioOn") : t("video.audioOff")}
           </button>
+
+          <button
+            type="button"
+            onClick={() => setWatermark(!watermark)}
+            className={cn(
+              "flex items-center gap-2 px-3 py-2 text-[11px] font-bold uppercase border border-foreground/20 transition-none",
+              watermark
+                ? "bg-accent-orange/15 text-foreground border-accent-orange/40"
+                : "bg-background text-muted-foreground"
+            )}
+          >
+            {watermark ? "WATERMARK ON" : "WATERMARK OFF"}
+          </button>
         </div>
 
         <div className="px-2.5 pb-2.5 pt-1 border-t border-foreground/15 space-y-2.5">
+          {selectedCanvasImage &&
+            selectedCanvasImage.type !== "video" &&
+            !firstFrameUrl && (
+              <div className="flex items-center gap-2 p-2 border border-accent-cyan/30 bg-accent-cyan/5">
+                <Image className="w-3.5 h-3.5 text-accent-cyan shrink-0" />
+                <span className="text-[10px] text-muted-foreground">
+                  {t("video.canvasImageDetected")}
+                </span>
+              </div>
+            )}
+
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="text-[10px] font-bold uppercase text-muted-foreground">
@@ -401,7 +412,9 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
                   setFirstFrameUrl(v);
                   updateMentionState("firstFrameUrl", v);
                 }}
-                onFocus={(e) => updateMentionState("firstFrameUrl", e.target.value)}
+                onFocus={(e) =>
+                  updateMentionState("firstFrameUrl", e.target.value)
+                }
                 placeholder={t("video.firstFrameUrlPlaceholder")}
                 className="w-full px-2.5 py-2 pr-8 text-[11px] font-mono border border-foreground/20 bg-background focus:outline-none focus:border-accent-purple"
               />
@@ -418,6 +431,7 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
               {renderMentionPanel("firstFrameUrl")}
             </div>
           </div>
+
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="text-[10px] font-bold uppercase text-muted-foreground">
@@ -450,7 +464,9 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
                   setLastFrameUrl(v);
                   updateMentionState("lastFrameUrl", v);
                 }}
-                onFocus={(e) => updateMentionState("lastFrameUrl", e.target.value)}
+                onFocus={(e) =>
+                  updateMentionState("lastFrameUrl", e.target.value)
+                }
                 placeholder={t("video.lastFrameUrlPlaceholder")}
                 className="w-full px-2.5 py-2 pr-8 text-[11px] font-mono border border-foreground/20 bg-background focus:outline-none focus:border-accent-purple"
               />
@@ -467,6 +483,7 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
               {renderMentionPanel("lastFrameUrl")}
             </div>
           </div>
+
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="text-[10px] font-bold uppercase text-muted-foreground">
@@ -479,7 +496,7 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
                   title={t("video.useCanvasRefs", { count: selectedCanvasCount })}
                   className="p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none"
                 >
-                  <Link2 className="w-3 h-3" />
+                  <Image className="w-3 h-3" />
                 </button>
                 <button
                   type="button"
@@ -518,6 +535,7 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
               {renderMentionPanel("referenceImageUrls")}
             </div>
           </div>
+
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="text-[10px] font-bold uppercase text-muted-foreground">
@@ -530,7 +548,7 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
                   title={t("video.useCanvasRefs", { count: selectedCanvasCount })}
                   className="p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none"
                 >
-                  <Link2 className="w-3 h-3" />
+                  <Image className="w-3 h-3" />
                 </button>
                 <button
                   type="button"
@@ -573,7 +591,7 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="text-[10px] font-bold uppercase text-muted-foreground">
-                {t("video.referenceAudioUrl")}
+                {t("video.referenceAudioUrls")}
               </label>
               <button
                 type="button"
@@ -585,16 +603,17 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
               </button>
             </div>
             <div className="relative group">
-              <input
-                value={referenceAudioUrl}
-                onChange={(e) => setReferenceAudioUrl(e.target.value)}
-                className="w-full px-2.5 py-2 pr-8 text-[11px] font-mono border border-foreground/20 bg-background focus:outline-none focus:border-accent-purple"
+              <textarea
+                value={referenceAudioUrls}
+                onChange={(e) => setReferenceAudioUrls(e.target.value)}
+                placeholder={t("video.multiUrlHint")}
+                className="w-full min-h-[48px] px-2.5 py-2 pr-8 text-[11px] font-mono border border-foreground/20 bg-background focus:outline-none focus:border-accent-purple resize-y"
               />
-              {referenceAudioUrl.trim() && (
+              {referenceAudioUrls.trim() && (
                 <button
                   type="button"
-                  onClick={() => setReferenceAudioUrl("")}
-                  className="absolute right-1 top-1/2 -translate-y-1/2 p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none opacity-0 group-hover:opacity-100"
+                  onClick={() => setReferenceAudioUrls("")}
+                  className="absolute right-1 top-1 p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none opacity-0 group-hover:opacity-100"
                   title={t("video.clearInput")}
                 >
                   <X className="w-3 h-3" />
@@ -602,6 +621,7 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
               )}
             </div>
           </div>
+
           <input
             ref={imageUploadRef}
             type="file"

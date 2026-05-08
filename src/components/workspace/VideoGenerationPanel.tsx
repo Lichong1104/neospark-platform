@@ -66,17 +66,17 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
   const { t } = useTranslation();
   const [isCreating, setIsCreating] = useState(false);
   const [prompt, setPrompt] = useState("");
-  const [model, setModel] = useState("AiVideoMax");
+  const [model, setModel] = useState("seedance-2.0");
   const [ratio, setRatio] = useState("16:9");
   const [duration, setDuration] = useState("5");
   const [resolution, setResolution] = useState<VideoResolution>("720p");
   const [generateAudio, setGenerateAudio] = useState(false);
+  const [watermark, setWatermark] = useState(false);
   const [firstFrameUrl, setFirstFrameUrl] = useState("");
   const [lastFrameUrl, setLastFrameUrl] = useState("");
   const [referenceImageUrls, setReferenceImageUrls] = useState("");
   const [referenceVideoUrls, setReferenceVideoUrls] = useState("");
-  const [referenceAudioUrl, setReferenceAudioUrl] = useState("");
-  const [assetGroupName, setAssetGroupName] = useState("");
+  const [referenceAudioUrls, setReferenceAudioUrls] = useState("");
   const [modelOptions, setModelOptions] = useState<VideoModelConfig[]>([]);
   const [ratioOptions, setRatioOptions] = useState<string[]>([
     "16:9",
@@ -91,6 +91,10 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     "10",
     "12",
     "15",
+  ]);
+  const [resolutionOptions, setResolutionOptions] = useState<string[]>([
+    "720p",
+    "480p",
   ]);
   const [estimatedCost, setEstimatedCost] = useState<number | null>(null);
   const [taskId, setTaskId] = useState("");
@@ -110,6 +114,10 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
         if (res.ratios?.length) {
           setRatioOptions(res.ratios);
           setRatio(res.ratios[0]);
+        }
+        if (res.resolutions?.length) {
+          setResolutionOptions(res.resolutions);
+          setResolution(res.resolutions[0] as VideoResolution);
         }
         const min = res.durations?.min ?? 4;
         const max = res.durations?.max ?? 15;
@@ -230,7 +238,7 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
       } else if (kind === "video") {
         setReferenceVideoUrls((prev) => appendMultiLineValue(prev, normalizedPath));
       } else {
-        setReferenceAudioUrl(normalizedPath);
+        setReferenceAudioUrls((prev) => appendMultiLineValue(prev, normalizedPath));
       }
       toast.success(t("video.refUploaded"));
     },
@@ -292,12 +300,10 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
 
     const parsedRefImages = parseMultiLineUrls(referenceImageUrls);
     const parsedRefVideos = parseMultiLineUrls(referenceVideoUrls);
+    const parsedRefAudios = parseMultiLineUrls(referenceAudioUrls);
     const hasVisualRef =
-      !!firstFrameUrl.trim() ||
-      !!lastFrameUrl.trim() ||
-      parsedRefImages.length > 0 ||
-      parsedRefVideos.length > 0;
-    const hasRefAudio = !!referenceAudioUrl.trim();
+      parsedRefImages.length > 0 || parsedRefVideos.length > 0;
+    const hasRefAudio = parsedRefAudios.length > 0;
     if (hasRefAudio && !hasVisualRef) {
       toast.error(t("video.referenceAudioRequiresRef"));
       return;
@@ -310,18 +316,13 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
       ratio,
       resolution,
       generate_audio: generateAudio,
+      watermark,
       first_frame_url: firstFrameUrl.trim() || undefined,
       last_frame_url: lastFrameUrl.trim() || undefined,
-      reference_image_urls: parsedRefImages,
-      reference_video_urls: parsedRefVideos,
-      reference_audio_url: referenceAudioUrl.trim() || undefined,
-      asset_group_name: assetGroupName.trim() || undefined,
+      reference_image_urls: parsedRefImages.length > 0 ? parsedRefImages : undefined,
+      reference_video_urls: parsedRefVideos.length > 0 ? parsedRefVideos : undefined,
+      reference_audio_urls: parsedRefAudios.length > 0 ? parsedRefAudios : undefined,
     };
-
-    if (!params.reference_image_urls?.length)
-      delete params.reference_image_urls;
-    if (!params.reference_video_urls?.length)
-      delete params.reference_video_urls;
 
     try {
       // Enter loading immediately when calling /video/generations
@@ -355,12 +356,12 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     ratio,
     resolution,
     generateAudio,
+    watermark,
     firstFrameUrl,
     lastFrameUrl,
     referenceImageUrls,
     referenceVideoUrls,
-    referenceAudioUrl,
-    assetGroupName,
+    referenceAudioUrls,
     t,
   ]);
 
@@ -377,9 +378,9 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     setLastFrameUrl("");
     setReferenceImageUrls("");
     setReferenceVideoUrls("");
-    setReferenceAudioUrl("");
-    setAssetGroupName("");
+    setReferenceAudioUrls("");
     setResolution("720p");
+    setWatermark(false);
     setEstimatedCost(null);
   };
 
@@ -500,6 +501,8 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
             setResolution={setResolution}
             generateAudio={generateAudio}
             setGenerateAudio={setGenerateAudio}
+            watermark={watermark}
+            setWatermark={setWatermark}
             firstFrameUrl={firstFrameUrl}
             setFirstFrameUrl={setFirstFrameUrl}
             lastFrameUrl={lastFrameUrl}
@@ -508,16 +511,15 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
             setReferenceImageUrls={setReferenceImageUrls}
             referenceVideoUrls={referenceVideoUrls}
             setReferenceVideoUrls={setReferenceVideoUrls}
-            referenceAudioUrl={referenceAudioUrl}
-            setReferenceAudioUrl={setReferenceAudioUrl}
-            assetGroupName={assetGroupName}
-            setAssetGroupName={setAssetGroupName}
+            referenceAudioUrls={referenceAudioUrls}
+            setReferenceAudioUrls={setReferenceAudioUrls}
             selectedCanvasImage={selectedCanvasImage ?? null}
             selectedCanvasImages={selectedCanvasImages}
             canvasImages={canvasImages}
             modelOptions={modelOptions}
             ratioOptions={ratioOptions}
             durationOptions={durationOptions}
+            resolutionOptions={resolutionOptions}
             onUploadReference={handleUploadReference}
             onUseSelectedCanvasRefs={handleUseSelectedCanvasRefs}
             onUseCanvasAsFirstFrame={handleUseCanvasAsFirstFrame}

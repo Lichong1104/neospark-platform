@@ -230,9 +230,9 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
   const [aspectRatio, setAspectRatio] = useState("1:1");
   const [resolution, setResolution] = useState("1K");
   const [model, setModel] = useState("gemini-3.1-flash-image-preview");
-  const [tengdaQuality, setTengdaQuality] = useState<"standard" | "high">(
-    "standard"
-  );
+  const [tengdaQuality, setTengdaQuality] = useState<
+    "low" | "medium" | "high"
+  >("low");
   const [standardSessionId, setStandardSessionId] = useState<string | null>(
     null
   );
@@ -325,7 +325,8 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
   const isGptImage2 = model === "gpt-image-2";
   const tengdaQualityOptions: DropdownOption[] = useMemo(
     () => [
-      { value: "standard", label: t("agentChat.gptImageQualityStandard") },
+      { value: "low", label: t("agentChat.gptImageQualityLow") },
+      { value: "medium", label: t("agentChat.gptImageQualityMedium") },
       { value: "high", label: t("agentChat.gptImageQualityHigh") },
     ],
     [t]
@@ -347,7 +348,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
   }, [modelsConfig, model]);
 
   useEffect(() => {
-    if (!isGptImage2) setTengdaQuality("standard");
+    if (!isGptImage2) setTengdaQuality("low");
   }, [isGptImage2]);
 
   useEffect(() => {
@@ -566,8 +567,8 @@ interface ChatViewProps {
   resolution: string;
   model: string;
   isGptImage2: boolean;
-  tengdaQuality: "standard" | "high";
-  onTengdaQualityChange: (value: "standard" | "high") => void;
+  tengdaQuality: "low" | "medium" | "high";
+  onTengdaQualityChange: (value: "low" | "medium" | "high") => void;
   aspectRatioOptions: DropdownOption[];
   resolutionOptions: DropdownOption[];
   modelOptions: DropdownOption[];
@@ -635,7 +636,8 @@ const ChatView: React.FC<ChatViewProps> = ({
   const promptInputRef = useRef<HTMLTextAreaElement>(null);
   const tengdaQualityOptions: DropdownOption[] = useMemo(
     () => [
-      { value: "standard", label: t("agentChat.gptImageQualityStandard") },
+      { value: "low", label: t("agentChat.gptImageQualityLow") },
+      { value: "medium", label: t("agentChat.gptImageQualityMedium") },
       { value: "high", label: t("agentChat.gptImageQualityHigh") },
     ],
     [t]
@@ -978,7 +980,7 @@ const ChatView: React.FC<ChatViewProps> = ({
                 options={tengdaQualityOptions}
                 value={tengdaQuality}
                 onChange={(v) =>
-                  onTengdaQualityChange(v as "standard" | "high")
+                  onTengdaQualityChange(v as "low" | "medium" | "high")
                 }
               />
             )}

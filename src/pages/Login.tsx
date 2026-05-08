@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "react-i18next";
-import { Sparkles, Zap, Globe } from "lucide-react";
+import { Sparkles, Zap, Globe, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { googleLogin, sendCode, login as apiLogin } from "@/api/auth";
 import { getErrorMessage } from "@/lib/errorMessage";
@@ -229,8 +229,9 @@ const Login = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full h-11 bg-card text-foreground font-bold text-xs uppercase tracking-wider border-brutal border-foreground brutal-shadow brutal-press hover:bg-secondary disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full h-11 bg-card text-foreground font-bold text-xs uppercase tracking-wider border-brutal border-foreground brutal-shadow brutal-press hover:bg-secondary disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
+                <Mail className="w-3.5 h-3.5" />
                 {isLoading ? `${t("login.sendCode")}...` : t("login.sendCode")}
               </button>
             </form>
@@ -302,6 +303,12 @@ const Login = () => {
               onClick={handleGoogle}
               className="w-full h-11 bg-accent-cyan text-foreground font-bold text-xs uppercase tracking-wider border-brutal border-foreground brutal-shadow brutal-press hover:opacity-90 flex items-center justify-center gap-2"
             >
+              <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" aria-hidden="true">
+                <path
+                  d="M21.35 11.1H12v2.98h5.35c-.23 1.5-1.75 4.4-5.35 4.4-3.22 0-5.85-2.67-5.85-5.95s2.63-5.95 5.85-5.95c1.84 0 3.07.79 3.77 1.46l2.57-2.48C16.7 4.08 14.56 3 12 3 6.97 3 3 7.03 3 12s3.97 9 9 9c5.2 0 8.64-3.65 8.64-8.79 0-.59-.06-1.03-.14-1.11Z"
+                  fill="#000"
+                />
+              </svg>
               {t("login.googleButton")}
             </button>
           </div>

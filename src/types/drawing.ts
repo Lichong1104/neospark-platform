@@ -110,10 +110,11 @@ export interface GenerateImageParams {
   provider?: "gemini" | "tengda";
   /**
    * 画质档位：仅 Tengda `gpt-image-2` 支持
-   * - standard: 普通（6 积分）
-   * - high: 高级（12 积分）
+   * - low: 低质量（默认）
+   * - medium: 中等质量
+   * - high: 高质量
    */
-  quality?: "standard" | "high";
+  quality?: "low" | "medium" | "high";
   optimize_prompt?: boolean;
   /** `1` = 电商详情页九宫格第一阶段 */
   type?: number;
@@ -131,10 +132,11 @@ export interface GenerateBatchParams {
   provider?: "gemini" | "tengda";
   /**
    * 画质档位：仅 Tengda `gpt-image-2` 支持
-   * - standard: 普通
-   * - high: 高级
+   * - low: 低质量（默认）
+   * - medium: 中等质量
+   * - high: 高质量
    */
-  quality?: "standard" | "high";
+  quality?: "low" | "medium" | "high";
 }
 
 export interface GenerateBatchMessageItem {

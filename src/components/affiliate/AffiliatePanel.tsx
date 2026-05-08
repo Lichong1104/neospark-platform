@@ -179,6 +179,19 @@ const AffiliatePanel = () => {
           </div>
         </div>
 
+        {/* 推广规则 */}
+        <div className="space-y-2 p-3 border border-foreground/20 bg-secondary/30">
+          <p className="text-[10px] font-bold uppercase tracking-wider">
+            {t("affiliate.rulesTitle", { defaultValue: "Program Rules" })}
+          </p>
+          <ul className="space-y-1 text-[11px] text-muted-foreground list-disc pl-4">
+            <li>{t("affiliate.ruleRegisterBonus", { defaultValue: "Register and get 10 bonus affiliate credits." })}</li>
+            <li>{t("affiliate.rulePaymentReward", { defaultValue: "Get 30% affiliate credits from referred users' successful payments." })}</li>
+            <li>{t("affiliate.ruleSettlement", { defaultValue: "Rewards are credited after payment is completed and can be converted 1:1 to regular credits." })}</li>
+            <li>{t("affiliate.ruleFraud", { defaultValue: "Fraud, self-referrals, or abuse may lead to reward rollback or account restrictions." })}</li>
+          </ul>
+        </div>
+
         {/* 转换积分 */}
         {info.balance > 0 && (
           <div className="space-y-2 pt-1 border-t border-foreground/15">
