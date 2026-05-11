@@ -34,6 +34,17 @@ export interface PromptCategoriesResponse {
   total_prompts: number;
 }
 
+export interface OptimizePromptParams {
+  prompt: string;
+  style?: string;
+}
+
+export interface OptimizePromptData {
+  original_prompt: string;
+  optimized_prompt: string;
+  style: string | null;
+}
+
 export async function listPrompts(params?: {
   category?: string;
   model?: string;
@@ -48,5 +59,15 @@ export async function listPrompts(params?: {
 
 export async function listPromptCategories(): Promise<PromptCategoriesResponse> {
   const res = await http.get<PromptCategoriesResponse>("/prompts/categories");
+  return res.data!;
+}
+
+export async function optimizePrompt(
+  params: OptimizePromptParams
+): Promise<OptimizePromptData> {
+  const res = await http.post<OptimizePromptData, OptimizePromptParams>(
+    "/prompts/optimize",
+    params
+  );
   return res.data!;
 }

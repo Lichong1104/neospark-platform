@@ -44,6 +44,7 @@ import { AgentChatArea } from "./AgentChatArea";
 import { VideoGenerationPanel } from "./VideoGenerationPanel";
 import { useTranslation } from "react-i18next";
 import drawingApi from "@/api/drawing";
+import { optimizePrompt } from "@/api/prompts";
 import type { CanvasImage } from "./CanvasArea";
 import type { ModelsConfigMap } from "@/types/drawing";
 
@@ -56,33 +57,33 @@ type StatusType =
 
 // 默认选项（模型配置加载前使用）
 const DEFAULT_ASPECT_RATIOS: DropdownOption[] = [
-  { value: "1:1", label: "1:1", icon: <Square className="w-3 h-3" /> },
+  { value: "1:1", label: "1:1 (Square)", icon: <Square className="w-3 h-3" /> },
   {
     value: "16:9",
-    label: "16:9",
+    label: "16:9 (Wide)",
     icon: <RectangleHorizontal className="w-3 h-3" />,
   },
   {
     value: "9:16",
-    label: "9:16",
+    label: "9:16 (Vertical)",
     icon: <RectangleVertical className="w-3 h-3" />,
   },
   {
     value: "4:3",
-    label: "4:3",
+    label: "4:3 (Classic)",
     icon: <RectangleHorizontal className="w-3 h-3" />,
   },
   {
     value: "3:4",
-    label: "3:4",
+    label: "3:4 (Portrait)",
     icon: <RectangleVertical className="w-3 h-3" />,
   },
 ];
 
 const DEFAULT_RESOLUTIONS: DropdownOption[] = [
-  { value: "1K", label: "1K" },
-  { value: "2K", label: "2K" },
-  { value: "4K", label: "4K" },
+  { value: "1K", label: "1K (1024px)" },
+  { value: "2K", label: "2K (2048px)" },
+  { value: "4K", label: "4K (4096px)" },
 ];
 
 const DEFAULT_MODELS: DropdownOption[] = [
@@ -237,6 +238,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
     null
   );
   const [isStandardGenerating, setIsStandardGenerating] = useState(false);
+  const [optimizeStandardPrompt, setOptimizeStandardPrompt] = useState(false);
   const [standardGenHistory, setStandardGenHistory] = useState<
     StandardGenHistoryItem[]
   >([]);
@@ -325,9 +327,9 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
   const isGptImage2 = model === "gpt-image-2";
   const tengdaQualityOptions: DropdownOption[] = useMemo(
     () => [
-      { value: "low", label: t("agentChat.gptImageQualityLow") },
-      { value: "medium", label: t("agentChat.gptImageQualityMedium") },
-      { value: "high", label: t("agentChat.gptImageQualityHigh") },
+      { value: "low", label: `${t("agentChat.gptImageQualityLow")} (Fast)` },
+      { value: "medium", label: `${t("agentChat.gptImageQualityMedium")} (Balanced)` },
+      { value: "high", label: `${t("agentChat.gptImageQualityHigh")} (Detail)` },
     ],
     [t]
   );
@@ -375,8 +377,10 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
     if (!currentModelConfig) return DEFAULT_RESOLUTIONS;
     return currentModelConfig.supported_resolutions.map((r) => ({
       value: r.value,
-      // Keep the dropdown compact (e.g. avoid "1K (1024px)").
-      label: r.value,
+      label:
+        r.label && r.label !== r.value
+          ? `${r.value} (${r.label})`
+          : r.value,
     }));
   }, [currentModelConfig]);
 
@@ -384,7 +388,10 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
     if (!currentModelConfig) return DEFAULT_ASPECT_RATIOS;
     return currentModelConfig.supported_aspect_ratios.map((ar) => ({
       value: ar.value,
-      label: ar.value,
+      label:
+        ar.label && ar.label !== ar.value
+          ? `${ar.value} (${ar.label})`
+          : ar.value,
     }));
   }, [currentModelConfig]);
 
@@ -400,12 +407,21 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
 
   const handleSend = async () => {
     if (!inputValue.trim() || isStandardGenerating) return;
-    const prompt = inputValue.trim();
+    const originalPrompt = inputValue.trim();
     setInputValue("");
     setIsStandardGenerating(true);
-    setPendingStandardPrompt(prompt);
+    setPendingStandardPrompt(originalPrompt);
 
     try {
+      let finalPrompt = originalPrompt;
+      if (optimizeStandardPrompt) {
+        toast.info(t("intelligenceHub.optimizingPrompt"));
+        const optimized = await optimizePrompt({
+          prompt: originalPrompt,
+        });
+        finalPrompt = optimized.optimized_prompt?.trim() || originalPrompt;
+      }
+
       const selectedRefImages = selectedCanvasImages.filter(
         (img) => img.type !== "video"
       );
@@ -424,14 +440,14 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
       let sid = standardSessionId;
       if (!sid) {
         const session = await drawingApi.createSession({
-          title: prompt.slice(0, 20),
+          title: originalPrompt.slice(0, 20),
         });
         sid = session.session_id;
         setStandardSessionId(sid);
       }
 
       const params: import("@/types/drawing").GenerateImageParams = {
-        prompt,
+        prompt: finalPrompt,
         model,
         resolution,
         aspect_ratio: aspectRatio,
@@ -536,6 +552,8 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
             onAspectRatioChange={setAspectRatio}
             onResolutionChange={setResolution}
             onModelChange={setModel}
+            optimizeStandardPrompt={optimizeStandardPrompt}
+            onOptimizeStandardPromptChange={setOptimizeStandardPrompt}
             onModeToggle={handleModeToggle}
             onInputChange={handleInputChange}
             onSend={handleSend}
@@ -578,6 +596,8 @@ interface ChatViewProps {
   onAspectRatioChange: (value: string) => void;
   onResolutionChange: (value: string) => void;
   onModelChange: (value: string) => void;
+  optimizeStandardPrompt: boolean;
+  onOptimizeStandardPromptChange: (value: boolean) => void;
   onModeToggle: (mode: boolean) => void;
   onInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   onSend: () => void;
@@ -616,6 +636,8 @@ const ChatView: React.FC<ChatViewProps> = ({
   onAspectRatioChange,
   onResolutionChange,
   onModelChange,
+  optimizeStandardPrompt,
+  onOptimizeStandardPromptChange,
   onModeToggle,
   onInputChange,
   onSend,
@@ -636,9 +658,9 @@ const ChatView: React.FC<ChatViewProps> = ({
   const promptInputRef = useRef<HTMLTextAreaElement>(null);
   const tengdaQualityOptions: DropdownOption[] = useMemo(
     () => [
-      { value: "low", label: t("agentChat.gptImageQualityLow") },
-      { value: "medium", label: t("agentChat.gptImageQualityMedium") },
-      { value: "high", label: t("agentChat.gptImageQualityHigh") },
+      { value: "low", label: `${t("agentChat.gptImageQualityLow")} (Fast)` },
+      { value: "medium", label: `${t("agentChat.gptImageQualityMedium")} (Balanced)` },
+      { value: "high", label: `${t("agentChat.gptImageQualityHigh")} (Detail)` },
     ],
     [t]
   );
@@ -962,53 +984,99 @@ const ChatView: React.FC<ChatViewProps> = ({
           />
         </div>
 
-        <div className="flex items-center gap-2 mt-3">
-          <div className="flex-1 min-w-0 flex items-center gap-1.5 flex-wrap">
-            <BrutalDropdown
-              options={aspectRatioOptions}
-              value={aspectRatio}
-              onChange={onAspectRatioChange}
-              icon={<Grid3X3 className="w-3.5 h-3.5" />}
-            />
-            <BrutalDropdown
-              options={resolutionOptions}
-              value={resolution}
-              onChange={onResolutionChange}
-            />
-            {isGptImage2 && (
-              <BrutalDropdown
-                options={tengdaQualityOptions}
-                value={tengdaQuality}
-                onChange={(v) =>
-                  onTengdaQualityChange(v as "low" | "medium" | "high")
-                }
-              />
-            )}
-            <BrutalDropdown
-              options={modelOptions}
-              value={model}
-              onChange={onModelChange}
-              icon={<Sparkles className="w-3.5 h-3.5" />}
-            />
+        <div className="mt-3 border-brutal border-foreground bg-secondary/10">
+          <div className="px-2.5 py-1.5 border-b border-foreground/15 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            {t("intelligenceHub.generationMode")} · {t("intelligenceHub.standardMode")}
           </div>
 
-          <div className="flex items-center gap-1.5 flex-shrink-0">
-            <button
-              onClick={onSend}
-              disabled={isGenerating || !inputValue.trim()}
-              className={cn(
-                "w-8 h-8 flex items-center justify-center border-brutal border-foreground brutal-press",
-                isGenerating || !inputValue.trim()
-                  ? "bg-muted text-muted-foreground cursor-not-allowed"
-                  : "bg-accent-cyan text-foreground hover:brightness-110"
-              )}
+          <div className="p-2.5 space-y-2.5">
+            <div
+              className="grid gap-1.5"
+              style={{
+                gridTemplateColumns: `repeat(${isGptImage2 ? 3 : 2}, minmax(0, 1fr))`,
+              }}
             >
-              {isGenerating ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Send className="w-4 h-4" />
+              <BrutalDropdown
+                options={aspectRatioOptions}
+                value={aspectRatio}
+                onChange={onAspectRatioChange}
+                icon={<Grid3X3 className="w-3.5 h-3.5" />}
+                fullWidth
+              />
+              <BrutalDropdown
+                options={resolutionOptions}
+                value={resolution}
+                onChange={onResolutionChange}
+                fullWidth
+              />
+              {isGptImage2 && (
+                <BrutalDropdown
+                  options={tengdaQualityOptions}
+                  value={tengdaQuality}
+                  onChange={(v) =>
+                    onTengdaQualityChange(v as "low" | "medium" | "high")
+                  }
+                  fullWidth
+                />
               )}
-            </button>
+            </div>
+
+            <div className="w-full">
+              <BrutalDropdown
+                options={modelOptions}
+                value={model}
+                onChange={onModelChange}
+                icon={<Sparkles className="w-3.5 h-3.5" />}
+                fullWidth
+              />
+            </div>
+
+            <div className="pt-1 border-t border-foreground/10 flex items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  onOptimizeStandardPromptChange(!optimizeStandardPrompt)
+                }
+                className={cn(
+                  "h-8 px-2.5 inline-flex items-center gap-2 text-[11px] font-mono border border-foreground/20 transition-none",
+                  optimizeStandardPrompt
+                    ? "bg-accent-cyan/15 text-foreground border-accent-cyan/40"
+                    : "bg-background text-muted-foreground"
+                )}
+                title={t("intelligenceHub.optimizePromptBeforeGenerate")}
+              >
+                <span
+                  className={cn(
+                    "w-2 h-2 border border-foreground/40",
+                    optimizeStandardPrompt ? "bg-accent-cyan" : "bg-transparent"
+                  )}
+                />
+                {t("intelligenceHub.optimizePromptBeforeGenerate")}
+              </button>
+
+              <div className="shrink-0">
+                <button
+                  onClick={onSend}
+                  disabled={isGenerating || !inputValue.trim()}
+                  className={cn(
+                    "h-8 px-3 min-w-[92px] flex items-center justify-center gap-1.5 border-brutal border-foreground brutal-press text-[11px] font-bold uppercase",
+                    isGenerating || !inputValue.trim()
+                      ? "bg-muted text-muted-foreground cursor-not-allowed"
+                      : "bg-accent-cyan text-foreground hover:brightness-110"
+                  )}
+                  title={t("canvas.generate")}
+                >
+                  {isGenerating ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Send className="w-3.5 h-3.5" />
+                      {t("canvas.generate")}
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

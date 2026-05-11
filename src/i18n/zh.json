@@ -458,7 +458,9 @@
     "imageTab": "图片",
     "videoTab": "视频",
     "firstLoginVideoTitle": "欢迎使用 Neospark Canvas",
-    "firstLoginVideoDesc": "首次登录引导视频，建议先看 1-2 分钟快速上手。"
+    "firstLoginVideoDesc": "首次登录引导视频，建议先看 1-2 分钟快速上手。",
+    "optimizePromptBeforeGenerate": "生成前优化提示词",
+    "optimizingPrompt": "正在优化提示词..."
   },
   "agents": {
     "ecommerce": "电商详情页大师",
@@ -835,6 +837,21 @@
     "ratio": "比例",
     "audioOn": "有声音",
     "audioOff": "无声音",
+    "cameraFixed": "固定镜头",
+    "cameraFixedOn": "固定镜头开启",
+    "cameraFixedOff": "固定镜头关闭",
+    "returnLastFrame": "返回尾帧",
+    "returnLastFrameOn": "返回尾帧开启",
+    "returnLastFrameOff": "返回尾帧关闭",
+    "draft": "草稿模式",
+    "draftOn": "草稿开启",
+    "draftOff": "草稿关闭",
+    "seed": "随机种子",
+    "seedPlaceholder": "留空则随机",
+    "frames": "帧数",
+    "framesPlaceholder": "留空自动",
+    "watermarkOn": "带水印",
+    "watermarkOff": "无水印",
     "negativePrompt": "负向提示词",
     "negativePromptPlaceholder": "模糊, 低质量, 变形...",
     "refImage": "参考图路径",
@@ -874,9 +891,11 @@
     "noCanvasRefSelected": "请先在画布中选中要引用的资源",
     "canvasRefsApplied": "已将选中画布资源填入参考输入框",
     "clearInput": "清空输入",
-    "noCanvasResourceMatch": "没有匹配的画布资源"
-    ,
-    "shiftEnterHint": "Shift + Enter 换行"
+    "noCanvasResourceMatch": "没有匹配的画布资源",
+    "shiftEnterHint": "Shift + Enter 换行",
+    "pointsApprox": "~{{points}} 积分",
+    "charCount": "{{count}} 字符",
+    "modelPricePerDuration": "{{cost}} 积分 / {{duration}}秒"
   },
   "affiliate": {
     "title": "推广计划",

@@ -458,7 +458,9 @@
     "imageTab": "IMAGE",
     "videoTab": "VIDEO",
     "firstLoginVideoTitle": "Welcome to Neospark Canvas",
-    "firstLoginVideoDesc": "First-login onboarding video. A quick 1-2 minute watch is recommended."
+    "firstLoginVideoDesc": "First-login onboarding video. A quick 1-2 minute watch is recommended.",
+    "optimizePromptBeforeGenerate": "Optimize prompt before generating",
+    "optimizingPrompt": "Optimizing prompt..."
   },
   "agents": {
     "ecommerce": "E-Commerce Master",
@@ -835,6 +837,21 @@
     "ratio": "Ratio",
     "audioOn": "Audio ON",
     "audioOff": "Audio OFF",
+    "cameraFixed": "Fixed Camera",
+    "cameraFixedOn": "FIXED CAM ON",
+    "cameraFixedOff": "FIXED CAM OFF",
+    "returnLastFrame": "Return Last Frame",
+    "returnLastFrameOn": "LAST FRAME ON",
+    "returnLastFrameOff": "LAST FRAME OFF",
+    "draft": "Draft Mode",
+    "draftOn": "DRAFT ON",
+    "draftOff": "DRAFT OFF",
+    "seed": "Seed",
+    "seedPlaceholder": "Leave blank for random",
+    "frames": "Frames",
+    "framesPlaceholder": "Leave blank for auto",
+    "watermarkOn": "Watermark ON",
+    "watermarkOff": "Watermark OFF",
     "negativePrompt": "Negative Prompt",
     "negativePromptPlaceholder": "Blurry, low quality, deformed...",
     "refImage": "Reference Image Path",
@@ -874,9 +891,11 @@
     "noCanvasRefSelected": "Select canvas assets to use as references first",
     "canvasRefsApplied": "Selected canvas assets were filled into reference inputs",
     "clearInput": "Clear input",
-    "noCanvasResourceMatch": "No matching canvas resources"
-    ,
-    "shiftEnterHint": "Shift + Enter for newline"
+    "noCanvasResourceMatch": "No matching canvas resources",
+    "shiftEnterHint": "Shift + Enter for newline",
+    "pointsApprox": "~{{points}} pts",
+    "charCount": "{{count}} chars",
+    "modelPricePerDuration": "{{cost}} pts / {{duration}}s"
   },
   "affiliate": {
     "title": "Affiliate Program",

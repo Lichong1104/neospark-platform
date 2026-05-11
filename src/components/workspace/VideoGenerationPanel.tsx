@@ -72,6 +72,11 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
   const [resolution, setResolution] = useState<VideoResolution>("720p");
   const [generateAudio, setGenerateAudio] = useState(false);
   const [watermark, setWatermark] = useState(false);
+  const [seed, setSeed] = useState("");
+  const [cameraFixed, setCameraFixed] = useState(false);
+  const [returnLastFrame, setReturnLastFrame] = useState(false);
+  const [draft, setDraft] = useState(false);
+  const [frames, setFrames] = useState("");
   const [firstFrameUrl, setFirstFrameUrl] = useState("");
   const [lastFrameUrl, setLastFrameUrl] = useState("");
   const [referenceImageUrls, setReferenceImageUrls] = useState("");
@@ -95,6 +100,7 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
   const [resolutionOptions, setResolutionOptions] = useState<string[]>([
     "720p",
     "480p",
+    "1080p",
   ]);
   const [estimatedCost, setEstimatedCost] = useState<number | null>(null);
   const [taskId, setTaskId] = useState("");
@@ -317,6 +323,11 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
       resolution,
       generate_audio: generateAudio,
       watermark,
+      seed: seed.trim() ? Number(seed) : undefined,
+      camera_fixed: cameraFixed,
+      return_last_frame: returnLastFrame,
+      draft,
+      frames: frames.trim() ? Number(frames) : undefined,
       first_frame_url: firstFrameUrl.trim() || undefined,
       last_frame_url: lastFrameUrl.trim() || undefined,
       reference_image_urls: parsedRefImages.length > 0 ? parsedRefImages : undefined,
@@ -357,6 +368,11 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     resolution,
     generateAudio,
     watermark,
+    seed,
+    cameraFixed,
+    returnLastFrame,
+    draft,
+    frames,
     firstFrameUrl,
     lastFrameUrl,
     referenceImageUrls,
@@ -381,6 +397,11 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     setReferenceAudioUrls("");
     setResolution("720p");
     setWatermark(false);
+    setSeed("");
+    setCameraFixed(false);
+    setReturnLastFrame(false);
+    setDraft(false);
+    setFrames("");
     setEstimatedCost(null);
   };
 
@@ -412,7 +433,7 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
                 <span>{progress}%</span>
                 {estimatedCost && (
                   <span className="text-accent-orange">
-                    ~{estimatedCost} pts
+                    {t("video.pointsApprox", { points: estimatedCost })}
                   </span>
                 )}
               </div>
@@ -503,6 +524,16 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
             setGenerateAudio={setGenerateAudio}
             watermark={watermark}
             setWatermark={setWatermark}
+            seed={seed}
+            setSeed={setSeed}
+            cameraFixed={cameraFixed}
+            setCameraFixed={setCameraFixed}
+            returnLastFrame={returnLastFrame}
+            setReturnLastFrame={setReturnLastFrame}
+            draft={draft}
+            setDraft={setDraft}
+            frames={frames}
+            setFrames={setFrames}
             firstFrameUrl={firstFrameUrl}
             setFirstFrameUrl={setFirstFrameUrl}
             lastFrameUrl={lastFrameUrl}
@@ -545,7 +576,8 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
                   {t("video.tutorial")}
                 </a>
                 <span className="text-[10px] font-bold text-accent-orange">
-                  {t("video.estimatedCost")}: ~{estimatedCost ?? 50} pts
+                  {t("video.estimatedCost")}:{" "}
+                  {t("video.pointsApprox", { points: estimatedCost ?? 50 })}
                 </span>
               </div>
             </div>
@@ -570,11 +602,11 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5">
                   <span className="text-[10px] text-muted-foreground font-mono">
-                    {prompt.length} chars
+                    {t("video.charCount", { count: prompt.length })}
                   </span>
                   <span className="text-[10px] text-muted-foreground">·</span>
                   <span className="text-[10px] text-muted-foreground">
-                    {t("video.shiftEnterHint", { defaultValue: "Shift + Enter for newline" })}
+                    {t("video.shiftEnterHint")}
                   </span>
                 </div>
 

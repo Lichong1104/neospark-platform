@@ -6,7 +6,7 @@ export type VideoTaskStatus =
   | "cancelled";
 
 /** Output resolution for video generation (API `resolution` field) */
-export type VideoResolution = "480p" | "720p";
+export type VideoResolution = "480p" | "720p" | "1080p";
 
 /** GET /video/models */
 export interface VideoModelConfig {
@@ -37,6 +37,12 @@ export interface CreateVideoParams {
   resolution?: VideoResolution;
   generate_audio?: boolean;
   watermark?: boolean;
+  /** Seedance 2.0 new params */
+  seed?: number;
+  camera_fixed?: boolean;
+  return_last_frame?: boolean;
+  draft?: boolean;
+  frames?: number;
   first_frame_url?: string;
   last_frame_url?: string;
   reference_image_urls?: string[];

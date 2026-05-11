@@ -15,6 +15,7 @@ interface BrutalDropdownProps {
   icon?: React.ReactNode;
   className?: string;
   placeholder?: string;
+  fullWidth?: boolean;
 }
 
 const BrutalDropdown: React.FC<BrutalDropdownProps> = ({
@@ -24,6 +25,7 @@ const BrutalDropdown: React.FC<BrutalDropdownProps> = ({
   icon,
   className,
   placeholder = "Select...",
+  fullWidth = false,
 }) => {
   const [isOpen, setIsOpen] = React.useState(false);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
@@ -49,18 +51,24 @@ const BrutalDropdown: React.FC<BrutalDropdownProps> = ({
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           "flex items-center gap-1 px-1.5 py-1 bg-card hover:bg-secondary border border-foreground/20 text-[11px] font-mono transition-none",
+          fullWidth && "w-full justify-between",
           isOpen && "bg-secondary"
         )}
       >
         {icon && <span className="text-foreground/70 flex-shrink-0">{icon}</span>}
-        <span className="max-w-[90px] truncate">
+        <span className={cn("truncate", fullWidth ? "flex-1 min-w-0" : "max-w-[90px]")}>
           {selectedOption?.label || placeholder}
         </span>
         <ChevronDown className={cn("w-2.5 h-2.5 flex-shrink-0 transition-transform", isOpen && "rotate-180")} />
       </button>
 
       {isOpen && (
-        <div className="absolute bottom-full left-0 mb-1 min-w-[120px] bg-card border-brutal border-foreground z-50 brutal-shadow">
+        <div
+          className={cn(
+            "absolute bottom-full left-0 mb-1 min-w-[120px] bg-card border-brutal border-foreground z-50 brutal-shadow",
+            fullWidth && "w-full"
+          )}
+        >
           {options.map((option) => (
             <button
               key={option.value}

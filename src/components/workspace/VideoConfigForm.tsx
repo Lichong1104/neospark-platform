@@ -18,6 +18,16 @@ interface VideoConfigFormProps {
   setGenerateAudio: (v: boolean) => void;
   watermark: boolean;
   setWatermark: (v: boolean) => void;
+  seed: string;
+  setSeed: (v: string) => void;
+  cameraFixed: boolean;
+  setCameraFixed: (v: boolean) => void;
+  returnLastFrame: boolean;
+  setReturnLastFrame: (v: boolean) => void;
+  draft: boolean;
+  setDraft: (v: boolean) => void;
+  frames: string;
+  setFrames: (v: string) => void;
   firstFrameUrl: string;
   setFirstFrameUrl: (v: string) => void;
   lastFrameUrl: string;
@@ -91,6 +101,16 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
   setGenerateAudio,
   watermark,
   setWatermark,
+  seed,
+  setSeed,
+  cameraFixed,
+  setCameraFixed,
+  returnLastFrame,
+  setReturnLastFrame,
+  draft,
+  setDraft,
+  frames,
+  setFrames,
   firstFrameUrl,
   setFirstFrameUrl,
   lastFrameUrl,
@@ -286,7 +306,11 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
           >
             {modelOptions.map((item) => (
               <option key={item.id} value={item.id}>
-                {item.name} ({item.price_per_second * 5} pts / 5s)
+                {item.name}{" "}
+                ({t("video.modelPricePerDuration", {
+                  cost: item.price_per_second * 5,
+                  duration: 5,
+                })})
               </option>
             ))}
           </select>
@@ -364,8 +388,81 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
                 : "bg-background text-muted-foreground"
             )}
           >
-            {watermark ? "WATERMARK ON" : "WATERMARK OFF"}
+            {watermark ? t("video.watermarkOn") : t("video.watermarkOff")}
           </button>
+        </div>
+
+        {/* Advanced options */}
+        <div className="px-2.5 pb-2.5 pt-1 border-t border-foreground/15 space-y-2.5">
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setCameraFixed(!cameraFixed)}
+              className={cn(
+                "flex items-center gap-2 px-3 py-2 text-[11px] font-bold uppercase border border-foreground/20 transition-none",
+                cameraFixed
+                  ? "bg-accent-purple/15 text-foreground border-accent-purple/40"
+                  : "bg-background text-muted-foreground"
+              )}
+            >
+              {cameraFixed ? t("video.cameraFixedOn") : t("video.cameraFixedOff")}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setReturnLastFrame(!returnLastFrame)}
+              className={cn(
+                "flex items-center gap-2 px-3 py-2 text-[11px] font-bold uppercase border border-foreground/20 transition-none",
+                returnLastFrame
+                  ? "bg-accent-green/15 text-foreground border-accent-green/40"
+                  : "bg-background text-muted-foreground"
+              )}
+            >
+              {returnLastFrame ? t("video.returnLastFrameOn") : t("video.returnLastFrameOff")}
+            </button>
+
+            {model !== "seedance-2.0-fast" && (
+              <button
+                type="button"
+                onClick={() => setDraft(!draft)}
+                className={cn(
+                  "flex items-center gap-2 px-3 py-2 text-[11px] font-bold uppercase border border-foreground/20 transition-none",
+                  draft
+                    ? "bg-accent-yellow/15 text-foreground border-accent-yellow/40"
+                    : "bg-background text-muted-foreground"
+                )}
+              >
+                {draft ? t("video.draftOn") : t("video.draftOff")}
+              </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">
+                {t("video.seed")}
+              </label>
+              <input
+                type="number"
+                value={seed}
+                onChange={(e) => setSeed(e.target.value)}
+                placeholder={t("video.seedPlaceholder")}
+                className="w-full px-2 py-1.5 text-[11px] font-mono border border-foreground/20 bg-background focus:outline-none focus:border-accent-purple"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">
+                {t("video.frames")}
+              </label>
+              <input
+                type="number"
+                value={frames}
+                onChange={(e) => setFrames(e.target.value)}
+                placeholder={t("video.framesPlaceholder")}
+                className="w-full px-2 py-1.5 text-[11px] font-mono border border-foreground/20 bg-background focus:outline-none focus:border-accent-purple"
+              />
+            </div>
+          </div>
         </div>
 
         <div className="px-2.5 pb-2.5 pt-1 border-t border-foreground/15 space-y-2.5">
