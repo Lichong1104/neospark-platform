@@ -181,6 +181,8 @@ const AGENT_DEFS = [
 type StandardGenHistoryItem = {
   id: string;
   prompt: string;
+  originalPrompt?: string;
+  optimizedPrompt?: string;
   images: { url: string; local_path: string }[];
   cost: number | null;
   createdAt: number;
@@ -242,9 +244,11 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
   const [standardGenHistory, setStandardGenHistory] = useState<
     StandardGenHistoryItem[]
   >([]);
-  const [pendingStandardPrompt, setPendingStandardPrompt] = useState<
-    string | null
-  >(null);
+  const [pendingStandardPrompt, setPendingStandardPrompt] = useState<{
+    original: string;
+    used: string;
+    optimized?: string;
+  } | null>(null);
   const [pastedImage, setPastedImage] = useState<{
     preview: string;
     path: string;
@@ -279,7 +283,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
 
   useEffect(() => {
     if (polling.status === "completed" && polling.images.length > 0) {
-      const promptText = pendingStandardPrompt?.trim() || "";
+      const promptText = pendingStandardPrompt?.used?.trim() || "";
       setStandardGenHistory((prev) => [
         ...prev,
         {
@@ -288,6 +292,8 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
               ? crypto.randomUUID()
               : `gen-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
           prompt: promptText,
+          originalPrompt: pendingStandardPrompt?.original,
+          optimizedPrompt: pendingStandardPrompt?.optimized,
           images: polling.images,
           cost: polling.actualCost ?? null,
           createdAt: Date.now(),
@@ -410,7 +416,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
     const originalPrompt = inputValue.trim();
     setInputValue("");
     setIsStandardGenerating(true);
-    setPendingStandardPrompt(originalPrompt);
+    setPendingStandardPrompt({ original: originalPrompt, used: originalPrompt });
 
     try {
       let finalPrompt = originalPrompt;
@@ -420,6 +426,13 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
           prompt: originalPrompt,
         });
         finalPrompt = optimized.optimized_prompt?.trim() || originalPrompt;
+        setPendingStandardPrompt({
+          original: originalPrompt,
+          used: finalPrompt,
+          optimized: optimized.optimized_prompt?.trim() || "",
+        });
+      } else {
+        setPendingStandardPrompt({ original: originalPrompt, used: finalPrompt });
       }
 
       const selectedRefImages = selectedCanvasImages.filter(
@@ -592,7 +605,11 @@ interface ChatViewProps {
   modelOptions: DropdownOption[];
   isGenerating: boolean;
   standardGenHistory: StandardGenHistoryItem[];
-  pendingStandardPrompt: string | null;
+  pendingStandardPrompt: {
+    original: string;
+    used: string;
+    optimized?: string;
+  } | null;
   onAspectRatioChange: (value: string) => void;
   onResolutionChange: (value: string) => void;
   onModelChange: (value: string) => void;
@@ -656,6 +673,9 @@ const ChatView: React.FC<ChatViewProps> = ({
   const currentAgent = AGENTS.find((a) => a.id === agentStatus) || AGENTS[0];
   const historyBottomRef = useRef<HTMLDivElement>(null);
   const promptInputRef = useRef<HTMLTextAreaElement>(null);
+  const [historyPromptView, setHistoryPromptView] = useState<
+    Record<string, "used" | "original">
+  >({});
   const tengdaQualityOptions: DropdownOption[] = useMemo(
     () => [
       { value: "low", label: `${t("agentChat.gptImageQualityLow")} (Fast)` },
@@ -683,6 +703,19 @@ const ChatView: React.FC<ChatViewProps> = ({
       }, 0);
     },
     [onReuseHistoryPrompt]
+  );
+
+  const resolveEntryPrompt = useCallback(
+    (entry: StandardGenHistoryItem) => {
+      const hasOptimized =
+        !!entry.optimizedPrompt && entry.optimizedPrompt.trim().length > 0;
+      const view = historyPromptView[entry.id];
+      if (!hasOptimized) return entry.prompt;
+      if (view === "original") return entry.originalPrompt || entry.prompt;
+      // default to used (optimized)
+      return entry.optimizedPrompt || entry.prompt;
+    },
+    [historyPromptView]
   );
 
   useEffect(() => {
@@ -768,17 +801,38 @@ const ChatView: React.FC<ChatViewProps> = ({
         <div className="space-y-6 flex-1">
           {standardGenHistory.map((entry) => (
             <div key={entry.id} className="space-y-2">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                {t("intelligenceHub.standardPrompt")}
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  {t("intelligenceHub.standardPrompt")}
+                </div>
+                {!!entry.optimizedPrompt?.trim() && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setHistoryPromptView((prev) => ({
+                        ...prev,
+                        [entry.id]:
+                          prev[entry.id] === "original" ? "used" : "original",
+                      }))
+                    }
+                    className="px-2 py-1 text-[10px] font-bold uppercase border border-foreground/20 bg-background hover:bg-secondary transition-none"
+                    title={t("intelligenceHub.toggleOptimizedPrompt")}
+                  >
+                    {historyPromptView[entry.id] === "original"
+                      ? t("intelligenceHub.viewOptimizedPrompt")
+                      : t("intelligenceHub.viewOriginalPrompt")}
+                  </button>
+                )}
               </div>
-              {entry.prompt.trim() ? (
+
+              {resolveEntryPrompt(entry).trim() ? (
                 <button
                   type="button"
-                  onClick={() => fillPromptFromHistory(entry.prompt)}
+                  onClick={() => fillPromptFromHistory(resolveEntryPrompt(entry))}
                   title={t("intelligenceHub.reuseHistoryPrompt")}
                   className="w-full text-left p-3 border-brutal border-foreground bg-secondary/20 font-mono text-sm whitespace-pre-wrap break-words leading-relaxed transition-none hover:bg-secondary/40 hover:border-accent-cyan/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan cursor-pointer"
                 >
-                  {entry.prompt}
+                  {resolveEntryPrompt(entry)}
                 </button>
               ) : (
                 <div className="p-3 border-brutal border-foreground/40 bg-secondary/10 font-mono text-sm text-muted-foreground">
@@ -827,11 +881,11 @@ const ChatView: React.FC<ChatViewProps> = ({
                   </div>
                   <button
                     type="button"
-                    onClick={() => fillPromptFromHistory(pendingStandardPrompt)}
+                    onClick={() => fillPromptFromHistory(pendingStandardPrompt.used)}
                     title={t("intelligenceHub.reuseHistoryPrompt")}
                     className="w-full text-left p-3 border-brutal border-dashed border-accent-cyan/50 bg-accent-cyan/5 font-mono text-sm whitespace-pre-wrap break-words transition-none hover:bg-accent-cyan/15 hover:border-accent-cyan focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan cursor-pointer"
                   >
-                    {pendingStandardPrompt}
+                    {pendingStandardPrompt.used}
                   </button>
                 </>
               )}

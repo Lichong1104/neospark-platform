@@ -460,7 +460,10 @@
     "firstLoginVideoTitle": "Welcome to Neospark Canvas",
     "firstLoginVideoDesc": "First-login onboarding video. A quick 1-2 minute watch is recommended.",
     "optimizePromptBeforeGenerate": "Optimize prompt before generating",
-    "optimizingPrompt": "Optimizing prompt..."
+    "optimizingPrompt": "Optimizing prompt...",
+    "viewOptimizedPrompt": "Optimized",
+    "viewOriginalPrompt": "Original",
+    "toggleOptimizedPrompt": "Toggle original/optimized prompt"
   },
   "agents": {
     "ecommerce": "E-Commerce Master",
