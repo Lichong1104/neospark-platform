@@ -19,12 +19,13 @@ export interface VideoModelConfig {
 export interface VideoModelsData {
   models: VideoModelConfig[];
   ratios: string[];
-  resolutions: string[];
+  resolutions: string[] | Record<string, string[]>;
   durations: {
     min: number;
     max: number;
     default: number;
   };
+  capabilities?: string[];
 }
 
 /** POST /video/generations */
@@ -43,6 +44,9 @@ export interface CreateVideoParams {
   return_last_frame?: boolean;
   draft?: boolean;
   frames?: number;
+  fps?: number;
+  service_tier?: "default" | "flex";
+  tools?: Array<{ type: string }>;
   first_frame_url?: string;
   last_frame_url?: string;
   reference_image_urls?: string[];

@@ -463,7 +463,10 @@
     "optimizingPrompt": "正在优化提示词...",
     "viewOptimizedPrompt": "看优化",
     "viewOriginalPrompt": "看原始",
-    "toggleOptimizedPrompt": "切换原始/优化提示词"
+    "toggleOptimizedPrompt": "切换原始/优化提示词",
+    "invalidCanvasSlot": "@图{{slot}} 无效。画布上当前有 {{max}} 张图片（图1–图{{max}}）。",
+    "canvasMentionNoImages": "画布上还没有图片。",
+    "canvasMentionNoMatch": "没有匹配的画布图片。"
   },
   "agents": {
     "ecommerce": "电商详情页大师",
@@ -898,7 +901,17 @@
     "shiftEnterHint": "Shift + Enter 换行",
     "pointsApprox": "~{{points}} 积分",
     "charCount": "{{count}} 字符",
-    "modelPricePerDuration": "{{cost}} 积分 / {{duration}}秒"
+    "modelPricePerDuration": "{{cost}} 积分 / {{duration}}秒",
+    "fps": "帧率",
+    "fpsPlaceholder": "留空自动",
+    "serviceTier": "服务等级",
+    "serviceTierDefault": "在线推理",
+    "serviceTierFlex": "离线推理(更便宜)",
+    "webSearch": "联网搜索",
+    "webSearchOn": "联网搜索开启",
+    "webSearchOff": "联网搜索关闭",
+    "webSearchHint": "开启后模型会搜索互联网获取最新信息",
+    "advanced": "高级选项"
   },
   "affiliate": {
     "title": "推广计划",

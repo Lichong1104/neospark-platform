@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Image, Volume2, VolumeX, Clock, Maximize2, Upload, Link2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { STATIC_BASE_URL } from "@/api/request";
+import { canvasImageSlotLabel } from "@/lib/canvasImageSlots";
 import type { VideoModelConfig, VideoResolution } from "@/types/video";
 
 interface VideoConfigFormProps {
@@ -18,16 +19,6 @@ interface VideoConfigFormProps {
   setGenerateAudio: (v: boolean) => void;
   watermark: boolean;
   setWatermark: (v: boolean) => void;
-  seed: string;
-  setSeed: (v: string) => void;
-  cameraFixed: boolean;
-  setCameraFixed: (v: boolean) => void;
-  returnLastFrame: boolean;
-  setReturnLastFrame: (v: boolean) => void;
-  draft: boolean;
-  setDraft: (v: boolean) => void;
-  frames: string;
-  setFrames: (v: string) => void;
   firstFrameUrl: string;
   setFirstFrameUrl: (v: string) => void;
   lastFrameUrl: string;
@@ -101,16 +92,6 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
   setGenerateAudio,
   watermark,
   setWatermark,
-  seed,
-  setSeed,
-  cameraFixed,
-  setCameraFixed,
-  returnLastFrame,
-  setReturnLastFrame,
-  draft,
-  setDraft,
-  frames,
-  setFrames,
   firstFrameUrl,
   setFirstFrameUrl,
   lastFrameUrl,
@@ -190,21 +171,51 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
     [getMentionQuery, mention?.field]
   );
 
+  const canvasEntriesWithSlots = React.useMemo(() => {
+    let imgSlot = 0;
+    let vidSlot = 0;
+    return canvasImages.map((item) => {
+      const typ = item.type ?? "image";
+      if (typ === "video") {
+        vidSlot += 1;
+        return { item, slot: vidSlot, role: "video" as const };
+      }
+      imgSlot += 1;
+      return { item, slot: imgSlot, role: "image" as const };
+    });
+  }, [canvasImages]);
+
   const visibleCanvasItems = React.useMemo(() => {
     if (!mention) return [];
-    const expectedType =
-      mention.field === "referenceVideoUrls" ? "video" : "image";
+    const expectedRole =
+      mention.field === "referenceVideoUrls" ? ("video" as const) : ("image" as const);
     const normalizedQuery = mention.query.trim().toLowerCase();
-    return canvasImages
-      .filter((item) => (item.type ?? "image") === expectedType)
-      .filter((item) =>
-        !normalizedQuery
-          ? true
-          : item.name.toLowerCase().includes(normalizedQuery) ||
-            normalizeCanvasPath(item.src).toLowerCase().includes(normalizedQuery)
-      )
+    return canvasEntriesWithSlots
+      .filter((row) => row.role === expectedRole)
+      .filter((row) => {
+        if (!normalizedQuery) return true;
+        const label =
+          row.role === "image"
+            ? canvasImageSlotLabel(row.slot).toLowerCase()
+            : `视频${row.slot}`.toLowerCase();
+        if (
+          (expectedRole === "image" && /^图\d*$/.test(normalizedQuery)) ||
+          (expectedRole === "video" && /^视频\d*$/.test(normalizedQuery))
+        ) {
+          return label.startsWith(normalizedQuery);
+        }
+        const m =
+          expectedRole === "image"
+            ? /^图(\d+)$/.exec(normalizedQuery)
+            : /^视频(\d+)$/.exec(normalizedQuery);
+        if (m) return Number(m[1]) === row.slot;
+        return (
+          row.item.name.toLowerCase().includes(normalizedQuery) ||
+          normalizeCanvasPath(row.item.src).toLowerCase().includes(normalizedQuery)
+        );
+      })
       .slice(0, 20);
-  }, [mention, canvasImages, normalizeCanvasPath]);
+  }, [mention, canvasEntriesWithSlots, normalizeCanvasPath]);
 
   const applyMentionPick = React.useCallback(
     (field: MentionField, src: string) => {
@@ -244,21 +255,21 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
             {t("video.noCanvasResourceMatch")}
           </div>
         ) : (
-          visibleCanvasItems.map((item, idx) => (
+          visibleCanvasItems.map((row, idx) => (
             <button
-              key={`${item.name}-${idx}`}
+              key={`${row.item.name}-${row.slot}-${idx}`}
               type="button"
-              onClick={() => applyMentionPick(field, item.src)}
+              onClick={() => applyMentionPick(field, row.item.src)}
               className="w-full px-2.5 py-2 text-left border-b border-foreground/10 last:border-b-0 hover:bg-secondary transition-none flex items-center gap-2"
             >
-              {(item.type ?? "image") === "image" ? (
+              {(row.item.type ?? "image") === "image" ? (
                 <img
                   src={
-                    item.src.startsWith("http")
-                      ? item.src
-                      : `${STATIC_BASE_URL}${item.src}`
+                    row.item.src.startsWith("http")
+                      ? row.item.src
+                      : `${STATIC_BASE_URL}${row.item.src}`
                   }
-                  alt={item.name}
+                  alt={row.item.name}
                   className="w-7 h-7 object-cover border border-foreground/20"
                 />
               ) : (
@@ -267,9 +278,16 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
                 </div>
               )}
               <div className="min-w-0">
-                <div className="text-[11px] font-bold truncate">{item.name}</div>
+                <div className="text-[11px] font-bold truncate">
+                  <span className="text-accent-cyan mr-1">
+                    {row.role === "image"
+                      ? canvasImageSlotLabel(row.slot)
+                      : `视频${row.slot}`}
+                  </span>
+                  {row.item.name}
+                </div>
                 <div className="text-[9px] text-muted-foreground truncate">
-                  {normalizeCanvasPath(item.src)}
+                  {normalizeCanvasPath(row.item.src)}
                 </div>
               </div>
             </button>
@@ -390,79 +408,6 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
           >
             {watermark ? t("video.watermarkOn") : t("video.watermarkOff")}
           </button>
-        </div>
-
-        {/* Advanced options */}
-        <div className="px-2.5 pb-2.5 pt-1 border-t border-foreground/15 space-y-2.5">
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              type="button"
-              onClick={() => setCameraFixed(!cameraFixed)}
-              className={cn(
-                "flex items-center gap-2 px-3 py-2 text-[11px] font-bold uppercase border border-foreground/20 transition-none",
-                cameraFixed
-                  ? "bg-accent-purple/15 text-foreground border-accent-purple/40"
-                  : "bg-background text-muted-foreground"
-              )}
-            >
-              {cameraFixed ? t("video.cameraFixedOn") : t("video.cameraFixedOff")}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setReturnLastFrame(!returnLastFrame)}
-              className={cn(
-                "flex items-center gap-2 px-3 py-2 text-[11px] font-bold uppercase border border-foreground/20 transition-none",
-                returnLastFrame
-                  ? "bg-accent-green/15 text-foreground border-accent-green/40"
-                  : "bg-background text-muted-foreground"
-              )}
-            >
-              {returnLastFrame ? t("video.returnLastFrameOn") : t("video.returnLastFrameOff")}
-            </button>
-
-            {model !== "seedance-2.0-fast" && (
-              <button
-                type="button"
-                onClick={() => setDraft(!draft)}
-                className={cn(
-                  "flex items-center gap-2 px-3 py-2 text-[11px] font-bold uppercase border border-foreground/20 transition-none",
-                  draft
-                    ? "bg-accent-yellow/15 text-foreground border-accent-yellow/40"
-                    : "bg-background text-muted-foreground"
-                )}
-              >
-                {draft ? t("video.draftOn") : t("video.draftOff")}
-              </button>
-            )}
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">
-                {t("video.seed")}
-              </label>
-              <input
-                type="number"
-                value={seed}
-                onChange={(e) => setSeed(e.target.value)}
-                placeholder={t("video.seedPlaceholder")}
-                className="w-full px-2 py-1.5 text-[11px] font-mono border border-foreground/20 bg-background focus:outline-none focus:border-accent-purple"
-              />
-            </div>
-            <div>
-              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">
-                {t("video.frames")}
-              </label>
-              <input
-                type="number"
-                value={frames}
-                onChange={(e) => setFrames(e.target.value)}
-                placeholder={t("video.framesPlaceholder")}
-                className="w-full px-2 py-1.5 text-[11px] font-mono border border-foreground/20 bg-background focus:outline-none focus:border-accent-purple"
-              />
-            </div>
-          </div>
         </div>
 
         <div className="px-2.5 pb-2.5 pt-1 border-t border-foreground/15 space-y-2.5">

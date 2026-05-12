@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Video, Film, Download, RotateCcw, Sparkles } from "lucide-react";
@@ -11,10 +11,17 @@ import { getErrorMessage } from "@/lib/errorMessage";
 import type {
   CreateVideoParams,
   VideoModelConfig,
+  VideoModelsData,
   VideoResolution,
   VideoTaskStatus,
 } from "@/types/video";
 import { VideoConfigForm } from "./VideoConfigForm";
+import {
+  canvasImageSlotLabel,
+  resolveImagesFromPromptSlots,
+  validatePromptCanvasSlots,
+} from "@/lib/canvasImageSlots";
+import { InlineCanvasMentionEditor } from "./InlineCanvasMentionEditor";
 
 interface VideoGenerationPanelProps {
   onVideoGenerated?: (videoUrl: string) => void;
@@ -72,11 +79,6 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
   const [resolution, setResolution] = useState<VideoResolution>("720p");
   const [generateAudio, setGenerateAudio] = useState(false);
   const [watermark, setWatermark] = useState(false);
-  const [seed, setSeed] = useState("");
-  const [cameraFixed, setCameraFixed] = useState(false);
-  const [returnLastFrame, setReturnLastFrame] = useState(false);
-  const [draft, setDraft] = useState(false);
-  const [frames, setFrames] = useState("");
   const [firstFrameUrl, setFirstFrameUrl] = useState("");
   const [lastFrameUrl, setLastFrameUrl] = useState("");
   const [referenceImageUrls, setReferenceImageUrls] = useState("");
@@ -108,6 +110,25 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
   const [progress, setProgress] = useState(0);
   const [videoUrl, setVideoUrl] = useState("");
   const [error, setError] = useState("");
+  // 解析分辨率：后端可能返回数组或按模型分组的对象
+  const resolveResolutions = React.useCallback(
+    (resolutions: VideoModelsData["resolutions"], currentModel: string): string[] => {
+      if (Array.isArray(resolutions)) return resolutions;
+      if (typeof resolutions === "object" && resolutions !== null) {
+        // 优先使用当前模型对应的分辨率，否则取第一个模型的
+        return (
+          (resolutions as Record<string, string[]>)[currentModel] ||
+          Object.values(resolutions as Record<string, string[]>)[0] ||
+          []
+        );
+      }
+      return [];
+    },
+    []
+  );
+
+  // prompt editor now handles inline tokens; we keep prompt as serialized text (@图N)
+  const [modelsData, setModelsData] = useState<VideoModelsData | null>(null);
   const activePollingTaskIdRef = useRef<string | null>(null);
   const deliveredTaskIdsRef = useRef<Set<string>>(new Set());
   const completedNoUrlTriesRef = useRef(0);
@@ -115,15 +136,19 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
   React.useEffect(() => {
     getVideoModels()
       .then((res) => {
+        setModelsData(res);
         setModelOptions(res.models ?? []);
-        if (res.models?.length) setModel((prev) => prev || res.models[0].id);
+        const firstModel = res.models?.[0]?.id || "";
+        const initialModel = model || firstModel;
+        if (res.models?.length) setModel(initialModel);
         if (res.ratios?.length) {
           setRatioOptions(res.ratios);
           setRatio(res.ratios[0]);
         }
-        if (res.resolutions?.length) {
-          setResolutionOptions(res.resolutions);
-          setResolution(res.resolutions[0] as VideoResolution);
+        const modelResolutions = resolveResolutions(res.resolutions, initialModel);
+        if (modelResolutions.length) {
+          setResolutionOptions(modelResolutions);
+          setResolution(modelResolutions[0] as VideoResolution);
         }
         const min = res.durations?.min ?? 4;
         const max = res.durations?.max ?? 15;
@@ -135,7 +160,16 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
         setDuration(defaultDuration);
       })
       .catch(() => {});
-  }, []);
+  }, [resolveResolutions]);
+
+  // 切换模型时更新分辨率选项
+  React.useEffect(() => {
+    if (!modelsData || !model) return;
+    const modelResolutions = resolveResolutions(modelsData.resolutions, model);
+    if (modelResolutions.length) {
+      setResolutionOptions(modelResolutions);
+    }
+  }, [model, modelsData, resolveResolutions]);
 
   React.useEffect(() => {
     if (!taskId) return;
@@ -304,11 +338,35 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
   const handleGenerate = useCallback(async () => {
     if (!prompt.trim() || isGenerating) return;
 
+    const canvasImageCount = canvasImages.filter(
+      (i) => (i.type ?? "image") !== "video"
+    ).length;
+    const slotCheck = validatePromptCanvasSlots(
+      prompt.trim(),
+      canvasImageCount
+    );
+    if (!slotCheck.ok) {
+      toast.error(
+        t("intelligenceHub.invalidCanvasSlot", {
+          slot: slotCheck.invalidSlot,
+          max: canvasImageCount,
+        })
+      );
+      return;
+    }
+
     const parsedRefImages = parseMultiLineUrls(referenceImageUrls);
+    const slotRefPaths = resolveImagesFromPromptSlots(canvasImages, prompt.trim())
+      .map((img) => toServerPath(img.src))
+      .filter(Boolean);
+    const mergedRefImages = [...parsedRefImages];
+    for (const p of slotRefPaths) {
+      if (p && !mergedRefImages.includes(p)) mergedRefImages.push(p);
+    }
     const parsedRefVideos = parseMultiLineUrls(referenceVideoUrls);
     const parsedRefAudios = parseMultiLineUrls(referenceAudioUrls);
     const hasVisualRef =
-      parsedRefImages.length > 0 || parsedRefVideos.length > 0;
+      mergedRefImages.length > 0 || parsedRefVideos.length > 0;
     const hasRefAudio = parsedRefAudios.length > 0;
     if (hasRefAudio && !hasVisualRef) {
       toast.error(t("video.referenceAudioRequiresRef"));
@@ -323,14 +381,14 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
       resolution,
       generate_audio: generateAudio,
       watermark,
-      seed: seed.trim() ? Number(seed) : undefined,
-      camera_fixed: cameraFixed,
-      return_last_frame: returnLastFrame,
-      draft,
-      frames: frames.trim() ? Number(frames) : undefined,
+      camera_fixed: false,
+      return_last_frame: false,
+      draft: false,
+      service_tier: "default",
       first_frame_url: firstFrameUrl.trim() || undefined,
       last_frame_url: lastFrameUrl.trim() || undefined,
-      reference_image_urls: parsedRefImages.length > 0 ? parsedRefImages : undefined,
+      reference_image_urls:
+        mergedRefImages.length > 0 ? mergedRefImages : undefined,
       reference_video_urls: parsedRefVideos.length > 0 ? parsedRefVideos : undefined,
       reference_audio_urls: parsedRefAudios.length > 0 ? parsedRefAudios : undefined,
     };
@@ -368,16 +426,12 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     resolution,
     generateAudio,
     watermark,
-    seed,
-    cameraFixed,
-    returnLastFrame,
-    draft,
-    frames,
     firstFrameUrl,
     lastFrameUrl,
     referenceImageUrls,
     referenceVideoUrls,
     referenceAudioUrls,
+    canvasImages,
     t,
   ]);
 
@@ -397,11 +451,6 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     setReferenceAudioUrls("");
     setResolution("720p");
     setWatermark(false);
-    setSeed("");
-    setCameraFixed(false);
-    setReturnLastFrame(false);
-    setDraft(false);
-    setFrames("");
     setEstimatedCost(null);
   };
 
@@ -524,16 +573,6 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
             setGenerateAudio={setGenerateAudio}
             watermark={watermark}
             setWatermark={setWatermark}
-            seed={seed}
-            setSeed={setSeed}
-            cameraFixed={cameraFixed}
-            setCameraFixed={setCameraFixed}
-            returnLastFrame={returnLastFrame}
-            setReturnLastFrame={setReturnLastFrame}
-            draft={draft}
-            setDraft={setDraft}
-            frames={frames}
-            setFrames={setFrames}
             firstFrameUrl={firstFrameUrl}
             setFirstFrameUrl={setFirstFrameUrl}
             lastFrameUrl={lastFrameUrl}
@@ -583,19 +622,16 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
             </div>
 
             <div className="p-3 space-y-2.5">
-              <textarea
+              <InlineCanvasMentionEditor
                 value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                onKeyDown={(e) =>
-                  e.key === "Enter" &&
-                  !e.shiftKey &&
-                  (e.preventDefault(), handleGenerate())
-                }
+                onChange={setPrompt}
+                canvasImages={canvasImages}
                 placeholder={t("video.promptPlaceholder")}
+                onSubmit={handleGenerate}
+                enableSubmitOnEnter
                 className={cn(
-                  "w-full min-h-[104px] p-3 border border-foreground/20 bg-background font-mono text-[12px] resize-none leading-relaxed",
-                  "focus:outline-none focus:border-accent-purple",
-                  "placeholder:text-muted-foreground/50"
+                  "border border-foreground/20 bg-background",
+                  "focus-within:border-accent-purple"
                 )}
               />
 

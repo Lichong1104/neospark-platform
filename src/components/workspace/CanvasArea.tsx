@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useEffect, useState } from "react";
+import React, { useRef, useCallback, useEffect, useMemo, useState } from "react";
 import {
   ZoomIn,
   ZoomOut,
@@ -16,6 +16,7 @@ import { useTranslation } from "react-i18next";
 import { ImageAnnotator } from "./ImageAnnotator";
 import { toFetchableAssetUrl } from "@/lib/assetFetchUrl";
 import { BASE_URL } from "@/api/request";
+import { canvasImageSlotLabel } from "@/lib/canvasImageSlots";
 
 export interface CanvasImage {
   id: string;
@@ -94,6 +95,17 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
   const activePointerIdRef = useRef<number | null>(null);
 
   const canvasRef = useRef<HTMLDivElement>(null);
+
+  const imageSlotById = useMemo(() => {
+    const map = new Map<string, number>();
+    let slot = 0;
+    for (const img of images) {
+      if (img.type === "video") continue;
+      slot += 1;
+      map.set(img.id, slot);
+    }
+    return map;
+  }, [images]);
 
   const setSelection = useCallback(
     (nextSelectedIds: string[]) => {
@@ -731,6 +743,14 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
                     className="w-full h-full object-cover"
                     draggable={false}
                   />
+                )}
+                {imageSlotById.has(img.id) && (
+                  <div
+                    className="absolute top-1 left-1 z-[1] px-1.5 py-0.5 text-[10px] font-bold font-mono bg-foreground/90 text-card border border-card/30 pointer-events-none select-none"
+                    title={`@${canvasImageSlotLabel(imageSlotById.get(img.id)!)}`}
+                  >
+                    {canvasImageSlotLabel(imageSlotById.get(img.id)!)}
+                  </div>
                 )}
                 {!img.loading && img.type !== "video" && (
                   <button

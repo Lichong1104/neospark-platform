@@ -46,6 +46,11 @@ import { useTranslation } from "react-i18next";
 import drawingApi from "@/api/drawing";
 import { optimizePrompt } from "@/api/prompts";
 import type { CanvasImage } from "./CanvasArea";
+import {
+  resolveImagesFromPromptSlots,
+  validatePromptCanvasSlots,
+} from "@/lib/canvasImageSlots";
+import { InlineCanvasMentionEditor } from "./InlineCanvasMentionEditor";
 import type { ModelsConfigMap } from "@/types/drawing";
 
 type StatusType =
@@ -435,9 +440,32 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
         setPendingStandardPrompt({ original: originalPrompt, used: finalPrompt });
       }
 
-      const selectedRefImages = selectedCanvasImages.filter(
-        (img) => img.type !== "video"
-      );
+      const canvasImagesOnly = canvasImages.filter((img) => img.type !== "video");
+      const promptUsesCanvasSlots = /@图\d+/.test(originalPrompt);
+      if (promptUsesCanvasSlots) {
+        const check = validatePromptCanvasSlots(
+          originalPrompt,
+          canvasImagesOnly.length
+        );
+        if (!check.ok) {
+          toast.error(
+            t("intelligenceHub.invalidCanvasSlot", {
+              slot: check.invalidSlot,
+              max: canvasImagesOnly.length,
+            })
+          );
+          setIsStandardGenerating(false);
+          setPendingStandardPrompt(null);
+          return;
+        }
+      }
+
+      const slotRefImages = promptUsesCanvasSlots
+        ? resolveImagesFromPromptSlots(canvasImages, originalPrompt)
+        : [];
+      const selectedRefImages = promptUsesCanvasSlots
+        ? slotRefImages
+        : selectedCanvasImages.filter((img) => img.type !== "video");
       const hasSelectedRefs = selectedRefImages.length > 0;
       if (
         hasSelectedRefs &&
@@ -568,7 +596,6 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
             optimizeStandardPrompt={optimizeStandardPrompt}
             onOptimizeStandardPromptChange={setOptimizeStandardPrompt}
             onModeToggle={handleModeToggle}
-            onInputChange={handleInputChange}
             onSend={handleSend}
             onTogglePresets={() => setShowPresets(!showPresets)}
             onSelectPreset={(prompt) => {
@@ -582,6 +609,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
             isUploadingPaste={isUploadingPaste}
             selectedCanvasImage={selectedCanvasImage ?? null}
             selectedCanvasImages={selectedCanvasImages}
+            canvasImages={canvasImages}
           />
         </>
       )}
@@ -616,7 +644,6 @@ interface ChatViewProps {
   optimizeStandardPrompt: boolean;
   onOptimizeStandardPromptChange: (value: boolean) => void;
   onModeToggle: (mode: boolean) => void;
-  onInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   onSend: () => void;
   onTogglePresets: () => void;
   onSelectPreset: (prompt: string) => void;
@@ -631,6 +658,7 @@ interface ChatViewProps {
     type?: "image" | "video";
   } | null;
   selectedCanvasImages: CanvasImage[];
+  canvasImages: CanvasImage[];
 }
 
 const ChatView: React.FC<ChatViewProps> = ({
@@ -656,7 +684,6 @@ const ChatView: React.FC<ChatViewProps> = ({
   optimizeStandardPrompt,
   onOptimizeStandardPromptChange,
   onModeToggle,
-  onInputChange,
   onSend,
   onTogglePresets,
   onSelectPreset,
@@ -667,15 +694,16 @@ const ChatView: React.FC<ChatViewProps> = ({
   isUploadingPaste,
   selectedCanvasImage,
   selectedCanvasImages,
+  canvasImages,
 }) => {
   const { t } = useTranslation();
   const AGENTS = useAgents();
   const currentAgent = AGENTS.find((a) => a.id === agentStatus) || AGENTS[0];
   const historyBottomRef = useRef<HTMLDivElement>(null);
-  const promptInputRef = useRef<HTMLTextAreaElement>(null);
   const [historyPromptView, setHistoryPromptView] = useState<
     Record<string, "used" | "original">
   >({});
+
   const tengdaQualityOptions: DropdownOption[] = useMemo(
     () => [
       { value: "low", label: `${t("agentChat.gptImageQualityLow")} (Fast)` },
@@ -690,17 +718,6 @@ const ChatView: React.FC<ChatViewProps> = ({
       const text = prompt.trim();
       if (!text) return;
       onReuseHistoryPrompt(text);
-      window.setTimeout(() => {
-        const el = promptInputRef.current;
-        if (!el) return;
-        el.focus();
-        const len = el.value.length;
-        try {
-          el.setSelectionRange(len, len);
-        } catch {
-          /* ignore */
-        }
-      }, 0);
     },
     [onReuseHistoryPrompt]
   );
@@ -996,45 +1013,32 @@ const ChatView: React.FC<ChatViewProps> = ({
         )}
 
         <div className="relative flex-1">
-          <textarea
-            ref={promptInputRef}
+          <InlineCanvasMentionEditor
             value={inputValue}
-            onChange={onInputChange}
-            onKeyDown={(e) =>
-              e.key === "Enter" && !e.shiftKey && (e.preventDefault(), onSend())
-            }
-            onPaste={(e) => {
-              const items = e.clipboardData?.items;
-              if (!items) return;
-              for (const item of Array.from(items)) {
-                if (item.type.startsWith("image/")) {
-                  e.preventDefault();
-                  const file = item.getAsFile();
-                  if (file) {
-                    // Trigger upload via parent
-                    const upload = async () => {
-                      const { default: sApi } = await import("@/api/storage");
-                      const preview = URL.createObjectURL(file);
-                      onPasteImage({ preview, path: "" }); // show preview immediately
-                      try {
-                        const res = await sApi.uploadFile(file, "image");
-                        onPasteImage({
-                          preview,
-                          path: res.path || res.url || "",
-                        });
-                      } catch {
-                        onPasteImage(null);
-                        toast.error(t("intelligenceHub.imageUploadFailed"));
-                      }
-                    };
-                    upload();
-                  }
-                  break;
-                }
-              }
-            }}
+            onChange={onReuseHistoryPrompt}
+            canvasImages={canvasImages}
             placeholder={t("intelligenceHub.inputPlaceholder")}
-            className="w-full h-full min-h-[72px] md:min-h-[96px] xl:min-h-[120px] p-3 border-brutal border-foreground bg-background font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-accent-cyan"
+            onSubmit={onSend}
+            enableSubmitOnEnter
+            onPasteImageFile={(file) => {
+              // Trigger upload via parent
+              const upload = async () => {
+                const { default: sApi } = await import("@/api/storage");
+                const preview = URL.createObjectURL(file);
+                onPasteImage({ preview, path: "" }); // show preview immediately
+                try {
+                  const res = await sApi.uploadFile(file, "image");
+                  onPasteImage({
+                    preview,
+                    path: res.path || res.url || "",
+                  });
+                } catch {
+                  onPasteImage(null);
+                  toast.error(t("intelligenceHub.imageUploadFailed"));
+                }
+              };
+              upload();
+            }}
           />
         </div>
 

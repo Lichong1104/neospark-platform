@@ -463,7 +463,10 @@
     "optimizingPrompt": "Optimizing prompt...",
     "viewOptimizedPrompt": "Optimized",
     "viewOriginalPrompt": "Original",
-    "toggleOptimizedPrompt": "Toggle original/optimized prompt"
+    "toggleOptimizedPrompt": "Toggle original/optimized prompt",
+    "invalidCanvasSlot": "@图{{slot}} is invalid. There are {{max}} image(s) on the canvas (图1–图{{max}}).",
+    "canvasMentionNoImages": "No images on the canvas yet.",
+    "canvasMentionNoMatch": "No canvas image matches this query."
   },
   "agents": {
     "ecommerce": "E-Commerce Master",
@@ -898,7 +901,17 @@
     "shiftEnterHint": "Shift + Enter for newline",
     "pointsApprox": "~{{points}} pts",
     "charCount": "{{count}} chars",
-    "modelPricePerDuration": "{{cost}} pts / {{duration}}s"
+    "modelPricePerDuration": "{{cost}} pts / {{duration}}s",
+    "fps": "FPS",
+    "fpsPlaceholder": "Leave blank for auto",
+    "serviceTier": "Service Tier",
+    "serviceTierDefault": "Online (default)",
+    "serviceTierFlex": "Offline (cheaper)",
+    "webSearch": "Web Search",
+    "webSearchOn": "Web Search ON",
+    "webSearchOff": "Web Search OFF",
+    "webSearchHint": "Model will search the internet for latest info",
+    "advanced": "Advanced Options"
   },
   "affiliate": {
     "title": "Affiliate Program",
