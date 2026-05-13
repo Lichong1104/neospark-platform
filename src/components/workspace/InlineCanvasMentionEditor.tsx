@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { cn } from "@/lib/utils";
 import { STATIC_BASE_URL } from "@/api/request";
 import { canvasImageSlotLabel } from "@/lib/canvasImageSlots";
+import { useTranslation } from "react-i18next";
 
 type CanvasItem = { id?: string; src: string; name: string; type?: "image" | "video" };
 
@@ -78,7 +79,7 @@ function replaceTextInRangeWithNode(root: HTMLElement, replaceLen: number, node:
   sel.addRange(del);
 }
 
-function serializeEditor(root: HTMLElement): string {
+function serializeEditor(root: HTMLElement, imageSlotPrefix: string): string {
   const parts: string[] = [];
   root.childNodes.forEach((child) => {
     if (child.nodeType === Node.TEXT_NODE) {
@@ -88,7 +89,7 @@ function serializeEditor(root: HTMLElement): string {
     if (child.nodeType === Node.ELEMENT_NODE) {
       const el = child as HTMLElement;
       if (el.dataset?.token === "canvas-image" && el.dataset?.slot) {
-        parts.push(`@${canvasImageSlotLabel(Number(el.dataset.slot))}`);
+        parts.push(`@${canvasImageSlotLabel(Number(el.dataset.slot), imageSlotPrefix)}`);
         return;
       }
       parts.push(el.innerText);
@@ -101,7 +102,8 @@ function serializeEditor(root: HTMLElement): string {
 function renderFromValue(
   root: HTMLElement,
   value: string,
-  slotItems: { slot: number; item: CanvasItem }[]
+  slotItems: { slot: number; item: CanvasItem }[],
+  imageSlotPrefix: string
 ) {
   // Clear & rebuild simple inline nodes.
   root.innerHTML = "";
@@ -109,14 +111,14 @@ function renderFromValue(
   const slotMap = new Map<number, CanvasItem>();
   slotItems.forEach((r) => slotMap.set(r.slot, r.item));
 
-  const re = /@图(\d+)/g;
+  const re = /@(图|image)(\d+)/gi;
   let last = 0;
   let m: RegExpExecArray | null;
   while ((m = re.exec(value)) !== null) {
     const start = m.index;
     const end = start + m[0].length;
     if (start > last) root.appendChild(document.createTextNode(value.slice(last, start)));
-    const slot = Number(m[1]);
+    const slot = Number(m[2]);
     const item = slotMap.get(slot);
     if (item) {
       const span = document.createElement("span");
@@ -134,7 +136,7 @@ function renderFromValue(
 
       const label = document.createElement("span");
       label.className = "ml-1 text-[11px] font-bold font-mono text-accent-cyan";
-      label.textContent = canvasImageSlotLabel(slot);
+      label.textContent = canvasImageSlotLabel(slot, imageSlotPrefix);
       span.appendChild(label);
 
       root.appendChild(span);
@@ -165,9 +167,11 @@ export function InlineCanvasMentionEditor({
   enableSubmitOnEnter?: boolean;
   onPasteImageFile?: (file: File) => void;
 }) {
+  const { t } = useTranslation();
   const editorRef = useRef<HTMLDivElement>(null);
   const [mentionTail, setMentionTail] = useState<string | null>(null);
   const [isFocused, setIsFocused] = useState(false);
+  const imageSlotPrefix = t("intelligenceHub.canvasImageSlotPrefix");
 
   const slotItems = useMemo(() => {
     let slot = 0;
@@ -185,14 +189,19 @@ export function InlineCanvasMentionEditor({
     return slotItems
       .filter(({ item, slot }) => {
         if (!q) return true;
-        const label = canvasImageSlotLabel(slot).toLowerCase();
-        if (/^图\d*$/.test(q)) return label.startsWith(q);
-        const exact = /^图(\d+)$/.exec(q);
+        const label = canvasImageSlotLabel(slot, imageSlotPrefix).toLowerCase();
+        if (
+          new RegExp(`^${imageSlotPrefix.toLowerCase()}\\d*$`).test(q) ||
+          /^image\d*$/.test(q)
+        ) {
+          return label.startsWith(q) || `image${slot}`.startsWith(q);
+        }
+        const exact = /^(?:图|image)(\d+)$/.exec(q);
         if (exact) return Number(exact[1]) === slot;
         return item.name.toLowerCase().includes(q) || item.src.toLowerCase().includes(q);
       })
       .slice(0, 12);
-  }, [mentionTail, slotItems]);
+  }, [imageSlotPrefix, mentionTail, slotItems]);
 
   // Keep DOM in sync on external value changes (not while focused to avoid caret jumps).
   useEffect(() => {
@@ -200,18 +209,18 @@ export function InlineCanvasMentionEditor({
     if (!root) return;
     if (isFocused) return;
     // Avoid rebuilding tokens (which can trigger image re-decode / refetch) if DOM already matches.
-    const current = serializeEditor(root);
+    const current = serializeEditor(root, imageSlotPrefix);
     if (current !== value) {
-      renderFromValue(root, value, slotItems);
+      renderFromValue(root, value, slotItems, imageSlotPrefix);
     }
-  }, [value, slotItems, isFocused]);
+  }, [value, slotItems, isFocused, imageSlotPrefix]);
 
   const emitChangeFromDom = useCallback(() => {
     const root = editorRef.current;
     if (!root) return;
-    const next = serializeEditor(root);
+    const next = serializeEditor(root, imageSlotPrefix);
     onChange(next);
-  }, [onChange]);
+  }, [onChange, imageSlotPrefix]);
 
   const updateMentionTailFromCaret = useCallback(() => {
     const root = editorRef.current;
@@ -252,7 +261,7 @@ export function InlineCanvasMentionEditor({
 
       const label = document.createElement("span");
       label.className = "ml-1 text-[11px] font-bold font-mono text-accent-cyan";
-      label.textContent = canvasImageSlotLabel(slot);
+      label.textContent = canvasImageSlotLabel(slot, imageSlotPrefix);
       span.appendChild(label);
 
       // Replace "@<tail>" with token node.
@@ -262,7 +271,7 @@ export function InlineCanvasMentionEditor({
       emitChangeFromDom();
       root.focus();
     },
-    [emitChangeFromDom, mentionTail, slotItems]
+    [emitChangeFromDom, imageSlotPrefix, mentionTail, slotItems]
   );
 
   const handleKeyDown = useCallback(
@@ -307,8 +316,8 @@ export function InlineCanvasMentionEditor({
           {visibleMentions.length === 0 ? (
             <div className="px-2.5 py-2 text-[10px] text-muted-foreground">
               {slotItems.length === 0
-                ? "画布上还没有图片。"
-                : "没有匹配的画布图片。"}
+                ? t("intelligenceHub.canvasMentionNoImages")
+                : t("intelligenceHub.canvasMentionNoMatch")}
             </div>
           ) : (
             visibleMentions.map(({ item, slot }) => (
@@ -327,7 +336,7 @@ export function InlineCanvasMentionEditor({
                 <div className="min-w-0">
                   <div className="text-[11px] font-bold truncate">
                     <span className="text-accent-cyan mr-1">
-                      {canvasImageSlotLabel(slot)}
+                      {canvasImageSlotLabel(slot, imageSlotPrefix)}
                     </span>
                     {item.name}
                   </div>
@@ -355,8 +364,10 @@ export function InlineCanvasMentionEditor({
           // Normalize DOM only when needed (rebuilding tokens can look like "reloading images").
           const root = editorRef.current;
           if (!root) return;
-          const current = serializeEditor(root);
-          if (current !== value) renderFromValue(root, value, slotItems);
+          const current = serializeEditor(root, imageSlotPrefix);
+          if (current !== value) {
+            renderFromValue(root, value, slotItems, imageSlotPrefix);
+          }
         }}
         onInput={handleInput}
         onKeyDown={handleKeyDown}

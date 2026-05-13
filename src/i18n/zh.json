@@ -464,7 +464,8 @@
     "viewOptimizedPrompt": "看优化",
     "viewOriginalPrompt": "看原始",
     "toggleOptimizedPrompt": "切换原始/优化提示词",
-    "invalidCanvasSlot": "@图{{slot}} 无效。画布上当前有 {{max}} 张图片（图1–图{{max}}）。",
+    "invalidCanvasSlot": "@{{label}} 无效。画布上当前有 {{max}} 张图片（{{rangeStart}}–{{rangeEnd}}）。",
+    "canvasImageSlotPrefix": "图",
     "canvasMentionNoImages": "画布上还没有图片。",
     "canvasMentionNoMatch": "没有匹配的画布图片。"
   },
@@ -911,7 +912,9 @@
     "webSearchOn": "联网搜索开启",
     "webSearchOff": "联网搜索关闭",
     "webSearchHint": "开启后模型会搜索互联网获取最新信息",
-    "advanced": "高级选项"
+    "advanced": "高级选项",
+    "canvasImageSlotPrefix": "图",
+    "canvasVideoSlotPrefix": "视频"
   },
   "affiliate": {
     "title": "推广计划",

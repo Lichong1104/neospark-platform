@@ -47,6 +47,8 @@ import drawingApi from "@/api/drawing";
 import { optimizePrompt } from "@/api/prompts";
 import type { CanvasImage } from "./CanvasArea";
 import {
+  canvasImageSlotLabel,
+  promptHasCanvasSlotMention,
   resolveImagesFromPromptSlots,
   validatePromptCanvasSlots,
 } from "@/lib/canvasImageSlots";
@@ -441,7 +443,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
       }
 
       const canvasImagesOnly = canvasImages.filter((img) => img.type !== "video");
-      const promptUsesCanvasSlots = /@图\d+/.test(originalPrompt);
+      const promptUsesCanvasSlots = promptHasCanvasSlotMention(originalPrompt);
       if (promptUsesCanvasSlots) {
         const check = validatePromptCanvasSlots(
           originalPrompt,
@@ -450,7 +452,18 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
         if (!check.ok) {
           toast.error(
             t("intelligenceHub.invalidCanvasSlot", {
-              slot: check.invalidSlot,
+              label: canvasImageSlotLabel(
+                check.invalidSlot,
+                t("intelligenceHub.canvasImageSlotPrefix")
+              ),
+              rangeStart: canvasImageSlotLabel(
+                1,
+                t("intelligenceHub.canvasImageSlotPrefix")
+              ),
+              rangeEnd: canvasImageSlotLabel(
+                canvasImagesOnly.length,
+                t("intelligenceHub.canvasImageSlotPrefix")
+              ),
               max: canvasImagesOnly.length,
             })
           );

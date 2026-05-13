@@ -464,7 +464,8 @@
     "viewOptimizedPrompt": "Optimized",
     "viewOriginalPrompt": "Original",
     "toggleOptimizedPrompt": "Toggle original/optimized prompt",
-    "invalidCanvasSlot": "@图{{slot}} is invalid. There are {{max}} image(s) on the canvas (图1–图{{max}}).",
+    "invalidCanvasSlot": "@{{label}} is invalid. There are {{max}} image(s) on the canvas ({{rangeStart}}–{{rangeEnd}}).",
+    "canvasImageSlotPrefix": "image",
     "canvasMentionNoImages": "No images on the canvas yet.",
     "canvasMentionNoMatch": "No canvas image matches this query."
   },
@@ -911,7 +912,9 @@
     "webSearchOn": "Web Search ON",
     "webSearchOff": "Web Search OFF",
     "webSearchHint": "Model will search the internet for latest info",
-    "advanced": "Advanced Options"
+    "advanced": "Advanced Options",
+    "canvasImageSlotPrefix": "image",
+    "canvasVideoSlotPrefix": "video"
   },
   "affiliate": {
     "title": "Affiliate Program",

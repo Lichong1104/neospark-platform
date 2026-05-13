@@ -27,8 +27,6 @@ interface VideoConfigFormProps {
   setReferenceImageUrls: (v: string) => void;
   referenceVideoUrls: string;
   setReferenceVideoUrls: (v: string) => void;
-  referenceAudioUrls: string;
-  setReferenceAudioUrls: (v: string) => void;
   selectedCanvasImage?: {
     src: string;
     name: string;
@@ -48,7 +46,7 @@ interface VideoConfigFormProps {
   ratioOptions: string[];
   durationOptions: string[];
   resolutionOptions: string[];
-  onUploadReference: (kind: "image" | "video" | "audio", file: File) => void;
+  onUploadReference: (kind: "image" | "video", file: File) => void;
   onUseSelectedCanvasRefs: () => void;
   onUseCanvasAsFirstFrame: () => void;
   onUseCanvasAsLastFrame: () => void;
@@ -100,8 +98,6 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
   setReferenceImageUrls,
   referenceVideoUrls,
   setReferenceVideoUrls,
-  referenceAudioUrls,
-  setReferenceAudioUrls,
   selectedCanvasImage,
   selectedCanvasImages = [],
   canvasImages = [],
@@ -115,9 +111,10 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
   onUseCanvasAsLastFrame,
 }) => {
   const { t } = useTranslation();
+  const imageSlotPrefix = t("video.canvasImageSlotPrefix");
+  const videoSlotPrefix = t("video.canvasVideoSlotPrefix");
   const imageUploadRef = React.useRef<HTMLInputElement>(null);
   const videoUploadRef = React.useRef<HTMLInputElement>(null);
-  const audioUploadRef = React.useRef<HTMLInputElement>(null);
   const selectedCanvasCount = selectedCanvasImages.length;
 
   type MentionField =
@@ -196,18 +193,24 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
         if (!normalizedQuery) return true;
         const label =
           row.role === "image"
-            ? canvasImageSlotLabel(row.slot).toLowerCase()
-            : `视频${row.slot}`.toLowerCase();
+            ? canvasImageSlotLabel(row.slot, imageSlotPrefix).toLowerCase()
+            : `${videoSlotPrefix}${row.slot}`.toLowerCase();
         if (
-          (expectedRole === "image" && /^图\d*$/.test(normalizedQuery)) ||
-          (expectedRole === "video" && /^视频\d*$/.test(normalizedQuery))
+          (expectedRole === "image" &&
+            (new RegExp(`^${imageSlotPrefix.toLowerCase()}\\d*$`).test(normalizedQuery) ||
+              /^image\d*$/.test(normalizedQuery))) ||
+          (expectedRole === "video" &&
+            new RegExp(`^${videoSlotPrefix.toLowerCase()}\\d*$`).test(normalizedQuery))
         ) {
-          return label.startsWith(normalizedQuery);
+          return (
+            label.startsWith(normalizedQuery) ||
+            (expectedRole === "image" && `image${row.slot}`.startsWith(normalizedQuery))
+          );
         }
         const m =
           expectedRole === "image"
-            ? /^图(\d+)$/.exec(normalizedQuery)
-            : /^视频(\d+)$/.exec(normalizedQuery);
+            ? /^(?:图|image)(\d+)$/.exec(normalizedQuery)
+            : new RegExp(`^${videoSlotPrefix.toLowerCase()}(\\d+)$`).exec(normalizedQuery);
         if (m) return Number(m[1]) === row.slot;
         return (
           row.item.name.toLowerCase().includes(normalizedQuery) ||
@@ -215,7 +218,7 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
         );
       })
       .slice(0, 20);
-  }, [mention, canvasEntriesWithSlots, normalizeCanvasPath]);
+  }, [mention, canvasEntriesWithSlots, normalizeCanvasPath, imageSlotPrefix, videoSlotPrefix]);
 
   const applyMentionPick = React.useCallback(
     (field: MentionField, src: string) => {
@@ -281,8 +284,8 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
                 <div className="text-[11px] font-bold truncate">
                   <span className="text-accent-cyan mr-1">
                     {row.role === "image"
-                      ? canvasImageSlotLabel(row.slot)
-                      : `视频${row.slot}`}
+                      ? canvasImageSlotLabel(row.slot, imageSlotPrefix)
+                      : `${videoSlotPrefix}${row.slot}`}
                   </span>
                   {row.item.name}
                 </div>
@@ -630,40 +633,6 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
             </div>
           </div>
 
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-[10px] font-bold uppercase text-muted-foreground">
-                {t("video.referenceAudioUrls")}
-              </label>
-              <button
-                type="button"
-                onClick={() => audioUploadRef.current?.click()}
-                title={t("video.uploadRefAudio")}
-                className="p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none"
-              >
-                <Upload className="w-3 h-3" />
-              </button>
-            </div>
-            <div className="relative group">
-              <textarea
-                value={referenceAudioUrls}
-                onChange={(e) => setReferenceAudioUrls(e.target.value)}
-                placeholder={t("video.multiUrlHint")}
-                className="w-full min-h-[48px] px-2.5 py-2 pr-8 text-[11px] font-mono border border-foreground/20 bg-background focus:outline-none focus:border-accent-purple resize-y"
-              />
-              {referenceAudioUrls.trim() && (
-                <button
-                  type="button"
-                  onClick={() => setReferenceAudioUrls("")}
-                  className="absolute right-1 top-1 p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none opacity-0 group-hover:opacity-100"
-                  title={t("video.clearInput")}
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              )}
-            </div>
-          </div>
-
           <input
             ref={imageUploadRef}
             type="file"
@@ -683,17 +652,6 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
             onChange={(e) => {
               const file = e.target.files?.[0];
               if (file) onUploadReference("video", file);
-              e.currentTarget.value = "";
-            }}
-          />
-          <input
-            ref={audioUploadRef}
-            type="file"
-            accept="audio/*"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) onUploadReference("audio", file);
               e.currentTarget.value = "";
             }}
           />

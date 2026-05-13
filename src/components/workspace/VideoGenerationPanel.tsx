@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useMemo } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Video, Film, Download, RotateCcw, Sparkles } from "lucide-react";
@@ -62,6 +62,30 @@ const toServerPath = (fullUrl: string) => {
   return fullUrl;
 };
 
+/** Supported output aspect ratios (API may still return deprecated values — normalize away). */
+const VIDEO_RATIO_ORDER = ["16:9", "4:3", "1:1", "3:4", "9:16"] as const;
+
+const normalizeVideoRatio = (r: string | undefined): string => {
+  if (!r) return "16:9";
+  const key = r.trim().toLowerCase();
+  if (key === "21:9" || key === "adaptive") return "16:9";
+  const hit = VIDEO_RATIO_ORDER.find((x) => x.toLowerCase() === key);
+  return hit ?? "16:9";
+};
+
+const filterAllowedRatiosFromApi = (apiRatios: string[] | undefined): string[] => {
+  if (!apiRatios?.length) return [...VIDEO_RATIO_ORDER];
+  const apiNorm = new Set(apiRatios.map((x) => x.trim().toLowerCase()));
+  const ordered = VIDEO_RATIO_ORDER.filter((r) => apiNorm.has(r.toLowerCase()));
+  return ordered.length ? ordered : [...VIDEO_RATIO_ORDER];
+};
+
+const normalizeVideoDuration = (d: number | string | undefined): "5" | "10" => {
+  const n = typeof d === "string" ? Number(d) : d ?? 5;
+  if (n === 10) return "10";
+  return "5";
+};
+
 const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
   onVideoGenerated,
   selectedCanvasImage,
@@ -71,6 +95,7 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
   const VIDEO_TUTORIAL_URL =
     "https://quantrisk.oss-cn-shenzhen.aliyuncs.com/neospark_video.mp4";
   const { t } = useTranslation();
+  const imageSlotPrefix = t("intelligenceHub.canvasImageSlotPrefix");
   const [isCreating, setIsCreating] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [model, setModel] = useState("seedance-2.0");
@@ -83,22 +108,9 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
   const [lastFrameUrl, setLastFrameUrl] = useState("");
   const [referenceImageUrls, setReferenceImageUrls] = useState("");
   const [referenceVideoUrls, setReferenceVideoUrls] = useState("");
-  const [referenceAudioUrls, setReferenceAudioUrls] = useState("");
   const [modelOptions, setModelOptions] = useState<VideoModelConfig[]>([]);
-  const [ratioOptions, setRatioOptions] = useState<string[]>([
-    "16:9",
-    "1:1",
-    "9:16",
-  ]);
-  const [durationOptions, setDurationOptions] = useState<string[]>([
-    "4",
-    "5",
-    "6",
-    "8",
-    "10",
-    "12",
-    "15",
-  ]);
+  const [ratioOptions, setRatioOptions] = useState<string[]>([...VIDEO_RATIO_ORDER]);
+  const [durationOptions] = useState<string[]>(["5", "10"]);
   const [resolutionOptions, setResolutionOptions] = useState<string[]>([
     "720p",
     "480p",
@@ -141,23 +153,20 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
         const firstModel = res.models?.[0]?.id || "";
         const initialModel = model || firstModel;
         if (res.models?.length) setModel(initialModel);
-        if (res.ratios?.length) {
-          setRatioOptions(res.ratios);
-          setRatio(res.ratios[0]);
-        }
+        const ratioList = filterAllowedRatiosFromApi(res.ratios);
+        setRatioOptions(ratioList);
+        setRatio((prev) => {
+          const normalizedPrev = normalizeVideoRatio(prev);
+          if (ratioList.includes(normalizedPrev)) return normalizedPrev;
+          const normalizedFirst = normalizeVideoRatio(res.ratios?.[0]);
+          return ratioList.includes(normalizedFirst) ? normalizedFirst : "16:9";
+        });
         const modelResolutions = resolveResolutions(res.resolutions, initialModel);
         if (modelResolutions.length) {
           setResolutionOptions(modelResolutions);
           setResolution(modelResolutions[0] as VideoResolution);
         }
-        const min = res.durations?.min ?? 4;
-        const max = res.durations?.max ?? 15;
-        const defaultDuration = String(res.durations?.default ?? 5);
-        const values = Array.from({ length: max - min + 1 }, (_, i) =>
-          String(min + i)
-        );
-        setDurationOptions(values);
-        setDuration(defaultDuration);
+        setDuration(normalizeVideoDuration(res.durations?.default));
       })
       .catch(() => {});
   }, [resolveResolutions]);
@@ -170,6 +179,17 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
       setResolutionOptions(modelResolutions);
     }
   }, [model, modelsData, resolveResolutions]);
+
+  React.useEffect(() => {
+    setRatio((prev) => {
+      const n = normalizeVideoRatio(prev);
+      return ratioOptions.includes(n) ? n : ratioOptions[0] ?? "16:9";
+    });
+  }, [ratioOptions]);
+
+  const setDurationClamped = useCallback((v: string) => {
+    setDuration(normalizeVideoDuration(v));
+  }, []);
 
   React.useEffect(() => {
     if (!taskId) return;
@@ -264,8 +284,8 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
   };
 
   const handleUploadReference = useCallback(
-    async (kind: "image" | "video" | "audio", file: File) => {
-      const fileType = kind === "image" ? "image" : kind === "video" ? "video" : "other";
+    async (kind: "image" | "video", file: File) => {
+      const fileType = kind === "image" ? "image" : "video";
       const uploaded = await storageApi.uploadFile(file, fileType);
       const uploadedPath = uploaded.url || uploaded.path || "";
       const normalizedPath = uploadedPath.startsWith("/")
@@ -275,10 +295,8 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
 
       if (kind === "image") {
         setReferenceImageUrls((prev) => appendMultiLineValue(prev, normalizedPath));
-      } else if (kind === "video") {
-        setReferenceVideoUrls((prev) => appendMultiLineValue(prev, normalizedPath));
       } else {
-        setReferenceAudioUrls((prev) => appendMultiLineValue(prev, normalizedPath));
+        setReferenceVideoUrls((prev) => appendMultiLineValue(prev, normalizedPath));
       }
       toast.success(t("video.refUploaded"));
     },
@@ -348,7 +366,9 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     if (!slotCheck.ok) {
       toast.error(
         t("intelligenceHub.invalidCanvasSlot", {
-          slot: slotCheck.invalidSlot,
+          label: canvasImageSlotLabel(slotCheck.invalidSlot, imageSlotPrefix),
+          rangeStart: canvasImageSlotLabel(1, imageSlotPrefix),
+          rangeEnd: canvasImageSlotLabel(canvasImageCount, imageSlotPrefix),
           max: canvasImageCount,
         })
       );
@@ -364,33 +384,22 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
       if (p && !mergedRefImages.includes(p)) mergedRefImages.push(p);
     }
     const parsedRefVideos = parseMultiLineUrls(referenceVideoUrls);
-    const parsedRefAudios = parseMultiLineUrls(referenceAudioUrls);
-    const hasVisualRef =
-      mergedRefImages.length > 0 || parsedRefVideos.length > 0;
-    const hasRefAudio = parsedRefAudios.length > 0;
-    if (hasRefAudio && !hasVisualRef) {
-      toast.error(t("video.referenceAudioRequiresRef"));
-      return;
-    }
+    const durNum = Number(duration);
+    const safeDuration = durNum === 10 ? 10 : 5;
 
     const params: CreateVideoParams = {
       prompt: prompt.trim(),
       model,
-      duration: Number(duration),
-      ratio,
+      duration: safeDuration,
+      ratio: normalizeVideoRatio(ratio),
       resolution,
       generate_audio: generateAudio,
       watermark,
-      camera_fixed: false,
-      return_last_frame: false,
-      draft: false,
-      service_tier: "default",
       first_frame_url: firstFrameUrl.trim() || undefined,
       last_frame_url: lastFrameUrl.trim() || undefined,
       reference_image_urls:
         mergedRefImages.length > 0 ? mergedRefImages : undefined,
       reference_video_urls: parsedRefVideos.length > 0 ? parsedRefVideos : undefined,
-      reference_audio_urls: parsedRefAudios.length > 0 ? parsedRefAudios : undefined,
     };
 
     try {
@@ -430,7 +439,6 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     lastFrameUrl,
     referenceImageUrls,
     referenceVideoUrls,
-    referenceAudioUrls,
     canvasImages,
     t,
   ]);
@@ -448,7 +456,6 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     setLastFrameUrl("");
     setReferenceImageUrls("");
     setReferenceVideoUrls("");
-    setReferenceAudioUrls("");
     setResolution("720p");
     setWatermark(false);
     setEstimatedCost(null);
@@ -566,7 +573,7 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
             ratio={ratio}
             setRatio={setRatio}
             duration={duration}
-            setDuration={setDuration}
+            setDuration={setDurationClamped}
             resolution={resolution}
             setResolution={setResolution}
             generateAudio={generateAudio}
@@ -581,8 +588,6 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
             setReferenceImageUrls={setReferenceImageUrls}
             referenceVideoUrls={referenceVideoUrls}
             setReferenceVideoUrls={setReferenceVideoUrls}
-            referenceAudioUrls={referenceAudioUrls}
-            setReferenceAudioUrls={setReferenceAudioUrls}
             selectedCanvasImage={selectedCanvasImage ?? null}
             selectedCanvasImages={selectedCanvasImages}
             canvasImages={canvasImages}

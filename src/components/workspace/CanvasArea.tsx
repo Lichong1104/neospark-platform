@@ -68,6 +68,7 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
   isFileDropLoading = false,
 }) => {
   const { t } = useTranslation();
+  const imageSlotPrefix = t("intelligenceHub.canvasImageSlotPrefix");
   const images = canvasImages;
   const setImages = onCanvasImagesChange;
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -747,9 +748,9 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
                 {imageSlotById.has(img.id) && (
                   <div
                     className="absolute top-1 left-1 z-[1] px-1.5 py-0.5 text-[10px] font-bold font-mono bg-foreground/90 text-card border border-card/30 pointer-events-none select-none"
-                    title={`@${canvasImageSlotLabel(imageSlotById.get(img.id)!)}`}
+                    title={`@${canvasImageSlotLabel(imageSlotById.get(img.id)!, imageSlotPrefix)}`}
                   >
-                    {canvasImageSlotLabel(imageSlotById.get(img.id)!)}
+                    {canvasImageSlotLabel(imageSlotById.get(img.id)!, imageSlotPrefix)}
                   </div>
                 )}
                 {!img.loading && img.type !== "video" && (

@@ -3,17 +3,31 @@
  * Prompts may reference them as @图1, @图2, …
  */
 
-export function canvasImageSlotLabel(slot: number): string {
-  return `图${slot}`;
+const CANVAS_SLOT_PREFIX_ALIASES = ["图", "image"] as const;
+
+function createCanvasSlotRegex(): RegExp {
+  return /@(图|image)(\d+)/gi;
+}
+
+export function canvasImageSlotLabel(slot: number, prefix = "图"): string {
+  return `${prefix}${slot}`;
+}
+
+export function promptHasCanvasSlotMention(prompt: string): boolean {
+  return createCanvasSlotRegex().test(prompt);
 }
 
 export function parseOrderedSlotNumbersFromPrompt(prompt: string): number[] {
   const ordered: number[] = [];
   const seen = new Set<number>();
   let m: RegExpExecArray | null;
-  const re = /@图(\d+)/g;
+  const re = createCanvasSlotRegex();
   while ((m = re.exec(prompt)) !== null) {
-    const n = Number(m[1]);
+    const prefix = m[1]?.toLowerCase();
+    if (!CANVAS_SLOT_PREFIX_ALIASES.some((item) => item.toLowerCase() === prefix)) {
+      continue;
+    }
+    const n = Number(m[2]);
     if (!Number.isFinite(n) || seen.has(n)) continue;
     seen.add(n);
     ordered.push(n);
@@ -26,9 +40,13 @@ export function validatePromptCanvasSlots(
   imageCount: number
 ): { ok: true } | { ok: false; invalidSlot: number } {
   let m: RegExpExecArray | null;
-  const re = /@图(\d+)/g;
+  const re = createCanvasSlotRegex();
   while ((m = re.exec(prompt)) !== null) {
-    const n = Number(m[1]);
+    const prefix = m[1]?.toLowerCase();
+    if (!CANVAS_SLOT_PREFIX_ALIASES.some((item) => item.toLowerCase() === prefix)) {
+      continue;
+    }
+    const n = Number(m[2]);
     if (!Number.isFinite(n) || n < 1 || n > imageCount) {
       return { ok: false, invalidSlot: n };
     }
