@@ -38,6 +38,8 @@ export interface CreateVideoParams {
   resolution?: VideoResolution;
   generate_audio?: boolean;
   watermark?: boolean;
+  /** Photorealistic human mode: assets go through security review; allows first/last + reference images together */
+  real_person_mode?: boolean;
   /** Seedance 2.0 new params */
   seed?: number;
   camera_fixed?: boolean;

@@ -2,6 +2,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { Image, Volume2, VolumeX, Clock, Maximize2, Upload, Link2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Switch } from "@/components/ui/switch";
 import { STATIC_BASE_URL } from "@/api/request";
 import { canvasImageSlotLabel } from "@/lib/canvasImageSlots";
 import type { VideoModelConfig, VideoResolution } from "@/types/video";
@@ -19,6 +20,8 @@ interface VideoConfigFormProps {
   setGenerateAudio: (v: boolean) => void;
   watermark: boolean;
   setWatermark: (v: boolean) => void;
+  realPersonMode: boolean;
+  setRealPersonMode: (v: boolean) => void;
   firstFrameUrl: string;
   setFirstFrameUrl: (v: string) => void;
   lastFrameUrl: string;
@@ -90,6 +93,8 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
   setGenerateAudio,
   watermark,
   setWatermark,
+  realPersonMode,
+  setRealPersonMode,
   firstFrameUrl,
   setFirstFrameUrl,
   lastFrameUrl,
@@ -116,6 +121,18 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
   const imageUploadRef = React.useRef<HTMLInputElement>(null);
   const videoUploadRef = React.useRef<HTMLInputElement>(null);
   const selectedCanvasCount = selectedCanvasImages.length;
+
+  const refImageLines = React.useMemo(
+    () =>
+      referenceImageUrls
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean),
+    [referenceImageUrls]
+  );
+  const hasFrameUrls = Boolean(firstFrameUrl.trim() || lastFrameUrl.trim());
+  const frameMutualLocked = !realPersonMode && refImageLines.length > 0;
+  const refImagesMutualLocked = !realPersonMode && hasFrameUrls;
 
   type MentionField =
     | "firstFrameUrl"
@@ -329,8 +346,8 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
               <option key={item.id} value={item.id}>
                 {item.name}{" "}
                 ({t("video.modelPricePerDuration", {
-                  cost: item.price_per_second * 5,
-                  duration: 5,
+                  cost: item.price_per_second * Number(duration || 5),
+                  duration: Number(duration || 5),
                 })})
               </option>
             ))}
@@ -380,37 +397,58 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
       </section>
 
       <section className="border-brutal border-foreground bg-card brutal-shadow animate-fade-in">
-        <div className="p-2.5 flex items-center gap-2 flex-wrap">
-          <button
-            type="button"
-            onClick={() => setGenerateAudio(!generateAudio)}
-            className={cn(
-              "flex items-center gap-2 px-3 py-2 text-[11px] font-bold uppercase border border-foreground/20 transition-none",
-              generateAudio
-                ? "bg-accent-cyan/15 text-foreground border-accent-cyan/40"
-                : "bg-background text-muted-foreground"
-            )}
-          >
-            {generateAudio ? (
-              <Volume2 className="w-3.5 h-3.5" />
-            ) : (
-              <VolumeX className="w-3.5 h-3.5" />
-            )}
-            {generateAudio ? t("video.audioOn") : t("video.audioOff")}
-          </button>
+        <div className="p-2.5 flex flex-col gap-2.5">
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setGenerateAudio(!generateAudio)}
+              className={cn(
+                "flex items-center gap-2 px-3 py-2 text-[11px] font-bold uppercase border border-foreground/20 transition-none",
+                generateAudio
+                  ? "bg-accent-cyan/15 text-foreground border-accent-cyan/40"
+                  : "bg-background text-muted-foreground"
+              )}
+            >
+              {generateAudio ? (
+                <Volume2 className="w-3.5 h-3.5" />
+              ) : (
+                <VolumeX className="w-3.5 h-3.5" />
+              )}
+              {generateAudio ? t("video.audioOn") : t("video.audioOff")}
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setWatermark(!watermark)}
-            className={cn(
-              "flex items-center gap-2 px-3 py-2 text-[11px] font-bold uppercase border border-foreground/20 transition-none",
-              watermark
-                ? "bg-accent-orange/15 text-foreground border-accent-orange/40"
-                : "bg-background text-muted-foreground"
-            )}
-          >
-            {watermark ? t("video.watermarkOn") : t("video.watermarkOff")}
-          </button>
+            <button
+              type="button"
+              onClick={() => setWatermark(!watermark)}
+              className={cn(
+                "flex items-center gap-2 px-3 py-2 text-[11px] font-bold uppercase border border-foreground/20 transition-none",
+                watermark
+                  ? "bg-accent-orange/15 text-foreground border-accent-orange/40"
+                  : "bg-background text-muted-foreground"
+              )}
+            >
+              {watermark ? t("video.watermarkOn") : t("video.watermarkOff")}
+            </button>
+
+            <div className="flex items-center gap-2 px-3 py-2 border border-foreground/20 bg-background min-w-0 flex-1 basis-[200px]">
+              <Switch
+                id="video-real-person-mode"
+                checked={realPersonMode}
+                onCheckedChange={setRealPersonMode}
+              />
+              <label
+                htmlFor="video-real-person-mode"
+                className="text-[11px] font-bold uppercase cursor-pointer select-none leading-tight"
+              >
+                {t("video.realPersonMode")}
+              </label>
+            </div>
+          </div>
+          {realPersonMode && (
+            <p className="text-[10px] text-muted-foreground leading-snug border-l-2 border-accent-purple/50 pl-2">
+              {t("video.realPersonModeAssetHint")}
+            </p>
+          )}
         </div>
 
         <div className="px-2.5 pb-2.5 pt-1 border-t border-foreground/15 space-y-2.5">
@@ -425,111 +463,140 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
               </div>
             )}
 
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-[10px] font-bold uppercase text-muted-foreground">
-                {t("video.firstFrameUrl")}
-              </label>
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={onUseCanvasAsFirstFrame}
-                  title={t("video.useCanvasRefs", { count: selectedCanvasCount })}
-                  className="p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none"
-                >
-                  <Link2 className="w-3 h-3" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => imageUploadRef.current?.click()}
-                  title={t("video.uploadRefImage")}
-                  className="p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none"
-                >
-                  <Upload className="w-3 h-3" />
-                </button>
+          {frameMutualLocked && (
+            <p className="text-[9px] text-muted-foreground border-l-2 border-foreground/20 pl-2">
+              {t("video.framesLockedByRefsHint")}
+            </p>
+          )}
+
+          <div
+            className={cn(
+              "space-y-2.5",
+              frameMutualLocked && "opacity-45 pointer-events-none"
+            )}
+          >
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-[10px] font-bold uppercase text-muted-foreground">
+                  {t("video.firstFrameUrl")}
+                </label>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    disabled={frameMutualLocked}
+                    onClick={onUseCanvasAsFirstFrame}
+                    title={t("video.useCanvasRefs", { count: selectedCanvasCount })}
+                    className="p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none disabled:pointer-events-none disabled:opacity-40"
+                  >
+                    <Link2 className="w-3 h-3" />
+                  </button>
+                  <button
+                    type="button"
+                    disabled={frameMutualLocked}
+                    onClick={() => imageUploadRef.current?.click()}
+                    title={t("video.uploadRefImage")}
+                    className="p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none disabled:pointer-events-none disabled:opacity-40"
+                  >
+                    <Upload className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+              <div className="relative group">
+                <input
+                  value={firstFrameUrl}
+                  disabled={frameMutualLocked}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setFirstFrameUrl(v);
+                    updateMentionState("firstFrameUrl", v);
+                  }}
+                  onFocus={(e) =>
+                    updateMentionState("firstFrameUrl", e.target.value)
+                  }
+                  placeholder={t("video.firstFrameUrlPlaceholder")}
+                  className="w-full px-2.5 py-2 pr-8 text-[11px] font-mono border border-foreground/20 bg-background focus:outline-none focus:border-accent-purple disabled:cursor-not-allowed"
+                />
+                {firstFrameUrl.trim() && !frameMutualLocked && (
+                  <button
+                    type="button"
+                    onClick={() => setFirstFrameUrl("")}
+                    className="absolute right-1 top-1/2 -translate-y-1/2 p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none opacity-0 group-hover:opacity-100"
+                    title={t("video.clearInput")}
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+                {renderMentionPanel("firstFrameUrl")}
               </div>
             </div>
-            <div className="relative group">
-              <input
-                value={firstFrameUrl}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setFirstFrameUrl(v);
-                  updateMentionState("firstFrameUrl", v);
-                }}
-                onFocus={(e) =>
-                  updateMentionState("firstFrameUrl", e.target.value)
-                }
-                placeholder={t("video.firstFrameUrlPlaceholder")}
-                className="w-full px-2.5 py-2 pr-8 text-[11px] font-mono border border-foreground/20 bg-background focus:outline-none focus:border-accent-purple"
-              />
-              {firstFrameUrl.trim() && (
-                <button
-                  type="button"
-                  onClick={() => setFirstFrameUrl("")}
-                  className="absolute right-1 top-1/2 -translate-y-1/2 p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none opacity-0 group-hover:opacity-100"
-                  title={t("video.clearInput")}
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              )}
-              {renderMentionPanel("firstFrameUrl")}
+
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-[10px] font-bold uppercase text-muted-foreground">
+                  {t("video.lastFrameUrl")}
+                </label>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    disabled={frameMutualLocked}
+                    onClick={onUseCanvasAsLastFrame}
+                    title={t("video.useCanvasRefs", { count: selectedCanvasCount })}
+                    className="p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none disabled:pointer-events-none disabled:opacity-40"
+                  >
+                    <Link2 className="w-3 h-3" />
+                  </button>
+                  <button
+                    type="button"
+                    disabled={frameMutualLocked}
+                    onClick={() => imageUploadRef.current?.click()}
+                    title={t("video.uploadRefImage")}
+                    className="p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none disabled:pointer-events-none disabled:opacity-40"
+                  >
+                    <Upload className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+              <div className="relative group">
+                <input
+                  value={lastFrameUrl}
+                  disabled={frameMutualLocked}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setLastFrameUrl(v);
+                    updateMentionState("lastFrameUrl", v);
+                  }}
+                  onFocus={(e) =>
+                    updateMentionState("lastFrameUrl", e.target.value)
+                  }
+                  placeholder={t("video.lastFrameUrlPlaceholder")}
+                  className="w-full px-2.5 py-2 pr-8 text-[11px] font-mono border border-foreground/20 bg-background focus:outline-none focus:border-accent-purple disabled:cursor-not-allowed"
+                />
+                {lastFrameUrl.trim() && !frameMutualLocked && (
+                  <button
+                    type="button"
+                    onClick={() => setLastFrameUrl("")}
+                    className="absolute right-1 top-1/2 -translate-y-1/2 p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none opacity-0 group-hover:opacity-100"
+                    title={t("video.clearInput")}
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+                {renderMentionPanel("lastFrameUrl")}
+              </div>
             </div>
           </div>
 
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-[10px] font-bold uppercase text-muted-foreground">
-                {t("video.lastFrameUrl")}
-              </label>
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={onUseCanvasAsLastFrame}
-                  title={t("video.useCanvasRefs", { count: selectedCanvasCount })}
-                  className="p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none"
-                >
-                  <Link2 className="w-3 h-3" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => imageUploadRef.current?.click()}
-                  title={t("video.uploadRefImage")}
-                  className="p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none"
-                >
-                  <Upload className="w-3 h-3" />
-                </button>
-              </div>
-            </div>
-            <div className="relative group">
-              <input
-                value={lastFrameUrl}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setLastFrameUrl(v);
-                  updateMentionState("lastFrameUrl", v);
-                }}
-                onFocus={(e) =>
-                  updateMentionState("lastFrameUrl", e.target.value)
-                }
-                placeholder={t("video.lastFrameUrlPlaceholder")}
-                className="w-full px-2.5 py-2 pr-8 text-[11px] font-mono border border-foreground/20 bg-background focus:outline-none focus:border-accent-purple"
-              />
-              {lastFrameUrl.trim() && (
-                <button
-                  type="button"
-                  onClick={() => setLastFrameUrl("")}
-                  className="absolute right-1 top-1/2 -translate-y-1/2 p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none opacity-0 group-hover:opacity-100"
-                  title={t("video.clearInput")}
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              )}
-              {renderMentionPanel("lastFrameUrl")}
-            </div>
-          </div>
+          {refImagesMutualLocked && (
+            <p className="text-[9px] text-muted-foreground border-l-2 border-foreground/20 pl-2">
+              {t("video.refsLockedByFramesHint")}
+            </p>
+          )}
 
-          <div>
+          <div
+            className={cn(
+              refImagesMutualLocked && "opacity-45 pointer-events-none"
+            )}
+          >
             <div className="flex items-center justify-between mb-1">
               <label className="text-[10px] font-bold uppercase text-muted-foreground">
                 {t("video.referenceImageUrls")}
@@ -537,17 +604,19 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
               <div className="flex items-center gap-1">
                 <button
                   type="button"
+                  disabled={refImagesMutualLocked}
                   onClick={triggerUseCanvasRefs}
                   title={t("video.useCanvasRefs", { count: selectedCanvasCount })}
-                  className="p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none"
+                  className="p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none disabled:pointer-events-none disabled:opacity-40"
                 >
                   <Image className="w-3 h-3" />
                 </button>
                 <button
                   type="button"
+                  disabled={refImagesMutualLocked}
                   onClick={() => imageUploadRef.current?.click()}
                   title={t("video.uploadRefImage")}
-                  className="p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none"
+                  className="p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none disabled:pointer-events-none disabled:opacity-40"
                 >
                   <Upload className="w-3 h-3" />
                 </button>
@@ -556,6 +625,7 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
             <div className="relative group">
               <textarea
                 value={referenceImageUrls}
+                disabled={refImagesMutualLocked}
                 onChange={(e) => {
                   const v = e.target.value;
                   setReferenceImageUrls(v);
@@ -565,9 +635,9 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
                   updateMentionState("referenceImageUrls", e.target.value)
                 }
                 placeholder={t("video.multiUrlHint")}
-                className="w-full min-h-[64px] px-2.5 py-2 pr-8 text-[11px] font-mono border border-foreground/20 bg-background focus:outline-none focus:border-accent-purple resize-y"
+                className="w-full min-h-[64px] px-2.5 py-2 pr-8 text-[11px] font-mono border border-foreground/20 bg-background focus:outline-none focus:border-accent-purple resize-y disabled:cursor-not-allowed"
               />
-              {referenceImageUrls.trim() && (
+              {referenceImageUrls.trim() && !refImagesMutualLocked && (
                 <button
                   type="button"
                   onClick={() => setReferenceImageUrls("")}

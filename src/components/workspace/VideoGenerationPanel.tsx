@@ -80,10 +80,47 @@ const filterAllowedRatiosFromApi = (apiRatios: string[] | undefined): string[] =
   return ordered.length ? ordered : [...VIDEO_RATIO_ORDER];
 };
 
-const normalizeVideoDuration = (d: number | string | undefined): "5" | "10" => {
-  const n = typeof d === "string" ? Number(d) : d ?? 5;
-  if (n === 10) return "10";
-  return "5";
+const VIDEO_DURATION_MIN = 4;
+const VIDEO_DURATION_MAX = 15;
+
+const defaultDurationOptions = (): string[] =>
+  Array.from({ length: VIDEO_DURATION_MAX - VIDEO_DURATION_MIN + 1 }, (_, i) =>
+    String(VIDEO_DURATION_MIN + i)
+  );
+
+const mergeDurationOptionsFromApi = (
+  d: VideoModelsData["durations"] | undefined
+): string[] => {
+  if (!d) return defaultDurationOptions();
+  const min = Number.isFinite(d.min) ? d.min : VIDEO_DURATION_MIN;
+  const max = Number.isFinite(d.max) ? d.max : VIDEO_DURATION_MAX;
+  const lo = Math.max(VIDEO_DURATION_MIN, Math.ceil(min));
+  const hi = Math.min(VIDEO_DURATION_MAX, Math.floor(max));
+  if (lo > hi) return defaultDurationOptions();
+  return Array.from({ length: hi - lo + 1 }, (_, i) => String(lo + i));
+};
+
+/** Pick a duration string that exists in `options` (seconds in [VIDEO_DURATION_MIN, VIDEO_DURATION_MAX]). */
+const pickDurationInOptions = (
+  value: number | string | undefined,
+  options: string[]
+): string => {
+  if (!options.length) return String(VIDEO_DURATION_MIN);
+  const n = typeof value === "string" ? Number(value) : value ?? Number(options[0]);
+  const rounded = Number.isFinite(n) ? Math.round(n) : Number(options[0]);
+  const clamped = Math.min(
+    VIDEO_DURATION_MAX,
+    Math.max(VIDEO_DURATION_MIN, rounded)
+  );
+  const s = String(clamped);
+  if (options.includes(s)) return s;
+  const sorted = [...options].map(Number).filter(Number.isFinite).sort((a, b) => a - b);
+  if (!sorted.length) return options[0];
+  let best = sorted[0];
+  for (const x of sorted) {
+    if (Math.abs(x - clamped) < Math.abs(best - clamped)) best = x;
+  }
+  return String(best);
 };
 
 const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
@@ -104,13 +141,14 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
   const [resolution, setResolution] = useState<VideoResolution>("720p");
   const [generateAudio, setGenerateAudio] = useState(false);
   const [watermark, setWatermark] = useState(false);
+  const [realPersonMode, setRealPersonMode] = useState(false);
   const [firstFrameUrl, setFirstFrameUrl] = useState("");
   const [lastFrameUrl, setLastFrameUrl] = useState("");
   const [referenceImageUrls, setReferenceImageUrls] = useState("");
   const [referenceVideoUrls, setReferenceVideoUrls] = useState("");
   const [modelOptions, setModelOptions] = useState<VideoModelConfig[]>([]);
   const [ratioOptions, setRatioOptions] = useState<string[]>([...VIDEO_RATIO_ORDER]);
-  const [durationOptions] = useState<string[]>(["5", "10"]);
+  const [durationOptions, setDurationOptions] = useState<string[]>(defaultDurationOptions);
   const [resolutionOptions, setResolutionOptions] = useState<string[]>([
     "720p",
     "480p",
@@ -166,7 +204,9 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
           setResolutionOptions(modelResolutions);
           setResolution(modelResolutions[0] as VideoResolution);
         }
-        setDuration(normalizeVideoDuration(res.durations?.default));
+        const durOpts = mergeDurationOptionsFromApi(res.durations);
+        setDurationOptions(durOpts);
+        setDuration(pickDurationInOptions(res.durations?.default, durOpts));
       })
       .catch(() => {});
   }, [resolveResolutions]);
@@ -187,9 +227,20 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     });
   }, [ratioOptions]);
 
-  const setDurationClamped = useCallback((v: string) => {
-    setDuration(normalizeVideoDuration(v));
-  }, []);
+  React.useEffect(() => {
+    setDuration((prev) =>
+      durationOptions.includes(prev)
+        ? prev
+        : pickDurationInOptions(prev, durationOptions)
+    );
+  }, [durationOptions]);
+
+  const setDurationClamped = useCallback(
+    (v: string) => {
+      setDuration(pickDurationInOptions(v, durationOptions));
+    },
+    [durationOptions]
+  );
 
   React.useEffect(() => {
     if (!taskId) return;
@@ -312,14 +363,24 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
       return;
     }
 
+    const hasFrame = Boolean(firstFrameUrl.trim() || lastFrameUrl.trim());
+    const blockRefImages = !realPersonMode && hasFrame;
+
+    let applied = false;
+
     if (selectedImages.length > 0) {
-      setReferenceImageUrls((prev) => {
-        let next = prev;
-        selectedImages.forEach((item) => {
-          next = appendMultiLineValue(next, toServerPath(item.src));
+      if (blockRefImages) {
+        toast.error(t("video.refsLockedByFramesHint"));
+      } else {
+        setReferenceImageUrls((prev) => {
+          let next = prev;
+          selectedImages.forEach((item) => {
+            next = appendMultiLineValue(next, toServerPath(item.src));
+          });
+          return next;
         });
-        return next;
-      });
+        applied = true;
+      }
     }
 
     if (selectedVideos.length > 0) {
@@ -330,10 +391,13 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
         });
         return next;
       });
+      applied = true;
     }
 
-    toast.success(t("video.canvasRefsApplied"));
-  }, [selectedCanvasImages, t]);
+    if (applied) {
+      toast.success(t("video.canvasRefsApplied"));
+    }
+  }, [selectedCanvasImages, t, realPersonMode, firstFrameUrl, lastFrameUrl]);
 
   const handleUseCanvasAsFirstFrame = useCallback(() => {
     const source = selectedCanvasImage?.src;
@@ -384,8 +448,26 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
       if (p && !mergedRefImages.includes(p)) mergedRefImages.push(p);
     }
     const parsedRefVideos = parseMultiLineUrls(referenceVideoUrls);
-    const durNum = Number(duration);
-    const safeDuration = durNum === 10 ? 10 : 5;
+    const safeDuration = Number(pickDurationInOptions(duration, durationOptions));
+
+    const hasFrame = Boolean(firstFrameUrl.trim() || lastFrameUrl.trim());
+    if (!realPersonMode && hasFrame && mergedRefImages.length > 0) {
+      toast.error(t("video.realPersonConflictFramesRefs"));
+      return;
+    }
+
+    const totalImages =
+      (firstFrameUrl.trim() ? 1 : 0) +
+      (lastFrameUrl.trim() ? 1 : 0) +
+      mergedRefImages.length;
+    if (totalImages > 9) {
+      toast.error(t("video.tooManyRefImages"));
+      return;
+    }
+    if (parsedRefVideos.length > 3) {
+      toast.error(t("video.tooManyRefVideos"));
+      return;
+    }
 
     const params: CreateVideoParams = {
       prompt: prompt.trim(),
@@ -395,6 +477,7 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
       resolution,
       generate_audio: generateAudio,
       watermark,
+      real_person_mode: realPersonMode,
       first_frame_url: firstFrameUrl.trim() || undefined,
       last_frame_url: lastFrameUrl.trim() || undefined,
       reference_image_urls:
@@ -435,10 +518,12 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     resolution,
     generateAudio,
     watermark,
+    realPersonMode,
     firstFrameUrl,
     lastFrameUrl,
     referenceImageUrls,
     referenceVideoUrls,
+    durationOptions,
     canvasImages,
     t,
   ]);
@@ -458,6 +543,7 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     setReferenceVideoUrls("");
     setResolution("720p");
     setWatermark(false);
+    setRealPersonMode(false);
     setEstimatedCost(null);
   };
 
@@ -580,6 +666,8 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
             setGenerateAudio={setGenerateAudio}
             watermark={watermark}
             setWatermark={setWatermark}
+            realPersonMode={realPersonMode}
+            setRealPersonMode={setRealPersonMode}
             firstFrameUrl={firstFrameUrl}
             setFirstFrameUrl={setFirstFrameUrl}
             lastFrameUrl={lastFrameUrl}
@@ -639,6 +727,12 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
                   "focus-within:border-accent-purple"
                 )}
               />
+
+              {realPersonMode && (
+                <p className="text-[10px] text-muted-foreground leading-snug border-l-2 border-accent-purple/40 pl-2">
+                  {t("video.realPersonModePromptHint")}
+                </p>
+              )}
 
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5">
