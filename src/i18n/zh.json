@@ -27,6 +27,7 @@
       "prev": "上一页",
       "next": "下一页",
       "addPoints": "加积分",
+      "manage": "管理",
       "inspect": "查看",
       "load": "加载",
       "submit": "提交",
@@ -117,6 +118,11 @@
       "expiryDescPrefix": "该操作调用",
       "dryRun": "dry_run"
     },
+    "restrictions": {
+      "title": "用户管理",
+      "canGenerateImage": "允许生成图片",
+      "canGenerateVideo": "允许生成视频"
+    },
     "toast": {
       "overviewFailed": "概览加载失败",
       "usersFailed": "用户列表加载失败",
@@ -127,6 +133,8 @@
       "pointsInvalidAmount": "请输入正确的积分数（且不能为 0）",
       "pointsUpdated": "积分已更新",
       "pointsAddFailed": "加积分失败",
+      "restrictionsUpdated": "限制设置已更新",
+      "restrictionsFailed": "限制设置更新失败",
       "expiryDryDone": "dry-run 已完成",
       "expiryDone": "处理已完成",
       "expiryFailed": "执行失败"
@@ -873,6 +881,9 @@
     "refImageRequired": "图生视频模式需要提供参考图",
     "estimatedCost": "预估消耗",
     "tutorial": "视频教程",
+    "assetReview": "资产审核",
+    "assetReviewSuccess": "资产审核成功: {{assetId}}",
+    "assetReviewFailed": "资产审核失败",
     "promptPlaceholder": "描述你想要生成的视频效果...",
     "taskCreated": "视频任务已创建，预估消耗 {{cost}} 积分",
     "createFailed": "创建视频任务失败",

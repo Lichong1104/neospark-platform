@@ -375,9 +375,9 @@ export function InlineCanvasMentionEditor({
         onKeyUp={() => updateMentionTailFromCaret()}
         onPaste={handlePaste}
         className={cn(
-          "w-full h-full p-3 border-brutal border-foreground bg-background font-mono text-sm whitespace-pre-wrap break-words",
+          "w-full h-[96px] shrink-0 overflow-y-auto overflow-x-hidden p-3 border-brutal border-foreground bg-background font-mono text-sm whitespace-pre-wrap break-words",
           "focus:outline-none focus:ring-2 focus:ring-accent-cyan",
-          "min-h-[72px] md:min-h-[96px] xl:min-h-[120px]"
+          "md:h-[104px] xl:h-[120px]"
         )}
       />
     </div>

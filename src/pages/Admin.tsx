@@ -29,6 +29,7 @@ import {
 import { BrutalButton } from "@/components/ui/brutal-button";
 import { BrutalInput } from "@/components/ui/brutal-input";
 import { BrutalTabs } from "@/components/ui/brutal-tabs";
+import { Switch } from "@/components/ui/switch";
 import adminApi from "@/api/admin";
 import { STATIC_BASE_URL } from "@/api/request";
 import type {
@@ -104,15 +105,18 @@ const Admin: React.FC = () => {
     "stripe"
   );
 
-  const [pointsDialogOpen, setPointsDialogOpen] = useState(false);
-  const [pointsTargetUser, setPointsTargetUser] = useState<{
+  const [manageDialogOpen, setManageDialogOpen] = useState(false);
+  const [manageTargetUser, setManageTargetUser] = useState<{
     id: number;
     email: string;
     name: string | null;
+    can_generate_image: boolean;
+    can_generate_video: boolean;
   } | null>(null);
   const [pointsValue, setPointsValue] = useState("10");
   const [pointsNote, setPointsNote] = useState("");
   const [pointsSubmitting, setPointsSubmitting] = useState(false);
+  const [restrictionsSubmitting, setRestrictionsSubmitting] = useState(false);
 
   const loadOverview = useCallback(async () => {
     setOverviewLoading(true);
@@ -244,19 +248,21 @@ const Admin: React.FC = () => {
     setActiveTab("userDetail");
   };
 
-  const openAddPointsDialog = (user: {
+  const openManageDialog = (user: {
     id: number;
     email: string;
     name: string | null;
+    can_generate_image: boolean;
+    can_generate_video: boolean;
   }) => {
-    setPointsTargetUser(user);
+    setManageTargetUser(user);
     setPointsValue("10");
     setPointsNote("");
-    setPointsDialogOpen(true);
+    setManageDialogOpen(true);
   };
 
   const submitAddPointsForUser = async () => {
-    if (!pointsTargetUser) return;
+    if (!manageTargetUser) return;
     const points = Number(pointsValue);
     if (!Number.isFinite(points) || points === 0) {
       toast.error(t("admin.toast.pointsInvalidAmount"));
@@ -266,18 +272,38 @@ const Admin: React.FC = () => {
     setPointsSubmitting(true);
     try {
       await adminApi.addPoints({
-        user_id: pointsTargetUser.id,
+        user_id: manageTargetUser.id,
         points,
         note: pointsNote.trim() ? pointsNote.trim() : undefined,
       });
       toast.success(t("admin.toast.pointsUpdated"));
-      setPointsDialogOpen(false);
+      setPointsValue("10");
+      setPointsNote("");
       await loadUsers();
-      if (selectedUserId === pointsTargetUser.id) await loadUserDetail();
+      if (selectedUserId === manageTargetUser.id) await loadUserDetail();
     } catch {
       toast.error(t("admin.toast.pointsAddFailed"));
     } finally {
       setPointsSubmitting(false);
+    }
+  };
+
+  const submitRestrictionsForUser = async () => {
+    if (!manageTargetUser) return;
+
+    setRestrictionsSubmitting(true);
+    try {
+      await adminApi.updateRestrictions(manageTargetUser.id, {
+        can_generate_image: manageTargetUser.can_generate_image,
+        can_generate_video: manageTargetUser.can_generate_video,
+      });
+      toast.success(t("admin.toast.restrictionsUpdated"));
+      await loadUsers();
+      if (selectedUserId === manageTargetUser.id) await loadUserDetail();
+    } catch {
+      toast.error(t("admin.toast.restrictionsFailed"));
+    } finally {
+      setRestrictionsSubmitting(false);
     }
   };
 
@@ -584,14 +610,16 @@ const Admin: React.FC = () => {
                                     size="sm"
                                     variant="yellow"
                                     onClick={() =>
-                                      openAddPointsDialog({
+                                      openManageDialog({
                                         id: u.id,
                                         email: u.email,
                                         name: u.name,
+                                        can_generate_image: u.can_generate_image,
+                                        can_generate_video: u.can_generate_video,
                                       })
                                     }
                                   >
-                                    {t("admin.actions.addPoints")}
+                                    {t("admin.actions.manage")}
                                   </BrutalButton>
                                   <BrutalButton
                                     size="sm"
@@ -1029,58 +1057,104 @@ const Admin: React.FC = () => {
         </div>
       </main>
 
-      <Dialog open={pointsDialogOpen} onOpenChange={setPointsDialogOpen}>
+      <Dialog open={manageDialogOpen} onOpenChange={setManageDialogOpen}>
         <DialogContent className="sm:max-w-md border-brutal border-foreground brutal-shadow bg-card">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 font-bold uppercase tracking-wider">
               <Coins className="h-4 w-4" />
-              {t("admin.actions.addPoints")}
+              {t("admin.restrictions.title")}
             </DialogTitle>
             <DialogDescription>
-              {pointsTargetUser
-                ? `${pointsTargetUser.email}${
-                    pointsTargetUser.name ? ` (${pointsTargetUser.name})` : ""
+              {manageTargetUser
+                ? `${manageTargetUser.email}${
+                    manageTargetUser.name ? ` (${manageTargetUser.name})` : ""
                   }`
                 : ""}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-3">
-            <div className="space-y-1">
+          <div className="space-y-5">
+            {/* 加积分 */}
+            <div className="space-y-3 border-b border-foreground/15 pb-4">
               <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                {t("admin.points.points")}
+                {t("admin.actions.addPoints")}
               </div>
-              <BrutalInput
-                value={pointsValue}
-                onChange={(e) => setPointsValue(e.target.value)}
-                placeholder={t("admin.points.amountPlaceholder")}
-              />
+              <div className="space-y-1">
+                <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  {t("admin.points.points")}
+                </div>
+                <BrutalInput
+                  value={pointsValue}
+                  onChange={(e) => setPointsValue(e.target.value)}
+                  placeholder={t("admin.points.amountPlaceholder")}
+                />
+              </div>
+              <div className="space-y-1">
+                <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  {t("admin.points.note")}
+                </div>
+                <BrutalInput
+                  value={pointsNote}
+                  onChange={(e) => setPointsNote(e.target.value)}
+                  placeholder={t("admin.points.notePlaceholder")}
+                />
+              </div>
+              <BrutalButton
+                variant="primary"
+                size="sm"
+                disabled={pointsSubmitting}
+                onClick={() => void submitAddPointsForUser()}
+              >
+                {pointsSubmitting
+                  ? t("admin.state.loading")
+                  : t("admin.actions.submit")}
+              </BrutalButton>
             </div>
-            <div className="space-y-1">
+
+            {/* 限制开关 */}
+            <div className="space-y-3">
               <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                {t("admin.points.note")}
+                {t("admin.restrictions.title")}
               </div>
-              <BrutalInput
-                value={pointsNote}
-                onChange={(e) => setPointsNote(e.target.value)}
-                placeholder={t("admin.points.notePlaceholder")}
-              />
+              <div className="flex items-center justify-between">
+                <span className="text-sm">{t("admin.restrictions.canGenerateImage")}</span>
+                <Switch
+                  checked={manageTargetUser?.can_generate_image ?? true}
+                  onCheckedChange={(checked) =>
+                    setManageTargetUser((prev) =>
+                      prev ? { ...prev, can_generate_image: checked } : prev
+                    )
+                  }
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm">{t("admin.restrictions.canGenerateVideo")}</span>
+                <Switch
+                  checked={manageTargetUser?.can_generate_video ?? true}
+                  onCheckedChange={(checked) =>
+                    setManageTargetUser((prev) =>
+                      prev ? { ...prev, can_generate_video: checked } : prev
+                    )
+                  }
+                />
+              </div>
+              <BrutalButton
+                variant="primary"
+                size="sm"
+                disabled={restrictionsSubmitting}
+                onClick={() => void submitRestrictionsForUser()}
+              >
+                {restrictionsSubmitting
+                  ? t("admin.state.loading")
+                  : t("admin.actions.submit")}
+              </BrutalButton>
             </div>
           </div>
           <DialogFooter className="gap-2">
             <BrutalButton
               variant="outline"
-              onClick={() => setPointsDialogOpen(false)}
+              onClick={() => setManageDialogOpen(false)}
             >
               {t("common.cancel")}
-            </BrutalButton>
-            <BrutalButton
-              variant="primary"
-              disabled={pointsSubmitting}
-              onClick={() => void submitAddPointsForUser()}
-            >
-              {pointsSubmitting
-                ? t("admin.state.loading")
-                : t("admin.actions.submit")}
             </BrutalButton>
           </DialogFooter>
         </DialogContent>

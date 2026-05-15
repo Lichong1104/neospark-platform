@@ -12,6 +12,8 @@ import type {
   AdminPointsAddParams,
   AdminPointsAddResponse,
   AdminPointsCheckExpiryResponse,
+  AdminUpdateRestrictionsParams,
+  AdminUpdateRestrictionsResponse,
 } from "@/types/admin";
 
 export async function checkAdmin(): Promise<AdminCheckResponse> {
@@ -102,6 +104,17 @@ export async function checkPointsExpiry(params?: {
   return (res as unknown as AdminPointsCheckExpiryResponse) ?? res.data;
 }
 
+export async function updateRestrictions(
+  userId: number,
+  payload: AdminUpdateRestrictionsParams
+): Promise<AdminUpdateRestrictionsResponse> {
+  const res = await http.post<
+    AdminUpdateRestrictionsResponse,
+    AdminUpdateRestrictionsParams
+  >(`/admin/users/${userId}/restrictions`, payload);
+  return (res as unknown as AdminUpdateRestrictionsResponse) ?? res.data;
+}
+
 const adminApi = {
   checkAdmin,
   getOverview,
@@ -113,6 +126,7 @@ const adminApi = {
   getWechatPayments,
   addPoints,
   checkPointsExpiry,
+  updateRestrictions,
 };
 
 export default adminApi;

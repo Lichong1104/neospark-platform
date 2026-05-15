@@ -6,6 +6,7 @@ import type {
   ListVideoTasksParams,
   VideoTaskListData,
   VideoModelsData,
+  UploadVideoAssetData,
 } from "@/types/video";
 import type { ApiResponse } from "@/types/common";
 
@@ -51,11 +52,29 @@ export async function deleteVideoTask(taskId: string): Promise<ApiResponse<unkno
   return http.del(`/video/generations/${taskId}`);
 }
 
+/**
+ * 上传视频资产
+ */
+export async function uploadVideoAsset(
+  file: File,
+  assetType: string = "image",
+  name?: string
+): Promise<UploadVideoAssetData> {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("asset_type", assetType);
+  if (name) formData.append("name", name);
+
+  const res = await http.postForm<UploadVideoAssetData>("/video/assets", formData);
+  return res.data;
+}
+
 const videoApi = {
   getVideoModels,
   createVideoTask,
   getVideoTask,
   listVideoTasks,
   deleteVideoTask,
+  uploadVideoAsset,
 };
 export default videoApi;

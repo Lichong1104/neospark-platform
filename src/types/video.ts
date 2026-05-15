@@ -118,3 +118,18 @@ export interface VideoTaskListData {
   page: number;
   page_size: number;
 }
+
+/** POST /video/assets */
+export interface UploadVideoAssetData {
+  asset_id: string;
+  name: string;
+  asset_type: string;
+  status: string;
+  url: string;
+  upload_id: string;
+  local_url: string;
+  meta_info?: {
+    width?: number;
+    height?: number;
+  };
+}

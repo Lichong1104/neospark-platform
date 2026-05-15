@@ -1,10 +1,10 @@
 import React, { useState, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { Video, Film, Download, RotateCcw, Sparkles } from "lucide-react";
+import { Video, Film, Download, RotateCcw, Sparkles, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
-import { createVideoTask, getVideoModels, getVideoTask } from "@/api/video";
+import { createVideoTask, getVideoModels, getVideoTask, uploadVideoAsset } from "@/api/video";
 import storageApi from "@/api/storage";
 import { STATIC_BASE_URL } from "@/api/request";
 import { getErrorMessage } from "@/lib/errorMessage";
@@ -63,14 +63,14 @@ const toServerPath = (fullUrl: string) => {
 };
 
 /** Supported output aspect ratios (API may still return deprecated values — normalize away). */
-const VIDEO_RATIO_ORDER = ["16:9", "4:3", "1:1", "3:4", "9:16"] as const;
+const VIDEO_RATIO_ORDER = ["16:9", "4:3", "1:1", "3:4", "9:16", "21:9"] as const;
 
 const normalizeVideoRatio = (r: string | undefined): string => {
   if (!r) return "16:9";
   const key = r.trim().toLowerCase();
-  if (key === "21:9" || key === "adaptive") return "16:9";
+  if (key === "adaptive") return "16:9";
   const hit = VIDEO_RATIO_ORDER.find((x) => x.toLowerCase() === key);
-  return hit ?? "16:9";
+  return hit ?? r.trim();
 };
 
 const filterAllowedRatiosFromApi = (apiRatios: string[] | undefined): string[] => {
@@ -80,7 +80,7 @@ const filterAllowedRatiosFromApi = (apiRatios: string[] | undefined): string[] =
   return ordered.length ? ordered : [...VIDEO_RATIO_ORDER];
 };
 
-const VIDEO_DURATION_MIN = 4;
+const VIDEO_DURATION_MIN = 5;
 const VIDEO_DURATION_MAX = 15;
 
 const defaultDurationOptions = (): string[] =>
@@ -135,7 +135,7 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
   const imageSlotPrefix = t("intelligenceHub.canvasImageSlotPrefix");
   const [isCreating, setIsCreating] = useState(false);
   const [prompt, setPrompt] = useState("");
-  const [model, setModel] = useState("seedance-2.0");
+  const [model, setModel] = useState("dreamina-seedance-2-0-260128");
   const [ratio, setRatio] = useState("16:9");
   const [duration, setDuration] = useState("5");
   const [resolution, setResolution] = useState<VideoResolution>("720p");
@@ -182,6 +182,7 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
   const activePollingTaskIdRef = useRef<string | null>(null);
   const deliveredTaskIdsRef = useRef<Set<string>>(new Set());
   const completedNoUrlTriesRef = useRef(0);
+  const assetUploadRef = useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     getVideoModels()
@@ -350,6 +351,19 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
         setReferenceVideoUrls((prev) => appendMultiLineValue(prev, normalizedPath));
       }
       toast.success(t("video.refUploaded"));
+    },
+    [t]
+  );
+
+  const handleAssetReview = useCallback(
+    async (file: File) => {
+      try {
+        const result = await uploadVideoAsset(file, "image");
+        toast.success(t("video.assetReviewSuccess", { assetId: result.asset_id }));
+      } catch (err: any) {
+        const msg = getErrorMessage(err, t("video.assetReviewFailed"));
+        toast.error(msg);
+      }
     },
     [t]
   );
@@ -707,10 +721,14 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
                 >
                   {t("video.tutorial")}
                 </a>
-                <span className="text-[10px] font-bold text-accent-orange">
-                  {t("video.estimatedCost")}:{" "}
-                  {t("video.pointsApprox", { points: estimatedCost ?? 50 })}
-                </span>
+                <button
+                  type="button"
+                  onClick={() => assetUploadRef.current?.click()}
+                  className="text-[10px] font-bold uppercase border border-foreground/30 px-2 py-1 hover:bg-secondary flex items-center gap-1"
+                >
+                  <Shield className="w-3 h-3" />
+                  {t("video.assetReview")}
+                </button>
               </div>
             </div>
 
@@ -763,6 +781,17 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
           </div>
         </div>
       )}
+      <input
+        ref={assetUploadRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleAssetReview(file);
+          e.currentTarget.value = "";
+        }}
+      />
     </div>
   );
 };

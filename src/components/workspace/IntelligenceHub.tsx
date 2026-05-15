@@ -577,15 +577,27 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
         </div>
       }
 
-      {activeTab === "VIDEO" ? (
-        <VideoGenerationPanel
-          onVideoGenerated={onVideoGenerated}
-          selectedCanvasImage={selectedCanvasImage ?? null}
-          selectedCanvasImages={selectedCanvasImages}
-          canvasImages={canvasImages}
-        />
-      ) : (
-        <>
+      {/* Keep both panels mounted so tab switches don't reset generation state or stop polling */}
+      <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+        <div
+          className={cn(
+            "flex flex-col flex-1 min-h-0 overflow-hidden",
+            activeTab !== "VIDEO" && "hidden"
+          )}
+        >
+          <VideoGenerationPanel
+            onVideoGenerated={onVideoGenerated}
+            selectedCanvasImage={selectedCanvasImage ?? null}
+            selectedCanvasImages={selectedCanvasImages}
+            canvasImages={canvasImages}
+          />
+        </div>
+        <div
+          className={cn(
+            "flex flex-col flex-1 min-h-0 overflow-hidden",
+            activeTab !== "IMAGE" && "hidden"
+          )}
+        >
           <ChatView
             isAgentMode={isAgentMode}
             agentStatus={agentStatus}
@@ -624,8 +636,8 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
             selectedCanvasImages={selectedCanvasImages}
             canvasImages={canvasImages}
           />
-        </>
-      )}
+        </div>
+      </div>
     </div>
   );
 };
@@ -1025,7 +1037,7 @@ const ChatView: React.FC<ChatViewProps> = ({
           </div>
         )}
 
-        <div className="relative flex-1">
+        <div className="relative flex-1 min-h-0">
           <InlineCanvasMentionEditor
             value={inputValue}
             onChange={onReuseHistoryPrompt}

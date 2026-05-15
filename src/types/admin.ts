@@ -17,6 +17,8 @@ export type AdminUserListItem = {
   name: string | null;
   avatar_url: string | null;
   is_admin: boolean;
+  can_generate_image: boolean;
+  can_generate_video: boolean;
   created_at: string;
   total_points: number;
   available_points: number;
@@ -38,6 +40,8 @@ export type AdminUserDetail = {
   google_sub: string | null;
   stripe_customer_id: string | null;
   is_admin: boolean;
+  can_generate_image: boolean;
+  can_generate_video: boolean;
   created_at: string;
   updated_at: string;
   points: {
@@ -46,6 +50,18 @@ export type AdminUserDetail = {
     frozen_points: number;
     expires_at: string | null;
   };
+};
+
+export type AdminUpdateRestrictionsParams = {
+  can_generate_image?: boolean;
+  can_generate_video?: boolean;
+};
+
+export type AdminUpdateRestrictionsResponse = {
+  success: boolean;
+  user_id: number;
+  can_generate_image: boolean;
+  can_generate_video: boolean;
 };
 
 export type AdminDrawingRecord = {

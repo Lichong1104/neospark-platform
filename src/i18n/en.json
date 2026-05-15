@@ -27,6 +27,7 @@
       "prev": "Prev",
       "next": "Next",
       "addPoints": "Add points",
+      "manage": "Manage",
       "inspect": "Inspect",
       "load": "Load",
       "submit": "Submit",
@@ -117,6 +118,11 @@
       "expiryDescPrefix": "This calls",
       "dryRun": "dry_run"
     },
+    "restrictions": {
+      "title": "User Management",
+      "canGenerateImage": "Allow image generation",
+      "canGenerateVideo": "Allow video generation"
+    },
     "toast": {
       "overviewFailed": "Failed to load admin overview",
       "usersFailed": "Failed to load users",
@@ -127,6 +133,8 @@
       "pointsInvalidAmount": "Please enter a valid points amount (non-zero)",
       "pointsUpdated": "Points updated",
       "pointsAddFailed": "Failed to add points",
+      "restrictionsUpdated": "Restrictions updated",
+      "restrictionsFailed": "Failed to update restrictions",
       "expiryDryDone": "Dry-run finished",
       "expiryDone": "Expiry processing finished",
       "expiryFailed": "Failed to run expiry check"
@@ -873,6 +881,9 @@
     "refImageRequired": "Reference image is required for image-to-video mode",
     "estimatedCost": "Estimated Cost",
     "tutorial": "Tutorial",
+    "assetReview": "Asset Review",
+    "assetReviewSuccess": "Asset review successful: {{assetId}}",
+    "assetReviewFailed": "Asset review failed",
     "promptPlaceholder": "Describe the video you want to generate...",
     "taskCreated": "Video task created, estimated cost {{cost}} pts",
     "createFailed": "Failed to create video task",
