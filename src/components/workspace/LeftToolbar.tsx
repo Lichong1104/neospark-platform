@@ -5,6 +5,7 @@ import {
   Wand2,
   FolderOpen,
   Loader2,
+  Camera,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -22,6 +23,14 @@ interface LeftToolbarProps {
   onBgRemove?: () => void;
   onLayerSplit?: () => void;
   onUpscale?: (resolution: "2K" | "4K" | "8K") => void;
+  onMultipleAngles?: (params: {
+    horizontalAngle: number;
+    verticalAngle: number;
+    distance: number;
+    prompt?: string;
+    negativePrompt?: string;
+    seed?: number;
+  }) => void;
 }
 
 interface ToolItem {
@@ -46,6 +55,13 @@ const processTools: ToolItem[] = [
     label: "Split",
     cost: 2,
     descriptionKey: "workspace.splitLayers",
+  },
+  {
+    id: "multiple-angles",
+    icon: <Camera className="w-5 h-5" />,
+    label: "Angles",
+    cost: 5,
+    descriptionKey: "workspace.multipleAngles",
   },
 ];
 
@@ -74,6 +90,7 @@ const LeftToolbar: React.FC<LeftToolbarProps> = ({
   onBgRemove,
   onLayerSplit,
   onUpscale,
+  onMultipleAngles,
 }) => {
   const { t } = useTranslation();
   const [selectedQuality, setSelectedQuality] = React.useState("ORIGINAL");
@@ -82,6 +99,15 @@ const LeftToolbar: React.FC<LeftToolbarProps> = ({
     null
   );
   const [activeTool, setActiveTool] = React.useState<string | null>(null);
+  const [showAnglesModal, setShowAnglesModal] = React.useState(false);
+  const [anglesParams, setAnglesParams] = React.useState({
+    horizontalAngle: 45,
+    verticalAngle: 0,
+    distance: 1,
+    prompt: "",
+    negativePrompt: "",
+    seed: -1,
+  });
 
   const isProcessing = processingState?.isProcessing ?? false;
 
@@ -127,6 +153,10 @@ const LeftToolbar: React.FC<LeftToolbarProps> = ({
     }
     if (tool.id === "layer-split") {
       onLayerSplit?.();
+      return;
+    }
+    if (tool.id === "multiple-angles") {
+      setShowAnglesModal(true);
       return;
     }
     // NOTE: "AI enhance" and "AI upscale" click actions are swapped per product UI.
@@ -264,6 +294,141 @@ const LeftToolbar: React.FC<LeftToolbarProps> = ({
               <button
                 onClick={confirmHighCost}
                 className="flex-1 py-2 border-brutal border-foreground font-bold uppercase text-xs bg-accent-red text-card hover:brightness-110 brutal-shadow-red brutal-press"
+              >
+                {t("workspace.confirm")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Multiple Angles Parameter Modal */}
+      {showAnglesModal && (
+        <div className="fixed inset-0 bg-foreground/80 flex items-center justify-center z-50 animate-fade-in">
+          <div className="bg-card border-brutal-heavy border-foreground brutal-shadow-heavy p-5 max-w-xs animate-scale-in w-full">
+            <div className="text-center mb-4">
+              <div className="text-lg font-bold uppercase">
+                {t("workspace.multipleAnglesTitle", { defaultValue: "Multiple Angles" })}
+              </div>
+              <div className="text-xs text-muted-foreground mt-1">
+                {t("workspace.multipleAnglesDesc", { defaultValue: "Generate new camera perspective" })}
+              </div>
+            </div>
+
+            {/* Horizontal Angle */}
+            <div className="mb-3">
+              <label className="text-[10px] font-bold uppercase block mb-1">
+                {t("workspace.horizontalAngle", { defaultValue: "Horizontal" })}
+              </label>
+              <div className="flex gap-1">
+                {[-90, -45, 0, 45, 90].map((v) => (
+                  <button
+                    key={v}
+                    onClick={() => setAnglesParams((p) => ({ ...p, horizontalAngle: v }))}
+                    className={cn(
+                      "flex-1 py-1 text-[10px] font-bold border-brutal border-foreground brutal-shadow brutal-press transition-none",
+                      anglesParams.horizontalAngle === v
+                        ? "bg-foreground text-card"
+                        : "bg-card hover:bg-secondary"
+                    )}
+                  >
+                    {v}°
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Vertical Angle */}
+            <div className="mb-3">
+              <label className="text-[10px] font-bold uppercase block mb-1">
+                {t("workspace.verticalAngle", { defaultValue: "Vertical" })}
+              </label>
+              <div className="flex gap-1">
+                {[-30, 0, 30, 60].map((v) => (
+                  <button
+                    key={v}
+                    onClick={() => setAnglesParams((p) => ({ ...p, verticalAngle: v }))}
+                    className={cn(
+                      "flex-1 py-1 text-[10px] font-bold border-brutal border-foreground brutal-shadow brutal-press transition-none",
+                      anglesParams.verticalAngle === v
+                        ? "bg-foreground text-card"
+                        : "bg-card hover:bg-secondary"
+                    )}
+                  >
+                    {v}°
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Distance */}
+            <div className="mb-3">
+              <label className="text-[10px] font-bold uppercase block mb-1">
+                {t("workspace.distance", { defaultValue: "Distance" })}
+              </label>
+              <div className="flex gap-1">
+                {[
+                  { value: 0, label: t("workspace.distanceClose", { defaultValue: "Close" }) },
+                  { value: 1, label: t("workspace.distanceMedium", { defaultValue: "Medium" }) },
+                  { value: 2, label: t("workspace.distanceWide", { defaultValue: "Wide" }) },
+                ].map((item) => (
+                  <button
+                    key={item.value}
+                    onClick={() => setAnglesParams((p) => ({ ...p, distance: item.value }))}
+                    className={cn(
+                      "flex-1 py-1 text-[10px] font-bold border-brutal border-foreground brutal-shadow brutal-press transition-none",
+                      anglesParams.distance === item.value
+                        ? "bg-foreground text-card"
+                        : "bg-card hover:bg-secondary"
+                    )}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Optional Prompt */}
+            <div className="mb-4">
+              <label className="text-[10px] font-bold uppercase block mb-1">
+                {t("workspace.optionalPrompt", { defaultValue: "Prompt (optional)" })}
+              </label>
+              <input
+                type="text"
+                value={anglesParams.prompt}
+                onChange={(e) => setAnglesParams((p) => ({ ...p, prompt: e.target.value }))}
+                placeholder={t("workspace.promptPlaceholder", { defaultValue: "Describe the desired view..." })}
+                className="w-full px-2 py-1.5 text-xs bg-card border-brutal border-foreground font-mono focus:outline-none focus:ring-0"
+              />
+            </div>
+
+            {/* Cost */}
+            <div className="text-center mb-4">
+              <span className="text-[10px] font-bold bg-accent-cyan text-foreground px-2 py-0.5 border border-foreground/30">
+                -5 {t("header.credits", { defaultValue: "Credits" })}
+              </span>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowAnglesModal(false)}
+                className="flex-1 py-2 border-brutal border-foreground font-bold uppercase text-xs bg-card hover:bg-secondary brutal-shadow brutal-press"
+              >
+                {t("workspace.cancel")}
+              </button>
+              <button
+                onClick={() => {
+                  onMultipleAngles?.({
+                    horizontalAngle: anglesParams.horizontalAngle,
+                    verticalAngle: anglesParams.verticalAngle,
+                    distance: anglesParams.distance,
+                    prompt: anglesParams.prompt || undefined,
+                    negativePrompt: anglesParams.negativePrompt || undefined,
+                    seed: anglesParams.seed,
+                  });
+                  setShowAnglesModal(false);
+                }}
+                className="flex-1 py-2 border-brutal border-foreground font-bold uppercase text-xs bg-foreground text-card hover:brightness-110 brutal-shadow brutal-press"
               >
                 {t("workspace.confirm")}
               </button>

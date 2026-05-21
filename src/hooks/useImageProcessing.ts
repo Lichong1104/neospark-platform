@@ -3,9 +3,14 @@ import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import imageLayerApi from "@/api/imageLayer";
 import { BASE_URL, STATIC_BASE_URL } from "@/api/request";
-import type { BgRemovalTaskDetail, LayerTaskDetail, UpscaleTaskDetail } from "@/types/imageLayer";
+import type {
+  BgRemovalTaskDetail,
+  LayerTaskDetail,
+  UpscaleTaskDetail,
+  MultipleAnglesTaskDetail,
+} from "@/types/imageLayer";
 
-type ProcessingType = "bg-remover" | "layer-split" | "upscale" | null;
+type ProcessingType = "bg-remover" | "layer-split" | "upscale" | "multiple-angles" | null;
 
 interface ProcessingState {
   isProcessing: boolean;
@@ -280,6 +285,87 @@ export function useImageProcessing(
     }
   }, [onResult, stopPolling, t]);
 
+  // ========== Multiple Angles ==========
+  const startMultipleAngles = useCallback(async (
+    imageSrc: string,
+    imageName: string,
+    params: {
+      horizontalAngle: number;
+      verticalAngle: number;
+      distance: number;
+      prompt?: string;
+      negativePrompt?: string;
+      seed?: number;
+    }
+  ) => {
+    const imagePath = getImagePath(imageSrc);
+    setState({ isProcessing: true, type: "multiple-angles", taskId: null, progress: 0 });
+
+    try {
+      const res = await imageLayerApi.createMultipleAnglesTask({
+        image_path: imagePath,
+        horizontal_angle: params.horizontalAngle,
+        vertical_angle: params.verticalAngle,
+        distance: params.distance,
+        prompt: params.prompt,
+        negative_prompt: params.negativePrompt,
+        seed: params.seed ?? -1,
+      });
+      const taskId = res.task_id;
+      stopPolling();
+      activeTaskIdRef.current = taskId;
+      setState(s => ({ ...s, taskId }));
+      toast.info(t("imageProcessing.multipleAnglesCreated", {
+        cost: res.pricing.estimated_cost,
+        defaultValue: "Multiple angles task created, estimated cost {{cost}}",
+      }));
+
+      const poll = async () => {
+        if (activeTaskIdRef.current !== taskId) return;
+        try {
+          const detail: MultipleAnglesTaskDetail = await imageLayerApi.getMultipleAnglesTask(taskId);
+          if (activeTaskIdRef.current !== taskId) return;
+          setState(s => ({ ...s, progress: detail.progress }));
+
+          if (detail.status === "completed" && detail.result_url) {
+            stopPolling();
+            if (!deliveredTaskIdsRef.current.has(taskId)) {
+              deliveredTaskIdsRef.current.add(taskId);
+              setState({ isProcessing: false, type: null, taskId: null, progress: 0 });
+              onResult({
+                type: "multiple-angles",
+                images: [{ src: fullUrl(detail.result_url), name: `${imageName}_angle` }],
+              });
+              toast.success(t("imageProcessing.multipleAnglesCompleted", {
+                defaultValue: "Multiple angles generation completed",
+              }));
+            }
+          } else if (detail.status === "failed") {
+            stopPolling();
+            setState({ isProcessing: false, type: null, taskId: null, progress: 0 });
+            toast.error(t("imageProcessing.multipleAnglesFailed", { defaultValue: "Multiple angles generation failed" }));
+          } else {
+            pollingRef.current = setTimeout(() => {
+              void poll();
+            }, 3000);
+          }
+        } catch {
+          stopPolling();
+          setState({ isProcessing: false, type: null, taskId: null, progress: 0 });
+          toast.error(t("imageProcessing.multipleAnglesStatusFailed", { defaultValue: "Failed to fetch multiple angles status" }));
+        }
+      };
+      void poll();
+    } catch (err: any) {
+      setState({ isProcessing: false, type: null, taskId: null, progress: 0 });
+      if (err?.response?.status === 402) {
+        toast.error(t("imageProcessing.insufficientCredits", { defaultValue: "Insufficient credits" }));
+      } else {
+        toast.error(t("imageProcessing.multipleAnglesCreateFailed", { defaultValue: "Failed to create multiple angles task" }));
+      }
+    }
+  }, [onResult, stopPolling, t]);
+
   const cancel = useCallback(() => {
     stopPolling();
     setState({ isProcessing: false, type: null, taskId: null, progress: 0 });
@@ -290,6 +376,7 @@ export function useImageProcessing(
     startBgRemoval,
     startLayerSplit,
     startUpscale,
+    startMultipleAngles,
     cancel,
   };
 }

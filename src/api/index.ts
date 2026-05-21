@@ -6,6 +6,7 @@ export { default as imageLayerApi } from "./imageLayer";
 export { default as wechatPayApi } from "./wechatPay";
 export { default as apiKeysApi } from "./apiKeys";
 export { default as adminApi } from "./admin";
+export { default as skillsApi } from "./skills";
 export * as promptsApi from "./prompts";
 export { default as http } from "./request";
 export { getToken, setToken, clearToken } from "./token";

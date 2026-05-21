@@ -16,6 +16,10 @@ import type {
   ListUpscaleTasksParams,
   UpscalePriceParams,
   UpscalePriceResponse,
+  CreateMultipleAnglesParams,
+  CreateMultipleAnglesResponse,
+  MultipleAnglesTaskDetail,
+  ListMultipleAnglesTasksParams,
 } from "@/types/imageLayer";
 
 // ==================== 图片分层 ====================
@@ -119,6 +123,36 @@ export async function calculateUpscalePrice(params: UpscalePriceParams): Promise
   return res.data;
 }
 
+// ==================== 多角度生成 ====================
+
+/** 创建多角度生成任务 */
+export async function createMultipleAnglesTask(
+  params: CreateMultipleAnglesParams
+): Promise<CreateMultipleAnglesResponse> {
+  const res = await http.post<CreateMultipleAnglesResponse>("/image-multiple-angles/tasks", params);
+  return res.data ?? (res as unknown as CreateMultipleAnglesResponse);
+}
+
+/** 查询多角度生成任务状态 */
+export async function getMultipleAnglesTask(taskId: string): Promise<MultipleAnglesTaskDetail> {
+  const res = await http.get<MultipleAnglesTaskDetail>(`/image-multiple-angles/tasks/${taskId}`);
+  return res.data;
+}
+
+/** 获取多角度生成任务列表 */
+export async function listMultipleAnglesTasks(params?: ListMultipleAnglesTasksParams) {
+  const res = await http.get<MultipleAnglesTaskDetail[]>(
+    "/image-multiple-angles/tasks",
+    params as Record<string, unknown>
+  );
+  return res.data;
+}
+
+/** 删除多角度生成任务 */
+export async function deleteMultipleAnglesTask(taskId: string): Promise<ApiResponse<unknown>> {
+  return http.del(`/image-multiple-angles/tasks/${taskId}`);
+}
+
 const imageLayerApi = {
   // 分层
   uploadLayerImage,
@@ -138,5 +172,10 @@ const imageLayerApi = {
   listUpscaleTasks,
   deleteUpscaleTask,
   calculateUpscalePrice,
+  // 多角度生成
+  createMultipleAnglesTask,
+  getMultipleAnglesTask,
+  listMultipleAnglesTasks,
+  deleteMultipleAnglesTask,
 };
 export default imageLayerApi;

@@ -138,3 +138,53 @@ export interface UpscalePriceResponse {
   estimated_cost: number;
   currency: string;
 }
+
+/** ===== 多角度生成 Multiple Angles ===== */
+
+/** 创建多角度生成任务请求 */
+export interface CreateMultipleAnglesParams {
+  image_path: string;
+  horizontal_angle: number;
+  vertical_angle?: number;
+  distance?: number;
+  prompt?: string;
+  negative_prompt?: string;
+  seed?: number;
+}
+
+/** 创建多角度生成任务响应 */
+export interface CreateMultipleAnglesResponse {
+  task_id: string;
+  status: string;
+  pricing: {
+    estimated_cost: number;
+    currency: string;
+    service: string;
+  };
+  available_points_after: number;
+  created_at: string;
+}
+
+/** 多角度生成任务详情 */
+export interface MultipleAnglesTaskDetail {
+  task_id: string;
+  status: "pending" | "processing" | "completed" | "failed";
+  progress: number;
+  horizontal_angle: number;
+  vertical_angle: number;
+  distance: number;
+  result_url?: string;
+  local_path?: string;
+  estimated_cost: number;
+  actual_cost?: number;
+  error_msg?: string;
+  created_at: string;
+  completed_at?: string;
+}
+
+/** 多角度生成任务列表查询参数 */
+export interface ListMultipleAnglesTasksParams {
+  page?: number;
+  page_size?: number;
+  status?: string;
+}

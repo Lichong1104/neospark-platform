@@ -19,6 +19,8 @@ import Invoices from "./pages/Invoices";
 import Account from "./pages/Account";
 import Admin from "./pages/Admin";
 import Affiliate from "./pages/Affiliate";
+import SkillMarket from "./pages/SkillMarket";
+import SkillDetail from "./pages/SkillDetail";
 import AdminRouteGuard from "@/components/auth/AdminRouteGuard";
 
 const queryClient = new QueryClient();
@@ -110,6 +112,22 @@ const App = () => (
                   <AdminRouteGuard>
                     <Admin />
                   </AdminRouteGuard>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/skills"
+              element={
+                <ProtectedRoute>
+                  <SkillMarket />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/skills/:skillId"
+              element={
+                <ProtectedRoute>
+                  <SkillDetail />
                 </ProtectedRoute>
               }
             />

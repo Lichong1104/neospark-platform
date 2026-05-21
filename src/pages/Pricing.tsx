@@ -77,8 +77,15 @@ function formatCnyFen(amountFen: number): string {
 
 const Pricing = () => {
   const [billing, setBilling] = useState<BillingCycle>("monthly");
-  const showSubscriptionPlans = true;
   const { t } = useTranslation();
+
+  const isChineseBrowser = useMemo(() => {
+    const lang = navigator.language || "en";
+    return lang.startsWith("zh");
+  }, []);
+
+  const showSubscriptionPlans = !isChineseBrowser;
+  const showWechatPay = isChineseBrowser;
   const navigate = useNavigate();
   const { isAuthenticated, refreshUser } = useAuth();
   const { toast } = useToast();
@@ -699,6 +706,7 @@ const Pricing = () => {
           )}
 
           {/* WeChat Pay Credits */}
+          {showWechatPay && (
           <div className="mt-12">
             <div className="flex items-end justify-between gap-4 mb-4">
               <div>
@@ -883,6 +891,7 @@ const Pricing = () => {
               )}
             </div>
           </div>
+          )}
         </div>
       </main>
 

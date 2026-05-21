@@ -162,6 +162,7 @@ const Index = () => {
     startBgRemoval,
     startLayerSplit,
     startUpscale,
+    startMultipleAngles,
   } = useImageProcessing(addResultsToCanvas);
 
   const handleBgRemove = useCallback(() => {
@@ -193,6 +194,24 @@ const Index = () => {
       );
     },
     [selectedCanvasImage, startUpscale, t]
+  );
+
+  const handleMultipleAngles = useCallback(
+    (params: {
+      horizontalAngle: number;
+      verticalAngle: number;
+      distance: number;
+      prompt?: string;
+      negativePrompt?: string;
+      seed?: number;
+    }) => {
+      if (!selectedCanvasImage || selectedCanvasImage.type === "video") {
+        toast.error(t("workspace.selectImageFirst"));
+        return;
+      }
+      startMultipleAngles(selectedCanvasImage.src, selectedCanvasImage.name, params);
+    },
+    [selectedCanvasImage, startMultipleAngles, t]
   );
 
   const handleAddToCanvas = useCallback(
@@ -438,6 +457,7 @@ const Index = () => {
               onBgRemove={handleBgRemove}
               onLayerSplit={handleLayerSplit}
               onUpscale={handleUpscale}
+              onMultipleAngles={handleMultipleAngles}
             />
             <AssetSidebar
               isOpen={isAssetSidebarOpen}

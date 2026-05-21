@@ -33,6 +33,7 @@ import {
   Loader2,
   X,
   ShoppingBag,
+  Wrench,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -42,6 +43,7 @@ import {
 import { PresetLibrary } from "./PresetLibrary";
 import { AgentChatArea } from "./AgentChatArea";
 import { VideoGenerationPanel } from "./VideoGenerationPanel";
+import SkillChatArea from "./SkillChatArea";
 import { useTranslation } from "react-i18next";
 import drawingApi from "@/api/drawing";
 import { optimizePrompt } from "@/api/prompts";
@@ -228,7 +230,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
 }) => {
   const { t } = useTranslation();
   const AGENTS = useAgents();
-  const [activeTab, setActiveTab] = useState<"IMAGE" | "VIDEO">("IMAGE");
+  const [activeTab, setActiveTab] = useState<"IMAGE" | "VIDEO" | "SKILL">("IMAGE");
   const [isAgentMode, setIsAgentMode] = useState(false);
   const [agentStatus, setAgentStatus] = useState<StatusType>("offline");
   const [showPresets, setShowPresets] = useState(false);
@@ -574,6 +576,20 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
             <Video className="w-4 h-4" />
             {t("intelligenceHub.videoTab")}
           </button>
+          {false && (
+            <button
+              onClick={() => setActiveTab("SKILL")}
+              className={cn(
+                "flex-1 px-6 py-4 font-mono font-bold text-sm uppercase tracking-wider transition-none flex items-center justify-center gap-2 border-l-brutal border-foreground",
+                activeTab === "SKILL"
+                  ? "bg-accent-pink text-card"
+                  : "bg-card text-foreground/50 hover:text-foreground"
+              )}
+            >
+              <Wrench className="w-4 h-4" />
+              {t("skill.tab")}
+            </button>
+          )}
         </div>
       }
 
@@ -632,6 +648,21 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
             pastedImage={pastedImage}
             onPasteImage={setPastedImage}
             isUploadingPaste={isUploadingPaste}
+            selectedCanvasImage={selectedCanvasImage ?? null}
+            selectedCanvasImages={selectedCanvasImages}
+            canvasImages={canvasImages}
+          />
+        </div>
+        {/* SKILL Panel — hidden but preserved for future use */}
+        <div
+          className={cn(
+            "flex flex-col flex-1 min-h-0 overflow-hidden",
+            activeTab !== "SKILL" && "hidden"
+          )}
+        >
+          <SkillChatArea
+            onImagesGenerated={onImagesGenerated}
+            onVideoGenerated={onVideoGenerated}
             selectedCanvasImage={selectedCanvasImage ?? null}
             selectedCanvasImages={selectedCanvasImages}
             canvasImages={canvasImages}
