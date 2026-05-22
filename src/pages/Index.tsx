@@ -120,6 +120,9 @@ const Index = () => {
     .split("-")[0]
     .toLowerCase() === "zh";
 
+  // 全局批次偏移：确保多次生成的图片不会堆叠在同一个位置
+  const generationBatchRef = useRef(0);
+
   // Get selected canvas image info
   const selectedCanvasImage = canvasImages.find(
     (img) => img.id === selectedImage
@@ -303,19 +306,43 @@ const Index = () => {
 
   const handleImagesGenerated = useCallback(
     (images: { url: string; local_path: string }[]) => {
-      const now = Date.now();
-      images.forEach((img, idx) => {
-        const src = img.url.startsWith("http")
-          ? img.url
-          : `${STATIC_BASE_URL}${img.url}`;
-        handleAddToCanvas({
-          src,
-          name: `Generated_${now}_${idx + 1}`,
-          type: "image",
-        }, idx);
-      });
+      (async () => {
+        if (images.length === 0) return;
+        const now = Date.now();
+        const batchIndex = generationBatchRef.current++;
+        const baseX = (selectedCanvasImage?.x ?? 120) + 40 + batchIndex * 80;
+        const baseY = (selectedCanvasImage?.y ?? 60) + 40 + batchIndex * 80;
+
+        const newItems: CanvasImage[] = await Promise.all(
+          images.map(async (img, idx) => {
+            const src = img.url.startsWith("http")
+              ? img.url
+              : `${STATIC_BASE_URL}${img.url}`;
+            const natural = await getImageSize(src);
+            const size = toCanvasSize(natural.width, natural.height);
+            // 网格布局：每行最多3张，间距40px
+            const cols = Math.min(images.length, 3);
+            const col = idx % cols;
+            const row = Math.floor(idx / cols);
+            const gap = 40;
+            return {
+              id: Math.random().toString(36).substr(2, 8).toUpperCase(),
+              x: baseX + col * (size.width + gap),
+              y: baseY + row * (size.height + gap),
+              width: size.width,
+              height: size.height,
+              selected: false,
+              src,
+              name: `Generated_${now}_${idx + 1}`,
+              type: "image" as const,
+            };
+          })
+        );
+
+        setCanvasImages((prev) => [...prev, ...newItems]);
+      })();
     },
-    [handleAddToCanvas]
+    [selectedCanvasImage]
   );
 
   const handleVideoGenerated = useCallback(

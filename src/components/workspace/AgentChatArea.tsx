@@ -57,6 +57,8 @@ type StatusType =
 
 const ECOMMERCE_GUIDE_VIDEO_URL =
   "https://quantrisk.oss-cn-shenzhen.aliyuncs.com/neospark_ecomm.mp4";
+const ECOMMERCE_GUIDE_VIDEO_URL_EN =
+  "https://www.youtube.com/embed/45fCnj5aVSE";
 
 async function pollMessageUntilTerminal(
   messageId: string,
@@ -149,17 +151,15 @@ const EcommerceWelcome: React.FC<{
             <span className="font-bold text-sm">
               {t("agents.ecommerce").toUpperCase()}_AGENT
             </span>
-            {isChineseLanguage ? (
-              <button
-                type="button"
-                onClick={() => setShowGuideVideo(true)}
-                className="inline-flex items-center justify-center w-7 h-7 border-brutal border-foreground bg-accent-cyan text-foreground hover:brightness-110 brutal-press"
-                title="电商详情页大师指导视频"
-                aria-label="打开电商详情页大师指导视频"
-              >
-                <CirclePlay className="w-4 h-4" />
-              </button>
-            ) : null}
+            <button
+              type="button"
+              onClick={() => setShowGuideVideo(true)}
+              className="inline-flex items-center justify-center w-7 h-7 border-brutal border-foreground bg-accent-cyan text-foreground hover:brightness-110 brutal-press"
+              title={isChineseLanguage ? "电商详情页大师指导视频" : "E-Commerce Master Guide Video"}
+              aria-label={isChineseLanguage ? "打开电商详情页大师指导视频" : "Open E-Commerce Master Guide Video"}
+            >
+              <CirclePlay className="w-4 h-4" />
+            </button>
           </div>
           <div className="text-sm bg-secondary/30 border border-foreground/10 p-4 space-y-3 whitespace-pre-wrap">
             <p className="font-bold">{t("ecommerceAgent.greeting")}</p>
@@ -195,20 +195,37 @@ const EcommerceWelcome: React.FC<{
       <Dialog open={showGuideVideo} onOpenChange={setShowGuideVideo}>
         <DialogContent className="max-w-4xl p-4">
           <DialogHeader>
-            <DialogTitle>电商详情页大师指导视频</DialogTitle>
+            <DialogTitle>
+              {isChineseLanguage
+                ? "电商详情页大师指导视频"
+                : "E-Commerce Master Guide Video"}
+            </DialogTitle>
             <DialogDescription>
-              建议先看 1-2 分钟，快速了解电商详情页大师的填写方式与产出流程。
+              {isChineseLanguage
+                ? "建议先看 1-2 分钟，快速了解电商详情页大师的填写方式与产出流程。"
+                : "Watch for 1-2 minutes to quickly understand how to use the E-Commerce Master and its workflow."}
             </DialogDescription>
           </DialogHeader>
           <div className="w-full overflow-hidden rounded-md border">
-            <video
-              className="h-auto w-full"
-              src={ECOMMERCE_GUIDE_VIDEO_URL}
-              controls
-              autoPlay
-              playsInline
-              preload="metadata"
-            />
+            {isChineseLanguage ? (
+              <video
+                className="h-auto w-full"
+                src={ECOMMERCE_GUIDE_VIDEO_URL}
+                controls
+                autoPlay
+                playsInline
+                preload="metadata"
+              />
+            ) : (
+              <iframe
+                className="h-auto w-full aspect-video"
+                src={ECOMMERCE_GUIDE_VIDEO_URL_EN}
+                title="E-Commerce Master Guide Video"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              />
+            )}
           </div>
         </DialogContent>
       </Dialog>

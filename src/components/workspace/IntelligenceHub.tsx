@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorMessage";
 import { useGenerationPolling } from "@/hooks/useGenerationPolling";
 import { STATIC_BASE_URL } from "@/api/request";
+import type { MessageStatusResponse } from "@/types/drawing";
 import {
   Send,
   Zap,
@@ -22,6 +23,7 @@ import {
   Expand,
   Image,
   Image as ImageIcon,
+  Images,
   Video,
   Bookmark,
   Plus,
@@ -250,6 +252,12 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
   );
   const [isStandardGenerating, setIsStandardGenerating] = useState(false);
   const [optimizeStandardPrompt, setOptimizeStandardPrompt] = useState(false);
+  const [batchMode, setBatchMode] = useState(false);
+  const [batchProgress, setBatchProgress] = useState<{
+    current: number;
+    total: number;
+  } | null>(null);
+  const batchAbortRef = useRef(false);
   const [standardGenHistory, setStandardGenHistory] = useState<
     StandardGenHistoryItem[]
   >([]);
@@ -410,6 +418,25 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
     }));
   }, [currentModelConfig]);
 
+  async function pollMessageUntilTerminal(
+    messageId: string,
+    intervalMs = 2000
+  ): Promise<MessageStatusResponse> {
+    for (;;) {
+      const res: MessageStatusResponse = await drawingApi.getMessageStatus(
+        messageId
+      );
+      if (
+        res.status === "completed" ||
+        res.status === "failed" ||
+        res.status === "cancelled"
+      ) {
+        return res;
+      }
+      await new Promise((r) => setTimeout(r, intervalMs));
+    }
+  }
+
   const handleModeToggle = (mode: boolean) => {
     setIsAgentMode(mode);
     setAgentStatus(mode ? "ecommerce" : "offline");
@@ -482,6 +509,109 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
         ? slotRefImages
         : selectedCanvasImages.filter((img) => img.type !== "video");
       const hasSelectedRefs = selectedRefImages.length > 0;
+
+      // ===== 批处理分支 =====
+      if (batchMode && !promptUsesCanvasSlots) {
+        const batchImages = selectedCanvasImages.filter(
+          (img) => img.type !== "video"
+        );
+        if (batchImages.length > 1) {
+          batchAbortRef.current = false;
+          setBatchProgress({ current: 0, total: batchImages.length });
+
+          let sid = standardSessionId;
+          if (!sid) {
+            const session = await drawingApi.createSession({
+              title: originalPrompt.slice(0, 20),
+            });
+            sid = session.session_id;
+            setStandardSessionId(sid);
+          }
+
+          const baseParams: import("@/types/drawing").GenerateImageParams = {
+            prompt: finalPrompt,
+            model,
+            resolution,
+            aspect_ratio: aspectRatio,
+            num_images: 1,
+            provider:
+              currentModelConfig?.provider ??
+              (model.startsWith("gemini") ? "gemini" : "tengda"),
+            optimize_prompt: true,
+          };
+          if (isGptImage2) {
+            baseParams.quality = tengdaQuality;
+          }
+
+          for (let i = 0; i < batchImages.length; i++) {
+            if (batchAbortRef.current) break;
+
+            setBatchProgress({ current: i + 1, total: batchImages.length });
+            const img = batchImages[i];
+            const params = { ...baseParams };
+            if (currentModelConfig?.supports_image_to_image !== false) {
+              params.ref_image_path = toServerPath(img.src);
+            }
+
+            try {
+              const res = await drawingApi.generateImage(sid, params);
+              toast.info(
+                t("intelligenceHub.batchProgressToast", {
+                  current: i + 1,
+                  total: batchImages.length,
+                  cost: res.estimated_cost,
+                })
+              );
+
+              // 内联轮询等待结果
+              const result = await pollMessageUntilTerminal(res.message_id);
+
+              if (
+                result.status === "completed" &&
+                result.images &&
+                result.images.length > 0
+              ) {
+                setStandardGenHistory((prev) => [
+                  ...prev,
+                  {
+                    id: `batch-${Date.now()}-${i}`,
+                    prompt: finalPrompt,
+                    originalPrompt: originalPrompt,
+                    optimizedPrompt: optimizeStandardPrompt
+                      ? finalPrompt
+                      : undefined,
+                    images: result.images,
+                    cost: result.actual_cost ?? null,
+                    createdAt: Date.now(),
+                  },
+                ]);
+                onImagesGenerated?.(result.images);
+              } else if (result.status === "failed") {
+                toast.error(
+                  t("intelligenceHub.batchFailed", {
+                    index: i + 1,
+                    msg: result.error_msg || "",
+                  })
+                );
+              }
+            } catch (err: any) {
+              const msg = getErrorMessage(
+                err,
+                t("intelligenceHub.generateFailed")
+              );
+              toast.error(
+                t("intelligenceHub.batchFailed", { index: i + 1, msg })
+              );
+            }
+          }
+
+          setBatchProgress(null);
+          setIsStandardGenerating(false);
+          setPendingStandardPrompt(null);
+          return;
+        }
+      }
+
       if (
         hasSelectedRefs &&
         selectedRefImages.length > 1 &&
@@ -636,6 +766,9 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
             onModelChange={setModel}
             optimizeStandardPrompt={optimizeStandardPrompt}
             onOptimizeStandardPromptChange={setOptimizeStandardPrompt}
+            batchMode={batchMode}
+            onBatchModeChange={setBatchMode}
+            batchProgress={batchProgress}
             onModeToggle={handleModeToggle}
             onSend={handleSend}
             onTogglePresets={() => setShowPresets(!showPresets)}
@@ -699,6 +832,9 @@ interface ChatViewProps {
   onModelChange: (value: string) => void;
   optimizeStandardPrompt: boolean;
   onOptimizeStandardPromptChange: (value: boolean) => void;
+  batchMode: boolean;
+  onBatchModeChange: (value: boolean) => void;
+  batchProgress: { current: number; total: number } | null;
   onModeToggle: (mode: boolean) => void;
   onSend: () => void;
   onTogglePresets: () => void;
@@ -739,6 +875,9 @@ const ChatView: React.FC<ChatViewProps> = ({
   onModelChange,
   optimizeStandardPrompt,
   onOptimizeStandardPromptChange,
+  batchMode,
+  onBatchModeChange,
+  batchProgress,
   onModeToggle,
   onSend,
   onTogglePresets,
@@ -1146,27 +1285,53 @@ const ChatView: React.FC<ChatViewProps> = ({
             </div>
 
             <div className="pt-1 border-t border-foreground/10 flex items-center justify-between gap-2">
-              <button
-                type="button"
-                onClick={() =>
-                  onOptimizeStandardPromptChange(!optimizeStandardPrompt)
-                }
-                className={cn(
-                  "h-8 px-2.5 inline-flex items-center gap-2 text-[11px] font-mono border border-foreground/20 transition-none",
-                  optimizeStandardPrompt
-                    ? "bg-accent-cyan/15 text-foreground border-accent-cyan/40"
-                    : "bg-background text-muted-foreground"
-                )}
-                title={t("intelligenceHub.optimizePromptBeforeGenerate")}
-              >
-                <span
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    onOptimizeStandardPromptChange(!optimizeStandardPrompt)
+                  }
                   className={cn(
-                    "w-2 h-2 border border-foreground/40",
-                    optimizeStandardPrompt ? "bg-accent-cyan" : "bg-transparent"
+                    "h-8 px-2.5 inline-flex items-center gap-2 text-[11px] font-mono border border-foreground/20 transition-none",
+                    optimizeStandardPrompt
+                      ? "bg-accent-cyan/15 text-foreground border-accent-cyan/40"
+                      : "bg-background text-muted-foreground"
                   )}
-                />
-                {t("intelligenceHub.optimizePromptBeforeGenerate")}
-              </button>
+                  title={t("intelligenceHub.optimizePromptBeforeGenerate")}
+                >
+                  <span
+                    className={cn(
+                      "w-2 h-2 border border-foreground/40",
+                      optimizeStandardPrompt ? "bg-accent-cyan" : "bg-transparent"
+                    )}
+                  />
+                  {t("intelligenceHub.optimizePromptBeforeGenerate")}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onBatchModeChange(!batchMode)}
+                  className={cn(
+                    "h-8 px-2.5 inline-flex items-center gap-2 text-[11px] font-mono border border-foreground/20 transition-none",
+                    batchMode
+                      ? "bg-accent-pink/15 text-foreground border-accent-pink/40"
+                      : "bg-background text-muted-foreground"
+                  )}
+                  title={t("intelligenceHub.batchMode")}
+                >
+                  <Images className="w-3.5 h-3.5" />
+                  {t("intelligenceHub.batchMode")}
+                  {selectedCanvasImages.filter((img) => img.type !== "video")
+                    .length > 1 && (
+                    <span className="text-[9px] text-accent-pink font-bold">
+                      {
+                        selectedCanvasImages.filter((img) => img.type !== "video")
+                          .length
+                      }
+                    </span>
+                  )}
+                </button>
+              </div>
 
               <div className="shrink-0">
                 <button
@@ -1191,6 +1356,36 @@ const ChatView: React.FC<ChatViewProps> = ({
                 </button>
               </div>
             </div>
+
+            {/* 批处理进度 */}
+            {batchProgress && (
+              <div className="mt-2 px-2.5 py-1.5 bg-accent-pink/5 border border-accent-pink/20">
+                <div className="flex items-center justify-between text-[11px] font-mono">
+                  <span className="text-accent-pink font-bold">
+                    {t("intelligenceHub.batchProcessing", {
+                      current: batchProgress.current,
+                      total: batchProgress.total,
+                    })}
+                  </span>
+                  <span className="text-muted-foreground">
+                    {Math.round(
+                      (batchProgress.current / batchProgress.total) * 100
+                    )}
+                    %
+                  </span>
+                </div>
+                <div className="mt-1 w-full h-1 bg-foreground/10">
+                  <div
+                    className="h-full bg-accent-pink transition-all"
+                    style={{
+                      width: `${
+                        (batchProgress.current / batchProgress.total) * 100
+                      }%`,
+                    }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
