@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { Header } from "@/components/layout/Header";
 import { LeftToolbar } from "@/components/workspace/LeftToolbar";
 import { AssetSidebar } from "@/components/workspace/AssetSidebar";
