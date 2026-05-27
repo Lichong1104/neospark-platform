@@ -182,16 +182,11 @@ const WorkspaceOnboarding: React.FC<WorkspaceOnboardingProps> = ({ onComplete })
         placement: "center",
       },
       {
-        targetId: "onboarding-header-nav",
-        titleKey: "onboarding.headerNavTitle",
-        bodyKey: "onboarding.headerNavBody",
+        targetId: "onboarding-user-menu-trigger",
+        titleKey: "onboarding.userMenuTitle",
+        bodyKey: "onboarding.userMenuBody",
         placement: "auto",
-      },
-      {
-        targetId: "onboarding-header-actions",
-        titleKey: "onboarding.headerActionsTitle",
-        bodyKey: "onboarding.headerActionsBody",
-        placement: "auto",
+        pad: 6,
       },
       {
         targetId: "onboarding-toolbar-assets",

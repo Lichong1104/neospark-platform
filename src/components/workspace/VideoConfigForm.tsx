@@ -1,6 +1,15 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Image, Volume2, VolumeX, Clock, Maximize2, Upload, Link2, X } from "lucide-react";
+import {
+  Image,
+  Volume2,
+  VolumeX,
+  Clock,
+  Maximize2,
+  Upload,
+  Link2,
+  X,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
 import { STATIC_BASE_URL } from "@/api/request";
@@ -146,7 +155,8 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
 
   const normalizeCanvasPath = React.useCallback((src: string) => {
     if (!src) return "";
-    if (src.startsWith(STATIC_BASE_URL)) return src.slice(STATIC_BASE_URL.length);
+    if (src.startsWith(STATIC_BASE_URL))
+      return src.slice(STATIC_BASE_URL.length);
     if (src.startsWith("http")) {
       try {
         return new URL(src).pathname;
@@ -165,13 +175,16 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
     return tail;
   }, []);
 
-  const replaceLastAtToken = React.useCallback((value: string, replacement: string) => {
-    const idx = value.lastIndexOf("@");
-    if (idx < 0) return value;
-    const tail = value.slice(idx + 1);
-    if (/\s/.test(tail)) return value;
-    return `${value.slice(0, idx)}${replacement}`;
-  }, []);
+  const replaceLastAtToken = React.useCallback(
+    (value: string, replacement: string) => {
+      const idx = value.lastIndexOf("@");
+      if (idx < 0) return value;
+      const tail = value.slice(idx + 1);
+      if (/\s/.test(tail)) return value;
+      return `${value.slice(0, idx)}${replacement}`;
+    },
+    []
+  );
 
   const updateMentionState = React.useCallback(
     (field: MentionField, value: string) => {
@@ -202,7 +215,9 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
   const visibleCanvasItems = React.useMemo(() => {
     if (!mention) return [];
     const expectedRole =
-      mention.field === "referenceVideoUrls" ? ("video" as const) : ("image" as const);
+      mention.field === "referenceVideoUrls"
+        ? ("video" as const)
+        : ("image" as const);
     const normalizedQuery = mention.query.trim().toLowerCase();
     return canvasEntriesWithSlots
       .filter((row) => row.role === expectedRole)
@@ -214,28 +229,43 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
             : `${videoSlotPrefix}${row.slot}`.toLowerCase();
         if (
           (expectedRole === "image" &&
-            (new RegExp(`^${imageSlotPrefix.toLowerCase()}\\d*$`).test(normalizedQuery) ||
+            (new RegExp(`^${imageSlotPrefix.toLowerCase()}\\d*$`).test(
+              normalizedQuery
+            ) ||
               /^image\d*$/.test(normalizedQuery))) ||
           (expectedRole === "video" &&
-            new RegExp(`^${videoSlotPrefix.toLowerCase()}\\d*$`).test(normalizedQuery))
+            new RegExp(`^${videoSlotPrefix.toLowerCase()}\\d*$`).test(
+              normalizedQuery
+            ))
         ) {
           return (
             label.startsWith(normalizedQuery) ||
-            (expectedRole === "image" && `image${row.slot}`.startsWith(normalizedQuery))
+            (expectedRole === "image" &&
+              `image${row.slot}`.startsWith(normalizedQuery))
           );
         }
         const m =
           expectedRole === "image"
             ? /^(?:图|image)(\d+)$/.exec(normalizedQuery)
-            : new RegExp(`^${videoSlotPrefix.toLowerCase()}(\\d+)$`).exec(normalizedQuery);
+            : new RegExp(`^${videoSlotPrefix.toLowerCase()}(\\d+)$`).exec(
+                normalizedQuery
+              );
         if (m) return Number(m[1]) === row.slot;
         return (
           row.item.name.toLowerCase().includes(normalizedQuery) ||
-          normalizeCanvasPath(row.item.src).toLowerCase().includes(normalizedQuery)
+          normalizeCanvasPath(row.item.src)
+            .toLowerCase()
+            .includes(normalizedQuery)
         );
       })
       .slice(0, 20);
-  }, [mention, canvasEntriesWithSlots, normalizeCanvasPath, imageSlotPrefix, videoSlotPrefix]);
+  }, [
+    mention,
+    canvasEntriesWithSlots,
+    normalizeCanvasPath,
+    imageSlotPrefix,
+    videoSlotPrefix,
+  ]);
 
   const applyMentionPick = React.useCallback(
     (field: MentionField, src: string) => {
@@ -344,11 +374,12 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
           >
             {modelOptions.map((item) => (
               <option key={item.id} value={item.id}>
-                {item.name}{" "}
-                ({t("video.modelPricePerDuration", {
+                {item.name} (
+                {t("video.modelPricePerDuration", {
                   cost: item.price_per_second * Number(duration || 5),
                   duration: Number(duration || 5),
-                })})
+                })}
+                )
               </option>
             ))}
           </select>
@@ -368,7 +399,11 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
             <span className="text-[10px] font-bold uppercase text-muted-foreground w-16 shrink-0 pt-1">
               {t("video.ratio")}
             </span>
-            <ChipSelect options={chipRatios} value={ratio} onChange={setRatio} />
+            <ChipSelect
+              options={chipRatios}
+              value={ratio}
+              onChange={setRatio}
+            />
           </div>
 
           <div className="flex items-start gap-3">
@@ -485,7 +520,9 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
                     type="button"
                     disabled={frameMutualLocked}
                     onClick={onUseCanvasAsFirstFrame}
-                    title={t("video.useCanvasRefs", { count: selectedCanvasCount })}
+                    title={t("video.useCanvasRefs", {
+                      count: selectedCanvasCount,
+                    })}
                     className="p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none disabled:pointer-events-none disabled:opacity-40"
                   >
                     <Link2 className="w-3 h-3" />
@@ -540,7 +577,9 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
                     type="button"
                     disabled={frameMutualLocked}
                     onClick={onUseCanvasAsLastFrame}
-                    title={t("video.useCanvasRefs", { count: selectedCanvasCount })}
+                    title={t("video.useCanvasRefs", {
+                      count: selectedCanvasCount,
+                    })}
                     className="p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none disabled:pointer-events-none disabled:opacity-40"
                   >
                     <Link2 className="w-3 h-3" />
@@ -606,7 +645,9 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
                   type="button"
                   disabled={refImagesMutualLocked}
                   onClick={triggerUseCanvasRefs}
-                  title={t("video.useCanvasRefs", { count: selectedCanvasCount })}
+                  title={t("video.useCanvasRefs", {
+                    count: selectedCanvasCount,
+                  })}
                   className="p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none disabled:pointer-events-none disabled:opacity-40"
                 >
                   <Image className="w-3 h-3" />
@@ -660,7 +701,9 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
                 <button
                   type="button"
                   onClick={triggerUseCanvasRefs}
-                  title={t("video.useCanvasRefs", { count: selectedCanvasCount })}
+                  title={t("video.useCanvasRefs", {
+                    count: selectedCanvasCount,
+                  })}
                   className="p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none"
                 >
                   <Image className="w-3 h-3" />

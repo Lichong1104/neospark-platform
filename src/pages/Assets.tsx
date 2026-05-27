@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Header } from "@/components/layout/Header";
 import { BrutalCard, BrutalCardHeader, BrutalCardTitle, BrutalCardContent } from "@/components/ui/brutal-card";
 import { BrutalButton } from "@/components/ui/brutal-button";
 import { BrutalInput } from "@/components/ui/brutal-input";
@@ -80,8 +79,7 @@ const Assets = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
-      <Header />
+    <div className="h-screen overflow-hidden">
       <input
         ref={fileInputRef}
         type="file"
@@ -91,7 +89,7 @@ const Assets = () => {
         onChange={handleUpload}
       />
       
-      <main className="flex-1 flex overflow-hidden">
+      <main className="h-full flex overflow-hidden">
         {/* Sidebar - grouped by source */}
         <aside className="w-80 p-4 border-r-brutal border-foreground bg-background overflow-y-auto">
           <BrutalCard shadow="default" className="h-full">

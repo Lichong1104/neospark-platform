@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Header } from "@/components/layout/Header";
 import { ProfileHeader } from "@/components/user-center/ProfileHeader";
 import { PlanCard } from "@/components/user-center/PlanCard";
 import { CreditVault } from "@/components/user-center/CreditVault";
@@ -166,10 +165,8 @@ const UserCenter = () => {
   }, [t, userInfo?.balance]);
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
-      <Header />
-
-      <main className="flex-1 p-6 md:p-8 bg-background overflow-y-auto">
+    <div className="h-screen overflow-hidden">
+      <main className="h-full p-6 md:p-8 bg-background overflow-y-auto">
         <div className="max-w-5xl mx-auto space-y-6">
           {/* Profile Header */}
           <ProfileHeader

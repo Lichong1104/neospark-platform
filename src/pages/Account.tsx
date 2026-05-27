@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Header } from "@/components/layout/Header";
 import { BrutalCard, BrutalCardContent, BrutalCardHeader, BrutalCardTitle } from "@/components/ui/brutal-card";
 import { BrutalButton } from "@/components/ui/brutal-button";
 import billingApi, { type BillingInvoice, type BillingSubscriptionSummary } from "@/api/billing";
@@ -71,9 +70,8 @@ const Account = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
-      <Header />
-      <main className="flex-1 bg-background bg-grid overflow-y-auto p-6 md:p-8">
+    <div className="h-screen overflow-hidden">
+      <main className="h-full bg-background bg-grid overflow-y-auto p-6 md:p-8">
         <div className="max-w-5xl mx-auto space-y-5">
           <div>
             <h1 className="text-2xl font-bold uppercase tracking-widest">STRIPE ACCOUNT</h1>

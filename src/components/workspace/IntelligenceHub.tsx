@@ -35,7 +35,6 @@ import {
   Loader2,
   X,
   ShoppingBag,
-  Wrench,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -45,7 +44,6 @@ import {
 import { PresetLibrary } from "./PresetLibrary";
 import { AgentChatArea } from "./AgentChatArea";
 import { VideoGenerationPanel } from "./VideoGenerationPanel";
-import SkillChatArea from "./SkillChatArea";
 import { useTranslation } from "react-i18next";
 import drawingApi from "@/api/drawing";
 import { optimizePrompt } from "@/api/prompts";
@@ -212,6 +210,7 @@ const useAgents = () => {
 };
 
 interface IntelligenceHubProps {
+  className?: string;
   onImagesGenerated?: (images: { url: string; local_path: string }[]) => void;
   onVideoGenerated?: (videoUrl: string) => void;
   selectedCanvasImage?: {
@@ -224,6 +223,7 @@ interface IntelligenceHubProps {
 }
 
 const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
+  className,
   onImagesGenerated,
   onVideoGenerated,
   selectedCanvasImage,
@@ -232,7 +232,9 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
 }) => {
   const { t } = useTranslation();
   const AGENTS = useAgents();
-  const [activeTab, setActiveTab] = useState<"IMAGE" | "VIDEO" | "SKILL">("IMAGE");
+  const [activeTab, setActiveTab] = useState<"IMAGE" | "VIDEO" | "SKILL">(
+    "IMAGE"
+  );
   const [isAgentMode, setIsAgentMode] = useState(false);
   const [agentStatus, setAgentStatus] = useState<StatusType>("offline");
   const [showPresets, setShowPresets] = useState(false);
@@ -244,9 +246,9 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
   const [aspectRatio, setAspectRatio] = useState("1:1");
   const [resolution, setResolution] = useState("1K");
   const [model, setModel] = useState("gemini-3.1-flash-image-preview");
-  const [tengdaQuality, setTengdaQuality] = useState<
-    "low" | "medium" | "high"
-  >("low");
+  const [tengdaQuality, setTengdaQuality] = useState<"low" | "medium" | "high">(
+    "low"
+  );
   const [standardSessionId, setStandardSessionId] = useState<string | null>(
     null
   );
@@ -351,8 +353,14 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
   const tengdaQualityOptions: DropdownOption[] = useMemo(
     () => [
       { value: "low", label: `${t("agentChat.gptImageQualityLow")} (Fast)` },
-      { value: "medium", label: `${t("agentChat.gptImageQualityMedium")} (Balanced)` },
-      { value: "high", label: `${t("agentChat.gptImageQualityHigh")} (Detail)` },
+      {
+        value: "medium",
+        label: `${t("agentChat.gptImageQualityMedium")} (Balanced)`,
+      },
+      {
+        value: "high",
+        label: `${t("agentChat.gptImageQualityHigh")} (Detail)`,
+      },
     ],
     [t]
   );
@@ -401,9 +409,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
     return currentModelConfig.supported_resolutions.map((r) => ({
       value: r.value,
       label:
-        r.label && r.label !== r.value
-          ? `${r.value} (${r.label})`
-          : r.value,
+        r.label && r.label !== r.value ? `${r.value} (${r.label})` : r.value,
     }));
   }, [currentModelConfig]);
 
@@ -452,7 +458,10 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
     const originalPrompt = inputValue.trim();
     setInputValue("");
     setIsStandardGenerating(true);
-    setPendingStandardPrompt({ original: originalPrompt, used: originalPrompt });
+    setPendingStandardPrompt({
+      original: originalPrompt,
+      used: originalPrompt,
+    });
 
     try {
       let finalPrompt = originalPrompt;
@@ -468,10 +477,15 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
           optimized: optimized.optimized_prompt?.trim() || "",
         });
       } else {
-        setPendingStandardPrompt({ original: originalPrompt, used: finalPrompt });
+        setPendingStandardPrompt({
+          original: originalPrompt,
+          used: finalPrompt,
+        });
       }
 
-      const canvasImagesOnly = canvasImages.filter((img) => img.type !== "video");
+      const canvasImagesOnly = canvasImages.filter(
+        (img) => img.type !== "video"
+      );
       const promptUsesCanvasSlots = promptHasCanvasSlotMention(originalPrompt);
       if (promptUsesCanvasSlots) {
         const check = validatePromptCanvasSlots(
@@ -646,7 +660,10 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
       if (isGptImage2) {
         params.quality = tengdaQuality;
       }
-      if (hasSelectedRefs && currentModelConfig?.supports_image_to_image !== false) {
+      if (
+        hasSelectedRefs &&
+        currentModelConfig?.supports_image_to_image !== false
+      ) {
         const refPaths = selectedRefImages
           .slice(0, 14)
           .map((img) => toServerPath(img.src))
@@ -678,48 +695,42 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-card border-l-brutal border-foreground overflow-hidden">
+    <div
+      className={cn(
+        "flex h-full min-h-0 flex-col overflow-hidden bg-card",
+        className
+      )}
+    >
       {/* Tabs */}
       {
-        <div className="flex border-b-brutal border-foreground">
+        <div
+          id="onboarding-hub-tabs"
+          className="flex h-11 shrink-0 border-b-brutal border-foreground"
+        >
           <button
             onClick={() => setActiveTab("IMAGE")}
             className={cn(
-              "flex-1 px-6 py-4 font-mono font-bold text-sm uppercase tracking-wider transition-none flex items-center justify-center gap-2",
+              "flex-1 h-11 min-w-0 px-4 font-mono font-bold text-xs uppercase tracking-wider transition-none flex items-center justify-center gap-1.5",
               activeTab === "IMAGE"
                 ? "bg-foreground text-card"
                 : "bg-card text-foreground/50 hover:text-foreground"
             )}
           >
-            <ImageIcon className="w-4 h-4" />
+            <ImageIcon className="w-3.5 h-3.5" />
             {t("intelligenceHub.imageTab")}
           </button>
           <button
             onClick={() => setActiveTab("VIDEO")}
             className={cn(
-              "flex-1 px-6 py-4 font-mono font-bold text-sm uppercase tracking-wider transition-none flex items-center justify-center gap-2 border-l-brutal border-foreground",
+              "flex-1 h-11 px-4 font-mono font-bold text-xs uppercase tracking-wider transition-none flex items-center justify-center gap-1.5 border-l-brutal border-foreground",
               activeTab === "VIDEO"
                 ? "bg-foreground text-card"
                 : "bg-card text-foreground/50 hover:text-foreground"
             )}
           >
-            <Video className="w-4 h-4" />
+            <Video className="w-3.5 h-3.5" />
             {t("intelligenceHub.videoTab")}
           </button>
-          {false && (
-            <button
-              onClick={() => setActiveTab("SKILL")}
-              className={cn(
-                "flex-1 px-6 py-4 font-mono font-bold text-sm uppercase tracking-wider transition-none flex items-center justify-center gap-2 border-l-brutal border-foreground",
-                activeTab === "SKILL"
-                  ? "bg-accent-pink text-card"
-                  : "bg-card text-foreground/50 hover:text-foreground"
-              )}
-            >
-              <Wrench className="w-4 h-4" />
-              {t("skill.tab")}
-            </button>
-          )}
         </div>
       }
 
@@ -786,22 +797,52 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
             canvasImages={canvasImages}
           />
         </div>
-        {/* SKILL Panel — hidden but preserved for future use */}
-        <div
-          className={cn(
-            "flex flex-col flex-1 min-h-0 overflow-hidden",
-            activeTab !== "SKILL" && "hidden"
-          )}
-        >
-          <SkillChatArea
-            onImagesGenerated={onImagesGenerated}
-            onVideoGenerated={onVideoGenerated}
-            selectedCanvasImage={selectedCanvasImage ?? null}
-            selectedCanvasImages={selectedCanvasImages}
-            canvasImages={canvasImages}
-          />
-        </div>
       </div>
+    </div>
+  );
+};
+
+const GenerationModeToggle: React.FC<{
+  isAgentMode: boolean;
+  onModeToggle: (agentMode: boolean) => void;
+  id?: string;
+}> = ({ isAgentMode, onModeToggle, id }) => {
+  const { t } = useTranslation();
+  return (
+    <div
+      id={id}
+      className="inline-flex h-8 shrink-0 items-stretch border border-foreground/25"
+      role="tablist"
+      aria-label={t("intelligenceHub.generationMode")}
+    >
+      <button
+        type="button"
+        role="tab"
+        aria-selected={!isAgentMode}
+        onClick={() => onModeToggle(false)}
+        className={cn(
+          "px-2.5 text-[10px] font-bold uppercase tracking-wide transition-none",
+          !isAgentMode
+            ? "bg-foreground text-card"
+            : "bg-card text-muted-foreground hover:text-foreground"
+        )}
+      >
+        {t("intelligenceHub.standardMode")}
+      </button>
+      <button
+        type="button"
+        role="tab"
+        aria-selected={isAgentMode}
+        onClick={() => onModeToggle(true)}
+        className={cn(
+          "border-l border-foreground/25 px-2.5 text-[10px] font-bold uppercase tracking-wide transition-none",
+          isAgentMode
+            ? "bg-accent-cyan text-foreground"
+            : "bg-card text-muted-foreground hover:text-foreground"
+        )}
+      >
+        {t("intelligenceHub.agentMode")}
+      </button>
     </div>
   );
 };
@@ -898,12 +939,19 @@ const ChatView: React.FC<ChatViewProps> = ({
   const [historyPromptView, setHistoryPromptView] = useState<
     Record<string, "used" | "original">
   >({});
+  const [settingsExpanded, setSettingsExpanded] = useState(true);
 
   const tengdaQualityOptions: DropdownOption[] = useMemo(
     () => [
       { value: "low", label: `${t("agentChat.gptImageQualityLow")} (Fast)` },
-      { value: "medium", label: `${t("agentChat.gptImageQualityMedium")} (Balanced)` },
-      { value: "high", label: `${t("agentChat.gptImageQualityHigh")} (Detail)` },
+      {
+        value: "medium",
+        label: `${t("agentChat.gptImageQualityMedium")} (Balanced)`,
+      },
+      {
+        value: "high",
+        label: `${t("agentChat.gptImageQualityHigh")} (Detail)`,
+      },
     ],
     [t]
   );
@@ -939,65 +987,34 @@ const ChatView: React.FC<ChatViewProps> = ({
 
   if (isAgentMode) {
     return (
-      <div className="flex flex-col flex-1 overflow-hidden">
-        <div className="p-4 border-b border-foreground/10">
-          <div className="flex items-center gap-2 mb-3 text-xs font-bold uppercase text-muted-foreground">
-            <Sparkles className="w-4 h-4 text-accent-pink" />
-            {t("intelligenceHub.generationMode")}
-          </div>
-          <div className="flex border-brutal border-foreground overflow-hidden">
-            <button
-              onClick={() => onModeToggle(false)}
-              className="flex-1 py-2 font-bold text-sm uppercase tracking-wider transition-none bg-card text-foreground hover:bg-secondary"
-            >
-              {t("intelligenceHub.standardMode")}
-            </button>
-            <button
-              onClick={() => onModeToggle(true)}
-              className="flex-1 py-2 font-bold text-sm uppercase tracking-wider transition-none border-l-brutal border-foreground bg-accent-cyan text-foreground"
-            >
-              {t("intelligenceHub.agentMode")}
-            </button>
-          </div>
-        </div>
-        <AgentChatArea
-          agentStatus={agentStatus}
-          agents={AGENTS}
-          onImagesGenerated={onImagesGenerated}
-          selectedCanvasImage={selectedCanvasImage}
-          selectedCanvasImages={selectedCanvasImages}
-        />
-      </div>
+      <AgentChatArea
+        className="flex-1 min-h-0"
+        agentStatus={agentStatus}
+        agents={AGENTS}
+        onImagesGenerated={onImagesGenerated}
+        selectedCanvasImage={selectedCanvasImage}
+        selectedCanvasImages={selectedCanvasImages}
+        modeToggle={
+          <GenerationModeToggle
+            id="onboarding-hub-mode"
+            isAgentMode={isAgentMode}
+            onModeToggle={onModeToggle}
+          />
+        }
+      />
     );
   }
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden relative">
-      <div className="p-4 border-b border-foreground/10">
-        <div className="flex items-center gap-2 mb-3 text-xs font-bold uppercase text-muted-foreground">
-          <Sparkles className="w-4 h-4 text-accent-pink" />
-          {t("intelligenceHub.generationMode")}
-        </div>
-        <div
-          id="onboarding-hub-mode"
-          className="flex border-brutal border-foreground overflow-hidden"
-        >
-          <button
-            onClick={() => onModeToggle(false)}
-            className="flex-1 py-2 font-bold text-sm uppercase tracking-wider transition-none bg-foreground text-card"
-          >
-            {t("intelligenceHub.standardMode")}
-          </button>
-          <button
-            onClick={() => onModeToggle(true)}
-            className="flex-1 py-2 font-bold text-sm uppercase tracking-wider transition-none border-l-brutal border-foreground bg-card text-foreground hover:bg-secondary"
-          >
-            {t("intelligenceHub.agentMode")}
-          </button>
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto px-8 pt-6 relative flex flex-col min-h-0">
+      <div
+        className={cn(
+          "flex-1 min-h-0 overflow-y-auto px-8 relative flex flex-col",
+          standardGenHistory.length === 0 && !isGenerating
+            ? "justify-center py-6"
+            : "pt-6"
+        )}
+      >
         {(standardGenHistory.length > 0 || isGenerating) && (
           <div className="flex items-center justify-between gap-2 mb-4 text-xs font-bold uppercase text-muted-foreground border-b border-foreground/10 pb-2">
             <span className="flex items-center gap-2">
@@ -1010,7 +1027,7 @@ const ChatView: React.FC<ChatViewProps> = ({
           </div>
         )}
 
-        <div className="space-y-6 flex-1">
+        <div className="space-y-6">
           {standardGenHistory.map((entry) => (
             <div key={entry.id} className="space-y-2">
               <div className="flex items-center justify-between gap-2">
@@ -1040,7 +1057,9 @@ const ChatView: React.FC<ChatViewProps> = ({
               {resolveEntryPrompt(entry).trim() ? (
                 <button
                   type="button"
-                  onClick={() => fillPromptFromHistory(resolveEntryPrompt(entry))}
+                  onClick={() =>
+                    fillPromptFromHistory(resolveEntryPrompt(entry))
+                  }
                   title={t("intelligenceHub.reuseHistoryPrompt")}
                   className="w-full text-left p-3 border-brutal border-foreground bg-secondary/20 font-mono text-sm whitespace-pre-wrap break-words leading-relaxed transition-none hover:bg-secondary/40 hover:border-accent-cyan/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan cursor-pointer"
                 >
@@ -1093,7 +1112,9 @@ const ChatView: React.FC<ChatViewProps> = ({
                   </div>
                   <button
                     type="button"
-                    onClick={() => fillPromptFromHistory(pendingStandardPrompt.used)}
+                    onClick={() =>
+                      fillPromptFromHistory(pendingStandardPrompt.used)
+                    }
                     title={t("intelligenceHub.reuseHistoryPrompt")}
                     className="w-full text-left p-3 border-brutal border-dashed border-accent-cyan/50 bg-accent-cyan/5 font-mono text-sm whitespace-pre-wrap break-words transition-none hover:bg-accent-cyan/15 hover:border-accent-cyan focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan cursor-pointer"
                   >
@@ -1137,18 +1158,16 @@ const ChatView: React.FC<ChatViewProps> = ({
         </div>
 
         {standardGenHistory.length === 0 && !isGenerating && (
-          <div className="flex items-start gap-4 pt-6">
-            <div className="w-16 h-16 border-brutal border-foreground/30 flex items-center justify-center flex-shrink-0">
-              <Zap className="w-8 h-8 text-foreground/30" />
+          <div className="flex flex-col items-center px-4 py-4 text-center shrink-0">
+            <div className="mb-3 flex h-10 w-10 items-center justify-center border-brutal border-foreground bg-accent-cyan/10 brutal-shadow-cyan">
+              <Sparkles className="h-5 w-5 text-accent-cyan" />
             </div>
-            <div className="flex flex-col justify-center">
-              <h2 className="text-lg font-bold uppercase tracking-widest mb-2">
-                {t("intelligenceHub.startCreating")}
-              </h2>
-              <p className="text-sm text-muted-foreground leading-relaxed max-w-[280px]">
-                {t("intelligenceHub.startCreatingDesc")}
-              </p>
-            </div>
+            <h2 className="mb-1.5 text-sm font-bold uppercase tracking-[0.2em] text-foreground">
+              {t("intelligenceHub.startCreating")}
+            </h2>
+            <p className="max-w-[248px] text-xs leading-relaxed text-muted-foreground">
+              {t("intelligenceHub.startCreatingDesc")}
+            </p>
           </div>
         )}
 
@@ -1167,15 +1186,29 @@ const ChatView: React.FC<ChatViewProps> = ({
 
       <div
         id="onboarding-hub-compose"
-        className="flex-1 flex flex-col p-4 border-t-brutal border-foreground bg-card"
+        className="shrink-0 flex flex-col p-4 border-t-brutal border-foreground bg-card"
       >
-        <button
-          onClick={onTogglePresets}
-          className="w-full mb-3 py-2 font-bold text-sm uppercase flex items-center justify-center gap-2 border-brutal border-foreground transition-none brutal-press bg-accent-pink text-foreground brutal-shadow hover:brightness-110"
-        >
-          <Library className="w-4 h-4" />
-          {t("intelligenceHub.promptArsenal")}
-        </button>
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            {t("intelligenceHub.composeLabel")}
+          </span>
+          <button
+            type="button"
+            id="onboarding-hub-presets"
+            onClick={onTogglePresets}
+            className={cn(
+              "inline-flex h-7 shrink-0 items-center gap-1.5 border px-2 text-[10px] font-bold uppercase tracking-wide transition-none brutal-press",
+              showPresets
+                ? "border-accent-pink/50 bg-accent-pink/15 text-foreground"
+                : "border-foreground/25 bg-card text-muted-foreground hover:border-foreground/40 hover:bg-accent-pink/10 hover:text-foreground"
+            )}
+            title={t("intelligenceHub.promptArsenal")}
+            aria-expanded={showPresets}
+          >
+            <Library className="h-3.5 w-3.5" />
+            {t("intelligenceHub.promptArsenalShort")}
+          </button>
+        </div>
 
         {/* Pasted image preview */}
         {(pastedImage || isUploadingPaste) && (
@@ -1207,7 +1240,7 @@ const ChatView: React.FC<ChatViewProps> = ({
           </div>
         )}
 
-        <div className="relative flex-1 min-h-0">
+        <div className="relative shrink-0">
           <InlineCanvasMentionEditor
             value={inputValue}
             onChange={onReuseHistoryPrompt}
@@ -1215,6 +1248,29 @@ const ChatView: React.FC<ChatViewProps> = ({
             placeholder={t("intelligenceHub.inputPlaceholder")}
             onSubmit={onSend}
             enableSubmitOnEnter
+            submitAction={
+              <button
+                type="button"
+                onClick={onSend}
+                disabled={isGenerating || !inputValue.trim()}
+                className={cn(
+                  "h-8 px-3 flex items-center justify-center gap-1.5 border-brutal border-foreground brutal-press text-[11px] font-bold uppercase shadow-sm",
+                  isGenerating || !inputValue.trim()
+                    ? "bg-muted text-muted-foreground cursor-not-allowed"
+                    : "bg-accent-cyan text-foreground hover:brightness-110"
+                )}
+                title={t("canvas.generate")}
+              >
+                {isGenerating ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <Send className="w-3.5 h-3.5" />
+                    {t("canvas.generate")}
+                  </>
+                )}
+              </button>
+            }
             onPasteImageFile={(file) => {
               // Trigger upload via parent
               const upload = async () => {
@@ -1237,16 +1293,35 @@ const ChatView: React.FC<ChatViewProps> = ({
           />
         </div>
 
-        <div className="mt-3 border-brutal border-foreground bg-secondary/10">
-          <div className="px-2.5 py-1.5 border-b border-foreground/15 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-            {t("intelligenceHub.generationMode")} · {t("intelligenceHub.standardMode")}
-          </div>
+        <div
+          id="onboarding-hub-settings"
+          className="mt-2 border-brutal border-foreground bg-secondary/10"
+        >
+          <button
+            type="button"
+            onClick={() => setSettingsExpanded((v) => !v)}
+            className="flex w-full items-center justify-between gap-2 px-2.5 py-2 text-left transition-none hover:bg-secondary/30"
+            aria-expanded={settingsExpanded}
+          >
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+              {t("intelligenceHub.generationSettings")}
+            </span>
+            <ChevronDown
+              className={cn(
+                "h-4 w-4 shrink-0 text-muted-foreground transition-transform",
+                settingsExpanded && "rotate-180"
+              )}
+            />
+          </button>
 
-          <div className="p-2.5 space-y-2.5">
+          {settingsExpanded ? (
+            <div className="space-y-2.5 border-t border-foreground/10 p-2.5">
             <div
               className="grid gap-1.5"
               style={{
-                gridTemplateColumns: `repeat(${isGptImage2 ? 3 : 2}, minmax(0, 1fr))`,
+                gridTemplateColumns: `repeat(${
+                  isGptImage2 ? 3 : 2
+                }, minmax(0, 1fr))`,
               }}
             >
               <BrutalDropdown
@@ -1284,15 +1359,20 @@ const ChatView: React.FC<ChatViewProps> = ({
               />
             </div>
 
-            <div className="pt-1 border-t border-foreground/10 flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
+            <div className="pt-2 mt-1 border-t border-foreground/10">
+              <div className="flex flex-wrap items-stretch gap-2">
+                <GenerationModeToggle
+                  id="onboarding-hub-mode"
+                  isAgentMode={isAgentMode}
+                  onModeToggle={onModeToggle}
+                />
                 <button
                   type="button"
                   onClick={() =>
                     onOptimizeStandardPromptChange(!optimizeStandardPrompt)
                   }
                   className={cn(
-                    "h-8 px-2.5 inline-flex items-center gap-2 text-[11px] font-mono border border-foreground/20 transition-none",
+                    "h-8 min-w-0 flex-1 px-2 inline-flex items-center justify-center gap-1.5 text-[10px] font-mono border border-foreground/20 transition-none",
                     optimizeStandardPrompt
                       ? "bg-accent-cyan/15 text-foreground border-accent-cyan/40"
                       : "bg-background text-muted-foreground"
@@ -1301,92 +1381,74 @@ const ChatView: React.FC<ChatViewProps> = ({
                 >
                   <span
                     className={cn(
-                      "w-2 h-2 border border-foreground/40",
-                      optimizeStandardPrompt ? "bg-accent-cyan" : "bg-transparent"
+                      "w-2 h-2 shrink-0 border border-foreground/40",
+                      optimizeStandardPrompt
+                        ? "bg-accent-cyan"
+                        : "bg-transparent"
                     )}
                   />
-                  {t("intelligenceHub.optimizePromptBeforeGenerate")}
+                  <span className="truncate">
+                    {t("intelligenceHub.optimizePromptShort")}
+                  </span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => onBatchModeChange(!batchMode)}
                   className={cn(
-                    "h-8 px-2.5 inline-flex items-center gap-2 text-[11px] font-mono border border-foreground/20 transition-none",
+                    "h-8 min-w-0 flex-1 px-2 inline-flex items-center justify-center gap-1.5 text-[10px] font-mono border border-foreground/20 transition-none",
                     batchMode
                       ? "bg-accent-pink/15 text-foreground border-accent-pink/40"
                       : "bg-background text-muted-foreground"
                   )}
                   title={t("intelligenceHub.batchMode")}
                 >
-                  <Images className="w-3.5 h-3.5" />
-                  {t("intelligenceHub.batchMode")}
+                  <Images className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">{t("intelligenceHub.batchMode")}</span>
                   {selectedCanvasImages.filter((img) => img.type !== "video")
                     .length > 1 && (
-                    <span className="text-[9px] text-accent-pink font-bold">
+                    <span className="shrink-0 text-[9px] text-accent-pink font-bold">
                       {
-                        selectedCanvasImages.filter((img) => img.type !== "video")
-                          .length
+                        selectedCanvasImages.filter(
+                          (img) => img.type !== "video"
+                        ).length
                       }
                     </span>
                   )}
                 </button>
               </div>
+            </div>
+            </div>
+          ) : null}
 
-              <div className="shrink-0">
-                <button
-                  onClick={onSend}
-                  disabled={isGenerating || !inputValue.trim()}
-                  className={cn(
-                    "h-8 px-3 min-w-[92px] flex items-center justify-center gap-1.5 border-brutal border-foreground brutal-press text-[11px] font-bold uppercase",
-                    isGenerating || !inputValue.trim()
-                      ? "bg-muted text-muted-foreground cursor-not-allowed"
-                      : "bg-accent-cyan text-foreground hover:brightness-110"
+          {batchProgress ? (
+            <div className="border-t border-foreground/10 px-2.5 py-1.5 bg-accent-pink/5">
+              <div className="flex items-center justify-between text-[11px] font-mono">
+                <span className="text-accent-pink font-bold">
+                  {t("intelligenceHub.batchProcessing", {
+                    current: batchProgress.current,
+                    total: batchProgress.total,
+                  })}
+                </span>
+                <span className="text-muted-foreground">
+                  {Math.round(
+                    (batchProgress.current / batchProgress.total) * 100
                   )}
-                  title={t("canvas.generate")}
-                >
-                  {isGenerating ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <>
-                      <Send className="w-3.5 h-3.5" />
-                      {t("canvas.generate")}
-                    </>
-                  )}
-                </button>
+                  %
+                </span>
+              </div>
+              <div className="mt-1 w-full h-1 bg-foreground/10">
+                <div
+                  className="h-full bg-accent-pink transition-all"
+                  style={{
+                    width: `${
+                      (batchProgress.current / batchProgress.total) * 100
+                    }%`,
+                  }}
+                />
               </div>
             </div>
-
-            {/* 批处理进度 */}
-            {batchProgress && (
-              <div className="mt-2 px-2.5 py-1.5 bg-accent-pink/5 border border-accent-pink/20">
-                <div className="flex items-center justify-between text-[11px] font-mono">
-                  <span className="text-accent-pink font-bold">
-                    {t("intelligenceHub.batchProcessing", {
-                      current: batchProgress.current,
-                      total: batchProgress.total,
-                    })}
-                  </span>
-                  <span className="text-muted-foreground">
-                    {Math.round(
-                      (batchProgress.current / batchProgress.total) * 100
-                    )}
-                    %
-                  </span>
-                </div>
-                <div className="mt-1 w-full h-1 bg-foreground/10">
-                  <div
-                    className="h-full bg-accent-pink transition-all"
-                    style={{
-                      width: `${
-                        (batchProgress.current / batchProgress.total) * 100
-                      }%`,
-                    }}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
+          ) : null}
         </div>
       </div>
     </div>

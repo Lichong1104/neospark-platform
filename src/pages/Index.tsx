@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
-import { Header } from "@/components/layout/Header";
+import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { LeftToolbar } from "@/components/workspace/LeftToolbar";
 import { AssetSidebar } from "@/components/workspace/AssetSidebar";
 import {
@@ -114,6 +115,7 @@ const Index = () => {
   const [canvasImages, setCanvasImages] = useState<CanvasImage[]>([]);
   const [isFileDropUploading, setIsFileDropUploading] = useState(false);
   const [showFirstLoginVideo, setShowFirstLoginVideo] = useState(false);
+  const [hubPanelExpanded, setHubPanelExpanded] = useState(true);
   const [hasResolvedOnboardingState, setHasResolvedOnboardingState] =
     useState(false);
   const isChineseLanguage = (i18n.resolvedLanguage || i18n.language || "en")
@@ -390,6 +392,15 @@ const Index = () => {
     setShowWorkspaceOnboarding(false);
   }, [userInfo?.id]);
 
+  useEffect(() => {
+    const onOpenVideoGuide = () => {
+      if (isChineseLanguage) setShowFirstLoginVideo(true);
+    };
+    window.addEventListener("neospark:open-video-guide", onOpenVideoGuide);
+    return () =>
+      window.removeEventListener("neospark:open-video-guide", onOpenVideoGuide);
+  }, [isChineseLanguage]);
+
   const handleFileDrop = useCallback(
     async (files: File[], position?: { x: number; y: number }) => {
       setIsFileDropUploading(true);
@@ -465,15 +476,6 @@ const Index = () => {
   return (
     <>
       <div className="h-screen flex flex-col overflow-hidden">
-        <Header
-          showVideoGuideEntry={isChineseLanguage}
-          onOpenVideoGuide={() => {
-            if (isChineseLanguage) {
-              setShowFirstLoginVideo(true);
-            }
-          }}
-        />
-
         <main className="flex-1 flex overflow-hidden">
           <div className="relative flex-shrink-0">
             <LeftToolbar
@@ -508,14 +510,53 @@ const Index = () => {
             )}
           </div>
 
-          <aside id="onboarding-hub-panel" className="w-[400px] flex-shrink-0">
-            <IntelligenceHub
-              onImagesGenerated={handleImagesGenerated}
-              onVideoGenerated={handleVideoGenerated}
-              selectedCanvasImage={selectedCanvasImage ?? null}
-              selectedCanvasImages={selectedCanvasImages}
-              canvasImages={canvasImages}
-            />
+          <aside
+            id="onboarding-hub-panel"
+            className={cn(
+              "relative flex shrink-0 flex-col border-l-brutal border-foreground bg-card transition-[width] duration-200 ease-out",
+              hubPanelExpanded
+                ? "w-[400px] overflow-visible"
+                : "w-11 overflow-hidden"
+            )}
+          >
+            {hubPanelExpanded && (
+              <button
+                type="button"
+                onClick={() => setHubPanelExpanded(false)}
+                className="absolute left-0 top-1/2 z-30 flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-foreground/10 bg-card text-muted-foreground transition-colors hover:border-foreground/20 hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/20"
+                title={t("intelligenceHub.collapsePanel")}
+                aria-label={t("intelligenceHub.collapsePanel")}
+              >
+                <ChevronRight className="h-3.5 w-3.5" strokeWidth={2} />
+              </button>
+            )}
+            {hubPanelExpanded ? (
+              <IntelligenceHub
+                className="h-full min-h-0 overflow-hidden"
+                onImagesGenerated={handleImagesGenerated}
+                onVideoGenerated={handleVideoGenerated}
+                selectedCanvasImage={selectedCanvasImage ?? null}
+                selectedCanvasImages={selectedCanvasImages}
+                canvasImages={canvasImages}
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={() => setHubPanelExpanded(true)}
+                className="flex h-full w-full flex-col items-center justify-center gap-2 py-4 transition-none hover:bg-accent-cyan/10"
+                title={t("intelligenceHub.expandPanel")}
+                aria-label={t("intelligenceHub.expandPanel")}
+              >
+                <ChevronLeft className="h-4 w-4 shrink-0" />
+                <Sparkles className="h-4 w-4 shrink-0 text-accent-cyan" />
+                <span
+                  className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground"
+                  style={{ writingMode: "vertical-rl" }}
+                >
+                  {t("intelligenceHub.panelShort")}
+                </span>
+              </button>
+            )}
           </aside>
         </main>
       </div>

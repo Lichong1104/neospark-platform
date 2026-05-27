@@ -1,6 +1,7 @@
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { UserMenuDock } from "@/components/layout/UserMenuDock";
 
 // 临时开关：用于本地/临时关闭路由登录校验
 // 需要恢复时改为 false 即可
@@ -41,7 +42,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     );
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      {location.pathname !== "/" ? <UserMenuDock /> : null}
+    </>
+  );
 };
 
 export default ProtectedRoute;

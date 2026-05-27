@@ -14,8 +14,6 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import skillsApi from "@/api/skills";
-import { Header } from "@/components/layout/Header";
-
 const SkillDetail: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -47,7 +45,6 @@ const SkillDetail: React.FC = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <Header />
         <div className="flex items-center justify-center py-20">
           <Loader2 className="w-8 h-8 animate-spin text-accent-pink" />
         </div>
@@ -58,7 +55,6 @@ const SkillDetail: React.FC = () => {
   if (!skill) {
     return (
       <div className="min-h-screen bg-background">
-        <Header />
         <div className="max-w-4xl mx-auto p-6 text-center py-20 text-muted-foreground">
           <Wrench className="w-12 h-12 mx-auto mb-4 opacity-30" />
           <p className="font-mono">{t("skill.notFound")}</p>
@@ -69,7 +65,6 @@ const SkillDetail: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
       <div className="max-w-4xl mx-auto p-6">
         <button
           onClick={() => navigate("/skills")}

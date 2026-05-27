@@ -1,10 +1,22 @@
 import React, { useState, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { Video, Film, Download, RotateCcw, Sparkles, Shield } from "lucide-react";
+import {
+  Video,
+  Film,
+  Download,
+  RotateCcw,
+  Sparkles,
+  Shield,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
-import { createVideoTask, getVideoModels, getVideoTask, uploadVideoAsset } from "@/api/video";
+import {
+  createVideoTask,
+  getVideoModels,
+  getVideoTask,
+  uploadVideoAsset,
+} from "@/api/video";
 import storageApi from "@/api/storage";
 import { STATIC_BASE_URL } from "@/api/request";
 import { getErrorMessage } from "@/lib/errorMessage";
@@ -63,7 +75,14 @@ const toServerPath = (fullUrl: string) => {
 };
 
 /** Supported output aspect ratios (API may still return deprecated values — normalize away). */
-const VIDEO_RATIO_ORDER = ["16:9", "4:3", "1:1", "3:4", "9:16", "21:9"] as const;
+const VIDEO_RATIO_ORDER = [
+  "16:9",
+  "4:3",
+  "1:1",
+  "3:4",
+  "9:16",
+  "21:9",
+] as const;
 
 const normalizeVideoRatio = (r: string | undefined): string => {
   if (!r) return "16:9";
@@ -73,7 +92,9 @@ const normalizeVideoRatio = (r: string | undefined): string => {
   return hit ?? r.trim();
 };
 
-const filterAllowedRatiosFromApi = (apiRatios: string[] | undefined): string[] => {
+const filterAllowedRatiosFromApi = (
+  apiRatios: string[] | undefined
+): string[] => {
   if (!apiRatios?.length) return [...VIDEO_RATIO_ORDER];
   const apiNorm = new Set(apiRatios.map((x) => x.trim().toLowerCase()));
   const ordered = VIDEO_RATIO_ORDER.filter((r) => apiNorm.has(r.toLowerCase()));
@@ -106,7 +127,8 @@ const pickDurationInOptions = (
   options: string[]
 ): string => {
   if (!options.length) return String(VIDEO_DURATION_MIN);
-  const n = typeof value === "string" ? Number(value) : value ?? Number(options[0]);
+  const n =
+    typeof value === "string" ? Number(value) : value ?? Number(options[0]);
   const rounded = Number.isFinite(n) ? Math.round(n) : Number(options[0]);
   const clamped = Math.min(
     VIDEO_DURATION_MAX,
@@ -114,7 +136,10 @@ const pickDurationInOptions = (
   );
   const s = String(clamped);
   if (options.includes(s)) return s;
-  const sorted = [...options].map(Number).filter(Number.isFinite).sort((a, b) => a - b);
+  const sorted = [...options]
+    .map(Number)
+    .filter(Number.isFinite)
+    .sort((a, b) => a - b);
   if (!sorted.length) return options[0];
   let best = sorted[0];
   for (const x of sorted) {
@@ -147,8 +172,12 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
   const [referenceImageUrls, setReferenceImageUrls] = useState("");
   const [referenceVideoUrls, setReferenceVideoUrls] = useState("");
   const [modelOptions, setModelOptions] = useState<VideoModelConfig[]>([]);
-  const [ratioOptions, setRatioOptions] = useState<string[]>([...VIDEO_RATIO_ORDER]);
-  const [durationOptions, setDurationOptions] = useState<string[]>(defaultDurationOptions);
+  const [ratioOptions, setRatioOptions] = useState<string[]>([
+    ...VIDEO_RATIO_ORDER,
+  ]);
+  const [durationOptions, setDurationOptions] = useState<string[]>(
+    defaultDurationOptions
+  );
   const [resolutionOptions, setResolutionOptions] = useState<string[]>([
     "720p",
     "480p",
@@ -162,7 +191,10 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
   const [error, setError] = useState("");
   // 解析分辨率：后端可能返回数组或按模型分组的对象
   const resolveResolutions = React.useCallback(
-    (resolutions: VideoModelsData["resolutions"], currentModel: string): string[] => {
+    (
+      resolutions: VideoModelsData["resolutions"],
+      currentModel: string
+    ): string[] => {
       if (Array.isArray(resolutions)) return resolutions;
       if (typeof resolutions === "object" && resolutions !== null) {
         // 优先使用当前模型对应的分辨率，否则取第一个模型的
@@ -200,7 +232,10 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
           const normalizedFirst = normalizeVideoRatio(res.ratios?.[0]);
           return ratioList.includes(normalizedFirst) ? normalizedFirst : "16:9";
         });
-        const modelResolutions = resolveResolutions(res.resolutions, initialModel);
+        const modelResolutions = resolveResolutions(
+          res.resolutions,
+          initialModel
+        );
         if (modelResolutions.length) {
           setResolutionOptions(modelResolutions);
           setResolution(modelResolutions[0] as VideoResolution);
@@ -318,7 +353,9 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
   const isGenerating =
     isCreating || status === "pending" || status === "processing";
   const showForm =
-    !isGenerating && status !== "failed" && !(status === "completed" && !!videoUrl);
+    !isGenerating &&
+    status !== "failed" &&
+    !(status === "completed" && !!videoUrl);
 
   const parseMultiLineUrls = (value: string) =>
     value
@@ -346,9 +383,13 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
       if (!normalizedPath) return;
 
       if (kind === "image") {
-        setReferenceImageUrls((prev) => appendMultiLineValue(prev, normalizedPath));
+        setReferenceImageUrls((prev) =>
+          appendMultiLineValue(prev, normalizedPath)
+        );
       } else {
-        setReferenceVideoUrls((prev) => appendMultiLineValue(prev, normalizedPath));
+        setReferenceVideoUrls((prev) =>
+          appendMultiLineValue(prev, normalizedPath)
+        );
       }
       toast.success(t("video.refUploaded"));
     },
@@ -359,7 +400,9 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     async (file: File) => {
       try {
         const result = await uploadVideoAsset(file, "image");
-        toast.success(t("video.assetReviewSuccess", { assetId: result.asset_id }));
+        toast.success(
+          t("video.assetReviewSuccess", { assetId: result.asset_id })
+        );
       } catch (err: any) {
         const msg = getErrorMessage(err, t("video.assetReviewFailed"));
         toast.error(msg);
@@ -369,8 +412,12 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
   );
 
   const handleUseSelectedCanvasRefs = useCallback(() => {
-    const selectedImages = selectedCanvasImages.filter((item) => item.type !== "video");
-    const selectedVideos = selectedCanvasImages.filter((item) => item.type === "video");
+    const selectedImages = selectedCanvasImages.filter(
+      (item) => item.type !== "video"
+    );
+    const selectedVideos = selectedCanvasImages.filter(
+      (item) => item.type === "video"
+    );
 
     if (!selectedImages.length && !selectedVideos.length) {
       toast.error(t("video.noCanvasRefSelected"));
@@ -454,7 +501,10 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     }
 
     const parsedRefImages = parseMultiLineUrls(referenceImageUrls);
-    const slotRefPaths = resolveImagesFromPromptSlots(canvasImages, prompt.trim())
+    const slotRefPaths = resolveImagesFromPromptSlots(
+      canvasImages,
+      prompt.trim()
+    )
       .map((img) => toServerPath(img.src))
       .filter(Boolean);
     const mergedRefImages = [...parsedRefImages];
@@ -462,7 +512,9 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
       if (p && !mergedRefImages.includes(p)) mergedRefImages.push(p);
     }
     const parsedRefVideos = parseMultiLineUrls(referenceVideoUrls);
-    const safeDuration = Number(pickDurationInOptions(duration, durationOptions));
+    const safeDuration = Number(
+      pickDurationInOptions(duration, durationOptions)
+    );
 
     const hasFrame = Boolean(firstFrameUrl.trim() || lastFrameUrl.trim());
     if (!realPersonMode && hasFrame && mergedRefImages.length > 0) {
@@ -496,7 +548,8 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
       last_frame_url: lastFrameUrl.trim() || undefined,
       reference_image_urls:
         mergedRefImages.length > 0 ? mergedRefImages : undefined,
-      reference_video_urls: parsedRefVideos.length > 0 ? parsedRefVideos : undefined,
+      reference_video_urls:
+        parsedRefVideos.length > 0 ? parsedRefVideos : undefined,
     };
 
     try {

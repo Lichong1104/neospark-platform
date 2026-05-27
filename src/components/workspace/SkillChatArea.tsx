@@ -48,10 +48,12 @@ const SkillChatArea: React.FC<SkillChatAreaProps> = ({
   streamContentRef.current = streamContent;
 
   useEffect(() => {
+    let cancelled = false;
     setIsLoadingSkills(true);
     skillsApi
       .listSkills()
       .then((skills) => {
+        if (cancelled) return;
         setAvailableSkills(skills);
         const systemSkills = skills
           .filter((s) => s.skill_type === "system")
@@ -60,10 +62,17 @@ const SkillChatArea: React.FC<SkillChatAreaProps> = ({
         setSelectedSkills(systemSkills);
       })
       .catch((err) => {
+        if (cancelled) return;
         toast.error(getErrorMessage(err, t("skill.loadSkillsFailed")));
       })
-      .finally(() => setIsLoadingSkills(false));
-  }, [t]);
+      .finally(() => {
+        if (!cancelled) setIsLoadingSkills(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- load once on mount
+  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

@@ -1,7 +1,7 @@
 import { CircleSlash2, RefreshCw, Home, LifeBuoy } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Header } from "@/components/layout/Header";
+import { UserMenuDock } from "@/components/layout/UserMenuDock";
 import { BrutalCard, BrutalCardContent } from "@/components/ui/brutal-card";
 import { BrutalButton } from "@/components/ui/brutal-button";
 
@@ -10,7 +10,7 @@ const Cancel = () => {
 
   return (
     <div className="min-h-screen bg-background bg-grid">
-      <Header />
+      <UserMenuDock />
       <main className="px-4 py-10 sm:px-6">
         <div className="mx-auto max-w-3xl space-y-5">
           <BrutalCard shadow="heavy" className="overflow-hidden">

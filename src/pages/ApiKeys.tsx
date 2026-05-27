@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Header } from "@/components/layout/Header";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -195,10 +194,8 @@ const ApiKeys: React.FC = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
-      <Header />
-
-      <main className="flex-1 p-6 md:p-8 bg-background overflow-y-auto">
+    <div className="h-screen overflow-hidden">
+      <main className="h-full p-6 md:p-8 bg-background overflow-y-auto">
         <div className="max-w-5xl mx-auto space-y-6">
           <BrutalCard shadow="default" className="overflow-hidden">
             <BrutalCardContent className="flex flex-col sm:flex-row items-start sm:items-center gap-4 py-5 px-5">

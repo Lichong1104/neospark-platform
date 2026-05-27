@@ -113,6 +113,7 @@ interface Agent {
 }
 
 interface AgentChatAreaProps {
+  className?: string;
   agentStatus: StatusType;
   agents: Agent[];
   onImagesGenerated?: (images: { url: string; local_path: string }[]) => void;
@@ -123,6 +124,8 @@ interface AgentChatAreaProps {
     type?: "image" | "video";
   } | null;
   selectedCanvasImages?: CanvasImage[];
+  /** 参数行左侧：标准/智能体切换 */
+  modeToggle?: React.ReactNode;
 }
 
 // ===== Ecommerce Welcome Message Component =====
@@ -132,9 +135,10 @@ const EcommerceWelcome: React.FC<{
 }> = ({ agentColor, agentIcon }) => {
   const { t, i18n } = useTranslation();
   const [showGuideVideo, setShowGuideVideo] = useState(false);
-  const isChineseLanguage = (i18n.resolvedLanguage || i18n.language || "en")
-    .split("-")[0]
-    .toLowerCase() === "zh";
+  const isChineseLanguage =
+    (i18n.resolvedLanguage || i18n.language || "en")
+      .split("-")[0]
+      .toLowerCase() === "zh";
   return (
     <>
       <div className="flex items-start gap-3 animate-fade-in">
@@ -155,8 +159,16 @@ const EcommerceWelcome: React.FC<{
               type="button"
               onClick={() => setShowGuideVideo(true)}
               className="inline-flex items-center justify-center w-7 h-7 border-brutal border-foreground bg-accent-cyan text-foreground hover:brightness-110 brutal-press"
-              title={isChineseLanguage ? "电商详情页大师指导视频" : "E-Commerce Master Guide Video"}
-              aria-label={isChineseLanguage ? "打开电商详情页大师指导视频" : "Open E-Commerce Master Guide Video"}
+              title={
+                isChineseLanguage
+                  ? "电商详情页大师指导视频"
+                  : "E-Commerce Master Guide Video"
+              }
+              aria-label={
+                isChineseLanguage
+                  ? "打开电商详情页大师指导视频"
+                  : "Open E-Commerce Master Guide Video"
+              }
             >
               <CirclePlay className="w-4 h-4" />
             </button>
@@ -476,23 +488,27 @@ const PastedImagesPreview: React.FC<{
 };
 
 const AgentChatArea: React.FC<AgentChatAreaProps> = ({
+  className,
   agentStatus,
   agents,
   onImagesGenerated,
   selectedCanvasImage,
   selectedCanvasImages: _selectedCanvasImages,
+  modeToggle,
 }) => {
   const { t } = useTranslation();
   const [inputValue, setInputValue] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [downloadingMessageId, setDownloadingMessageId] = useState<string | null>(null);
+  const [downloadingMessageId, setDownloadingMessageId] = useState<
+    string | null
+  >(null);
   const [aspectRatio, setAspectRatio] = useState("1:1");
   const [resolution, setResolution] = useState("1K");
   const [model, setModel] = useState("gemini-3.1-flash-image-preview");
-  const [tengdaQuality, setTengdaQuality] = useState<
-    "low" | "medium" | "high"
-  >("low");
+  const [tengdaQuality, setTengdaQuality] = useState<"low" | "medium" | "high">(
+    "low"
+  );
   const [modelsConfig, setModelsConfig] = useState<ModelsConfigMap | null>(
     null
   );
@@ -1380,28 +1396,31 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
     : Boolean(inputValue.trim() && !isGenerating);
 
   return (
-    <div className="flex flex-col flex-1 overflow-hidden">
-      <div className="flex-1 overflow-y-auto p-4 space-y-6">
+    <div
+      className={cn("flex h-full min-h-0 flex-col overflow-hidden", className)}
+    >
+      <div
+        className={cn(
+          "flex-1 min-h-0 overflow-y-auto p-4",
+          messages.length === 0 ? "flex flex-col justify-center" : "space-y-6"
+        )}
+      >
         {messages.length === 0 ? (
-          <div className="flex flex-col justify-start pt-12 px-8">
-            <div className="flex items-start gap-4">
-              <div
-                className={cn(
-                  "w-16 h-16 border-brutal border-foreground/30 flex items-center justify-center flex-shrink-0",
-                  currentAgent.color
-                )}
-              >
-                {currentAgent.icon}
-              </div>
-              <div className="flex flex-col justify-center">
-                <h3 className="font-bold text-lg uppercase tracking-wider mb-2">
-                  {t("agentChat.agentReady", { name: currentAgent.name })}
-                </h3>
-                <p className="text-sm text-muted-foreground max-w-[280px]">
-                  {t("agentChat.agentReadyDesc")}
-                </p>
-              </div>
+          <div className="flex flex-col items-center px-4 py-6 text-center shrink-0">
+            <div
+              className={cn(
+                "mb-3 flex h-10 w-10 items-center justify-center border-brutal border-foreground shrink-0",
+                currentAgent.color
+              )}
+            >
+              {currentAgent.icon}
             </div>
+            <h3 className="mb-1.5 text-sm font-bold uppercase tracking-[0.15em]">
+              {t("agentChat.agentReady", { name: currentAgent.name })}
+            </h3>
+            <p className="max-w-[248px] text-xs leading-relaxed text-muted-foreground">
+              {t("agentChat.agentReadyDesc")}
+            </p>
           </div>
         ) : (
           <>
@@ -1760,7 +1779,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
         )}
       </div>
 
-      <div className="p-4 border-t-brutal border-foreground bg-card">
+      <div className="shrink-0 border-t-brutal border-foreground bg-card p-4">
         <input
           ref={fileInputRef}
           type="file"
@@ -1819,7 +1838,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
           </>
         )}
 
-        <div className="relative">
+        <div className="relative mb-2">
           <textarea
             ref={textareaRef}
             value={inputValue}
@@ -1835,56 +1854,64 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
                 ? t("ecommerceAgent.inputPlaceholder")
                 : t("agentChat.inputPlaceholder")
             }
-            className="w-full h-24 p-3 border-brutal border-foreground bg-background font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-accent-cyan"
+            className="w-full h-20 resize-none border-brutal border-foreground bg-background p-3 pb-11 pr-[5.5rem] font-mono text-sm focus:outline-none focus:ring-2 focus:ring-accent-cyan md:h-[88px]"
           />
-        </div>
-
-        <div className="flex items-center gap-2 mt-3">
-          <div className="flex-1 min-w-0 flex items-center gap-1.5 flex-wrap">
-            <BrutalDropdown
-              options={aspectRatioOptions}
-              value={aspectRatio}
-              onChange={setAspectRatio}
-              icon={<Grid3X3 className="w-3.5 h-3.5" />}
-            />
-            <BrutalDropdown
-              options={resolutionOptions}
-              value={resolution}
-              onChange={setResolution}
-            />
-            {isGptImage2 && (
-              <BrutalDropdown
-                options={tengdaQualityOptions}
-                value={tengdaQuality}
-                onChange={(v) => setTengdaQuality(v as "low" | "medium" | "high")}
-              />
-            )}
-            <BrutalDropdown
-              options={modelOptions}
-              value={model}
-              onChange={setModel}
-              icon={<Sparkles className="w-3.5 h-3.5" />}
-            />
-          </div>
-
-          {isEcommerce && productRefs.length > 0 && (
-            <span className="px-2 py-1 border border-accent-orange/30 bg-accent-orange/10 text-[10px] font-bold text-accent-orange mr-1">
-              📷 {productRefs.length}
-            </span>
-          )}
-
           <button
+            type="button"
             onClick={handleSend}
             disabled={!canSend}
             className={cn(
-              "w-8 h-8 flex items-center justify-center border-brutal border-foreground brutal-press",
+              "absolute bottom-2 right-2 z-10 flex h-8 items-center justify-center gap-1.5 border-brutal border-foreground px-3 brutal-press text-[11px] font-bold uppercase shadow-sm",
               !canSend
                 ? "bg-muted text-muted-foreground cursor-not-allowed"
                 : "bg-accent-cyan text-foreground hover:brightness-110"
             )}
+            title={t("canvas.generate")}
           >
-            <Send className="w-4 h-4" />
+            {isGenerating ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <>
+                <Send className="w-3.5 h-3.5" />
+                {t("canvas.generate")}
+              </>
+            )}
           </button>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          {modeToggle}
+          <BrutalDropdown
+            options={aspectRatioOptions}
+            value={aspectRatio}
+            onChange={setAspectRatio}
+            icon={<Grid3X3 className="w-3.5 h-3.5" />}
+          />
+          <BrutalDropdown
+            options={resolutionOptions}
+            value={resolution}
+            onChange={setResolution}
+          />
+          {isGptImage2 && (
+            <BrutalDropdown
+              options={tengdaQualityOptions}
+              value={tengdaQuality}
+              onChange={(v) =>
+                setTengdaQuality(v as "low" | "medium" | "high")
+              }
+            />
+          )}
+          <BrutalDropdown
+            options={modelOptions}
+            value={model}
+            onChange={setModel}
+            icon={<Sparkles className="w-3.5 h-3.5" />}
+          />
+          {isEcommerce && productRefs.length > 0 && (
+            <span className="px-2 py-1 border border-accent-orange/30 bg-accent-orange/10 text-[10px] font-bold text-accent-orange">
+              📷 {productRefs.length}
+            </span>
+          )}
         </div>
       </div>
     </div>

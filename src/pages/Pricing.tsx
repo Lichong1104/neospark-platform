@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Header } from "@/components/layout/Header";
 import { BrutalCard, BrutalCardContent } from "@/components/ui/brutal-card";
 import { BrutalButton } from "@/components/ui/brutal-button";
 import { Check, Crown, Zap, Star, Rocket, Gift } from "lucide-react";
@@ -496,10 +495,8 @@ const Pricing = () => {
   ];
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
-      <Header />
-
-      <main className="flex-1 bg-background bg-grid overflow-y-auto">
+    <div className="h-screen overflow-hidden">
+      <main className="h-full bg-background bg-grid overflow-y-auto">
         <div className="max-w-7xl mx-auto px-6 py-10">
           {/* Hero */}
           <div className="text-center mb-10">

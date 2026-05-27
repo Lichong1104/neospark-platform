@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import skillsApi from "@/api/skills";
-import { Header } from "@/components/layout/Header";
 import SkillMarketCard from "@/components/skills/SkillMarketCard";
 import UploadSkillButton from "@/components/skills/UploadSkillButton";
 import type { SkillMeta } from "@/types/skills";
@@ -40,7 +39,6 @@ const SkillMarket: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
       <div className="max-w-6xl mx-auto p-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">

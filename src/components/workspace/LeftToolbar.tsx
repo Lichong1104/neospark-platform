@@ -7,9 +7,11 @@ import {
   Loader2,
   Camera,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import { UserMenuDock } from "@/components/layout/UserMenuDock";
 
 interface LeftToolbarProps {
   isActive: boolean;
@@ -92,6 +94,7 @@ const LeftToolbar: React.FC<LeftToolbarProps> = ({
   onUpscale,
   onMultipleAngles,
 }) => {
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const [selectedQuality, setSelectedQuality] = React.useState("ORIGINAL");
   const [showCostWarning, setShowCostWarning] = React.useState(false);
@@ -173,6 +176,20 @@ const LeftToolbar: React.FC<LeftToolbarProps> = ({
   return (
     <>
       <div className="h-full w-16 bg-card border-r-brutal border-foreground flex flex-col select-none">
+        <button
+          type="button"
+          id="onboarding-sidebar-logo"
+          onClick={() => navigate("/")}
+          className="group w-full h-14 shrink-0 flex items-center justify-center border-b-brutal border-foreground cursor-pointer transition-none hover:bg-accent-yellow"
+          title="NEOSPARK"
+          aria-label="NEOSPARK"
+        >
+          <div className="w-8 h-8 bg-accent-cyan text-foreground flex items-center justify-center font-black text-base border-brutal border-foreground brutal-shadow-cyan group-hover:translate-x-[-2px] group-hover:translate-y-[-2px] transition-transform">
+            N
+          </div>
+        </button>
+
+        <div className="flex-1 min-h-0 overflow-y-auto flex flex-col">
         {/* Assets Button */}
         <button
           id="onboarding-toolbar-assets"
@@ -238,8 +255,9 @@ const LeftToolbar: React.FC<LeftToolbarProps> = ({
             );
           })}
         </div>
+        </div>
         {/* Quality presets - also belong to Process */}
-        <div id="onboarding-toolbar-quality" className="mt-auto">
+        <div id="onboarding-toolbar-quality" className="shrink-0">
           {qualityLevels.map((quality) => (
             <button
               key={quality.label}
@@ -263,9 +281,11 @@ const LeftToolbar: React.FC<LeftToolbarProps> = ({
         </div>
 
         {/* Status */}
-        <div className="px-1 py-2 bg-foreground text-card text-[10px] font-mono text-center leading-tight">
+        <div className="shrink-0 px-1 py-2 bg-foreground text-card text-[10px] font-mono text-center leading-tight border-t border-foreground/15">
           X:0 Y:0
         </div>
+
+        <UserMenuDock variant="sidebar" />
       </div>
 
       {/* 8K Cost Warning Modal */}

@@ -538,8 +538,8 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
       const scale = zoom / 100;
       const dropX = rect ? (e.clientX - rect.left - panOffset.x) / scale : 120;
       const dropY = rect
-        ? (e.clientY - rect.top - 40 - panOffset.y) / scale
-        : 60; // 40 = header height
+        ? (e.clientY - rect.top - panOffset.y) / scale
+        : 60;
 
       // Upload first, then add to canvas from persisted URL (no base64 local preview).
       onFileDrop?.(files, { x: dropX, y: dropY });

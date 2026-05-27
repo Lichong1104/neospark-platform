@@ -157,6 +157,7 @@ export function InlineCanvasMentionEditor({
   onSubmit,
   enableSubmitOnEnter = true,
   onPasteImageFile,
+  submitAction,
 }: {
   value: string;
   onChange: (next: string) => void;
@@ -166,6 +167,8 @@ export function InlineCanvasMentionEditor({
   onSubmit?: () => void;
   enableSubmitOnEnter?: boolean;
   onPasteImageFile?: (file: File) => void;
+  /** 嵌入输入框右下角的操作（如生成按钮） */
+  submitAction?: React.ReactNode;
 }) {
   const { t } = useTranslation();
   const editorRef = useRef<HTMLDivElement>(null);
@@ -348,7 +351,12 @@ export function InlineCanvasMentionEditor({
       )}
 
       {!isFocused && (!value || value.trim().length === 0) && placeholder && (
-        <div className="absolute left-3 top-3 text-muted-foreground/50 font-mono text-sm pointer-events-none select-none">
+        <div
+          className={cn(
+            "absolute left-3 top-3 text-muted-foreground/50 font-mono text-sm pointer-events-none select-none",
+            submitAction && "right-24"
+          )}
+        >
           {placeholder}
         </div>
       )}
@@ -375,11 +383,18 @@ export function InlineCanvasMentionEditor({
         onKeyUp={() => updateMentionTailFromCaret()}
         onPaste={handlePaste}
         className={cn(
-          "w-full h-[96px] shrink-0 overflow-y-auto overflow-x-hidden p-3 border-brutal border-foreground bg-background font-mono text-sm whitespace-pre-wrap break-words",
+          "w-full h-[68px] shrink-0 overflow-y-auto overflow-x-hidden border-brutal border-foreground bg-background font-mono text-sm whitespace-pre-wrap break-words p-3",
           "focus:outline-none focus:ring-2 focus:ring-accent-cyan",
-          "md:h-[104px] xl:h-[120px]"
+          "sm:h-[76px] md:h-[88px] lg:h-[96px]",
+          submitAction && "pb-10 pr-[5.5rem] sm:pb-11"
         )}
       />
+
+      {submitAction ? (
+        <div className="absolute bottom-2 right-2 z-10 pointer-events-auto">
+          {submitAction}
+        </div>
+      ) : null}
     </div>
   );
 }

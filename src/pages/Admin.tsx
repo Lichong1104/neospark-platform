@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Header } from "@/components/layout/Header";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
@@ -308,9 +307,8 @@ const Admin: React.FC = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
-      <Header />
-      <main className="flex-1 overflow-y-auto bg-background p-4 md:p-6">
+    <div className="h-screen overflow-hidden">
+      <main className="h-full overflow-y-auto bg-background p-4 md:p-6">
         <div className="mx-auto max-w-7xl space-y-5 pb-5">
           {/* Header */}
           <BrutalCard shadow="default" className="overflow-hidden">
