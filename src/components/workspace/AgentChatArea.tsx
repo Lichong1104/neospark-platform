@@ -129,6 +129,15 @@ interface AgentChatAreaProps {
   modeToggle?: React.ReactNode;
 }
 
+const ECOMMERCE_WELCOME_FIELDS = [
+  "field1",
+  "field2",
+  "field3",
+  "field4",
+  "field5",
+  "field6",
+] as const;
+
 // ===== Ecommerce Welcome Message Component =====
 const EcommerceWelcome: React.FC<{
   agentColor: string;
@@ -140,83 +149,58 @@ const EcommerceWelcome: React.FC<{
     (i18n.resolvedLanguage || i18n.language || "en")
       .split("-")[0]
       .toLowerCase() === "zh";
+  const agentName = `${t("agents.ecommerce").toUpperCase()}_AGENT`;
+
   return (
     <>
-      <div className="flex items-start gap-3 animate-fade-in">
-        <div
-          className={cn(
-            "w-10 h-10 border-brutal border-foreground flex items-center justify-center flex-shrink-0",
-            agentColor
-          )}
-        >
-          {agentIcon}
+      <div className="w-full min-w-0 space-y-2 animate-fade-in">
+        <div className="flex items-center gap-2 min-w-0">
+          <div
+            className={cn(
+              "flex h-8 w-8 shrink-0 items-center justify-center border-brutal border-foreground",
+              agentColor
+            )}
+          >
+            {agentIcon}
+          </div>
+          <span className="min-w-0 flex-1 truncate text-sm font-bold tracking-wide">
+            {agentName}
+          </span>
+          <button
+            type="button"
+            onClick={() => setShowGuideVideo(true)}
+            className="inline-flex h-7 w-7 shrink-0 items-center justify-center border-brutal border-foreground bg-accent-cyan text-foreground hover:brightness-110 brutal-press"
+            title={
+              isChineseLanguage
+                ? "电商详情页大师指导视频"
+                : "E-Commerce Master Guide Video"
+            }
+            aria-label={
+              isChineseLanguage
+                ? "打开电商详情页大师指导视频"
+                : "Open E-Commerce Master Guide Video"
+            }
+          >
+            <CirclePlay className="h-4 w-4" />
+          </button>
         </div>
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="font-bold text-sm">
-              {t("agents.ecommerce").toUpperCase()}_AGENT
-            </span>
-            <button
-              type="button"
-              onClick={() => setShowGuideVideo(true)}
-              className="inline-flex items-center justify-center w-7 h-7 border-brutal border-foreground bg-accent-cyan text-foreground hover:brightness-110 brutal-press"
-              title={
-                isChineseLanguage
-                  ? "电商详情页大师指导视频"
-                  : "E-Commerce Master Guide Video"
-              }
-              aria-label={
-                isChineseLanguage
-                  ? "打开电商详情页大师指导视频"
-                  : "Open E-Commerce Master Guide Video"
-              }
-            >
-              <CirclePlay className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="text-sm bg-secondary/30 border border-foreground/10 py-2.5 pr-2.5 pl-2 space-y-2 leading-relaxed">
-            <p className="font-bold text-foreground">
-              {t("ecommerceAgent.greeting")}
-            </p>
-            <ol className="list-none space-y-1.5 p-0 m-0 text-muted-foreground">
-              <li>
-                <strong className="text-foreground">
-                  1. {t("ecommerceAgent.field1Label")}
-                </strong>
-                ：{t("ecommerceAgent.field1Example")}
+
+        <div className="w-full border-brutal border-foreground/15 bg-secondary/30 p-3 text-sm leading-relaxed">
+          <p className="font-bold text-foreground">{t("ecommerceAgent.greeting")}</p>
+          <ol className="mt-2.5 divide-y divide-foreground/10">
+            {ECOMMERCE_WELCOME_FIELDS.map((field, index) => (
+              <li
+                key={field}
+                className="py-2 text-muted-foreground first:pt-0 last:pb-0"
+              >
+                <span className="font-bold text-foreground">
+                  {index + 1}. {t(`ecommerceAgent.${field}Label`)}
+                </span>
+                <span className="text-foreground/70">：</span>
+                {t(`ecommerceAgent.${field}Example`)}
               </li>
-              <li>
-                <strong className="text-foreground">
-                  2. {t("ecommerceAgent.field2Label")}
-                </strong>
-                ：{t("ecommerceAgent.field2Example")}
-              </li>
-              <li>
-                <strong className="text-foreground">
-                  3. {t("ecommerceAgent.field3Label")}
-                </strong>
-                ：{t("ecommerceAgent.field3Example")}
-              </li>
-              <li>
-                <strong className="text-foreground">
-                  4. {t("ecommerceAgent.field4Label")}
-                </strong>
-                ：{t("ecommerceAgent.field4Example")}
-              </li>
-              <li>
-                <strong className="text-foreground">
-                  5. {t("ecommerceAgent.field5Label")}
-                </strong>
-                ：{t("ecommerceAgent.field5Example")}
-              </li>
-              <li>
-                <strong className="text-foreground">
-                  6. {t("ecommerceAgent.field6Label")}
-                </strong>
-                ：{t("ecommerceAgent.field6Example")}
-              </li>
-            </ol>
-          </div>
+            ))}
+          </ol>
         </div>
       </div>
       <Dialog open={showGuideVideo} onOpenChange={setShowGuideVideo}>
