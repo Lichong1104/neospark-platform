@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
-import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LeftToolbar } from "@/components/workspace/LeftToolbar";
 import { AssetSidebar } from "@/components/workspace/AssetSidebar";
@@ -485,7 +485,7 @@ const Index = () => {
             />
           </div>
 
-          <div className="flex-1 relative">
+          <div className="flex-1 relative min-w-0">
             {activeView === "canvas" ? (
               <CanvasArea
                 onImageSelect={setSelectedImage}
@@ -533,18 +533,11 @@ const Index = () => {
               <button
                 type="button"
                 onClick={() => setHubPanelExpanded(true)}
-                className="flex h-full w-full flex-col items-center justify-center gap-2 py-4 transition-none hover:bg-accent-cyan/10"
+                className="flex h-full w-full items-center justify-center transition-none hover:bg-accent-cyan/10"
                 title={t("intelligenceHub.expandPanel")}
                 aria-label={t("intelligenceHub.expandPanel")}
               >
-                <ChevronLeft className="h-4 w-4 shrink-0" />
-                <Sparkles className="h-4 w-4 shrink-0 text-accent-cyan" />
-                <span
-                  className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground"
-                  style={{ writingMode: "vertical-rl" }}
-                >
-                  {t("intelligenceHub.panelShort")}
-                </span>
+                <ChevronLeft className="h-4 w-4 shrink-0 text-muted-foreground" />
               </button>
             )}
           </aside>
