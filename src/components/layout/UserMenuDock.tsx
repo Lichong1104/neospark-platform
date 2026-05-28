@@ -167,6 +167,7 @@ const UserMenuDock: React.FC<UserMenuDockProps> = ({ variant = "fixed" }) => {
                 active={isActive("/pricing")}
                 icon={<CreditCard className="h-4 w-4" />}
                 onNavigate={() => setOpen(false)}
+                openInNewTab
               >
                 {t("header.pricing", { defaultValue: "Pricing" })}
               </MenuNavItem>
@@ -196,12 +197,18 @@ const UserMenuDock: React.FC<UserMenuDockProps> = ({ variant = "fixed" }) => {
                   icon={<Shield className="h-4 w-4" />}
                   onNavigate={() => setOpen(false)}
                   accent="green"
+                  openInNewTab
                 >
                   {t("header.admin", { defaultValue: "Admin" })}
                 </MenuNavItem>
               ) : null}
 
-              <Link to="/user" onClick={() => setOpen(false)}>
+              <Link
+                to="/user"
+                onClick={() => setOpen(false)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <div
                   className={cn(
                     "flex w-full items-center gap-2.5 border-brutal border-foreground px-3 py-2.5 text-xs font-bold uppercase tracking-wider brutal-press",
@@ -308,8 +315,14 @@ const MenuNavItem: React.FC<{
   children: React.ReactNode;
   onNavigate: () => void;
   accent?: "green";
-}> = ({ to, active, icon, children, onNavigate, accent }) => (
-  <Link to={to} onClick={onNavigate}>
+  openInNewTab?: boolean;
+}> = ({ to, active, icon, children, onNavigate, accent, openInNewTab }) => (
+  <Link
+    to={to}
+    onClick={onNavigate}
+    target={openInNewTab ? "_blank" : undefined}
+    rel={openInNewTab ? "noopener noreferrer" : undefined}
+  >
     <div
       className={cn(
         "flex w-full items-center gap-2.5 border-brutal border-foreground px-3 py-2.5 text-xs font-bold uppercase tracking-wider brutal-press",

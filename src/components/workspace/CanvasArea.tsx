@@ -40,25 +40,6 @@ interface CanvasAreaProps {
   isFileDropLoading?: boolean;
 }
 
-const CANVAS_IMAGE_MAX_SIZE = 256;
-
-const toCanvasSize = (
-  width: number,
-  height: number
-): { width: number; height: number } => {
-  if (width <= 0 || height <= 0) {
-    return { width: CANVAS_IMAGE_MAX_SIZE, height: CANVAS_IMAGE_MAX_SIZE };
-  }
-  const scale = Math.min(
-    CANVAS_IMAGE_MAX_SIZE / width,
-    CANVAS_IMAGE_MAX_SIZE / height
-  );
-  return {
-    width: Math.round(width * scale),
-    height: Math.round(height * scale),
-  };
-};
-
 const CanvasArea: React.FC<CanvasAreaProps> = ({
   onImageSelect,
   onSelectionChange,

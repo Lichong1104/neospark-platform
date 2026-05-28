@@ -868,7 +868,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
             prompt: userContent,
             model,
             resolution: "1K",
-            aspect_ratio: "1:1",
+            aspect_ratio: aspectRatio,
             negative_prompt: "",
             num_images: 1,
             provider:
@@ -1042,7 +1042,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
           prompt: ctx.prompt,
           model,
           resolution: "1K",
-          aspect_ratio: "1:1",
+          aspect_ratio: aspectRatio,
           negative_prompt: "",
           num_images: 1,
           provider:
@@ -1173,7 +1173,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
         ref_upload_id: refUploadId,
         model,
         resolution: "1K",
-        aspect_ratio: "1:1",
+        aspect_ratio: aspectRatio,
         negative_prompt: "",
         strength: 0.7,
         provider:

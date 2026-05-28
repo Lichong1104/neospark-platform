@@ -15,6 +15,10 @@ import storageApi from "@/api/storage";
 import { useImageProcessing } from "@/hooks/useImageProcessing";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
+import {
+  getCanvasImageMaxSize,
+  toCanvasSize,
+} from "@/lib/canvasImageSize";
 import { WorkspaceOnboarding } from "@/components/onboarding/WorkspaceOnboarding";
 import {
   Dialog,
@@ -28,7 +32,6 @@ import {
   setWorkspaceOnboardingDone,
 } from "@/lib/workspaceOnboarding";
 
-const CANVAS_IMAGE_MAX_SIZE = 256;
 const FIRST_LOGIN_VIDEO_URL =
   "https://quantrisk.oss-cn-shenzhen.aliyuncs.com/demo_canva_chinese.mp4";
 const getFirstLoginVideoShownKey = (userId: string | number) =>
@@ -38,15 +41,16 @@ const getImageSize = (
   src: string
 ): Promise<{ width: number; height: number }> =>
   new Promise((resolve) => {
+    const fallback = getCanvasImageMaxSize();
     const img = new Image();
     img.onload = () => {
       resolve({
-        width: img.naturalWidth || CANVAS_IMAGE_MAX_SIZE,
-        height: img.naturalHeight || CANVAS_IMAGE_MAX_SIZE,
+        width: img.naturalWidth || fallback,
+        height: img.naturalHeight || fallback,
       });
     };
     img.onerror = () => {
-      resolve({ width: CANVAS_IMAGE_MAX_SIZE, height: CANVAS_IMAGE_MAX_SIZE });
+      resolve({ width: fallback, height: fallback });
     };
     img.src = src;
   });
@@ -55,36 +59,20 @@ const getVideoSize = (
   src: string
 ): Promise<{ width: number; height: number }> =>
   new Promise((resolve) => {
+    const fallback = getCanvasImageMaxSize();
     const video = document.createElement("video");
     video.preload = "metadata";
     video.onloadedmetadata = () => {
       resolve({
-        width: video.videoWidth || CANVAS_IMAGE_MAX_SIZE,
-        height: video.videoHeight || CANVAS_IMAGE_MAX_SIZE,
+        width: video.videoWidth || fallback,
+        height: video.videoHeight || fallback,
       });
     };
     video.onerror = () => {
-      resolve({ width: CANVAS_IMAGE_MAX_SIZE, height: CANVAS_IMAGE_MAX_SIZE });
+      resolve({ width: fallback, height: fallback });
     };
     video.src = src;
   });
-
-const toCanvasSize = (
-  width: number,
-  height: number
-): { width: number; height: number } => {
-  if (width <= 0 || height <= 0) {
-    return { width: CANVAS_IMAGE_MAX_SIZE, height: CANVAS_IMAGE_MAX_SIZE };
-  }
-  const scale = Math.min(
-    CANVAS_IMAGE_MAX_SIZE / width,
-    CANVAS_IMAGE_MAX_SIZE / height
-  );
-  return {
-    width: Math.round(width * scale),
-    height: Math.round(height * scale),
-  };
-};
 
 const toStorageUrl = (url: string): string =>
   url.startsWith("http") ? url : `${STATIC_BASE_URL}${url}`;
@@ -226,17 +214,18 @@ const Index = () => {
     ) => {
       (async () => {
         const id = Math.random().toString(36).substr(2, 8).toUpperCase();
+        const maxSize = getCanvasImageMaxSize();
         const tempPos = getCanvasCenterPlacement(
-          CANVAS_IMAGE_MAX_SIZE,
-          CANVAS_IMAGE_MAX_SIZE,
+          maxSize,
+          maxSize,
           placementOffset
         );
         const tempItem: CanvasImage = {
           id,
           x: tempPos.x,
           y: tempPos.y,
-          width: CANVAS_IMAGE_MAX_SIZE,
-          height: CANVAS_IMAGE_MAX_SIZE,
+          width: maxSize,
+          height: maxSize,
           selected: false,
           src: item.src,
           name: item.name,
@@ -407,22 +396,23 @@ const Index = () => {
       try {
         for (const [index, file] of files.entries()) {
           const id = Math.random().toString(36).substr(2, 8).toUpperCase();
+          const maxSize = getCanvasImageMaxSize();
           const initialPos = position
             ? {
                 x: Math.max(0, Math.round(position.x + index * 30)),
                 y: Math.max(0, Math.round(position.y + index * 30)),
               }
             : getCanvasCenterPlacement(
-                CANVAS_IMAGE_MAX_SIZE,
-                CANVAS_IMAGE_MAX_SIZE,
+                maxSize,
+                maxSize,
                 index
               );
           const tempItem: CanvasImage = {
             id,
             x: initialPos.x,
             y: initialPos.y,
-            width: CANVAS_IMAGE_MAX_SIZE,
-            height: CANVAS_IMAGE_MAX_SIZE,
+            width: maxSize,
+            height: maxSize,
             selected: false,
             src: "",
             name: file.name,
