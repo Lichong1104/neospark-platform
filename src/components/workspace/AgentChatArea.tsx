@@ -39,6 +39,7 @@ import { toast } from "sonner";
 import drawingApi, { downloadZip } from "@/api/drawing";
 import storageApi from "@/api/storage";
 import { STATIC_BASE_URL } from "@/api/request";
+import { fetchAssetBlob } from "@/lib/assetFetchUrl";
 import { useGenerationPolling } from "@/hooks/useGenerationPolling";
 import { getErrorMessage } from "@/lib/errorMessage";
 import type {
@@ -773,17 +774,13 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
       return;
     }
     try {
-      const r = await fetch(selectedCanvasImage.src);
-      const blob = await r.blob();
       const base = selectedCanvasImage.name?.trim() || "canvas";
       const safeName = base.replace(/[/\\?%*:|"<>]/g, "_");
-      const file = new File(
-        [blob],
-        safeName.includes(".") ? safeName : `${safeName}.png`,
-        {
-          type: blob.type || "image/png",
-        }
-      );
+      const fileName = safeName.includes(".") ? safeName : `${safeName}.png`;
+      const blob = await fetchAssetBlob(selectedCanvasImage.src, fileName);
+      const file = new File([blob], fileName, {
+        type: blob.type || "image/png",
+      });
       await uploadProductFile(file);
     } catch {
       toast.error(t("ecommerceAgent.useCanvasFailed"));

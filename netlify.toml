@@ -1,4 +1,16 @@
 [[redirects]]
+  from = "/uploads/*"
+  to = "https://api.useneospark.com/uploads/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/storage/*"
+  to = "https://api.useneospark.com/storage/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200 
