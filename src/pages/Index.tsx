@@ -503,7 +503,7 @@ const Index = () => {
           <aside
             id="onboarding-hub-panel"
             className={cn(
-              "relative flex shrink-0 flex-col border-l-brutal border-foreground bg-card transition-[width] duration-200 ease-out",
+              "relative flex shrink-0 flex-col border-l-4 border-foreground bg-card transition-[width] duration-200 ease-out",
               hubPanelExpanded
                 ? "w-[400px] overflow-visible"
                 : "w-11 overflow-hidden"
