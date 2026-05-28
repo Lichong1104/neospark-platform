@@ -174,32 +174,46 @@ const EcommerceWelcome: React.FC<{
               <CirclePlay className="w-4 h-4" />
             </button>
           </div>
-          <div className="text-sm bg-secondary/30 border border-foreground/10 p-4 space-y-3 whitespace-pre-wrap">
-            <p className="font-bold">{t("ecommerceAgent.greeting")}</p>
-            <ol className="list-decimal list-inside space-y-1.5 text-muted-foreground">
+          <div className="text-sm bg-secondary/30 border border-foreground/10 py-2.5 pr-2.5 pl-2 space-y-2 leading-relaxed">
+            <p className="font-bold text-foreground">
+              {t("ecommerceAgent.greeting")}
+            </p>
+            <ol className="list-none space-y-1.5 p-0 m-0 text-muted-foreground">
               <li>
-                <strong>{t("ecommerceAgent.field1Label")}</strong>：
-                {t("ecommerceAgent.field1Example")}
+                <strong className="text-foreground">
+                  1. {t("ecommerceAgent.field1Label")}
+                </strong>
+                ：{t("ecommerceAgent.field1Example")}
               </li>
               <li>
-                <strong>{t("ecommerceAgent.field2Label")}</strong>：
-                {t("ecommerceAgent.field2Example")}
+                <strong className="text-foreground">
+                  2. {t("ecommerceAgent.field2Label")}
+                </strong>
+                ：{t("ecommerceAgent.field2Example")}
               </li>
               <li>
-                <strong>{t("ecommerceAgent.field3Label")}</strong>：
-                {t("ecommerceAgent.field3Example")}
+                <strong className="text-foreground">
+                  3. {t("ecommerceAgent.field3Label")}
+                </strong>
+                ：{t("ecommerceAgent.field3Example")}
               </li>
               <li>
-                <strong>{t("ecommerceAgent.field4Label")}</strong>：
-                {t("ecommerceAgent.field4Example")}
+                <strong className="text-foreground">
+                  4. {t("ecommerceAgent.field4Label")}
+                </strong>
+                ：{t("ecommerceAgent.field4Example")}
               </li>
               <li>
-                <strong>{t("ecommerceAgent.field5Label")}</strong>：
-                {t("ecommerceAgent.field5Example")}
+                <strong className="text-foreground">
+                  5. {t("ecommerceAgent.field5Label")}
+                </strong>
+                ：{t("ecommerceAgent.field5Example")}
               </li>
               <li>
-                <strong>{t("ecommerceAgent.field6Label")}</strong>：
-                {t("ecommerceAgent.field6Example")}
+                <strong className="text-foreground">
+                  6. {t("ecommerceAgent.field6Label")}
+                </strong>
+                ：{t("ecommerceAgent.field6Example")}
               </li>
             </ol>
           </div>
