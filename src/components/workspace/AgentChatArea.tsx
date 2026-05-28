@@ -42,10 +42,11 @@ import { STATIC_BASE_URL } from "@/api/request";
 import { fetchAssetBlob } from "@/lib/assetFetchUrl";
 import { useGenerationPolling } from "@/hooks/useGenerationPolling";
 import { getErrorMessage } from "@/lib/errorMessage";
-import type {
-  GenerateImageParams,
-  MessageStatusResponse,
-  ModelsConfigMap,
+import {
+  DEFAULT_DRAWING_MODEL,
+  type GenerateImageParams,
+  type MessageStatusResponse,
+  type ModelsConfigMap,
 } from "@/types/drawing";
 import type { CanvasImage } from "./CanvasArea";
 
@@ -138,6 +139,52 @@ const ECOMMERCE_WELCOME_FIELDS = [
   "field6",
 ] as const;
 
+const CHAT_MESSAGE_CARD =
+  "w-full border-brutal border-foreground/15 bg-secondary/30 p-3 text-sm leading-relaxed";
+
+/** 智能体模式 GPT 模型固定使用低质量，不提供 UI 选择 */
+const AGENT_GPT_IMAGE_QUALITY = "low" as const;
+
+/** 头像 + 名称一行，内容全宽（与欢迎消息一致） */
+const ChatMessageBlock: React.FC<{
+  avatar: React.ReactNode;
+  avatarClassName?: string;
+  title: string;
+  timestamp?: string;
+  headerTrailing?: React.ReactNode;
+  className?: string;
+  children: React.ReactNode;
+}> = ({
+  avatar,
+  avatarClassName,
+  title,
+  timestamp,
+  headerTrailing,
+  className,
+  children,
+}) => (
+  <div className={cn("w-full min-w-0 space-y-2 animate-fade-in", className)}>
+    <div className="flex items-center gap-2 min-w-0">
+      <div
+        className={cn(
+          "flex h-8 w-8 shrink-0 items-center justify-center border-brutal border-foreground",
+          avatarClassName
+        )}
+      >
+        {avatar}
+      </div>
+      <span className="min-w-0 flex-1 truncate text-sm font-bold tracking-wide">
+        {title}
+      </span>
+      {timestamp ? (
+        <span className="shrink-0 text-xs text-muted-foreground">{timestamp}</span>
+      ) : null}
+      {headerTrailing}
+    </div>
+    <div className="w-full min-w-0">{children}</div>
+  </div>
+);
+
 // ===== Ecommerce Welcome Message Component =====
 const EcommerceWelcome: React.FC<{
   agentColor: string;
@@ -149,23 +196,15 @@ const EcommerceWelcome: React.FC<{
     (i18n.resolvedLanguage || i18n.language || "en")
       .split("-")[0]
       .toLowerCase() === "zh";
-  const agentName = `${t("agents.ecommerce").toUpperCase()}_AGENT`;
+  const agentName = t("agents.ecommerce");
 
   return (
     <>
-      <div className="w-full min-w-0 space-y-2 animate-fade-in">
-        <div className="flex items-center gap-2 min-w-0">
-          <div
-            className={cn(
-              "flex h-8 w-8 shrink-0 items-center justify-center border-brutal border-foreground",
-              agentColor
-            )}
-          >
-            {agentIcon}
-          </div>
-          <span className="min-w-0 flex-1 truncate text-sm font-bold tracking-wide">
-            {agentName}
-          </span>
+      <ChatMessageBlock
+        avatar={agentIcon}
+        avatarClassName={agentColor}
+        title={agentName}
+        headerTrailing={
           <button
             type="button"
             onClick={() => setShowGuideVideo(true)}
@@ -183,9 +222,9 @@ const EcommerceWelcome: React.FC<{
           >
             <CirclePlay className="h-4 w-4" />
           </button>
-        </div>
-
-        <div className="w-full border-brutal border-foreground/15 bg-secondary/30 p-3 text-sm leading-relaxed">
+        }
+      >
+        <div className={CHAT_MESSAGE_CARD}>
           <p className="font-bold text-foreground">{t("ecommerceAgent.greeting")}</p>
           <ol className="mt-2.5 divide-y divide-foreground/10">
             {ECOMMERCE_WELCOME_FIELDS.map((field, index) => (
@@ -202,7 +241,7 @@ const EcommerceWelcome: React.FC<{
             ))}
           </ol>
         </div>
-      </div>
+      </ChatMessageBlock>
       <Dialog open={showGuideVideo} onOpenChange={setShowGuideVideo}>
         <DialogContent className="max-w-4xl p-4">
           <DialogHeader>
@@ -273,27 +312,16 @@ const EcommerceResultGrid: React.FC<{
   };
 
   return (
-    <div className="flex items-start gap-3 animate-fade-in">
-      <div
-        className={cn(
-          "w-10 h-10 border-brutal border-foreground flex items-center justify-center flex-shrink-0",
-          agentColor
-        )}
-      >
-        {agentIcon}
-      </div>
-      <div className="flex-1 space-y-3">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="font-bold text-sm">
-            {t("agents.ecommerce").toUpperCase()}_AGENT
-          </span>
-        </div>
+    <ChatMessageBlock
+      avatar={agentIcon}
+      avatarClassName={agentColor}
+      title={t("agents.ecommerce")}
+    >
+      <div className="w-full space-y-3">
         <p className="text-sm text-muted-foreground">
           {t("ecommerceAgent.resultReady")}
         </p>
-
-        {/* 10 panels: 5×2 */}
-        <div className="grid grid-cols-5 gap-1.5 border-brutal border-foreground p-1.5 bg-secondary/10">
+        <div className="grid w-full grid-cols-5 gap-1.5 border-brutal border-foreground p-1.5 bg-secondary/10">
           {images.slice(0, 10).map((img, idx) => (
             <a
               key={idx}
@@ -311,16 +339,13 @@ const EcommerceResultGrid: React.FC<{
             </a>
           ))}
         </div>
-
-        {cost && (
-          <div className="text-xs text-muted-foreground flex items-center gap-1">
+        {cost ? (
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
             <span>✅ {t("agentChat.generationComplete")}</span>
-            <span className="text-accent-green font-bold">-{cost} pts</span>
+            <span className="font-bold text-accent-green">-{cost} pts</span>
           </div>
-        )}
-
-        {/* Action Buttons */}
-        <div className="flex items-center gap-2">
+        ) : null}
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={onRegenerate}
             className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase border-brutal border-foreground bg-card hover:bg-secondary brutal-press"
@@ -350,7 +375,7 @@ const EcommerceResultGrid: React.FC<{
           </button>
         </div>
       </div>
-    </div>
+    </ChatMessageBlock>
   );
 };
 
@@ -361,6 +386,7 @@ const EcommercePreviewGrid: React.FC<{
   onRegenerate: () => void;
   onConfirm: () => void;
   onModify: () => void;
+  onPreviewLoaded?: () => void;
   agentColor: string;
   agentIcon: React.ReactNode;
 }> = ({
@@ -369,6 +395,7 @@ const EcommercePreviewGrid: React.FC<{
   onRegenerate,
   onConfirm,
   onModify,
+  onPreviewLoaded,
   agentColor,
   agentIcon,
 }) => {
@@ -383,26 +410,16 @@ const EcommercePreviewGrid: React.FC<{
   if (!previewImage) return null;
 
   return (
-    <div className="flex items-start gap-3 animate-fade-in">
-      <div
-        className={cn(
-          "w-10 h-10 border-brutal border-foreground flex items-center justify-center flex-shrink-0",
-          agentColor
-        )}
-      >
-        {agentIcon}
-      </div>
-      <div className="flex-1 space-y-3">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="font-bold text-sm">
-            {t("agents.ecommerce").toUpperCase()}_AGENT
-          </span>
-        </div>
+    <ChatMessageBlock
+      avatar={agentIcon}
+      avatarClassName={agentColor}
+      title={t("agents.ecommerce")}
+    >
+      <div className="w-full space-y-3">
         <p className="text-sm text-muted-foreground">
           {t("ecommerceAgent.resultReady")}
         </p>
-
-        <div className="border-brutal border-foreground p-1.5 bg-secondary/10 w-full max-w-xs overflow-hidden">
+        <div className="w-full overflow-hidden border-brutal border-foreground bg-secondary/10 p-1.5">
           <a
             href={getImageUrl(previewImage.url)}
             target="_blank"
@@ -414,19 +431,18 @@ const EcommercePreviewGrid: React.FC<{
               alt={t("ecommerceAgent.previewAlt", {
                 defaultValue: "Ecommerce 9-grid preview",
               })}
-              className="block w-full max-h-96 object-contain hover:brightness-110 transition-none"
+              className="block max-h-[min(28rem,55vh)] w-full object-contain hover:brightness-110 transition-none"
+              onLoad={onPreviewLoaded}
             />
           </a>
         </div>
-
-        {typeof cost === "number" && (
-          <div className="text-xs text-muted-foreground flex items-center gap-1">
+        {typeof cost === "number" ? (
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
             <span>✅ {t("agentChat.generationComplete")}</span>
-            <span className="text-accent-green font-bold">-{cost} pts</span>
+            <span className="font-bold text-accent-green">-{cost} pts</span>
           </div>
-        )}
-
-        <div className="flex items-center gap-2">
+        ) : null}
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={onRegenerate}
             className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase border-brutal border-foreground bg-card hover:bg-secondary brutal-press"
@@ -450,7 +466,7 @@ const EcommercePreviewGrid: React.FC<{
           </button>
         </div>
       </div>
-    </div>
+    </ChatMessageBlock>
   );
 };
 
@@ -504,10 +520,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
   >(null);
   const [aspectRatio, setAspectRatio] = useState("1:1");
   const [resolution, setResolution] = useState("1K");
-  const [model, setModel] = useState("gemini-3.1-flash-image-preview");
-  const [tengdaQuality, setTengdaQuality] = useState<"low" | "medium" | "high">(
-    "low"
-  );
+  const [model, setModel] = useState(DEFAULT_DRAWING_MODEL);
   const [modelsConfig, setModelsConfig] = useState<ModelsConfigMap | null>(
     null
   );
@@ -524,6 +537,8 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
     total: number;
   } | null>(null);
   const [lastUserContent, setLastUserContent] = useState("");
+  const messagesScrollRef = useRef<HTMLDivElement>(null);
+  const messagesListRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -540,17 +555,6 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
     () => modelsConfig?.[model],
     [modelsConfig, model]
   );
-  const isGptImage2 = model === "gpt-image-2";
-
-  const tengdaQualityOptions: DropdownOption[] = useMemo(
-    () => [
-      { value: "low", label: t("agentChat.gptImageQualityLow") },
-      { value: "medium", label: t("agentChat.gptImageQualityMedium") },
-      { value: "high", label: t("agentChat.gptImageQualityHigh") },
-    ],
-    [t]
-  );
-
   useEffect(() => {
     drawingApi
       .getModelsConfig()
@@ -559,21 +563,21 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
   }, []);
 
   useEffect(() => {
-    if (!isGptImage2) setTengdaQuality("low");
-  }, [isGptImage2]);
-
-  useEffect(() => {
     if (!modelsConfig) return;
 
     const modelIds = Object.keys(modelsConfig);
     if (!modelIds.length) return;
 
     if (!modelsConfig[model]) {
-      const firstModelId = modelIds[0];
-      const firstModel = modelsConfig[firstModelId];
-      setModel(firstModelId);
-      setResolution(firstModel.supported_resolutions[0]?.value ?? "1K");
-      setAspectRatio(firstModel.supported_aspect_ratios[0]?.value ?? "1:1");
+      const fallbackId = modelsConfig[DEFAULT_DRAWING_MODEL]
+        ? DEFAULT_DRAWING_MODEL
+        : modelIds[0];
+      const fallbackModel = modelsConfig[fallbackId];
+      setModel(fallbackId);
+      setResolution(fallbackModel.supported_resolutions[0]?.value ?? "1K");
+      setAspectRatio(
+        fallbackModel.supported_aspect_ratios[0]?.value ?? "1:1"
+      );
     }
   }, [modelsConfig, model]);
 
@@ -702,13 +706,51 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
     onImagesGenerated,
   ]);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
+    const container = messagesScrollRef.current;
+    if (container) {
+      container.scrollTo({ top: container.scrollHeight, behavior });
+      return;
+    }
+    messagesEndRef.current?.scrollIntoView({ behavior, block: "end" });
+  }, []);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    scrollToBottom("auto");
+    const frame = requestAnimationFrame(() => scrollToBottom("auto"));
+    return () => cancelAnimationFrame(frame);
+  }, [messages, scrollToBottom]);
+
+  const hasEcommercePreview = useMemo(
+    () =>
+      messages.some(
+        (m) =>
+          m.isEcommercePreview &&
+          m.status === "completed" &&
+          (m.images?.length ?? 0) > 0
+      ),
+    [messages]
+  );
+
+  useEffect(() => {
+    if (!hasEcommercePreview) return;
+    const delays = [0, 80, 200, 500];
+    const timers = delays.map((ms) =>
+      window.setTimeout(() => scrollToBottom(ms === 0 ? "auto" : "smooth"), ms)
+    );
+    return () => timers.forEach((id) => window.clearTimeout(id));
+  }, [hasEcommercePreview, messages, scrollToBottom]);
+
+  useEffect(() => {
+    const listEl = messagesListRef.current;
+    if (!listEl || !hasEcommercePreview) return;
+
+    const observer = new ResizeObserver(() => {
+      scrollToBottom("auto");
+    });
+    observer.observe(listEl);
+    return () => observer.disconnect();
+  }, [hasEcommercePreview, scrollToBottom]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
@@ -878,7 +920,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
             type: 1,
           };
           if (model === "gpt-image-2") {
-            phase1Params.quality = tengdaQuality;
+            phase1Params.quality = AGENT_GPT_IMAGE_QUALITY;
           }
           const phase1Res = await drawingApi.generateImage(sid, phase1Params);
 
@@ -958,8 +1000,8 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
         optimize_prompt: true,
       };
 
-      if (isGptImage2) {
-        params.quality = tengdaQuality;
+      if (model === "gpt-image-2") {
+        params.quality = AGENT_GPT_IMAGE_QUALITY;
       }
 
       if (
@@ -1052,7 +1094,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
           type: 1,
         };
         if (model === "gpt-image-2") {
-          phase1Params.quality = tengdaQuality;
+          phase1Params.quality = AGENT_GPT_IMAGE_QUALITY;
         }
         const phase1Res = await drawingApi.generateImage(sid, phase1Params);
 
@@ -1179,7 +1221,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
           (model.startsWith("gemini") ? "gemini" : "tengda"),
       };
       if (model === "gpt-image-2") {
-        batchParams.quality = tengdaQuality;
+        batchParams.quality = AGENT_GPT_IMAGE_QUALITY;
       }
       const batchData = await drawingApi.generateBatch(sid, batchParams);
 
@@ -1395,9 +1437,10 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
       className={cn("flex h-full min-h-0 flex-col overflow-hidden", className)}
     >
       <div
+        ref={messagesScrollRef}
         className={cn(
           "flex-1 min-h-0 overflow-y-auto p-4",
-          messages.length === 0 ? "flex flex-col justify-center" : "space-y-6"
+          messages.length === 0 && "flex flex-col justify-center"
         )}
       >
         {messages.length === 0 ? (
@@ -1418,7 +1461,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
             </p>
           </div>
         ) : (
-          <>
+          <div ref={messagesListRef} className="space-y-6">
             {messages.map((message) => (
               <div key={message.id} className="animate-fade-in">
                 {/* Welcome message for ecommerce */}
@@ -1428,86 +1471,64 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
                     agentIcon={currentAgent.icon}
                   />
                 ) : message.role === "user" ? (
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 bg-accent-yellow border-brutal border-foreground flex items-center justify-center flex-shrink-0">
-                      <User className="w-5 h-5" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-bold text-sm">
-                          {t("agentChat.you")}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {message.timestamp}
-                        </span>
+                  <ChatMessageBlock
+                    avatar={<User className="h-4 w-4" />}
+                    avatarClassName="bg-accent-yellow"
+                    title={t("agentChat.you")}
+                    timestamp={message.timestamp}
+                  >
+                    {message.userImages && message.userImages.length > 0 ? (
+                      <div className="mb-2 flex flex-wrap gap-1.5">
+                        {message.userImages.map((src, idx) => (
+                          <div
+                            key={idx}
+                            className="h-16 w-16 overflow-hidden border border-foreground/20"
+                          >
+                            <img
+                              src={src}
+                              alt=""
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                        ))}
                       </div>
-                      {/* Show user uploaded images */}
-                      {message.userImages && message.userImages.length > 0 && (
-                        <div className="flex gap-1.5 mb-2">
-                          {message.userImages.map((src, idx) => (
-                            <div
-                              key={idx}
-                              className="w-16 h-16 border border-foreground/20 overflow-hidden"
-                            >
-                              <img
-                                src={src}
-                                alt=""
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      <p className="text-sm bg-secondary/30 border border-foreground/10 p-3 whitespace-pre-wrap">
-                        {message.content}
-                      </p>
-                    </div>
-                  </div>
-                ) : message.isFinalResult && message.status === "generating" ? (
-                  <div className="flex items-start gap-3 animate-fade-in">
-                    <div
+                    ) : null}
+                    <p
                       className={cn(
-                        "w-10 h-10 border-brutal border-foreground flex items-center justify-center flex-shrink-0",
-                        currentAgent.color
+                        CHAT_MESSAGE_CARD,
+                        "whitespace-pre-wrap text-foreground"
                       )}
                     >
-                      {currentAgent.icon}
-                    </div>
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-bold text-sm">
-                          {t("agents.ecommerce").toUpperCase()}_AGENT
-                        </span>
-                      </div>
+                      {message.content}
+                    </p>
+                  </ChatMessageBlock>
+                ) : message.isFinalResult && message.status === "generating" ? (
+                  <ChatMessageBlock
+                    avatar={currentAgent.icon}
+                    avatarClassName={currentAgent.color}
+                    title={t("agents.ecommerce")}
+                  >
+                    <div className="w-full space-y-2">
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <Loader2 className="h-4 w-4 animate-spin" />
                         <span>{message.content}</span>
                       </div>
-                      <div className="w-full max-w-xs h-64 bg-secondary/20 border border-foreground/10 animate-pulse rounded" />
+                      <div className="h-64 w-full animate-pulse rounded border border-foreground/10 bg-secondary/20" />
                     </div>
-                  </div>
+                  </ChatMessageBlock>
                 ) : message.isFinalResult &&
                   message.status === "completed" &&
                   message.images ? (
-                  <div className="flex items-start gap-3 animate-fade-in">
-                    <div
-                      className={cn(
-                        "w-10 h-10 border-brutal border-foreground flex items-center justify-center flex-shrink-0",
-                        currentAgent.color
-                      )}
-                    >
-                      {currentAgent.icon}
-                    </div>
-                    <div className="flex-1 space-y-3">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-bold text-sm">
-                          {t("agents.ecommerce").toUpperCase()}_AGENT
-                        </span>
-                      </div>
+                  <ChatMessageBlock
+                    avatar={currentAgent.icon}
+                    avatarClassName={currentAgent.color}
+                    title={t("agents.ecommerce")}
+                  >
+                    <div className="w-full space-y-3">
                       <p className="text-sm text-muted-foreground">
                         {message.content}
                       </p>
-                      <div className="border-brutal border-foreground p-1.5 bg-secondary/10 w-full max-w-xs overflow-hidden">
+                      <div className="w-full overflow-hidden border-brutal border-foreground bg-secondary/10 p-1.5">
                         <a
                           href={
                             message.images[0].url.startsWith("http")
@@ -1527,20 +1548,20 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
                             alt={t("ecommerceAgent.finalDetailAlt", {
                               defaultValue: "Final detail page",
                             })}
-                            className="block w-full max-h-96 object-contain hover:brightness-110 transition-none"
+                            className="block max-h-[28rem] w-full object-contain hover:brightness-110 transition-none"
                           />
                         </a>
                       </div>
-                      {message.cost && (
-                        <div className="text-xs text-muted-foreground flex items-center gap-1">
+                      {message.cost ? (
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
                           <span>✅ {t("agentChat.generationComplete")}</span>
-                          <span className="text-accent-green font-bold">
+                          <span className="font-bold text-accent-green">
                             -{message.cost} pts
                           </span>
                         </div>
-                      )}
+                      ) : null}
                     </div>
-                  </div>
+                  </ChatMessageBlock>
                 ) : message.isEcommercePreview &&
                   message.status === "completed" &&
                   message.images ? (
@@ -1550,61 +1571,52 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
                     onRegenerate={handleEcommerceRegeneratePreview}
                     onConfirm={() => handleEcommerceConfirmPreview(message)}
                     onModify={handleEcommerceModify}
+                    onPreviewLoaded={() => scrollToBottom("smooth")}
                     agentColor={currentAgent.color}
                     agentIcon={currentAgent.icon}
                   />
                 ) : message.isEcommerceFinalAdded &&
                   message.status === "completed" ? (
-                  <div className="flex items-start gap-3 animate-fade-in">
-                    <div
+                  <ChatMessageBlock
+                    avatar={currentAgent.icon}
+                    avatarClassName={currentAgent.color}
+                    title={t("agents.ecommerce")}
+                    timestamp={message.timestamp}
+                  >
+                    <p
                       className={cn(
-                        "w-10 h-10 border-brutal border-foreground flex items-center justify-center flex-shrink-0",
-                        currentAgent.color
+                        CHAT_MESSAGE_CARD,
+                        "mb-3 whitespace-pre-wrap text-foreground"
                       )}
                     >
-                      {currentAgent.icon}
-                    </div>
-                    <div className="flex-1 space-y-3">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-bold text-sm">
-                          {t("agents.ecommerce").toUpperCase()}_AGENT
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {message.timestamp}
-                        </span>
-                      </div>
-                      <p className="text-sm bg-secondary/30 border border-foreground/10 p-3 whitespace-pre-wrap">
-                        {message.content}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() =>
-                            handleDownloadEcommerceImages(
-                              message.images ?? [],
-                              message.message_id
-                            )
-                          }
-                          disabled={
-                            !message.images ||
-                            message.images.length === 0 ||
-                            downloadingMessageId === message.message_id
-                          }
-                          className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold border-brutal border-foreground bg-accent-cyan hover:brightness-110 brutal-press disabled:opacity-50"
-                        >
-                          {downloadingMessageId === message.message_id ? (
-                            <Loader2 className="w-3 h-3 animate-spin" />
-                          ) : (
-                            <Download className="w-3 h-3" />
-                          )}
-                          {downloadingMessageId === message.message_id
-                            ? t("ecommerceAgent.downloading", {
-                                defaultValue: "Downloading...",
-                              })
-                            : t("ecommerceAgent.downloadAll")}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                      {message.content}
+                    </p>
+                    <button
+                      onClick={() =>
+                        handleDownloadEcommerceImages(
+                          message.images ?? [],
+                          message.message_id
+                        )
+                      }
+                      disabled={
+                        !message.images ||
+                        message.images.length === 0 ||
+                        downloadingMessageId === message.message_id
+                      }
+                      className="flex items-center gap-1.5 border-brutal border-foreground bg-accent-cyan px-3 py-2 text-xs font-bold hover:brightness-110 brutal-press disabled:opacity-50"
+                    >
+                      {downloadingMessageId === message.message_id ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <Download className="h-3 w-3" />
+                      )}
+                      {downloadingMessageId === message.message_id
+                        ? t("ecommerceAgent.downloading", {
+                            defaultValue: "Downloading...",
+                          })
+                        : t("ecommerceAgent.downloadAll")}
+                    </button>
+                  </ChatMessageBlock>
                 ) : (
                   <div>
                     {message.config && message.status !== "failed" ? (
@@ -1662,74 +1674,71 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
                           )}
                       </>
                     ) : (
-                      <div className="flex items-start gap-3">
-                        <div
-                          className={cn(
-                            "w-10 h-10 border-brutal border-foreground flex items-center justify-center flex-shrink-0",
-                            message.status === "failed"
-                              ? "bg-accent-red"
-                              : currentAgent.color
-                          )}
-                        >
-                          {currentAgent.icon}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-bold text-sm">
-                              {currentAgent.name.toUpperCase()}_AGENT
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {message.timestamp}
-                            </span>
-                          </div>
-                          {/* Ecommerce generating state */}
-                          {isEcommerce && message.status === "generating" ? (
-                            <div className="bg-secondary/30 border border-foreground/10 p-4 space-y-3">
-                              <div className="flex items-center gap-2">
-                                <Loader2 className="w-4 h-4 animate-spin text-accent-orange" />
-                                <span className="text-sm font-bold">
-                                  {t("ecommerceAgent.generatingDetail")}
-                                </span>
-                              </div>
-                              {ecommerceBatchProgress && (
-                                <p className="text-xs font-mono text-muted-foreground">
-                                  {t("ecommerceAgent.batchProgress", {
-                                    current: ecommerceBatchProgress.current,
-                                    total: ecommerceBatchProgress.total,
-                                  })}
-                                </p>
-                              )}
-                              {(() => {
-                                const phase = message.ecommercePhase;
-                                const skeletonCount =
-                                  phase === "phase1" ? 1 : 10;
-                                return (
-                                  <div
-                                    className={cn(
-                                      phase === "phase1"
-                                        ? "grid grid-cols-1 gap-1.5"
-                                        : "grid grid-cols-5 gap-1.5"
-                                    )}
-                                  >
-                                    {Array.from({ length: skeletonCount }).map(
-                                      (_, i) => (
-                                        <div
-                                          key={i}
-                                          className="aspect-square bg-foreground/5 border border-foreground/10 animate-pulse"
-                                        />
-                                      )
-                                    )}
-                                  </div>
-                                );
-                              })()}
+                      <ChatMessageBlock
+                        avatar={currentAgent.icon}
+                        avatarClassName={
+                          message.status === "failed"
+                            ? "bg-accent-red"
+                            : currentAgent.color
+                        }
+                        title={
+                          isEcommerce
+                            ? currentAgent.name
+                            : `${currentAgent.name.toUpperCase()}_AGENT`
+                        }
+                        timestamp={message.timestamp}
+                      >
+                        {isEcommerce && message.status === "generating" ? (
+                          <div className={cn(CHAT_MESSAGE_CARD, "space-y-3")}>
+                            <div className="flex items-center gap-2">
+                              <Loader2 className="h-4 w-4 animate-spin text-accent-orange" />
+                              <span className="font-bold">
+                                {t("ecommerceAgent.generatingDetail")}
+                              </span>
                             </div>
-                          ) : (
-                            <p className="text-sm bg-secondary/30 border border-foreground/10 p-3 whitespace-pre-wrap">
-                              {message.content}
-                            </p>
-                          )}
-                        </div>
-                      </div>
+                            {ecommerceBatchProgress ? (
+                              <p className="font-mono text-xs text-muted-foreground">
+                                {t("ecommerceAgent.batchProgress", {
+                                  current: ecommerceBatchProgress.current,
+                                  total: ecommerceBatchProgress.total,
+                                })}
+                              </p>
+                            ) : null}
+                            {(() => {
+                              const phase = message.ecommercePhase;
+                              const skeletonCount = phase === "phase1" ? 1 : 10;
+                              return (
+                                <div
+                                  className={cn(
+                                    "w-full gap-1.5",
+                                    phase === "phase1"
+                                      ? "grid grid-cols-1"
+                                      : "grid grid-cols-5"
+                                  )}
+                                >
+                                  {Array.from({ length: skeletonCount }).map(
+                                    (_, i) => (
+                                      <div
+                                        key={i}
+                                        className="aspect-square animate-pulse border border-foreground/10 bg-foreground/5"
+                                      />
+                                    )
+                                  )}
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        ) : (
+                          <p
+                            className={cn(
+                              CHAT_MESSAGE_CARD,
+                              "whitespace-pre-wrap text-foreground"
+                            )}
+                          >
+                            {message.content}
+                          </p>
+                        )}
+                      </ChatMessageBlock>
                     )}
                   </div>
                 )}
@@ -1737,40 +1746,33 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
             ))}
             {isGenerating &&
               !messages.some((m) => m.status === "generating") && (
-                <div className="flex items-start gap-3">
-                  <div
-                    className={cn(
-                      "w-10 h-10 border-brutal border-foreground flex items-center justify-center animate-pulse",
-                      currentAgent.color
-                    )}
-                  >
-                    {currentAgent.icon}
+                <ChatMessageBlock
+                  avatar={currentAgent.icon}
+                  avatarClassName={cn(currentAgent.color, "animate-pulse")}
+                  title={
+                    isEcommerce
+                      ? currentAgent.name
+                      : `${currentAgent.name.toUpperCase()}_AGENT`
+                  }
+                >
+                  <div className={cn(CHAT_MESSAGE_CARD, "flex gap-1")}>
+                    <span
+                      className="h-2 w-2 animate-bounce rounded-full bg-foreground/50"
+                      style={{ animationDelay: "0ms" }}
+                    />
+                    <span
+                      className="h-2 w-2 animate-bounce rounded-full bg-foreground/50"
+                      style={{ animationDelay: "150ms" }}
+                    />
+                    <span
+                      className="h-2 w-2 animate-bounce rounded-full bg-foreground/50"
+                      style={{ animationDelay: "300ms" }}
+                    />
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-bold text-sm">
-                        {currentAgent.name.toUpperCase()}_AGENT
-                      </span>
-                    </div>
-                    <div className="flex gap-1 p-3">
-                      <span
-                        className="w-2 h-2 bg-foreground/50 rounded-full animate-bounce"
-                        style={{ animationDelay: "0ms" }}
-                      />
-                      <span
-                        className="w-2 h-2 bg-foreground/50 rounded-full animate-bounce"
-                        style={{ animationDelay: "150ms" }}
-                      />
-                      <span
-                        className="w-2 h-2 bg-foreground/50 rounded-full animate-bounce"
-                        style={{ animationDelay: "300ms" }}
-                      />
-                    </div>
-                  </div>
-                </div>
+                </ChatMessageBlock>
               )}
-            <div ref={messagesEndRef} />
-          </>
+            <div ref={messagesEndRef} className="h-2 shrink-0" aria-hidden />
+          </div>
         )}
       </div>
 
@@ -1887,15 +1889,6 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
             value={resolution}
             onChange={setResolution}
           />
-          {isGptImage2 && (
-            <BrutalDropdown
-              options={tengdaQualityOptions}
-              value={tengdaQuality}
-              onChange={(v) =>
-                setTengdaQuality(v as "low" | "medium" | "high")
-              }
-            />
-          )}
           <BrutalDropdown
             options={modelOptions}
             value={model}

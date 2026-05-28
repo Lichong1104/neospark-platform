@@ -502,7 +502,7 @@
     "canvasMentionNoMatch": "No canvas image matches this query."
   },
   "agents": {
-    "ecommerce": "E-Commerce Master",
+    "ecommerce": "E-Commerce Listing Expert",
     "ecommerceDesc": "Professional product detail page images",
     "optimizer": "Optimizer",
     "optimizerDesc": "Intelligent image quality opti...",

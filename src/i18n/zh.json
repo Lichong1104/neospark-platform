@@ -502,7 +502,7 @@
     "canvasMentionNoMatch": "没有匹配的画布图片。"
   },
   "agents": {
-    "ecommerce": "电商详情页大师",
+    "ecommerce": "电商详情页专家",
     "ecommerceDesc": "专业电商产品详情页图片生成",
     "optimizer": "优化器",
     "optimizerDesc": "智能图像质量优化...",

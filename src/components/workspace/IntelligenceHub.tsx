@@ -55,7 +55,10 @@ import {
   validatePromptCanvasSlots,
 } from "@/lib/canvasImageSlots";
 import { InlineCanvasMentionEditor } from "./InlineCanvasMentionEditor";
-import type { ModelsConfigMap } from "@/types/drawing";
+import {
+  DEFAULT_DRAWING_MODEL,
+  type ModelsConfigMap,
+} from "@/types/drawing";
 
 type StatusType =
   | "ecommerce"
@@ -97,6 +100,11 @@ const DEFAULT_RESOLUTIONS: DropdownOption[] = [
 
 const DEFAULT_MODELS: DropdownOption[] = [
   {
+    value: "gpt-image-2",
+    label: "GPT Image 2 (Tengda)",
+    icon: <Image className="w-3 h-3" />,
+  },
+  {
     value: "gemini-3.1-flash-image-preview",
     label: "Gemini 3.1 Flash (Image)",
     icon: <Sparkles className="w-3 h-3" />,
@@ -109,11 +117,6 @@ const DEFAULT_MODELS: DropdownOption[] = [
   {
     value: "gemini-2.5-flash-image",
     label: "Gemini 2.5 Flash (Image)",
-    icon: <Image className="w-3 h-3" />,
-  },
-  {
-    value: "gpt-image-2",
-    label: "GPT Image 2 (Tengda)",
     icon: <Image className="w-3 h-3" />,
   },
 ];
@@ -245,7 +248,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
 
   const [aspectRatio, setAspectRatio] = useState("1:1");
   const [resolution, setResolution] = useState("1K");
-  const [model, setModel] = useState("gemini-3.1-flash-image-preview");
+  const [model, setModel] = useState(DEFAULT_DRAWING_MODEL);
   const [tengdaQuality, setTengdaQuality] = useState<"low" | "medium" | "high">(
     "low"
   );
@@ -372,11 +375,15 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
     if (!modelIds.length) return;
 
     if (!modelsConfig[model]) {
-      const firstModelId = modelIds[0];
-      const firstModel = modelsConfig[firstModelId];
-      setModel(firstModelId);
-      setResolution(firstModel.supported_resolutions[0]?.value ?? "1K");
-      setAspectRatio(firstModel.supported_aspect_ratios[0]?.value ?? "1:1");
+      const fallbackId = modelsConfig[DEFAULT_DRAWING_MODEL]
+        ? DEFAULT_DRAWING_MODEL
+        : modelIds[0];
+      const fallbackModel = modelsConfig[fallbackId];
+      setModel(fallbackId);
+      setResolution(fallbackModel.supported_resolutions[0]?.value ?? "1K");
+      setAspectRatio(
+        fallbackModel.supported_aspect_ratios[0]?.value ?? "1:1"
+      );
     }
   }, [modelsConfig, model]);
 

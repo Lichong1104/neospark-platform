@@ -25,6 +25,9 @@ export interface ModelConfig {
 /** 所有模型配置（key 为模型 ID） */
 export type ModelsConfigMap = Record<string, ModelConfig>;
 
+/** 标准模式 / 智能体（含九宫格）默认绘画模型 */
+export const DEFAULT_DRAWING_MODEL = "gpt-image-2";
+
 /** 创建会话请求 */
 export interface CreateSessionParams {
   title?: string;

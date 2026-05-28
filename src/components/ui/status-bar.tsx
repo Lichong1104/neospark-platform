@@ -13,7 +13,7 @@ const statusConfig: Record<StatusType, { bg: string; glow: string; text: string 
   ecommerce: {
     bg: "bg-accent-orange",
     glow: "glow-orange",
-    text: "ECOMMERCE_AGENT ONLINE",
+    text: "E-COMMERCE LISTING EXPERT ONLINE",
   },
   optimizer: {
     bg: "bg-accent-green",
