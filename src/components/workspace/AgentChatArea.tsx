@@ -1783,7 +1783,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
           className="hidden"
           onChange={handleProductFilePick}
         />
-        {/* 电商：产品参考图（上传 / 粘贴自动上传 / 画布） */}
+        {/* 电商：产品参考图（上传 / 粘贴 / 画布） */}
         {isEcommerce ? (
           <>
             <PastedImagesPreview

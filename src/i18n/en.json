@@ -571,7 +571,7 @@
     "field6Label": "Reference Images",
     "field6Example": "Please paste images for design analysis",
     "imageRequired": "Please paste at least one product reference image",
-    "pasteImageHint": "Upload, paste (auto-upload), or use the selected canvas image as product reference",
+    "pasteImageHint": "Upload, paste, or use the selected canvas image as product reference",
     "inputPlaceholder": "Fill in product details as prompted above...",
     "resultReady": "Visual plan generated. Preview the 3×3 grid below:",
     "generatingDetail": "Generating e-commerce visual plan...",

@@ -571,7 +571,7 @@
     "field6Label": "参考图片",
     "field6Example": "请粘贴图片以便我分析工业设计细节",
     "imageRequired": "请至少粘贴一张产品参考图片",
-    "pasteImageHint": "请上传、粘贴（自动上传）或使用画布中的图片作为产品参考图",
+    "pasteImageHint": "请上传、粘贴或使用画布中的图片作为产品参考图",
     "inputPlaceholder": "请按照上方提示填写产品信息...",
     "resultReady": "视觉方案已生成，请查看以下预览图：",
     "generatingDetail": "正在生成电商详情页视觉方案...",
