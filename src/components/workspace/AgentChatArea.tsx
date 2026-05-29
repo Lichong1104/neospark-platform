@@ -56,9 +56,9 @@ type StatusType =
   | "offline";
 
 const ECOMMERCE_GUIDE_VIDEO_URL =
-  "https://quantrisk.oss-cn-shenzhen.aliyuncs.com/neospark_ecomm.mp4";
+  "https://fquantplus.oss-cn-qingdao.aliyuncs.com/neospark/%E7%94%B5%E5%95%86%E8%AF%A6%E6%83%85%E9%A1%B5%E6%95%99%E7%A8%8B%E8%84%9A%E6%9C%AC.mp4";
 const ECOMMERCE_GUIDE_VIDEO_URL_EN =
-  "https://www.youtube.com/embed/45fCnj5aVSE";
+  "https://ustrader-73014.oss-us-east-1.aliyuncs.com/ecommerce_listing_en.mp4";
 
 async function pollMessageUntilTerminal(
   messageId: string,
@@ -252,25 +252,18 @@ const EcommerceWelcome: React.FC<{
             </DialogDescription>
           </DialogHeader>
           <div className="w-full overflow-hidden rounded-md border">
-            {isChineseLanguage ? (
-              <video
-                className="h-auto w-full"
-                src={ECOMMERCE_GUIDE_VIDEO_URL}
-                controls
-                autoPlay
-                playsInline
-                preload="metadata"
-              />
-            ) : (
-              <iframe
-                className="h-auto w-full aspect-video"
-                src={ECOMMERCE_GUIDE_VIDEO_URL_EN}
-                title="E-Commerce Master Guide Video"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-              />
-            )}
+            <video
+              className="h-auto w-full"
+              src={
+                isChineseLanguage
+                  ? ECOMMERCE_GUIDE_VIDEO_URL
+                  : ECOMMERCE_GUIDE_VIDEO_URL_EN
+              }
+              controls
+              autoPlay
+              playsInline
+              preload="metadata"
+            />
           </div>
         </DialogContent>
       </Dialog>
