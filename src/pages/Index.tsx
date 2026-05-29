@@ -19,6 +19,11 @@ import {
   getCanvasImageMaxSize,
   toCanvasSize,
 } from "@/lib/canvasImageSize";
+import {
+  createGenPlaceholderItem,
+  CANVAS_GEN_NODE_WIDTH,
+  getGenNodeTotalHeight,
+} from "@/lib/canvasGenNode";
 import { WorkspaceOnboarding } from "@/components/onboarding/WorkspaceOnboarding";
 import {
   Dialog,
@@ -390,6 +395,66 @@ const Index = () => {
       window.removeEventListener("neospark:open-video-guide", onOpenVideoGuide);
   }, [isChineseLanguage]);
 
+  const handleAddGenPlaceholder = useCallback(
+    (genType: "image" | "video") => {
+      const offset = canvasImages.filter((i) => i.kind === "gen-placeholder").length;
+      const height = getGenNodeTotalHeight(genType);
+      const pos = getCanvasCenterPlacement(CANVAS_GEN_NODE_WIDTH, height, offset);
+      const item = createGenPlaceholderItem(
+        genType,
+        pos,
+        genType === "image"
+          ? t("canvas.genImagePlaceholder")
+          : t("canvas.genVideoPlaceholder")
+      );
+      setCanvasImages((prev) => [
+        ...prev.map((img) => ({ ...img, selected: false })),
+        item,
+      ]);
+      setSelectedImageIds([item.id]);
+      setSelectedImage(item.id);
+    },
+    [canvasImages, t]
+  );
+
+  const handleGenPlaceholderFulfilled = useCallback(
+    (
+      nodeId: string,
+      genType: "image" | "video",
+      result: { src: string; name: string }
+    ) => {
+      (async () => {
+        const natural =
+          genType === "video"
+            ? await getVideoSize(result.src)
+            : await getImageSize(result.src);
+        const size = toCanvasSize(natural.width, natural.height);
+        setCanvasImages((prev) =>
+          prev.map((img) => {
+            if (img.id !== nodeId) return img;
+            return {
+              id: nodeId,
+              x: img.x,
+              y: img.y,
+              width: size.width,
+              height: size.height,
+              selected: img.selected,
+              src: result.src,
+              name: result.name,
+              type: genType,
+            };
+          })
+        );
+        toast.success(
+          genType === "video"
+            ? t("canvas.videoAdded", { name: result.name })
+            : t("canvas.addedImage", { name: result.name })
+        );
+      })();
+    },
+    [t]
+  );
+
   const handleFileDrop = useCallback(
     async (files: File[], position?: { x: number; y: number }) => {
       setIsFileDropUploading(true);
@@ -472,6 +537,8 @@ const Index = () => {
               isActive={selectedImageIds.length === 1}
               onToolSelect={(toolId) => console.log("Tool selected:", toolId)}
               onAssetClick={() => setIsAssetSidebarOpen(!isAssetSidebarOpen)}
+              onAddImagePlaceholder={() => handleAddGenPlaceholder("image")}
+              onAddVideoPlaceholder={() => handleAddGenPlaceholder("video")}
               processingState={processingState}
               onBgRemove={handleBgRemove}
               onLayerSplit={handleLayerSplit}
@@ -494,6 +561,7 @@ const Index = () => {
                 onCanvasImagesChange={setCanvasImages}
                 onFileDrop={handleFileDrop}
                 isFileDropLoading={isFileDropUploading}
+                onGenPlaceholderFulfilled={handleGenPlaceholderFulfilled}
               />
             ) : (
               <WorkflowCanvas />

@@ -6,6 +6,8 @@ import {
   FolderOpen,
   Loader2,
   Camera,
+  ImagePlus,
+  Video,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -17,6 +19,8 @@ interface LeftToolbarProps {
   isActive: boolean;
   onToolSelect?: (toolId: string) => void;
   onAssetClick?: () => void;
+  onAddImagePlaceholder?: () => void;
+  onAddVideoPlaceholder?: () => void;
   processingState?: {
     isProcessing: boolean;
     type: string | null;
@@ -88,6 +92,8 @@ const LeftToolbar: React.FC<LeftToolbarProps> = ({
   isActive,
   onToolSelect,
   onAssetClick,
+  onAddImagePlaceholder,
+  onAddVideoPlaceholder,
   processingState,
   onBgRemove,
   onLayerSplit,
@@ -203,6 +209,38 @@ const LeftToolbar: React.FC<LeftToolbarProps> = ({
           <FolderOpen className="w-5 h-5" />
           <span className="text-[10px] font-bold mt-1 uppercase">
             {t("workspace.assets")}
+          </span>
+        </button>
+
+        <button
+          id="onboarding-toolbar-gen-image"
+          type="button"
+          onClick={onAddImagePlaceholder}
+          className={cn(
+            "w-full h-11 flex flex-col items-center justify-center border-b border-foreground/10 transition-none",
+            "hover:bg-accent-cyan/15 hover:text-foreground text-muted-foreground"
+          )}
+          title={t("workspace.genImage")}
+        >
+          <ImagePlus className="w-5 h-5" />
+          <span className="text-[9px] font-bold mt-0.5 uppercase leading-tight text-center px-0.5">
+            {t("workspace.genImageShort")}
+          </span>
+        </button>
+
+        <button
+          id="onboarding-toolbar-gen-video"
+          type="button"
+          onClick={onAddVideoPlaceholder}
+          className={cn(
+            "w-full h-11 flex flex-col items-center justify-center border-b-brutal border-foreground transition-none",
+            "hover:bg-accent-purple/15 hover:text-foreground text-muted-foreground"
+          )}
+          title={t("workspace.genVideo")}
+        >
+          <Video className="w-5 h-5" />
+          <span className="text-[9px] font-bold mt-0.5 uppercase leading-tight text-center px-0.5">
+            {t("workspace.genVideoShort")}
           </span>
         </button>
 

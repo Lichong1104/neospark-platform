@@ -1,10 +1,21 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { cn } from "@/lib/utils";
 import { STATIC_BASE_URL } from "@/api/request";
 import { canvasImageSlotLabel } from "@/lib/canvasImageSlots";
 import { useTranslation } from "react-i18next";
 
-type CanvasItem = { id?: string; src: string; name: string; type?: "image" | "video" };
+type CanvasItem = {
+  id?: string;
+  src: string;
+  name: string;
+  type?: "image" | "video";
+};
 
 function toFullUrl(src: string): string {
   if (!src) return "";
@@ -23,7 +34,11 @@ function getSelectionTextBeforeCaret(root: HTMLElement): string {
   return pre.toString();
 }
 
-function replaceTextInRangeWithNode(root: HTMLElement, replaceLen: number, node: Node) {
+function replaceTextInRangeWithNode(
+  root: HTMLElement,
+  replaceLen: number,
+  node: Node
+) {
   const sel = window.getSelection();
   if (!sel || sel.rangeCount === 0) return;
   const range = sel.getRangeAt(0);
@@ -89,7 +104,9 @@ function serializeEditor(root: HTMLElement, imageSlotPrefix: string): string {
     if (child.nodeType === Node.ELEMENT_NODE) {
       const el = child as HTMLElement;
       if (el.dataset?.token === "canvas-image" && el.dataset?.slot) {
-        parts.push(`@${canvasImageSlotLabel(Number(el.dataset.slot), imageSlotPrefix)}`);
+        parts.push(
+          `@${canvasImageSlotLabel(Number(el.dataset.slot), imageSlotPrefix)}`
+        );
         return;
       }
       parts.push(el.innerText);
@@ -117,7 +134,8 @@ function renderFromValue(
   while ((m = re.exec(value)) !== null) {
     const start = m.index;
     const end = start + m[0].length;
-    if (start > last) root.appendChild(document.createTextNode(value.slice(last, start)));
+    if (start > last)
+      root.appendChild(document.createTextNode(value.slice(last, start)));
     const slot = Number(m[2]);
     const item = slotMap.get(slot);
     if (item) {
@@ -145,7 +163,8 @@ function renderFromValue(
     }
     last = end;
   }
-  if (last < value.length) root.appendChild(document.createTextNode(value.slice(last)));
+  if (last < value.length)
+    root.appendChild(document.createTextNode(value.slice(last)));
 }
 
 export function InlineCanvasMentionEditor({
@@ -158,6 +177,8 @@ export function InlineCanvasMentionEditor({
   enableSubmitOnEnter = true,
   onPasteImageFile,
   submitAction,
+  footerLeft,
+  embedded = false,
 }: {
   value: string;
   onChange: (next: string) => void;
@@ -169,6 +190,10 @@ export function InlineCanvasMentionEditor({
   onPasteImageFile?: (file: File) => void;
   /** 嵌入输入框右下角的操作（如生成按钮） */
   submitAction?: React.ReactNode;
+  /** 嵌入输入框左下角（如生成参数摘要） */
+  footerLeft?: React.ReactNode;
+  /** 画布节点内嵌：更紧凑、无外边框 */
+  embedded?: boolean;
 }) {
   const { t } = useTranslation();
   const editorRef = useRef<HTMLDivElement>(null);
@@ -201,7 +226,10 @@ export function InlineCanvasMentionEditor({
         }
         const exact = /^(?:图|image)(\d+)$/.exec(q);
         if (exact) return Number(exact[1]) === slot;
-        return item.name.toLowerCase().includes(q) || item.src.toLowerCase().includes(q);
+        return (
+          item.name.toLowerCase().includes(q) ||
+          item.src.toLowerCase().includes(q)
+        );
       })
       .slice(0, 12);
   }, [imageSlotPrefix, mentionTail, slotItems]);
@@ -312,90 +340,123 @@ export function InlineCanvasMentionEditor({
     [onPasteImageFile]
   );
 
-  return (
-    <div className={cn("relative", className)}>
-      {mentionTail !== null && (
-        <div className="absolute left-0 right-0 bottom-full mb-1 z-30 max-h-40 overflow-y-auto border border-foreground/20 bg-card brutal-shadow">
-          {visibleMentions.length === 0 ? (
-            <div className="px-2.5 py-2 text-[10px] text-muted-foreground">
-              {slotItems.length === 0
-                ? t("intelligenceHub.canvasMentionNoImages")
-                : t("intelligenceHub.canvasMentionNoMatch")}
-            </div>
-          ) : (
-            visibleMentions.map(({ item, slot }) => (
-              <button
-                key={`${slot}-${item.src}`}
-                type="button"
-                onMouseDown={(ev) => ev.preventDefault()}
-                onClick={() => applyMention(slot)}
-                className="w-full px-2.5 py-2 text-left border-b border-foreground/10 last:border-b-0 hover:bg-secondary transition-none flex items-center gap-2"
-              >
-                <img
-                  src={toFullUrl(item.src)}
-                  alt={item.name}
-                  className="w-7 h-7 object-cover border border-foreground/20 shrink-0"
-                />
-                <div className="min-w-0">
-                  <div className="text-[11px] font-bold truncate">
-                    <span className="text-accent-cyan mr-1">
-                      {canvasImageSlotLabel(slot, imageSlotPrefix)}
-                    </span>
-                    {item.name}
-                  </div>
-                </div>
-              </button>
-            ))
-          )}
-        </div>
-      )}
+  const hasFooter = Boolean(footerLeft || submitAction);
 
-      {!isFocused && (!value || value.trim().length === 0) && placeholder && (
+  return (
+    <div
+      className={cn(
+        "relative flex flex-col overflow-hidden",
+        embedded
+          ? "rounded-sm bg-background/90"
+          : "border-brutal border-foreground bg-background",
+        className
+      )}
+    >
+      <div className="relative min-h-0 flex-1">
+        {mentionTail !== null && (
+          <div className="absolute left-0 right-0 bottom-full mb-1 z-30 max-h-40 overflow-y-auto border border-foreground/20 bg-card brutal-shadow">
+            {visibleMentions.length === 0 ? (
+              <div className="px-2.5 py-2 text-[10px] text-muted-foreground">
+                {slotItems.length === 0
+                  ? t("intelligenceHub.canvasMentionNoImages")
+                  : t("intelligenceHub.canvasMentionNoMatch")}
+              </div>
+            ) : (
+              visibleMentions.map(({ item, slot }) => (
+                <button
+                  key={`${slot}-${item.src}`}
+                  type="button"
+                  onMouseDown={(ev) => ev.preventDefault()}
+                  onClick={() => applyMention(slot)}
+                  className="w-full px-2.5 py-2 text-left border-b border-foreground/10 last:border-b-0 hover:bg-secondary transition-none flex items-center gap-2"
+                >
+                  <img
+                    src={toFullUrl(item.src)}
+                    alt={item.name}
+                    className="w-7 h-7 object-cover border border-foreground/20 shrink-0"
+                  />
+                  <div className="min-w-0">
+                    <div className="text-[11px] font-bold truncate">
+                      <span className="text-accent-cyan mr-1">
+                        {canvasImageSlotLabel(slot, imageSlotPrefix)}
+                      </span>
+                      {item.name}
+                    </div>
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+        )}
+
+        {!isFocused && (!value || value.trim().length === 0) && placeholder && (
+          <div
+            className={cn(
+              "absolute text-muted-foreground/45 font-mono pointer-events-none select-none",
+              embedded
+                ? "left-2.5 top-2 text-[11px] leading-snug"
+                : "left-3 top-3 text-sm"
+            )}
+          >
+            {placeholder}
+          </div>
+        )}
+
+        <div
+          ref={editorRef}
+          contentEditable
+          suppressContentEditableWarning
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => {
+            setIsFocused(false);
+            setMentionTail(null);
+            // Normalize DOM only when needed (rebuilding tokens can look like "reloading images").
+            const root = editorRef.current;
+            if (!root) return;
+            const current = serializeEditor(root, imageSlotPrefix);
+            if (current !== value) {
+              renderFromValue(root, value, slotItems, imageSlotPrefix);
+            }
+          }}
+          onInput={handleInput}
+          onKeyDown={handleKeyDown}
+          onMouseUp={() => updateMentionTailFromCaret()}
+          onKeyUp={() => updateMentionTailFromCaret()}
+          onPaste={handlePaste}
+          className={cn(
+            "w-full shrink-0 overflow-y-auto overflow-x-hidden font-mono whitespace-pre-wrap break-words",
+            embedded
+              ? "min-h-[80px] h-[80px] px-2.5 pt-2.5 pb-2.5 text-[11px] leading-relaxed focus:outline-none focus:ring-1 focus:ring-inset focus:ring-accent-cyan/50"
+              : cn(
+                  "min-h-[112px] h-[112px] px-3 pt-3 pb-3 text-sm",
+                  "focus:outline-none focus:ring-2 focus:ring-inset focus:ring-accent-cyan/60",
+                  "sm:min-h-[128px] sm:h-[128px] md:min-h-[140px] md:h-[140px]"
+                )
+          )}
+        />
+      </div>
+
+      {hasFooter ? (
         <div
           className={cn(
-            "absolute left-3 top-3 text-muted-foreground/50 font-mono text-sm pointer-events-none select-none",
-            submitAction && "right-24"
+            "flex shrink-0 items-center gap-1",
+            embedded
+              ? "border-t border-foreground/8 bg-foreground/[0.03] px-1.5 py-1"
+              : "gap-1.5 border-t border-foreground/10 bg-secondary/20 px-2 py-1.5"
           )}
         >
-          {placeholder}
-        </div>
-      )}
-
-      <div
-        ref={editorRef}
-        contentEditable
-        suppressContentEditableWarning
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => {
-          setIsFocused(false);
-          setMentionTail(null);
-          // Normalize DOM only when needed (rebuilding tokens can look like "reloading images").
-          const root = editorRef.current;
-          if (!root) return;
-          const current = serializeEditor(root, imageSlotPrefix);
-          if (current !== value) {
-            renderFromValue(root, value, slotItems, imageSlotPrefix);
-          }
-        }}
-        onInput={handleInput}
-        onKeyDown={handleKeyDown}
-        onMouseUp={() => updateMentionTailFromCaret()}
-        onKeyUp={() => updateMentionTailFromCaret()}
-        onPaste={handlePaste}
-        className={cn(
-          "w-full h-[68px] shrink-0 overflow-y-auto overflow-x-hidden border-brutal border-foreground bg-background font-mono text-sm whitespace-pre-wrap break-words p-3",
-          "focus:outline-none focus:ring-2 focus:ring-accent-cyan",
-          "sm:h-[76px] md:h-[88px] lg:h-[96px]",
-          submitAction && "pb-10 pr-[5.5rem] sm:pb-11"
-        )}
-      />
-
-      {submitAction ? (
-        <div className="absolute bottom-2 right-2 z-10 pointer-events-auto">
-          {submitAction}
+          {footerLeft ? (
+            <div className="flex min-w-0 flex-1 items-center gap-1">
+              {footerLeft}
+            </div>
+          ) : (
+            <div className="flex-1" />
+          )}
+          {submitAction ? (
+            <div className="shrink-0 pointer-events-auto">{submitAction}</div>
+          ) : null}
         </div>
       ) : null}
     </div>
   );
 }
-

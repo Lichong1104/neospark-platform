@@ -16,6 +16,8 @@ import { useTranslation } from "react-i18next";
 import { ImageAnnotator } from "./ImageAnnotator";
 import { toFetchableAssetUrl } from "@/lib/assetFetchUrl";
 import { BASE_URL } from "@/api/request";
+import { CanvasGenNode } from "./CanvasGenNode";
+import { isGenPlaceholder } from "@/lib/canvasGenNode";
 import { canvasImageSlotLabel } from "@/lib/canvasImageSlots";
 
 export interface CanvasImage {
@@ -29,6 +31,9 @@ export interface CanvasImage {
   name: string;
   type?: "image" | "video";
   loading?: boolean;
+  /** 画布内生成占位节点 */
+  kind?: "gen-placeholder";
+  genType?: "image" | "video";
 }
 
 interface CanvasAreaProps {
@@ -38,6 +43,11 @@ interface CanvasAreaProps {
   onCanvasImagesChange: React.Dispatch<React.SetStateAction<CanvasImage[]>>;
   onFileDrop?: (files: File[], position: { x: number; y: number }) => void;
   isFileDropLoading?: boolean;
+  onGenPlaceholderFulfilled?: (
+    nodeId: string,
+    genType: "image" | "video",
+    result: { src: string; name: string }
+  ) => void;
 }
 
 const CanvasArea: React.FC<CanvasAreaProps> = ({
@@ -47,6 +57,7 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
   onCanvasImagesChange,
   onFileDrop,
   isFileDropLoading = false,
+  onGenPlaceholderFulfilled,
 }) => {
   const { t } = useTranslation();
   const imageSlotPrefix = t("intelligenceHub.canvasImageSlotPrefix");
@@ -82,7 +93,7 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
     const map = new Map<string, number>();
     let slot = 0;
     for (const img of images) {
-      if (img.type === "video") continue;
+      if (img.type === "video" || isGenPlaceholder(img)) continue;
       slot += 1;
       map.set(img.id, slot);
     }
@@ -672,7 +683,25 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
             transformOrigin: "0 0",
           }}
         >
-          {images.map((img) => (
+          {images.map((img) =>
+            isGenPlaceholder(img) ? (
+              <CanvasGenNode
+                key={img.id}
+                image={img}
+                canvasImages={images}
+                selected={img.selected}
+                isDragging={isDraggingImage && draggedImageId === img.id}
+                onSelect={(e) => handleImageClick(e, img.id)}
+                onDragStart={(e) => handleImagePointerDown(e, img.id)}
+                onFulfilled={(nodeId, result) => {
+                  onGenPlaceholderFulfilled?.(
+                    nodeId,
+                    img.genType ?? "image",
+                    result
+                  );
+                }}
+              />
+            ) : (
             <div
               key={img.id}
               onClick={(e) => handleImageClick(e, img.id)}
@@ -764,7 +793,8 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
                 </>
               )}
             </div>
-          ))}
+            )
+          )}
         </div>
       </div>
 

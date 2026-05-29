@@ -22,10 +22,8 @@ import {
   CirclePlay,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  BrutalDropdown,
-  type DropdownOption,
-} from "@/components/ui/brutal-dropdown";
+import { type DropdownOption } from "@/components/ui/brutal-dropdown";
+import { ImageGenerationParams, type GptImageQuality } from "./ImageGenerationParams";
 import { AgentResponseCard, type PromptConfig } from "./AgentResponseCard";
 import {
   Dialog,
@@ -141,9 +139,6 @@ const ECOMMERCE_WELCOME_FIELDS = [
 
 const CHAT_MESSAGE_CARD =
   "w-full border-brutal border-foreground/15 bg-secondary/30 p-3 text-sm leading-relaxed";
-
-/** 智能体模式 GPT 模型固定使用低质量，不提供 UI 选择 */
-const AGENT_GPT_IMAGE_QUALITY = "low" as const;
 
 /** 头像 + 名称一行，内容全宽（与欢迎消息一致） */
 const ChatMessageBlock: React.FC<{
@@ -521,6 +516,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
   const [aspectRatio, setAspectRatio] = useState("1:1");
   const [resolution, setResolution] = useState("1K");
   const [model, setModel] = useState(DEFAULT_DRAWING_MODEL);
+  const [gptImageQuality, setGptImageQuality] = useState<GptImageQuality>("low");
   const [modelsConfig, setModelsConfig] = useState<ModelsConfigMap | null>(
     null
   );
@@ -920,7 +916,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
             type: 1,
           };
           if (model === "gpt-image-2") {
-            phase1Params.quality = AGENT_GPT_IMAGE_QUALITY;
+            phase1Params.quality = gptImageQuality;
           }
           const phase1Res = await drawingApi.generateImage(sid, phase1Params);
 
@@ -1001,7 +997,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
       };
 
       if (model === "gpt-image-2") {
-        params.quality = AGENT_GPT_IMAGE_QUALITY;
+        params.quality = gptImageQuality;
       }
 
       if (
@@ -1094,7 +1090,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
           type: 1,
         };
         if (model === "gpt-image-2") {
-          phase1Params.quality = AGENT_GPT_IMAGE_QUALITY;
+          phase1Params.quality = gptImageQuality;
         }
         const phase1Res = await drawingApi.generateImage(sid, phase1Params);
 
@@ -1221,7 +1217,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
           (model.startsWith("gemini") ? "gemini" : "tengda"),
       };
       if (model === "gpt-image-2") {
-        batchParams.quality = AGENT_GPT_IMAGE_QUALITY;
+        batchParams.quality = gptImageQuality;
       }
       const batchData = await drawingApi.generateBatch(sid, batchParams);
 
@@ -1418,10 +1414,12 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
     if (!modelsConfig) return [{ value: model, label: model }];
     return Object.entries(modelsConfig).map(([id, cfg]) => ({
       value: id,
-      label: cfg.name,
+      label: cfg.name.replace(/\s*\(Tengda\)/i, "").trim() || cfg.name,
       icon: <Sparkles className="w-3 h-3" />,
     }));
   }, [modelsConfig, model]);
+
+  const isGptImage2 = model === "gpt-image-2";
 
   const canSend = isEcommerce
     ? Boolean(
@@ -1835,7 +1833,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
           </>
         )}
 
-        <div className="relative mb-2">
+        <div className="mb-2 flex flex-col overflow-hidden border-brutal border-foreground bg-background">
           <textarea
             ref={textareaRef}
             value={inputValue}
@@ -1851,55 +1849,57 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
                 ? t("ecommerceAgent.inputPlaceholder")
                 : t("agentChat.inputPlaceholder")
             }
-            className="w-full h-20 resize-none border-brutal border-foreground bg-background p-3 pb-11 pr-[5.5rem] font-mono text-sm focus:outline-none focus:ring-2 focus:ring-accent-cyan md:h-[88px]"
+            className="w-full min-h-[112px] h-[112px] resize-none font-mono text-sm px-3 pt-3 pb-3 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-accent-cyan/60 sm:min-h-[128px] sm:h-[128px] md:min-h-[140px] md:h-[140px]"
           />
-          <button
-            type="button"
-            onClick={handleSend}
-            disabled={!canSend}
-            className={cn(
-              "absolute bottom-2 right-2 z-10 flex h-8 items-center justify-center gap-1.5 border-brutal border-foreground px-3 brutal-press text-[11px] font-bold uppercase shadow-sm",
-              !canSend
-                ? "bg-muted text-muted-foreground cursor-not-allowed"
-                : "bg-accent-cyan text-foreground hover:brightness-110"
-            )}
-            title={t("canvas.generate")}
-          >
-            {isGenerating ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <>
-                <Send className="w-3.5 h-3.5" />
-                {t("canvas.generate")}
-              </>
-            )}
-          </button>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-1.5">
-          {modeToggle}
-          <BrutalDropdown
-            options={aspectRatioOptions}
-            value={aspectRatio}
-            onChange={setAspectRatio}
-            icon={<Grid3X3 className="w-3.5 h-3.5" />}
-          />
-          <BrutalDropdown
-            options={resolutionOptions}
-            value={resolution}
-            onChange={setResolution}
-          />
-          <BrutalDropdown
-            options={modelOptions}
-            value={model}
-            onChange={setModel}
-            icon={<Sparkles className="w-3.5 h-3.5" />}
-          />
-          {isEcommerce && productRefs.length > 0 && (
-            <span className="px-2 py-1 border border-accent-orange/30 bg-accent-orange/10 text-[10px] font-bold text-accent-orange">
-              📷 {productRefs.length}
-            </span>
-          )}
+          <div className="flex shrink-0 items-center gap-1.5 border-t border-foreground/10 bg-secondary/20 px-2 py-1.5">
+            <div className="flex min-w-0 flex-1 items-center gap-1">
+              {modeToggle}
+              <ImageGenerationParams
+                aspectRatio={aspectRatio}
+                resolution={resolution}
+                model={model}
+                isGptImage2={isGptImage2}
+                gptImageQuality={gptImageQuality}
+                onGptImageQualityChange={setGptImageQuality}
+                aspectRatioOptions={aspectRatioOptions}
+                resolutionOptions={resolutionOptions}
+                modelOptions={modelOptions}
+                onAspectRatioChange={setAspectRatio}
+                onResolutionChange={setResolution}
+                onModelChange={setModel}
+              />
+              {isEcommerce && productRefs.length > 0 && (
+                <span
+                  className="inline-flex h-7 shrink-0 items-center gap-1 rounded-md px-2 text-[10px] font-mono text-accent-orange"
+                  title={t("ecommerceAgent.uploadProduct")}
+                >
+                  <ImageIcon className="h-3 w-3" />
+                  {productRefs.length}
+                </span>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={handleSend}
+              disabled={!canSend}
+              className={cn(
+                "inline-flex h-7 shrink-0 items-center justify-center gap-1 rounded-md px-2.5 text-[10px] font-bold uppercase transition-colors",
+                !canSend
+                  ? "bg-foreground/10 text-muted-foreground cursor-not-allowed"
+                  : "bg-accent-cyan text-foreground hover:brightness-110 brutal-press"
+              )}
+              title={t("canvas.generate")}
+            >
+              {isGenerating ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <>
+                  <Send className="w-3.5 h-3.5" />
+                  <span>{t("canvas.generate")}</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>

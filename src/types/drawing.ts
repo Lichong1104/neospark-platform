@@ -104,15 +104,15 @@ export interface GenerateImageParams {
   ref_image_path?: string;
   /** 【单张，向后兼容】来自 `POST /storage/upload` 的 upload_id，与 `ref_image_path` 二选一 */
   ref_upload_id?: string;
-  /** 【多张】参考图 upload_id 列表（最多 14 张，Gemini 3 Pro / 3.1 Flash 以及 Tengda 全系列支持） */
+  /** 【多张】参考图 upload_id 列表（最多 14 张） */
   ref_upload_ids?: string[];
-  /** 【多张】参考图路径列表（最多 14 张，Gemini 3 Pro / 3.1 Flash 以及 Tengda 全系列支持） */
+  /** 【多张】参考图路径列表（最多 14 张） */
   ref_image_paths?: string[];
   strength?: number;
   /** 提供商：默认 gemini */
   provider?: "gemini" | "tengda";
   /**
-   * 画质档位：仅 Tengda `gpt-image-2` 支持
+   * 画质档位：仅 `gpt-image-2` 支持
    * - low: 低质量（默认）
    * - medium: 中等质量
    * - high: 高质量
@@ -134,7 +134,7 @@ export interface GenerateBatchParams {
   strength?: number;
   provider?: "gemini" | "tengda";
   /**
-   * 画质档位：仅 Tengda `gpt-image-2` 支持
+   * 画质档位：仅 `gpt-image-2` 支持
    * - low: 低质量（默认）
    * - medium: 中等质量
    * - high: 高质量

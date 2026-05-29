@@ -19,7 +19,6 @@ import {
   Bot,
   Terminal,
   GitBranch,
-  Grid3X3,
   Expand,
   Image,
   Image as ImageIcon,
@@ -27,7 +26,6 @@ import {
   Video,
   Bookmark,
   Plus,
-  ChevronDown,
   RectangleHorizontal,
   Square,
   RectangleVertical,
@@ -37,10 +35,7 @@ import {
   ShoppingBag,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  BrutalDropdown,
-  type DropdownOption,
-} from "@/components/ui/brutal-dropdown";
+import { type DropdownOption } from "@/components/ui/brutal-dropdown";
 import { PresetLibrary } from "./PresetLibrary";
 import { AgentChatArea } from "./AgentChatArea";
 import { VideoGenerationPanel } from "./VideoGenerationPanel";
@@ -55,6 +50,8 @@ import {
   validatePromptCanvasSlots,
 } from "@/lib/canvasImageSlots";
 import { InlineCanvasMentionEditor } from "./InlineCanvasMentionEditor";
+import { ImageGenerationParams } from "./ImageGenerationParams";
+import { GenerationModeIconToggle } from "./GenerationModeIconToggle";
 import {
   DEFAULT_DRAWING_MODEL,
   type ModelsConfigMap,
@@ -101,7 +98,7 @@ const DEFAULT_RESOLUTIONS: DropdownOption[] = [
 const DEFAULT_MODELS: DropdownOption[] = [
   {
     value: "gpt-image-2",
-    label: "GPT Image 2 (Tengda)",
+    label: "GPT Image 2",
     icon: <Image className="w-3 h-3" />,
   },
   {
@@ -249,7 +246,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
   const [aspectRatio, setAspectRatio] = useState("1:1");
   const [resolution, setResolution] = useState("1K");
   const [model, setModel] = useState(DEFAULT_DRAWING_MODEL);
-  const [tengdaQuality, setTengdaQuality] = useState<"low" | "medium" | "high">(
+  const [gptImageQuality, setGptImageQuality] = useState<"low" | "medium" | "high">(
     "low"
   );
   const [standardSessionId, setStandardSessionId] = useState<string | null>(
@@ -346,14 +343,14 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
     if (!modelsConfig) return DEFAULT_MODELS;
     return Object.entries(modelsConfig).map(([id, cfg]) => ({
       value: id,
-      label: cfg.name,
+      label: cfg.name.replace(/\s*\(Tengda\)/i, "").trim() || cfg.name,
       icon: <Sparkles className="w-3 h-3" />,
     }));
   }, [modelsConfig]);
 
   const currentModelConfig = modelsConfig?.[model];
   const isGptImage2 = model === "gpt-image-2";
-  const tengdaQualityOptions: DropdownOption[] = useMemo(
+  const gptImageQualityOptions: DropdownOption[] = useMemo(
     () => [
       { value: "low", label: `${t("agentChat.gptImageQualityLow")} (Fast)` },
       {
@@ -388,7 +385,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
   }, [modelsConfig, model]);
 
   useEffect(() => {
-    if (!isGptImage2) setTengdaQuality("low");
+    if (!isGptImage2) setGptImageQuality("low");
   }, [isGptImage2]);
 
   useEffect(() => {
@@ -561,7 +558,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
             optimize_prompt: true,
           };
           if (isGptImage2) {
-            baseParams.quality = tengdaQuality;
+            baseParams.quality = gptImageQuality;
           }
 
           for (let i = 0; i < batchImages.length; i++) {
@@ -665,7 +662,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
         optimize_prompt: true,
       };
       if (isGptImage2) {
-        params.quality = tengdaQuality;
+        params.quality = gptImageQuality;
       }
       if (
         hasSelectedRefs &&
@@ -771,8 +768,8 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
             resolution={resolution}
             model={model}
             isGptImage2={model === "gpt-image-2"}
-            tengdaQuality={tengdaQuality}
-            onTengdaQualityChange={setTengdaQuality}
+            gptImageQuality={gptImageQuality}
+            onGptImageQualityChange={setGptImageQuality}
             aspectRatioOptions={aspectRatioOptions}
             resolutionOptions={resolutionOptions}
             modelOptions={modelOptions}
@@ -809,51 +806,6 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
   );
 };
 
-const GenerationModeToggle: React.FC<{
-  isAgentMode: boolean;
-  onModeToggle: (agentMode: boolean) => void;
-  id?: string;
-}> = ({ isAgentMode, onModeToggle, id }) => {
-  const { t } = useTranslation();
-  return (
-    <div
-      id={id}
-      className="inline-flex h-8 shrink-0 items-stretch border border-foreground/25"
-      role="tablist"
-      aria-label={t("intelligenceHub.generationMode")}
-    >
-      <button
-        type="button"
-        role="tab"
-        aria-selected={!isAgentMode}
-        onClick={() => onModeToggle(false)}
-        className={cn(
-          "px-2.5 text-[10px] font-bold uppercase tracking-wide transition-none",
-          !isAgentMode
-            ? "bg-foreground text-card"
-            : "bg-card text-muted-foreground hover:text-foreground"
-        )}
-      >
-        {t("intelligenceHub.standardMode")}
-      </button>
-      <button
-        type="button"
-        role="tab"
-        aria-selected={isAgentMode}
-        onClick={() => onModeToggle(true)}
-        className={cn(
-          "border-l border-foreground/25 px-2.5 text-[10px] font-bold uppercase tracking-wide transition-none",
-          isAgentMode
-            ? "bg-accent-cyan text-foreground"
-            : "bg-card text-muted-foreground hover:text-foreground"
-        )}
-      >
-        {t("intelligenceHub.agentMode")}
-      </button>
-    </div>
-  );
-};
-
 interface ChatViewProps {
   isAgentMode: boolean;
   agentStatus: StatusType;
@@ -863,8 +815,8 @@ interface ChatViewProps {
   resolution: string;
   model: string;
   isGptImage2: boolean;
-  tengdaQuality: "low" | "medium" | "high";
-  onTengdaQualityChange: (value: "low" | "medium" | "high") => void;
+  gptImageQuality: "low" | "medium" | "high";
+  onGptImageQualityChange: (value: "low" | "medium" | "high") => void;
   aspectRatioOptions: DropdownOption[];
   resolutionOptions: DropdownOption[];
   modelOptions: DropdownOption[];
@@ -910,8 +862,8 @@ const ChatView: React.FC<ChatViewProps> = ({
   resolution,
   model,
   isGptImage2,
-  tengdaQuality,
-  onTengdaQualityChange,
+  gptImageQuality,
+  onGptImageQualityChange,
   aspectRatioOptions,
   resolutionOptions,
   modelOptions,
@@ -946,22 +898,6 @@ const ChatView: React.FC<ChatViewProps> = ({
   const [historyPromptView, setHistoryPromptView] = useState<
     Record<string, "used" | "original">
   >({});
-  const [settingsExpanded, setSettingsExpanded] = useState(true);
-
-  const tengdaQualityOptions: DropdownOption[] = useMemo(
-    () => [
-      { value: "low", label: `${t("agentChat.gptImageQualityLow")} (Fast)` },
-      {
-        value: "medium",
-        label: `${t("agentChat.gptImageQualityMedium")} (Balanced)`,
-      },
-      {
-        value: "high",
-        label: `${t("agentChat.gptImageQualityHigh")} (Detail)`,
-      },
-    ],
-    [t]
-  );
 
   const fillPromptFromHistory = useCallback(
     (prompt: string) => {
@@ -1002,7 +938,7 @@ const ChatView: React.FC<ChatViewProps> = ({
         selectedCanvasImage={selectedCanvasImage}
         selectedCanvasImages={selectedCanvasImages}
         modeToggle={
-          <GenerationModeToggle
+          <GenerationModeIconToggle
             id="onboarding-hub-mode"
             isAgentMode={isAgentMode}
             onModeToggle={onModeToggle}
@@ -1255,25 +1191,57 @@ const ChatView: React.FC<ChatViewProps> = ({
             placeholder={t("intelligenceHub.inputPlaceholder")}
             onSubmit={onSend}
             enableSubmitOnEnter
+            footerLeft={
+              <ImageGenerationParams
+                aspectRatio={aspectRatio}
+                resolution={resolution}
+                model={model}
+                isGptImage2={isGptImage2}
+                gptImageQuality={gptImageQuality}
+                onGptImageQualityChange={onGptImageQualityChange}
+                aspectRatioOptions={aspectRatioOptions}
+                resolutionOptions={resolutionOptions}
+                modelOptions={modelOptions}
+                onAspectRatioChange={onAspectRatioChange}
+                onResolutionChange={onResolutionChange}
+                onModelChange={onModelChange}
+                leadingSlot={
+                  <GenerationModeIconToggle
+                    id="onboarding-hub-mode"
+                    isAgentMode={isAgentMode}
+                    onModeToggle={onModeToggle}
+                  />
+                }
+                optimizeStandardPrompt={optimizeStandardPrompt}
+                onOptimizeStandardPromptChange={onOptimizeStandardPromptChange}
+                batchMode={batchMode}
+                onBatchModeChange={onBatchModeChange}
+                batchSelectedCount={
+                  selectedCanvasImages.filter((img) => img.type !== "video")
+                    .length
+                }
+                settingsTriggerId="onboarding-hub-settings"
+              />
+            }
             submitAction={
               <button
                 type="button"
                 onClick={onSend}
                 disabled={isGenerating || !inputValue.trim()}
                 className={cn(
-                  "h-8 px-3 flex items-center justify-center gap-1.5 border-brutal border-foreground brutal-press text-[11px] font-bold uppercase shadow-sm",
+                  "inline-flex h-7 items-center justify-center gap-1 rounded-md px-2.5 text-[10px] font-bold uppercase transition-colors",
                   isGenerating || !inputValue.trim()
-                    ? "bg-muted text-muted-foreground cursor-not-allowed"
-                    : "bg-accent-cyan text-foreground hover:brightness-110"
+                    ? "bg-foreground/10 text-muted-foreground cursor-not-allowed"
+                    : "bg-accent-cyan text-foreground hover:brightness-110 brutal-press"
                 )}
                 title={t("canvas.generate")}
               >
                 {isGenerating ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 ) : (
                   <>
                     <Send className="w-3.5 h-3.5" />
-                    {t("canvas.generate")}
+                    <span>{t("canvas.generate")}</span>
                   </>
                 )}
               </button>
@@ -1300,163 +1268,34 @@ const ChatView: React.FC<ChatViewProps> = ({
           />
         </div>
 
-        <div
-          id="onboarding-hub-settings"
-          className="mt-2 border-brutal border-foreground bg-secondary/10"
-        >
-          <button
-            type="button"
-            onClick={() => setSettingsExpanded((v) => !v)}
-            className="flex w-full items-center justify-between gap-2 px-2.5 py-2 text-left transition-none hover:bg-secondary/30"
-            aria-expanded={settingsExpanded}
-          >
-            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-              {t("intelligenceHub.generationSettings")}
-            </span>
-            <ChevronDown
-              className={cn(
-                "h-4 w-4 shrink-0 text-muted-foreground transition-transform",
-                settingsExpanded && "rotate-180"
-              )}
-            />
-          </button>
-
-          {settingsExpanded ? (
-            <div className="space-y-2.5 border-t border-foreground/10 p-2.5">
-            <div
-              className="grid gap-1.5"
-              style={{
-                gridTemplateColumns: `repeat(${
-                  isGptImage2 ? 3 : 2
-                }, minmax(0, 1fr))`,
-              }}
-            >
-              <BrutalDropdown
-                options={aspectRatioOptions}
-                value={aspectRatio}
-                onChange={onAspectRatioChange}
-                icon={<Grid3X3 className="w-3.5 h-3.5" />}
-                fullWidth
-              />
-              <BrutalDropdown
-                options={resolutionOptions}
-                value={resolution}
-                onChange={onResolutionChange}
-                fullWidth
-              />
-              {isGptImage2 && (
-                <BrutalDropdown
-                  options={tengdaQualityOptions}
-                  value={tengdaQuality}
-                  onChange={(v) =>
-                    onTengdaQualityChange(v as "low" | "medium" | "high")
-                  }
-                  fullWidth
-                />
-              )}
+        {batchProgress ? (
+          <div className="mt-2 border-brutal border-foreground bg-accent-pink/5 px-2.5 py-1.5">
+            <div className="flex items-center justify-between text-[11px] font-mono">
+              <span className="text-accent-pink font-bold">
+                {t("intelligenceHub.batchProcessing", {
+                  current: batchProgress.current,
+                  total: batchProgress.total,
+                })}
+              </span>
+              <span className="text-muted-foreground">
+                {Math.round(
+                  (batchProgress.current / batchProgress.total) * 100
+                )}
+                %
+              </span>
             </div>
-
-            <div className="w-full">
-              <BrutalDropdown
-                options={modelOptions}
-                value={model}
-                onChange={onModelChange}
-                icon={<Sparkles className="w-3.5 h-3.5" />}
-                fullWidth
-              />
-            </div>
-
-            <div className="pt-2 mt-1 border-t border-foreground/10">
-              <div className="flex flex-wrap items-stretch gap-2">
-                <GenerationModeToggle
-                  id="onboarding-hub-mode"
-                  isAgentMode={isAgentMode}
-                  onModeToggle={onModeToggle}
-                />
-                <button
-                  type="button"
-                  onClick={() =>
-                    onOptimizeStandardPromptChange(!optimizeStandardPrompt)
-                  }
-                  className={cn(
-                    "h-8 min-w-0 flex-1 px-2 inline-flex items-center justify-center gap-1.5 text-[10px] font-mono border border-foreground/20 transition-none",
-                    optimizeStandardPrompt
-                      ? "bg-accent-cyan/15 text-foreground border-accent-cyan/40"
-                      : "bg-background text-muted-foreground"
-                  )}
-                  title={t("intelligenceHub.optimizePromptBeforeGenerate")}
-                >
-                  <span
-                    className={cn(
-                      "w-2 h-2 shrink-0 border border-foreground/40",
-                      optimizeStandardPrompt
-                        ? "bg-accent-cyan"
-                        : "bg-transparent"
-                    )}
-                  />
-                  <span className="truncate">
-                    {t("intelligenceHub.optimizePromptShort")}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => onBatchModeChange(!batchMode)}
-                  className={cn(
-                    "h-8 min-w-0 flex-1 px-2 inline-flex items-center justify-center gap-1.5 text-[10px] font-mono border border-foreground/20 transition-none",
-                    batchMode
-                      ? "bg-accent-pink/15 text-foreground border-accent-pink/40"
-                      : "bg-background text-muted-foreground"
-                  )}
-                  title={t("intelligenceHub.batchMode")}
-                >
-                  <Images className="w-3.5 h-3.5 shrink-0" />
-                  <span className="truncate">{t("intelligenceHub.batchMode")}</span>
-                  {selectedCanvasImages.filter((img) => img.type !== "video")
-                    .length > 1 && (
-                    <span className="shrink-0 text-[9px] text-accent-pink font-bold">
-                      {
-                        selectedCanvasImages.filter(
-                          (img) => img.type !== "video"
-                        ).length
-                      }
-                    </span>
-                  )}
-                </button>
-              </div>
-            </div>
-            </div>
-          ) : null}
-
-          {batchProgress ? (
-            <div className="border-t border-foreground/10 px-2.5 py-1.5 bg-accent-pink/5">
-              <div className="flex items-center justify-between text-[11px] font-mono">
-                <span className="text-accent-pink font-bold">
-                  {t("intelligenceHub.batchProcessing", {
-                    current: batchProgress.current,
-                    total: batchProgress.total,
-                  })}
-                </span>
-                <span className="text-muted-foreground">
-                  {Math.round(
+            <div className="mt-1 w-full h-1 bg-foreground/10">
+              <div
+                className="h-full bg-accent-pink transition-all"
+                style={{
+                  width: `${
                     (batchProgress.current / batchProgress.total) * 100
-                  )}
-                  %
-                </span>
-              </div>
-              <div className="mt-1 w-full h-1 bg-foreground/10">
-                <div
-                  className="h-full bg-accent-pink transition-all"
-                  style={{
-                    width: `${
-                      (batchProgress.current / batchProgress.total) * 100
-                    }%`,
-                  }}
-                />
-              </div>
+                  }%`,
+                }}
+              />
             </div>
-          ) : null}
-        </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );
