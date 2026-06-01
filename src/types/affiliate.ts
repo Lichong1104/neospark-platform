@@ -35,3 +35,16 @@ export interface ReferralsListResponse {
   page: number;
   page_size: number;
 }
+
+/** 专职分销申请请求 */
+export interface ApplyFullTimeParams {
+  name: string;
+  contact: string;
+  reason: string;
+}
+
+/** 专职分销申请响应 */
+export interface ApplyFullTimeResponse {
+  message: string;
+  email_sent: boolean;
+}

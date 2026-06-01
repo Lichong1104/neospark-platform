@@ -33,6 +33,8 @@ import {
   Loader2,
   X,
   ShoppingBag,
+  Pencil,
+  RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { type DropdownOption } from "@/components/ui/brutal-dropdown";
@@ -260,6 +262,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
     total: number;
   } | null>(null);
   const batchAbortRef = useRef(false);
+  const generateAbortRef = useRef(false);
   const [standardGenHistory, setStandardGenHistory] = useState<
     StandardGenHistoryItem[]
   >([]);
@@ -430,12 +433,15 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
 
   async function pollMessageUntilTerminal(
     messageId: string,
-    intervalMs = 2000
-  ): Promise<MessageStatusResponse> {
+    intervalMs = 2000,
+    shouldAbort?: () => boolean
+  ): Promise<MessageStatusResponse | null> {
     for (;;) {
+      if (shouldAbort?.()) return null;
       const res: MessageStatusResponse = await drawingApi.getMessageStatus(
         messageId
       );
+      if (shouldAbort?.()) return null;
       if (
         res.status === "completed" ||
         res.status === "failed" ||
@@ -447,6 +453,17 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
     }
   }
 
+  const handleCancelGeneration = () => {
+    generateAbortRef.current = true;
+    batchAbortRef.current = true;
+    polling.stopPolling();
+    polling.reset();
+    setIsStandardGenerating(false);
+    setPendingStandardPrompt(null);
+    setBatchProgress(null);
+    toast.info(t("intelligenceHub.generationCancelled"));
+  };
+
   const handleModeToggle = (mode: boolean) => {
     setIsAgentMode(mode);
     setAgentStatus(mode ? "ecommerce" : "offline");
@@ -457,34 +474,61 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
     setInputValue(value);
   };
 
-  const handleSend = async () => {
-    if (!inputValue.trim() || isStandardGenerating) return;
-    const originalPrompt = inputValue.trim();
-    setInputValue("");
+  const handleSend = async (override?: {
+    prompt: string;
+    skipOptimize?: boolean;
+    originalPrompt?: string;
+    optimizedPrompt?: string;
+  }) => {
+    const originalPrompt = (override?.prompt ?? inputValue).trim();
+    if (!originalPrompt || isStandardGenerating) return;
+    generateAbortRef.current = false;
+    batchAbortRef.current = false;
+    if (!override) setInputValue("");
     setIsStandardGenerating(true);
-    setPendingStandardPrompt({
-      original: originalPrompt,
-      used: originalPrompt,
-    });
 
     try {
       let finalPrompt = originalPrompt;
-      if (optimizeStandardPrompt) {
-        toast.info(t("intelligenceHub.optimizingPrompt"));
-        const optimized = await optimizePrompt({
-          prompt: originalPrompt,
-        });
-        finalPrompt = optimized.optimized_prompt?.trim() || originalPrompt;
+      if (override?.skipOptimize) {
+        finalPrompt = override.prompt;
         setPendingStandardPrompt({
-          original: originalPrompt,
+          original: override.originalPrompt ?? originalPrompt,
           used: finalPrompt,
-          optimized: optimized.optimized_prompt?.trim() || "",
+          optimized: override.optimizedPrompt,
         });
       } else {
         setPendingStandardPrompt({
           original: originalPrompt,
-          used: finalPrompt,
+          used: originalPrompt,
         });
+        if (optimizeStandardPrompt) {
+          toast.info(t("intelligenceHub.optimizingPrompt"));
+          const optimized = await optimizePrompt({
+            prompt: originalPrompt,
+          });
+          finalPrompt = optimized.optimized_prompt?.trim() || originalPrompt;
+          if (generateAbortRef.current) {
+            setIsStandardGenerating(false);
+            setPendingStandardPrompt(null);
+            return;
+          }
+          setPendingStandardPrompt({
+            original: originalPrompt,
+            used: finalPrompt,
+            optimized: optimized.optimized_prompt?.trim() || "",
+          });
+        } else {
+          setPendingStandardPrompt({
+            original: originalPrompt,
+            used: finalPrompt,
+          });
+        }
+      }
+
+      if (generateAbortRef.current) {
+        setIsStandardGenerating(false);
+        setPendingStandardPrompt(null);
+        return;
       }
 
       const canvasImagesOnly = canvasImages.filter(
@@ -582,7 +626,18 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
               );
 
               // 内联轮询等待结果
-              const result = await pollMessageUntilTerminal(res.message_id);
+              const result = await pollMessageUntilTerminal(
+                res.message_id,
+                2000,
+                () => batchAbortRef.current || generateAbortRef.current
+              );
+
+              if (!result) {
+                setBatchProgress(null);
+                setIsStandardGenerating(false);
+                setPendingStandardPrompt(null);
+                return;
+              }
 
               if (
                 result.status === "completed" &&
@@ -685,7 +740,20 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
       }
       setPastedImage(null);
 
+      if (generateAbortRef.current) {
+        setIsStandardGenerating(false);
+        setPendingStandardPrompt(null);
+        return;
+      }
+
       const res = await drawingApi.generateImage(sid, params);
+
+      if (generateAbortRef.current) {
+        setIsStandardGenerating(false);
+        setPendingStandardPrompt(null);
+        return;
+      }
+
       toast.info(
         t("intelligenceHub.generatingCost", { cost: res.estimated_cost })
       );
@@ -696,6 +764,17 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
       setIsStandardGenerating(false);
       setPendingStandardPrompt(null);
     }
+  };
+
+  const handleRegenerateFromHistory = (entry: StandardGenHistoryItem) => {
+    const usedPrompt = entry.prompt.trim();
+    if (!usedPrompt) return;
+    void handleSend({
+      prompt: usedPrompt,
+      skipOptimize: true,
+      originalPrompt: entry.originalPrompt ?? usedPrompt,
+      optimizedPrompt: entry.optimizedPrompt,
+    });
   };
 
   return (
@@ -786,12 +865,14 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
             batchProgress={batchProgress}
             onModeToggle={handleModeToggle}
             onSend={handleSend}
+            onCancelGeneration={handleCancelGeneration}
             onTogglePresets={() => setShowPresets(!showPresets)}
             onSelectPreset={(prompt) => {
               setInputValue(prompt);
               setShowPresets(false);
             }}
             onReuseHistoryPrompt={setInputValue}
+            onRegenerateFromHistory={handleRegenerateFromHistory}
             onImagesGenerated={onImagesGenerated}
             pastedImage={pastedImage}
             onPasteImage={setPastedImage}
@@ -837,9 +918,11 @@ interface ChatViewProps {
   batchProgress: { current: number; total: number } | null;
   onModeToggle: (mode: boolean) => void;
   onSend: () => void;
+  onCancelGeneration: () => void;
   onTogglePresets: () => void;
   onSelectPreset: (prompt: string) => void;
   onReuseHistoryPrompt: (prompt: string) => void;
+  onRegenerateFromHistory: (entry: StandardGenHistoryItem) => void;
   onImagesGenerated?: (images: { url: string; local_path: string }[]) => void;
   pastedImage: { preview: string; path: string } | null;
   onPasteImage: (image: { preview: string; path: string } | null) => void;
@@ -880,9 +963,11 @@ const ChatView: React.FC<ChatViewProps> = ({
   batchProgress,
   onModeToggle,
   onSend,
+  onCancelGeneration,
   onTogglePresets,
   onSelectPreset,
   onReuseHistoryPrompt,
+  onRegenerateFromHistory,
   onImagesGenerated,
   pastedImage,
   onPasteImage,
@@ -1043,6 +1128,40 @@ const ChatView: React.FC<ChatViewProps> = ({
                   );
                 })}
               </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => onRegenerateFromHistory(entry)}
+                  disabled={isGenerating}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase border-brutal border-foreground bg-accent-cyan text-foreground brutal-press",
+                    isGenerating
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:brightness-110"
+                  )}
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  {t("agentResponse.regenerate")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    fillPromptFromHistory(
+                      entry.originalPrompt || entry.prompt
+                    )
+                  }
+                  disabled={isGenerating}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase border-brutal border-foreground bg-accent-yellow text-foreground brutal-press",
+                    isGenerating
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:brightness-110"
+                  )}
+                >
+                  <Pencil className="w-3 h-3" />
+                  {t("agentResponse.modify")}
+                </button>
+              </div>
             </div>
           ))}
 
@@ -1189,8 +1308,8 @@ const ChatView: React.FC<ChatViewProps> = ({
             onChange={onReuseHistoryPrompt}
             canvasImages={canvasImages}
             placeholder={t("intelligenceHub.inputPlaceholder")}
-            onSubmit={onSend}
-            enableSubmitOnEnter
+            onSubmit={isGenerating ? onCancelGeneration : onSend}
+            enableSubmitOnEnter={!isGenerating}
             footerLeft={
               <ImageGenerationParams
                 aspectRatio={aspectRatio}
@@ -1226,18 +1345,25 @@ const ChatView: React.FC<ChatViewProps> = ({
             submitAction={
               <button
                 type="button"
-                onClick={onSend}
-                disabled={isGenerating || !inputValue.trim()}
+                onClick={isGenerating ? onCancelGeneration : onSend}
+                disabled={!isGenerating && !inputValue.trim()}
                 className={cn(
                   "inline-flex h-7 items-center justify-center gap-1 rounded-md px-2.5 text-[10px] font-bold uppercase transition-colors",
-                  isGenerating || !inputValue.trim()
-                    ? "bg-foreground/10 text-muted-foreground cursor-not-allowed"
-                    : "bg-accent-cyan text-foreground hover:brightness-110 brutal-press"
+                  isGenerating
+                    ? "bg-accent-red text-foreground hover:brightness-110 brutal-press"
+                    : !inputValue.trim()
+                      ? "bg-foreground/10 text-muted-foreground cursor-not-allowed"
+                      : "bg-accent-cyan text-foreground hover:brightness-110 brutal-press"
                 )}
-                title={t("canvas.generate")}
+                title={
+                  isGenerating ? t("common.cancel") : t("canvas.generate")
+                }
               >
                 {isGenerating ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <>
+                    <X className="w-3.5 h-3.5" />
+                    <span>{t("common.cancel")}</span>
+                  </>
                 ) : (
                   <>
                     <Send className="w-3.5 h-3.5" />

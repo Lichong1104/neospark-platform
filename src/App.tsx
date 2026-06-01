@@ -19,6 +19,7 @@ import Invoices from "./pages/Invoices";
 import Account from "./pages/Account";
 import Admin from "./pages/Admin";
 import Affiliate from "./pages/Affiliate";
+import FullTimeAffiliate from "./pages/FullTimeAffiliate";
 import SkillMarket from "./pages/SkillMarket";
 import SkillDetail from "./pages/SkillDetail";
 import AdminRouteGuard from "@/components/auth/AdminRouteGuard";
@@ -94,6 +95,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Affiliate />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/affiliate/full-time"
+              element={
+                <ProtectedRoute>
+                  <FullTimeAffiliate />
                 </ProtectedRoute>
               }
             />

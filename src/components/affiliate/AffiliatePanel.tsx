@@ -16,13 +16,16 @@ import {
   ArrowRightLeft,
   Loader2,
   Gift,
+  Briefcase,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import affiliateApi from "@/api/affiliate";
 import type { AffiliateInfo } from "@/types/affiliate";
 import { getErrorMessage } from "@/lib/errorMessage";
 
 const AffiliatePanel = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [info, setInfo] = useState<AffiliateInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [convertAmount, setConvertAmount] = useState("");
@@ -190,6 +193,24 @@ const AffiliatePanel = () => {
             <li>{t("affiliate.ruleSettlement", { defaultValue: "Rewards are credited after payment is completed and can be converted 1:1 to regular credits." })}</li>
             <li>{t("affiliate.ruleFraud", { defaultValue: "Fraud, self-referrals, or abuse may lead to reward rollback or account restrictions." })}</li>
           </ul>
+        </div>
+
+        {/* 专职分销入口 */}
+        <div className="p-3 border border-foreground/20 bg-accent-green/10">
+          <p className="text-[11px] text-muted-foreground mb-2">
+            {t("fullTimeAffiliate.description", {
+              defaultValue:
+                "Join our dedicated affiliate program for higher commission rates, exclusive support, and priority access to new features.",
+            })}
+          </p>
+          <BrutalButton
+            size="sm"
+            variant="green"
+            onClick={() => navigate("/affiliate/full-time")}
+          >
+            <Briefcase className="w-3.5 h-3.5" />
+            {t("affiliate.fullTimeLink", { defaultValue: "Apply for Full-Time Affiliate" })}
+          </BrutalButton>
         </div>
 
         {/* 转换积分 */}

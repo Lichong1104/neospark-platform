@@ -9,6 +9,7 @@ import {
   Download,
   PenTool,
   Loader2,
+  Images,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -99,6 +100,14 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
     }
     return map;
   }, [images]);
+
+  const isCanvasImage = (img: CanvasImage) =>
+    img.type !== "video" && !isGenPlaceholder(img);
+
+  const selectableImageIds = useMemo(
+    () => images.filter(isCanvasImage).map((img) => img.id),
+    [images]
+  );
 
   const setSelection = useCallback(
     (nextSelectedIds: string[]) => {
@@ -332,6 +341,31 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [previewImage]);
+
+  const handleSelectAllImages = useCallback(() => {
+    if (selectableImageIds.length === 0) return;
+    setSelection(selectableImageIds);
+  }, [selectableImageIds, setSelection]);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (previewImage || annotatingImage) return;
+      if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== "a") return;
+      const target = e.target as HTMLElement | null;
+      if (
+        target?.tagName === "INPUT" ||
+        target?.tagName === "TEXTAREA" ||
+        target?.isContentEditable
+      ) {
+        return;
+      }
+      if (selectableImageIds.length === 0) return;
+      e.preventDefault();
+      setSelection(selectableImageIds);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [previewImage, annotatingImage, selectableImageIds, setSelection]);
 
   const handleZoomIn = () => setZoom((prev) => Math.min(prev + ZOOM_STEP, ZOOM_MAX));
   const handleZoomOut = () => setZoom((prev) => Math.max(prev - ZOOM_STEP, ZOOM_MIN));
@@ -621,6 +655,19 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
           >
             <Maximize2 className="w-4 h-4" />
           </button>
+
+          {selectableImageIds.length > 0 && (
+            <>
+              <div className="w-px h-5 bg-foreground/15 mx-1" />
+              <button
+                onClick={handleSelectAllImages}
+                className="w-8 h-8 flex items-center justify-center hover:bg-secondary transition-none"
+                title={t("canvas.selectAllImages")}
+              >
+                <Images className="w-4 h-4" />
+              </button>
+            </>
+          )}
 
           {selectedIds.length > 0 && (
             <>

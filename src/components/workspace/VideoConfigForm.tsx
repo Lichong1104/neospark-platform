@@ -374,12 +374,7 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
           >
             {modelOptions.map((item) => (
               <option key={item.id} value={item.id}>
-                {item.name} (
-                {t("video.modelPricePerDuration", {
-                  cost: item.price_per_second * Number(duration || 5),
-                  duration: Number(duration || 5),
-                })}
-                )
+                {item.name}
               </option>
             ))}
           </select>

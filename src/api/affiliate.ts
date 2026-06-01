@@ -1,6 +1,8 @@
 import http from "./request";
 import type {
   AffiliateInfo,
+  ApplyFullTimeParams,
+  ApplyFullTimeResponse,
   ConvertPointsParams,
   ConvertPointsResponse,
   ReferralsListResponse,
@@ -32,5 +34,19 @@ export function getReferrals(
   return http.get("/affiliate/referrals", { page, page_size: pageSize }) as unknown as Promise<ReferralsListResponse>;
 }
 
-const affiliateApi = { getAffiliateInfo, convertAffiliatePoints, getReferrals };
+/**
+ * 申请成为专职分销
+ */
+export function applyFullTimeAffiliate(
+  params: ApplyFullTimeParams
+): Promise<ApplyFullTimeResponse> {
+  return http.post("/affiliate/apply-full-time", params) as unknown as Promise<ApplyFullTimeResponse>;
+}
+
+const affiliateApi = {
+  getAffiliateInfo,
+  convertAffiliatePoints,
+  getReferrals,
+  applyFullTimeAffiliate,
+};
 export default affiliateApi;
