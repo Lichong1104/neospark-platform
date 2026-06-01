@@ -99,7 +99,7 @@ const App = () => (
               }
             />
             <Route
-              path="/affiliate/full-time"
+              path="/affiliate/dedicated"
               element={
                 <ProtectedRoute>
                   <FullTimeAffiliate />

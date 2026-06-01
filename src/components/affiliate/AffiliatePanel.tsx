@@ -206,7 +206,7 @@ const AffiliatePanel = () => {
           <BrutalButton
             size="sm"
             variant="green"
-            onClick={() => navigate("/affiliate/full-time")}
+            onClick={() => navigate("/affiliate/dedicated")}
           >
             <Briefcase className="w-3.5 h-3.5" />
             {t("affiliate.fullTimeLink", { defaultValue: "Apply for Full-Time Affiliate" })}
