@@ -6,7 +6,7 @@ export type VideoTaskStatus =
   | "cancelled";
 
 /** Output resolution for video generation (API `resolution` field) */
-export type VideoResolution = "480p" | "720p" | "1080p";
+export type VideoResolution = "480p" | "720p" | "1080p" | "2k" | "4k";
 
 /** GET /video/models */
 export interface VideoModelConfig {

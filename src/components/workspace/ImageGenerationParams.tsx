@@ -134,28 +134,76 @@ const QualitySegment: React.FC<{
   );
 };
 
+function parseAspectRatio(value: string): { w: number; h: number } | null {
+  const match = value.match(/^(\d+(?:\.\d+)?):(\d+(?:\.\d+)?)$/);
+  if (!match) return null;
+  return { w: Number(match[1]), h: Number(match[2]) };
+}
+
+function aspectRatioPreviewSize(
+  w: number,
+  h: number,
+  maxSize = 26
+): { width: number; height: number } {
+  const ratio = w / h;
+  if (ratio >= 1) {
+    return { width: maxSize, height: Math.max(8, Math.round(maxSize / ratio)) };
+  }
+  return { width: Math.max(8, Math.round(maxSize * ratio)), height: maxSize };
+}
+
+const AspectRatioShape: React.FC<{
+  ratio: string;
+  selected: boolean;
+}> = ({ ratio, selected }) => {
+  const dims = parseAspectRatio(ratio);
+  const { width, height } = dims
+    ? aspectRatioPreviewSize(dims.w, dims.h)
+    : { width: 20, height: 20 };
+
+  return (
+    <div
+      className="flex h-[30px] w-full items-center justify-center"
+      aria-hidden
+    >
+      <div
+        className={cn(
+          "shrink-0 border-2 transition-none",
+          selected
+            ? "border-foreground bg-foreground/12"
+            : "border-foreground/30 bg-muted/40"
+        )}
+        style={{ width, height }}
+      />
+    </div>
+  );
+};
+
 const AspectRatioGrid: React.FC<{
   options: DropdownOption[];
   value: string;
   onChange: (value: string) => void;
 }> = ({ options, value, onChange }) => (
   <div className="grid grid-cols-4 gap-1">
-    {options.map((opt) => (
-      <button
-        key={opt.value}
-        type="button"
-        onClick={() => onChange(opt.value)}
-        className={cn(
-          "flex flex-col items-center justify-center gap-0.5 border px-1 py-1.5 text-[9px] font-mono transition-none",
-          value === opt.value
-            ? "border-foreground/40 bg-secondary/50 text-foreground"
-            : "border-foreground/15 bg-background text-muted-foreground hover:border-foreground/30"
-        )}
-      >
-        {opt.icon ? <span className="opacity-80">{opt.icon}</span> : null}
-        <span className="truncate w-full text-center">{opt.value}</span>
-      </button>
-    ))}
+    {options.map((opt) => {
+      const selected = value === opt.value;
+      return (
+        <button
+          key={opt.value}
+          type="button"
+          onClick={() => onChange(opt.value)}
+          className={cn(
+            "flex min-h-[52px] flex-col items-center justify-center gap-0.5 border px-1 py-1.5 text-[9px] font-mono transition-none",
+            selected
+              ? "border-foreground/40 bg-secondary/50 text-foreground"
+              : "border-foreground/15 bg-background text-muted-foreground hover:border-foreground/30"
+          )}
+        >
+          <AspectRatioShape ratio={opt.value} selected={selected} />
+          <span className="w-full truncate text-center">{opt.value}</span>
+        </button>
+      );
+    })}
   </div>
 );
 
@@ -371,7 +419,10 @@ export const ImageGenerationParams: React.FC<ImageGenerationParamsProps> = ({
             id={settingsTriggerId}
             type="button"
             onClick={toggleSettings}
-            className={cn(settingsBtnClass, settingsOpen && composeChipActiveClass)}
+            className={cn(
+              settingsBtnClass,
+              settingsOpen && composeChipActiveClass
+            )}
             title={summaryTitle}
             aria-label={t("intelligenceHub.generationSettings")}
             aria-expanded={settingsOpen}
@@ -384,14 +435,15 @@ export const ImageGenerationParams: React.FC<ImageGenerationParamsProps> = ({
           side="top"
           align="end"
           sideOffset={8}
-          className="w-[min(100vw-2rem,320px)] rounded-none border-brutal border-foreground bg-card p-3 shadow-lg"
+          className="w-[min(100vw-2rem,320px)] overflow-hidden rounded-none border-brutal border-foreground bg-card p-0 shadow-lg"
           onOpenAutoFocus={(e) => e.preventDefault()}
         >
-          <p className="mb-2.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+          <p className="shrink-0 px-3 pt-3 pb-2.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
             {t("intelligenceHub.generationSettings")}
           </p>
 
-          <div className="space-y-3 max-h-[min(60vh,420px)] overflow-y-auto pr-0.5">
+          <div className="scrollbar-brutal max-h-[min(60vh,420px)] overflow-y-auto overflow-x-hidden">
+            <div className="space-y-3 px-3 pb-3">
             {isGptImage2 && onGptImageQualityChange ? (
               <section className="space-y-1.5">
                 <span className="text-[10px] font-bold uppercase text-muted-foreground">
@@ -495,6 +547,7 @@ export const ImageGenerationParams: React.FC<ImageGenerationParamsProps> = ({
                 ) : null}
               </section>
             ) : null}
+            </div>
           </div>
         </PopoverContent>
       </Popover>

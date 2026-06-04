@@ -392,4 +392,24 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  /* Panel edge scrollbar — flush right, matches brutal UI */
+  .scrollbar-brutal {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--foreground) / 0.22) hsl(var(--foreground) / 0.06);
+  }
+  .scrollbar-brutal::-webkit-scrollbar {
+    width: 5px;
+  }
+  .scrollbar-brutal::-webkit-scrollbar-track {
+    background: hsl(var(--foreground) / 0.06);
+    border-left: 1px solid hsl(var(--foreground) / 0.1);
+  }
+  .scrollbar-brutal::-webkit-scrollbar-thumb {
+    background: hsl(var(--foreground) / 0.22);
+    border-radius: 0;
+  }
+  .scrollbar-brutal::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--foreground) / 0.32);
+  }
 }

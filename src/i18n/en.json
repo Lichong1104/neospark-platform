@@ -915,6 +915,7 @@
     "realPersonMode": "Photorealistic human mode",
     "realPersonModeAssetHint": "In this mode, all image assets are uploaded to a secure asset library for review first, which helps avoid “contains a real person” safety blocks.",
     "realPersonModePromptHint": "In photorealistic human mode, reference uploaded images in the prompt using tags like [图片1], [图片2], etc.",
+    "omniModeHint": "Omni mode supports first/last frame together with reference images (up to 5 reference images).",
     "realPersonConflictFramesRefs": "In normal mode, first/last frame and reference images cannot be used together.",
     "tooManyRefImages": "At most 9 images in total (first + last + references).",
     "tooManyRefVideos": "At most 3 reference videos.",

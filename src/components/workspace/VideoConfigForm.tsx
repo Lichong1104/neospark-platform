@@ -89,6 +89,10 @@ const ChipSelect: React.FC<{
   </div>
 );
 
+/** Omni 模型集合 */
+const OMNI_MODELS = new Set(["omni-fast", "omni-fast-v2v"]);
+const isOmniModel = (model: string) => OMNI_MODELS.has(model);
+
 const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
   model,
   setModel,
@@ -130,6 +134,7 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
   const imageUploadRef = React.useRef<HTMLInputElement>(null);
   const videoUploadRef = React.useRef<HTMLInputElement>(null);
   const selectedCanvasCount = selectedCanvasImages.length;
+  const isOmni = isOmniModel(model);
 
   const refImageLines = React.useMemo(
     () =>
@@ -140,8 +145,9 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
     [referenceImageUrls]
   );
   const hasFrameUrls = Boolean(firstFrameUrl.trim() || lastFrameUrl.trim());
-  const frameMutualLocked = !realPersonMode && refImageLines.length > 0;
-  const refImagesMutualLocked = !realPersonMode && hasFrameUrls;
+  // Omni 模型支持 first_frame + reference_image 同时使用（多参考图模式）
+  const frameMutualLocked = !isOmni && !realPersonMode && refImageLines.length > 0;
+  const refImagesMutualLocked = !isOmni && !realPersonMode && hasFrameUrls;
 
   type MentionField =
     | "firstFrameUrl"
@@ -429,52 +435,63 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
       <section className="border-brutal border-foreground bg-card brutal-shadow animate-fade-in">
         <div className="p-2.5 flex flex-col gap-2.5">
           <div className="flex items-center gap-2 flex-wrap">
-            <button
-              type="button"
-              onClick={() => setGenerateAudio(!generateAudio)}
-              className={cn(
-                "flex items-center gap-2 px-3 py-2 text-[11px] font-bold uppercase border border-foreground/20 transition-none",
-                generateAudio
-                  ? "bg-accent-cyan/15 text-foreground border-accent-cyan/40"
-                  : "bg-background text-muted-foreground"
-              )}
-            >
-              {generateAudio ? (
-                <Volume2 className="w-3.5 h-3.5" />
-              ) : (
-                <VolumeX className="w-3.5 h-3.5" />
-              )}
-              {generateAudio ? t("video.audioOn") : t("video.audioOff")}
-            </button>
+            {!isOmni && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setGenerateAudio(!generateAudio)}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-2 text-[11px] font-bold uppercase border border-foreground/20 transition-none",
+                    generateAudio
+                      ? "bg-accent-cyan/15 text-foreground border-accent-cyan/40"
+                      : "bg-background text-muted-foreground"
+                  )}
+                >
+                  {generateAudio ? (
+                    <Volume2 className="w-3.5 h-3.5" />
+                  ) : (
+                    <VolumeX className="w-3.5 h-3.5" />
+                  )}
+                  {generateAudio ? t("video.audioOn") : t("video.audioOff")}
+                </button>
 
-            <button
-              type="button"
-              onClick={() => setWatermark(!watermark)}
-              className={cn(
-                "flex items-center gap-2 px-3 py-2 text-[11px] font-bold uppercase border border-foreground/20 transition-none",
-                watermark
-                  ? "bg-accent-orange/15 text-foreground border-accent-orange/40"
-                  : "bg-background text-muted-foreground"
-              )}
-            >
-              {watermark ? t("video.watermarkOn") : t("video.watermarkOff")}
-            </button>
+                <button
+                  type="button"
+                  onClick={() => setWatermark(!watermark)}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-2 text-[11px] font-bold uppercase border border-foreground/20 transition-none",
+                    watermark
+                      ? "bg-accent-orange/15 text-foreground border-accent-orange/40"
+                      : "bg-background text-muted-foreground"
+                  )}
+                >
+                  {watermark ? t("video.watermarkOn") : t("video.watermarkOff")}
+                </button>
 
-            <div className="flex items-center gap-2 px-3 py-2 border border-foreground/20 bg-background min-w-0 flex-1 basis-[200px]">
-              <Switch
-                id="video-real-person-mode"
-                checked={realPersonMode}
-                onCheckedChange={setRealPersonMode}
-              />
-              <label
-                htmlFor="video-real-person-mode"
-                className="text-[11px] font-bold uppercase cursor-pointer select-none leading-tight"
-              >
-                {t("video.realPersonMode")}
-              </label>
-            </div>
+                <div className="flex items-center gap-2 px-3 py-2 border border-foreground/20 bg-background min-w-0 flex-1 basis-[200px]">
+                  <Switch
+                    id="video-real-person-mode"
+                    checked={realPersonMode}
+                    onCheckedChange={setRealPersonMode}
+                  />
+                  <label
+                    htmlFor="video-real-person-mode"
+                    className="text-[11px] font-bold uppercase cursor-pointer select-none leading-tight"
+                  >
+                    {t("video.realPersonMode")}
+                  </label>
+                </div>
+              </>
+            )}
+            {isOmni && (
+              <div className="px-3 py-2 border border-foreground/20 bg-background">
+                <span className="text-[11px] text-muted-foreground">
+                  {t("video.omniModeHint")}
+                </span>
+              </div>
+            )}
           </div>
-          {realPersonMode && (
+          {realPersonMode && !isOmni && (
             <p className="text-[10px] text-muted-foreground leading-snug border-l-2 border-accent-purple/50 pl-2">
               {t("video.realPersonModeAssetHint")}
             </p>

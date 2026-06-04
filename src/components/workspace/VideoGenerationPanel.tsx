@@ -101,8 +101,8 @@ const filterAllowedRatiosFromApi = (
   return ordered.length ? ordered : [...VIDEO_RATIO_ORDER];
 };
 
-const VIDEO_DURATION_MIN = 5;
-const VIDEO_DURATION_MAX = 15;
+const VIDEO_DURATION_MIN = 4;
+const VIDEO_DURATION_MAX = 30;
 
 const defaultDurationOptions = (): string[] =>
   Array.from({ length: VIDEO_DURATION_MAX - VIDEO_DURATION_MIN + 1 }, (_, i) =>
@@ -147,6 +147,14 @@ const pickDurationInOptions = (
   }
   return String(best);
 };
+
+/** Omni 模型常量 */
+const OMNI_MODELS = new Set(["omni-fast", "omni-fast-v2v"]);
+const isOmniModel = (model: string) => OMNI_MODELS.has(model);
+
+/** 获取当前模型允许的最大参考图数量 */
+const getMaxRefImages = (model: string) => (isOmniModel(model) ? 5 : 9);
+const getMaxRefVideos = (_model: string) => 3;
 
 const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
   onVideoGenerated,
@@ -517,7 +525,8 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     );
 
     const hasFrame = Boolean(firstFrameUrl.trim() || lastFrameUrl.trim());
-    if (!realPersonMode && hasFrame && mergedRefImages.length > 0) {
+    // Omni 模型支持 first_frame + reference_image 同时使用（多参考图模式）
+    if (!isOmniModel(model) && !realPersonMode && hasFrame && mergedRefImages.length > 0) {
       toast.error(t("video.realPersonConflictFramesRefs"));
       return;
     }
@@ -526,8 +535,11 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
       (firstFrameUrl.trim() ? 1 : 0) +
       (lastFrameUrl.trim() ? 1 : 0) +
       mergedRefImages.length;
-    if (totalImages > 9) {
-      toast.error(t("video.tooManyRefImages"));
+    const maxRefImages = getMaxRefImages(model);
+    if (totalImages > maxRefImages) {
+      toast.error(
+        t("video.tooManyRefImages", { max: maxRefImages })
+      );
       return;
     }
     if (parsedRefVideos.length > 3) {
@@ -535,15 +547,12 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
       return;
     }
 
-    const params: CreateVideoParams = {
+    const baseParams: CreateVideoParams = {
       prompt: prompt.trim(),
       model,
       duration: safeDuration,
       ratio: normalizeVideoRatio(ratio),
       resolution,
-      generate_audio: generateAudio,
-      watermark,
-      real_person_mode: realPersonMode,
       first_frame_url: firstFrameUrl.trim() || undefined,
       last_frame_url: lastFrameUrl.trim() || undefined,
       reference_image_urls:
@@ -551,6 +560,16 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
       reference_video_urls:
         parsedRefVideos.length > 0 ? parsedRefVideos : undefined,
     };
+
+    // Omni 模型只发送基本参数，不发送 Seedance 特有参数
+    const params: CreateVideoParams = isOmniModel(model)
+      ? baseParams
+      : {
+          ...baseParams,
+          generate_audio: generateAudio,
+          watermark,
+          real_person_mode: realPersonMode,
+        };
 
     try {
       // Enter loading immediately when calling /video/generations
