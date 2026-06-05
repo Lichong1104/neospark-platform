@@ -789,10 +789,13 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
                     src={img.src}
                     className="w-full h-full object-cover"
                     muted
-                    loop
                     autoPlay
+                    playsInline
                     draggable={false}
                     controls={img.selected}
+                    onEnded={(e) => {
+                      e.currentTarget.pause();
+                    }}
                   />
                 ) : (
                   <img

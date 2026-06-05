@@ -94,24 +94,34 @@ function replaceTextInRangeWithNode(
   sel.addRange(del);
 }
 
+function serializeNode(node: Node, imageSlotPrefix: string): string {
+  if (node.nodeType === Node.TEXT_NODE) {
+    return (node as Text).data;
+  }
+  if (node.nodeType !== Node.ELEMENT_NODE) return "";
+  const el = node as HTMLElement;
+  if (el.dataset?.token === "canvas-image" && el.dataset?.slot) {
+    return `@${canvasImageSlotLabel(Number(el.dataset.slot), imageSlotPrefix)}`;
+  }
+  if (el.tagName === "BR") return "\n";
+  let out = "";
+  el.childNodes.forEach((child) => {
+    out += serializeNode(child, imageSlotPrefix);
+  });
+  return out;
+}
+
 function serializeEditor(root: HTMLElement, imageSlotPrefix: string): string {
   const parts: string[] = [];
-  root.childNodes.forEach((child) => {
-    if (child.nodeType === Node.TEXT_NODE) {
-      parts.push((child as Text).data);
-      return;
+  root.childNodes.forEach((child, index) => {
+    if (
+      index > 0 &&
+      child.nodeType === Node.ELEMENT_NODE &&
+      ["DIV", "P"].includes((child as HTMLElement).tagName)
+    ) {
+      parts.push("\n");
     }
-    if (child.nodeType === Node.ELEMENT_NODE) {
-      const el = child as HTMLElement;
-      if (el.dataset?.token === "canvas-image" && el.dataset?.slot) {
-        parts.push(
-          `@${canvasImageSlotLabel(Number(el.dataset.slot), imageSlotPrefix)}`
-        );
-        return;
-      }
-      parts.push(el.innerText);
-      return;
-    }
+    parts.push(serializeNode(child, imageSlotPrefix));
   });
   return parts.join("");
 }
@@ -307,7 +317,11 @@ export function InlineCanvasMentionEditor({
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLDivElement>) => {
-      if (enableSubmitOnEnter && e.key === "Enter" && !e.shiftKey) {
+      if (
+        enableSubmitOnEnter &&
+        e.key === "Enter" &&
+        (e.ctrlKey || e.metaKey)
+      ) {
         e.preventDefault();
         onSubmit?.();
         return;
