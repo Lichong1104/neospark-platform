@@ -507,6 +507,7 @@
     "batchMode": "Batch",
     "batchProcessing": "Batch {{current}}/{{total}}",
     "batchProgressToast": "Batch {{current}}/{{total}} · ≈ {{cost}} pts",
+    "batchStarted": "Batch submitted {{count}} images · ≈ {{cost}} pts",
     "batchFailed": "Batch item {{index}} failed: {{msg}}",
     "optimizingPrompt": "Optimizing prompt...",
     "viewOptimizedPrompt": "Optimized",

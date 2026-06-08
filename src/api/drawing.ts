@@ -10,6 +10,8 @@ import type {
   GenerateImageResponse,
   GenerateBatchParams,
   GenerateBatchData,
+  GenerateMultiRefParams,
+  GenerateMultiRefData,
   MessageStatusResponse,
   UpdateSessionTitleParams,
   DeleteSessionParams,
@@ -76,6 +78,20 @@ export async function generateBatch(
     params
   );
   return res.data ?? (res as unknown as GenerateBatchData);
+}
+
+/**
+ * 多参考图批量生成（并行）
+ */
+export async function generateMultiRef(
+  sessionId: string,
+  params: GenerateMultiRefParams
+): Promise<GenerateMultiRefData> {
+  const res = await http.post<GenerateMultiRefData>(
+    `/drawing/sessions/${sessionId}/generate-multi-ref`,
+    params
+  );
+  return res.data ?? (res as unknown as GenerateMultiRefData);
 }
 
 /**
@@ -147,6 +163,7 @@ const drawingApi = {
   getSessionDetail,
   generateImage,
   generateBatch,
+  generateMultiRef,
   getMessageStatus,
   updateSessionTitle,
   deleteSession,

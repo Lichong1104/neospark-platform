@@ -507,6 +507,7 @@
     "batchMode": "批处理",
     "batchProcessing": "批处理中 {{current}}/{{total}}",
     "batchProgressToast": "批处理 {{current}}/{{total}} · 预估消耗 {{cost}} pts",
+    "batchStarted": "批处理已提交 {{count}} 张 · 预估消耗 {{cost}} pts",
     "batchFailed": "批处理第 {{index}} 张失败: {{msg}}",
     "optimizingPrompt": "正在优化提示词...",
     "viewOptimizedPrompt": "看优化",

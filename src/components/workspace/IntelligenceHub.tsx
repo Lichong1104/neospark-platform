@@ -57,6 +57,7 @@ import { GenerationModeIconToggle } from "./GenerationModeIconToggle";
 import {
   DEFAULT_DRAWING_MODEL,
   type ModelsConfigMap,
+  type GenerateMultiRefParams,
 } from "@/types/drawing";
 
 type StatusType =
@@ -590,54 +591,45 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
             setStandardSessionId(sid);
           }
 
-          const baseParams: import("@/types/drawing").GenerateImageParams = {
+          const refPaths = batchImages
+            .map((img) => toServerPath(img.src))
+            .filter(Boolean);
+
+          const params: GenerateMultiRefParams = {
             prompt: finalPrompt,
             model,
             resolution,
             aspect_ratio: aspectRatio,
-            num_images: 1,
+            ref_image_paths: refPaths,
             provider:
               currentModelConfig?.provider ??
               (model.startsWith("gemini") ? "gemini" : "tengda"),
-            optimize_prompt: true,
           };
           if (isGptImage2) {
-            baseParams.quality = gptImageQuality;
+            params.quality = gptImageQuality;
           }
 
-          for (let i = 0; i < batchImages.length; i++) {
-            if (batchAbortRef.current) break;
+          try {
+            const batchRes = await drawingApi.generateMultiRef(sid, params);
+            toast.info(
+              t("intelligenceHub.batchStarted", {
+                count: batchRes.ref_count,
+                cost: batchRes.total_estimated_cost,
+              })
+            );
 
-            setBatchProgress({ current: i + 1, total: batchImages.length });
-            const img = batchImages[i];
-            const params = { ...baseParams };
-            if (currentModelConfig?.supports_image_to_image !== false) {
-              params.ref_image_path = toServerPath(img.src);
-            }
-
-            try {
-              const res = await drawingApi.generateImage(sid, params);
-              toast.info(
-                t("intelligenceHub.batchProgressToast", {
-                  current: i + 1,
-                  total: batchImages.length,
-                  cost: res.estimated_cost,
-                })
-              );
-
-              // 内联轮询等待结果
+            // 并行轮询所有消息
+            const pollOne = async (
+              messageId: string,
+              index: number
+            ): Promise<void> => {
               const result = await pollMessageUntilTerminal(
-                res.message_id,
+                messageId,
                 2000,
                 () => batchAbortRef.current || generateAbortRef.current
               );
 
-              if (!result) {
-                setBatchProgress(null);
-                setIsStandardGenerating(false);
-                setPendingStandardPrompt(null);
-                return;
-              }
+              if (!result || batchAbortRef.current) return;
 
               if (
                 result.status === "completed" &&
@@ -647,7 +639,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
                 setStandardGenHistory((prev) => [
                   ...prev,
                   {
-                    id: `batch-${Date.now()}-${i}`,
+                    id: `batch-${Date.now()}-${index}`,
                     prompt: finalPrompt,
                     originalPrompt: originalPrompt,
                     optimizedPrompt: optimizeStandardPrompt
@@ -662,20 +654,33 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
               } else if (result.status === "failed") {
                 toast.error(
                   t("intelligenceHub.batchFailed", {
-                    index: i + 1,
+                    index: index + 1,
                     msg: result.error_msg || "",
                   })
                 );
               }
-            } catch (err: any) {
-              const msg = getErrorMessage(
-                err,
-                t("intelligenceHub.generateFailed")
+
+              setBatchProgress((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      current: Math.min(prev.current + 1, prev.total),
+                    }
+                  : null
               );
-              toast.error(
-                t("intelligenceHub.batchFailed", { index: i + 1, msg })
-              );
-            }
+            };
+
+            await Promise.all(
+              batchRes.messages.map((item, idx) =>
+                pollOne(item.message_id, idx)
+              )
+            );
+          } catch (err: any) {
+            const msg = getErrorMessage(
+              err,
+              t("intelligenceHub.generateFailed")
+            );
+            toast.error(msg);
           }
 
           setBatchProgress(null);

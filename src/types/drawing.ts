@@ -153,6 +153,36 @@ export interface GenerateBatchData {
   total_estimated_cost?: number;
 }
 
+/** 多参考图批量生成 */
+export interface GenerateMultiRefParams {
+  prompt: string;
+  model: string;
+  resolution: string;
+  aspect_ratio: string;
+  negative_prompt?: string;
+  /** 参考图上传ID列表（与 ref_image_paths 二选一） */
+  ref_upload_ids?: string[];
+  /** 参考图路径列表（与 ref_upload_ids 二选一） */
+  ref_image_paths?: string[];
+  strength?: number;
+  provider?: "gemini" | "tengda";
+  quality?: "low" | "medium" | "high";
+  concurrency?: number;
+}
+
+export interface GenerateMultiRefMessageItem {
+  message_id: string;
+  status: string;
+  ref_index: number;
+}
+
+export interface GenerateMultiRefData {
+  batch_request_id: string;
+  messages: GenerateMultiRefMessageItem[];
+  total_estimated_cost: number;
+  ref_count: number;
+}
+
 /** 生成图片响应 */
 export interface GenerateImageResponse {
   message_id: string;
