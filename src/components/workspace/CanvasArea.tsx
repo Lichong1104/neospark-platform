@@ -86,9 +86,18 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
   const [draggedImageId, setDraggedImageId] = useState<string | null>(null);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [imageDragStart, setImageDragStart] = useState({ x: 0, y: 0 });
+  const [isMarqueeSelecting, setIsMarqueeSelecting] = useState(false);
+  const [marqueeStart, setMarqueeStart] = useState({ x: 0, y: 0 });
+  const [marqueeEnd, setMarqueeEnd] = useState({ x: 0, y: 0 });
   const activePointerIdRef = useRef<number | null>(null);
+  const marqueeAdditiveRef = useRef(false);
+  const isMarqueeSelectingRef = useRef(false);
+  const marqueeStartRef = useRef({ x: 0, y: 0 });
+  const marqueeEndRef = useRef({ x: 0, y: 0 });
 
   const canvasRef = useRef<HTMLDivElement>(null);
+
+  const MARQUEE_CLICK_THRESHOLD = 4;
 
   const imageSlotById = useMemo(() => {
     const map = new Map<string, number>();
@@ -130,6 +139,129 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
 
   const isMultiSelectGesture = (e: React.MouseEvent) =>
     !!(e.ctrlKey || e.metaKey || e.shiftKey);
+
+  const isBackgroundTarget = (target: EventTarget) => {
+    const el = target as HTMLElement;
+    return el === canvasRef.current || el.classList.contains("canvas-background");
+  };
+
+  const getCanvasLocalPoint = useCallback((clientX: number, clientY: number) => {
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return { x: 0, y: 0 };
+    return { x: clientX - rect.left, y: clientY - rect.top };
+  }, []);
+
+  const canvasLocalToWorld = useCallback(
+    (localX: number, localY: number) => {
+      const scale = zoom / 100;
+      return {
+        x: (localX - panOffset.x) / scale,
+        y: (localY - panOffset.y) / scale,
+      };
+    },
+    [zoom, panOffset]
+  );
+
+  const getItemsInMarquee = useCallback(
+    (start: { x: number; y: number }, end: { x: number; y: number }) => {
+      const left = Math.min(start.x, end.x);
+      const top = Math.min(start.y, end.y);
+      const right = Math.max(start.x, end.x);
+      const bottom = Math.max(start.y, end.y);
+      const w1 = canvasLocalToWorld(left, top);
+      const w2 = canvasLocalToWorld(right, bottom);
+      const sel = {
+        left: w1.x,
+        top: w1.y,
+        right: w2.x,
+        bottom: w2.y,
+      };
+      return images
+        .filter((img) => {
+          const item = {
+            left: img.x,
+            top: img.y,
+            right: img.x + img.width,
+            bottom: img.y + img.height,
+          };
+          return (
+            sel.left < item.right &&
+            sel.right > item.left &&
+            sel.top < item.bottom &&
+            sel.bottom > item.top
+          );
+        })
+        .map((img) => img.id);
+    },
+    [images, canvasLocalToWorld]
+  );
+
+  const startPan = useCallback(
+    (clientX: number, clientY: number, pointerId?: number) => {
+      if (pointerId != null) {
+        activePointerIdRef.current = pointerId;
+      }
+      setIsPanning(true);
+      setDragStart({ x: clientX - panOffset.x, y: clientY - panOffset.y });
+    },
+    [panOffset]
+  );
+
+  const startMarquee = useCallback(
+    (clientX: number, clientY: number, additive: boolean, pointerId?: number) => {
+      if (pointerId != null) {
+        activePointerIdRef.current = pointerId;
+      }
+      marqueeAdditiveRef.current = additive;
+      const point = getCanvasLocalPoint(clientX, clientY);
+      isMarqueeSelectingRef.current = true;
+      marqueeStartRef.current = point;
+      marqueeEndRef.current = point;
+      setIsMarqueeSelecting(true);
+      setMarqueeStart(point);
+      setMarqueeEnd(point);
+    },
+    [getCanvasLocalPoint]
+  );
+
+  const finalizeMarquee = useCallback(() => {
+    if (!isMarqueeSelectingRef.current) return;
+    isMarqueeSelectingRef.current = false;
+
+    const start = marqueeStartRef.current;
+    const end = marqueeEndRef.current;
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const distance = Math.hypot(dx, dy);
+
+    if (distance < MARQUEE_CLICK_THRESHOLD) {
+      // Shift+click without drag: keep current selection
+    } else {
+      const hitIds = getItemsInMarquee(start, end);
+      if (marqueeAdditiveRef.current) {
+        setSelectedIds((prev) => {
+          const merged = [...new Set([...prev, ...hitIds])];
+          setImages((imgs) =>
+            imgs.map((img) => ({ ...img, selected: merged.includes(img.id) }))
+          );
+          onImageSelect?.(merged.length > 0 ? merged[merged.length - 1] : null);
+          onSelectionChange?.(merged);
+          return merged;
+        });
+      } else {
+        setSelection(hitIds);
+      }
+    }
+
+    setIsMarqueeSelecting(false);
+    marqueeAdditiveRef.current = false;
+  }, [
+    getItemsInMarquee,
+    setSelection,
+    onImageSelect,
+    onSelectionChange,
+    setImages,
+  ]);
 
   const handleImageClick = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
@@ -209,35 +341,66 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
   };
 
   const handleCanvasMouseDown = (e: React.MouseEvent) => {
-    if (
-      e.target === canvasRef.current ||
-      (e.target as HTMLElement).classList.contains("canvas-background")
-    ) {
-      setIsPanning(true);
-      setDragStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
-      setSelection([]);
+    if (!isBackgroundTarget(e.target)) return;
+
+    if (e.button === 1) {
+      startPan(e.clientX, e.clientY);
+      return;
     }
+    if (e.button !== 0) return;
+
+    if (e.shiftKey) {
+      startMarquee(e.clientX, e.clientY, !!(e.ctrlKey || e.metaKey));
+      return;
+    }
+
+    startPan(e.clientX, e.clientY);
+    setSelection([]);
   };
 
   const handleCanvasPointerDown = (e: React.PointerEvent) => {
-    if (e.button !== 0) return;
-    const target = e.target as HTMLElement;
-    if (target === canvasRef.current || target.classList.contains("canvas-background")) {
+    if (!isBackgroundTarget(e.target)) return;
+
+    if (e.button === 1) {
       activePointerIdRef.current = e.pointerId;
       try {
         (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
       } catch {
         /* ignore */
       }
-      setIsPanning(true);
-      setDragStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
-      setSelection([]);
+      startPan(e.clientX, e.clientY, e.pointerId);
+      return;
     }
+    if (e.button !== 0) return;
+
+    activePointerIdRef.current = e.pointerId;
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {
+      /* ignore */
+    }
+
+    if (e.shiftKey) {
+      startMarquee(
+        e.clientX,
+        e.clientY,
+        !!(e.ctrlKey || e.metaKey),
+        e.pointerId
+      );
+      return;
+    }
+
+    startPan(e.clientX, e.clientY, e.pointerId);
+    setSelection([]);
   };
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent) => {
-      if (isPanning) {
+      if (isMarqueeSelecting) {
+        const point = getCanvasLocalPoint(e.clientX, e.clientY);
+        marqueeEndRef.current = point;
+        setMarqueeEnd(point);
+      } else if (isPanning) {
         setPanOffset({
           x: e.clientX - dragStart.x,
           y: e.clientY - dragStart.y,
@@ -260,6 +423,8 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
       }
     },
     [
+      isMarqueeSelecting,
+      getCanvasLocalPoint,
       isPanning,
       isDraggingImage,
       draggedImageId,
@@ -272,7 +437,11 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
   const handlePointerMove = useCallback(
     (e: React.PointerEvent) => {
       if (activePointerIdRef.current != null && e.pointerId !== activePointerIdRef.current) return;
-      if (isPanning) {
+      if (isMarqueeSelecting) {
+        const point = getCanvasLocalPoint(e.clientX, e.clientY);
+        marqueeEndRef.current = point;
+        setMarqueeEnd(point);
+      } else if (isPanning) {
         setPanOffset({
           x: e.clientX - dragStart.x,
           y: e.clientY - dragStart.y,
@@ -295,6 +464,8 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
       }
     },
     [
+      isMarqueeSelecting,
+      getCanvasLocalPoint,
       isPanning,
       isDraggingImage,
       draggedImageId,
@@ -304,14 +475,17 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
     ]
   );
 
-  const handleMouseUp = () => {
+  const handleMouseUp = useCallback(() => {
+    finalizeMarquee();
     setIsPanning(false);
     setIsDraggingImage(false);
     setDraggedImageId(null);
-  };
+    activePointerIdRef.current = null;
+  }, [finalizeMarquee]);
 
   useEffect(() => {
     const stopDragging = () => {
+      finalizeMarquee();
       setIsPanning(false);
       setIsDraggingImage(false);
       setDraggedImageId(null);
@@ -331,7 +505,7 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
       window.removeEventListener("lostpointercapture", stopDragging as any);
       window.removeEventListener("blur", stopDragging);
     };
-  }, []);
+  }, [finalizeMarquee]);
 
   useEffect(() => {
     if (!previewImage) return;
@@ -715,12 +889,27 @@ const CanvasArea: React.FC<CanvasAreaProps> = ({
         ref={canvasRef}
         className={cn(
           "absolute inset-0 top-10 canvas-background",
-          isPanning ? "cursor-grabbing" : "cursor-grab"
+          isPanning
+            ? "cursor-grabbing"
+            : isMarqueeSelecting
+              ? "cursor-crosshair"
+              : "cursor-grab"
         )}
         onMouseDown={handleCanvasMouseDown}
         onPointerDown={handleCanvasPointerDown}
         style={{ backgroundPosition: `${panOffset.x}px ${panOffset.y}px` }}
       >
+        {isMarqueeSelecting && (
+          <div
+            className="absolute z-20 pointer-events-none border border-accent-cyan bg-accent-cyan/10"
+            style={{
+              left: Math.min(marqueeStart.x, marqueeEnd.x),
+              top: Math.min(marqueeStart.y, marqueeEnd.y),
+              width: Math.abs(marqueeEnd.x - marqueeStart.x),
+              height: Math.abs(marqueeEnd.y - marqueeStart.y),
+            }}
+          />
+        )}
         <div
           className="absolute origin-center pointer-events-none"
           style={{

@@ -416,7 +416,7 @@
     "remove": "移除",
     "keep": "保留",
     "selectAllImages": "全选图片",
-    "helpHint": "拖拽画布平移 | 滚轮缩放 | 点击图片选中 | Ctrl+A 全选图片 | 拖拽文件到画布上传",
+    "helpHint": "拖拽画布平移 | Shift+拖拽框选 | 滚轮缩放 | 点击选中 | Ctrl/Shift 加选 | Ctrl+A 全选 | 拖拽文件上传",
     "dropToAdd": "松开以添加到画布",
     "annotate": "标注",
     "preview": "预览",

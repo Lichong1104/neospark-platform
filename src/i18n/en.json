@@ -416,7 +416,7 @@
     "remove": "REMOVE",
     "keep": "KEEP",
     "selectAllImages": "Select all images",
-    "helpHint": "Drag canvas to pan | Scroll to zoom | Click to select | Ctrl+A select all images | Drop files to upload",
+    "helpHint": "Drag canvas to pan | Shift+drag to box-select | Scroll to zoom | Click to select | Ctrl/Shift to add | Ctrl+A select all | Drop files to upload",
     "dropToAdd": "Drop to add to canvas",
     "annotate": "ANNOTATE",
     "preview": "PREVIEW",
