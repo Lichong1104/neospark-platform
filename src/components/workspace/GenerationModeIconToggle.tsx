@@ -1,15 +1,27 @@
 import React from "react";
-import { Bot, ImageIcon } from "lucide-react";
+import { Bot, ImageIcon, Video } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
+
+export type HubMediaTab = "IMAGE" | "VIDEO";
 
 export const GenerationModeIconToggle: React.FC<{
   isAgentMode: boolean;
   onModeToggle: (agentMode: boolean) => void;
+  activeTab: HubMediaTab;
+  onTabChange: (tab: HubMediaTab) => void;
   id?: string;
   className?: string;
-}> = ({ isAgentMode, onModeToggle, id, className }) => {
+}> = ({
+  isAgentMode,
+  onModeToggle,
+  activeTab,
+  onTabChange,
+  id,
+  className,
+}) => {
   const { t } = useTranslation();
+  const isImageStandard = activeTab === "IMAGE" && !isAgentMode;
 
   return (
     <div
@@ -24,12 +36,15 @@ export const GenerationModeIconToggle: React.FC<{
       <button
         type="button"
         role="tab"
-        aria-selected={!isAgentMode}
+        aria-selected={isImageStandard}
         title={t("intelligenceHub.standardMode")}
-        onClick={() => onModeToggle(false)}
+        onClick={() => {
+          onTabChange("IMAGE");
+          onModeToggle(false);
+        }}
         className={cn(
           "flex h-7 w-7 items-center justify-center rounded-[5px] transition-colors",
-          !isAgentMode
+          isImageStandard
             ? "bg-foreground text-card shadow-sm"
             : "text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
         )}
@@ -39,12 +54,30 @@ export const GenerationModeIconToggle: React.FC<{
       <button
         type="button"
         role="tab"
-        aria-selected={isAgentMode}
-        title={t("intelligenceHub.agentMode")}
-        onClick={() => onModeToggle(true)}
+        aria-selected={activeTab === "VIDEO"}
+        title={t("intelligenceHub.videoTab")}
+        onClick={() => onTabChange("VIDEO")}
         className={cn(
           "flex h-7 w-7 items-center justify-center rounded-[5px] transition-colors",
-          isAgentMode
+          activeTab === "VIDEO"
+            ? "bg-foreground text-card shadow-sm"
+            : "text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
+        )}
+      >
+        <Video className="h-3.5 w-3.5" strokeWidth={2} />
+      </button>
+      <button
+        type="button"
+        role="tab"
+        aria-selected={activeTab === "IMAGE" && isAgentMode}
+        title={t("intelligenceHub.agentMode")}
+        onClick={() => {
+          onTabChange("IMAGE");
+          onModeToggle(true);
+        }}
+        className={cn(
+          "flex h-7 w-7 items-center justify-center rounded-[5px] transition-colors",
+          activeTab === "IMAGE" && isAgentMode
             ? "bg-accent-cyan text-foreground shadow-sm"
             : "text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
         )}

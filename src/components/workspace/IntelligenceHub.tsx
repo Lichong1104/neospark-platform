@@ -23,7 +23,6 @@ import {
   Image,
   Image as ImageIcon,
   Images,
-  Video,
   Bookmark,
   Plus,
   RectangleHorizontal,
@@ -53,7 +52,11 @@ import {
 } from "@/lib/canvasImageSlots";
 import { InlineCanvasMentionEditor } from "./InlineCanvasMentionEditor";
 import { ImageGenerationParams } from "./ImageGenerationParams";
-import { GenerationModeIconToggle } from "./GenerationModeIconToggle";
+import {
+  GenerationModeIconToggle,
+  type HubMediaTab,
+} from "./GenerationModeIconToggle";
+import { drawingModelOptionIcon } from "@/components/icons/DrawingModelIcon";
 import {
   DEFAULT_DRAWING_MODEL,
   type ModelsConfigMap,
@@ -102,22 +105,34 @@ const DEFAULT_MODELS: DropdownOption[] = [
   {
     value: "gpt-image-2",
     label: "GPT Image 2",
-    icon: <Image className="w-3 h-3" />,
+    icon: drawingModelOptionIcon("gpt-image-2", "GPT Image 2", "tengda"),
   },
   {
     value: "gemini-3.1-flash-image-preview",
     label: "Gemini 3.1 Flash (Image)",
-    icon: <Sparkles className="w-3 h-3" />,
+    icon: drawingModelOptionIcon(
+      "gemini-3.1-flash-image-preview",
+      "Gemini 3.1 Flash (Image)",
+      "gemini"
+    ),
   },
   {
     value: "gemini-3-pro-image-preview",
     label: "Gemini 3 Pro (Image)",
-    icon: <Zap className="w-3 h-3" />,
+    icon: drawingModelOptionIcon(
+      "gemini-3-pro-image-preview",
+      "Gemini 3 Pro (Image)",
+      "gemini"
+    ),
   },
   {
     value: "gemini-2.5-flash-image",
     label: "Gemini 2.5 Flash (Image)",
-    icon: <Image className="w-3 h-3" />,
+    icon: drawingModelOptionIcon(
+      "gemini-2.5-flash-image",
+      "Gemini 2.5 Flash (Image)",
+      "gemini"
+    ),
   },
 ];
 
@@ -235,9 +250,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
 }) => {
   const { t } = useTranslation();
   const AGENTS = useAgents();
-  const [activeTab, setActiveTab] = useState<"IMAGE" | "VIDEO" | "SKILL">(
-    "IMAGE"
-  );
+  const [activeTab, setActiveTab] = useState<HubMediaTab>("IMAGE");
   const [isAgentMode, setIsAgentMode] = useState(false);
   const [agentStatus, setAgentStatus] = useState<StatusType>("offline");
   const [showPresets, setShowPresets] = useState(false);
@@ -348,7 +361,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
     return Object.entries(modelsConfig).map(([id, cfg]) => ({
       value: id,
       label: cfg.name.replace(/\s*\(Tengda\)/i, "").trim() || cfg.name,
-      icon: <Sparkles className="w-3 h-3" />,
+      icon: drawingModelOptionIcon(id, cfg.name, cfg.provider),
     }));
   }, [modelsConfig]);
 
@@ -468,7 +481,18 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
   const handleModeToggle = (mode: boolean) => {
     setIsAgentMode(mode);
     setAgentStatus(mode ? "ecommerce" : "offline");
+    if (mode) setActiveTab("IMAGE");
   };
+
+  const hubModeToggle = (
+    <GenerationModeIconToggle
+      id="onboarding-hub-mode"
+      isAgentMode={isAgentMode}
+      onModeToggle={handleModeToggle}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+    />
+  );
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
@@ -789,39 +813,6 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
         className
       )}
     >
-      {/* Tabs */}
-      {
-        <div
-          id="onboarding-hub-tabs"
-          className="flex h-11 shrink-0 border-b-brutal border-foreground"
-        >
-          <button
-            onClick={() => setActiveTab("IMAGE")}
-            className={cn(
-              "flex-1 h-11 min-w-0 px-4 font-mono font-bold text-xs uppercase tracking-wider transition-none flex items-center justify-center gap-1.5",
-              activeTab === "IMAGE"
-                ? "bg-foreground text-card"
-                : "bg-card text-foreground/50 hover:text-foreground"
-            )}
-          >
-            <ImageIcon className="w-3.5 h-3.5" />
-            {t("intelligenceHub.imageTab")}
-          </button>
-          <button
-            onClick={() => setActiveTab("VIDEO")}
-            className={cn(
-              "flex-1 h-11 px-4 font-mono font-bold text-xs uppercase tracking-wider transition-none flex items-center justify-center gap-1.5 border-l-brutal border-foreground",
-              activeTab === "VIDEO"
-                ? "bg-foreground text-card"
-                : "bg-card text-foreground/50 hover:text-foreground"
-            )}
-          >
-            <Video className="w-3.5 h-3.5" />
-            {t("intelligenceHub.videoTab")}
-          </button>
-        </div>
-      }
-
       {/* Keep both panels mounted so tab switches don't reset generation state or stop polling */}
       <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
         <div
@@ -835,6 +826,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
             selectedCanvasImage={selectedCanvasImage ?? null}
             selectedCanvasImages={selectedCanvasImages}
             canvasImages={canvasImages}
+            modeToggle={hubModeToggle}
           />
         </div>
         <div
@@ -868,7 +860,6 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
             batchMode={batchMode}
             onBatchModeChange={setBatchMode}
             batchProgress={batchProgress}
-            onModeToggle={handleModeToggle}
             onSend={handleSend}
             onCancelGeneration={handleCancelGeneration}
             onTogglePresets={() => setShowPresets(!showPresets)}
@@ -885,6 +876,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
             selectedCanvasImage={selectedCanvasImage ?? null}
             selectedCanvasImages={selectedCanvasImages}
             canvasImages={canvasImages}
+            modeToggle={hubModeToggle}
           />
         </div>
       </div>
@@ -893,6 +885,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
 };
 
 interface ChatViewProps {
+  modeToggle: React.ReactNode;
   isAgentMode: boolean;
   agentStatus: StatusType;
   inputValue: string;
@@ -921,7 +914,6 @@ interface ChatViewProps {
   batchMode: boolean;
   onBatchModeChange: (value: boolean) => void;
   batchProgress: { current: number; total: number } | null;
-  onModeToggle: (mode: boolean) => void;
   onSend: () => void;
   onCancelGeneration: () => void;
   onTogglePresets: () => void;
@@ -942,6 +934,7 @@ interface ChatViewProps {
 }
 
 const ChatView: React.FC<ChatViewProps> = ({
+  modeToggle,
   isAgentMode,
   agentStatus,
   inputValue,
@@ -966,7 +959,6 @@ const ChatView: React.FC<ChatViewProps> = ({
   batchMode,
   onBatchModeChange,
   batchProgress,
-  onModeToggle,
   onSend,
   onCancelGeneration,
   onTogglePresets,
@@ -1027,13 +1019,7 @@ const ChatView: React.FC<ChatViewProps> = ({
         onImagesGenerated={onImagesGenerated}
         selectedCanvasImage={selectedCanvasImage}
         selectedCanvasImages={selectedCanvasImages}
-        modeToggle={
-          <GenerationModeIconToggle
-            id="onboarding-hub-mode"
-            isAgentMode={isAgentMode}
-            onModeToggle={onModeToggle}
-          />
-        }
+        modeToggle={modeToggle}
       />
     );
   }
@@ -1329,13 +1315,7 @@ const ChatView: React.FC<ChatViewProps> = ({
                 onAspectRatioChange={onAspectRatioChange}
                 onResolutionChange={onResolutionChange}
                 onModelChange={onModelChange}
-                leadingSlot={
-                  <GenerationModeIconToggle
-                    id="onboarding-hub-mode"
-                    isAgentMode={isAgentMode}
-                    onModeToggle={onModeToggle}
-                  />
-                }
+                leadingSlot={modeToggle}
                 optimizeStandardPrompt={optimizeStandardPrompt}
                 onOptimizeStandardPromptChange={onOptimizeStandardPromptChange}
                 batchMode={batchMode}

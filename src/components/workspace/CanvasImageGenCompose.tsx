@@ -18,12 +18,11 @@ import {
   type GptImageQuality,
 } from "./ImageGenerationParams";
 import { type DropdownOption } from "@/components/ui/brutal-dropdown";
+import { drawingModelOptionIcon } from "@/components/icons/DrawingModelIcon";
 import {
   Square,
   RectangleHorizontal,
   RectangleVertical,
-  Sparkles,
-  Image as ImageIcon,
 } from "lucide-react";
 
 const DEFAULT_ASPECT_RATIOS: DropdownOption[] = [
@@ -141,12 +140,18 @@ export const CanvasImageGenCompose: React.FC<{
 
   const modelOptions: DropdownOption[] = useMemo(() => {
     if (!modelsConfig) {
-      return [{ value: model, label: model, icon: <Sparkles className="w-3 h-3" /> }];
+      return [
+        {
+          value: model,
+          label: model,
+          icon: drawingModelOptionIcon(model),
+        },
+      ];
     }
     return Object.entries(modelsConfig).map(([id, cfg]) => ({
       value: id,
       label: cfg.name.replace(/\s*\(Tengda\)/i, "").trim() || cfg.name,
-      icon: <ImageIcon className="w-3 h-3" />,
+      icon: drawingModelOptionIcon(id, cfg.name, cfg.provider),
     }));
   }, [modelsConfig, model]);
 

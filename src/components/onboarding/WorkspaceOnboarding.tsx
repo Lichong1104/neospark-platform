@@ -226,12 +226,6 @@ const WorkspaceOnboarding: React.FC<WorkspaceOnboardingProps> = ({ onComplete })
         placement: "auto",
       },
       {
-        targetId: "onboarding-hub-tabs",
-        titleKey: "onboarding.hubTabsTitle",
-        bodyKey: "onboarding.hubTabsBody",
-        placement: "auto",
-      },
-      {
         targetId: "onboarding-hub-mode",
         fallbackTargetId: "onboarding-hub-panel",
         titleKey: "onboarding.hubModeTitle",
@@ -240,7 +234,7 @@ const WorkspaceOnboarding: React.FC<WorkspaceOnboardingProps> = ({ onComplete })
       },
       {
         targetId: "onboarding-hub-compose",
-        fallbackTargetId: "onboarding-hub-tabs",
+        fallbackTargetId: "onboarding-hub-mode",
         titleKey: "onboarding.hubComposeTitle",
         bodyKey: "onboarding.hubComposeBody",
         placement: "auto",

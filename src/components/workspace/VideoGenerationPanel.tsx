@@ -36,6 +36,7 @@ import {
 import { InlineCanvasMentionEditor } from "./InlineCanvasMentionEditor";
 
 interface VideoGenerationPanelProps {
+  modeToggle?: React.ReactNode;
   onVideoGenerated?: (videoUrl: string) => void;
   selectedCanvasImage?: {
     src: string;
@@ -102,7 +103,7 @@ const filterAllowedRatiosFromApi = (
 };
 
 const VIDEO_DURATION_MIN = 4;
-const VIDEO_DURATION_MAX = 30;
+const VIDEO_DURATION_MAX = 15;
 
 const defaultDurationOptions = (): string[] =>
   Array.from({ length: VIDEO_DURATION_MAX - VIDEO_DURATION_MIN + 1 }, (_, i) =>
@@ -157,6 +158,7 @@ const getMaxRefImages = (model: string) => (isOmniModel(model) ? 5 : 9);
 const getMaxRefVideos = (_model: string) => 3;
 
 const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
+  modeToggle,
   onVideoGenerated,
   selectedCanvasImage,
   selectedCanvasImages = [],
@@ -816,6 +818,7 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
                   "border border-foreground/20 bg-background",
                   "focus-within:border-accent-purple"
                 )}
+                footerLeft={modeToggle}
               />
 
               {realPersonMode && (

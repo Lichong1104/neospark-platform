@@ -5,7 +5,6 @@ import {
   Maximize2,
   Ratio,
   Settings2,
-  Sparkles,
   Wand2,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -19,6 +18,7 @@ import {
   BrutalDropdown,
   type DropdownOption,
 } from "@/components/ui/brutal-dropdown";
+import { DrawingModelIcon } from "@/components/icons/DrawingModelIcon";
 
 export type GptImageQuality = "low" | "medium" | "high";
 
@@ -235,10 +235,16 @@ export const ImageGenerationParams: React.FC<ImageGenerationParamsProps> = ({
   const [activeMenu, setActiveMenu] = useState<QuickMenuMode | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
+  const selectedModelOption = useMemo(
+    () => modelOptions.find((o) => o.value === model),
+    [model, modelOptions]
+  );
+
   const modelLabel = useMemo(() => {
-    const found = modelOptions.find((o) => o.value === model);
-    return found ? shortModelLabel(found.label) : model;
-  }, [model, modelOptions]);
+    return selectedModelOption
+      ? shortModelLabel(selectedModelOption.label)
+      : model;
+  }, [model, selectedModelOption]);
 
   const qualityShort = useMemo(() => {
     if (!isGptImage2) return null;
@@ -487,7 +493,11 @@ export const ImageGenerationParams: React.FC<ImageGenerationParamsProps> = ({
                 options={modelOptions}
                 value={model}
                 onChange={onModelChange}
-                icon={<Sparkles className="w-3.5 h-3.5" />}
+                icon={
+                  selectedModelOption?.icon ?? (
+                    <DrawingModelIcon modelId={model} className="h-3.5 w-3.5" />
+                  )
+                }
                 fullWidth
               />
               <p className="text-[9px] font-mono text-muted-foreground/80 truncate">

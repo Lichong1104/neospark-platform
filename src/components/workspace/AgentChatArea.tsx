@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { type DropdownOption } from "@/components/ui/brutal-dropdown";
+import { drawingModelOptionIcon } from "@/components/icons/DrawingModelIcon";
 import { ImageGenerationParams, type GptImageQuality } from "./ImageGenerationParams";
 import { AgentResponseCard, type PromptConfig } from "./AgentResponseCard";
 import {
@@ -1408,7 +1409,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
     return Object.entries(modelsConfig).map(([id, cfg]) => ({
       value: id,
       label: cfg.name.replace(/\s*\(Tengda\)/i, "").trim() || cfg.name,
-      icon: <Sparkles className="w-3 h-3" />,
+      icon: drawingModelOptionIcon(id, cfg.name, cfg.provider),
     }));
   }, [modelsConfig, model]);
 
