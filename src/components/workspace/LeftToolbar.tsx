@@ -8,6 +8,7 @@ import {
   Camera,
   ImagePlus,
   Video,
+  Droplets,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -17,6 +18,7 @@ import { UserMenuDock } from "@/components/layout/UserMenuDock";
 
 interface LeftToolbarProps {
   isActive: boolean;
+  isVideoActive?: boolean;
   onToolSelect?: (toolId: string) => void;
   onAssetClick?: () => void;
   onAddImagePlaceholder?: () => void;
@@ -37,6 +39,7 @@ interface LeftToolbarProps {
     negativePrompt?: string;
     seed?: number;
   }) => void;
+  onVideoWatermarkRemove?: () => void;
 }
 
 interface ToolItem {
@@ -81,6 +84,16 @@ const enhanceTools: ToolItem[] = [
   },
 ];
 
+const videoTools: ToolItem[] = [
+  {
+    id: "video-watermark-remove",
+    icon: <Droplets className="w-5 h-5" />,
+    label: "WM",
+    cost: 1,
+    descriptionKey: "workspace.removeVideoWatermark",
+  },
+];
+
 const qualityLevels = [
   { label: "ORIGINAL", cost: 0 },
   { label: "2K", cost: 1, resolution: "2K" as const },
@@ -90,6 +103,7 @@ const qualityLevels = [
 
 const LeftToolbar: React.FC<LeftToolbarProps> = ({
   isActive,
+  isVideoActive,
   onToolSelect,
   onAssetClick,
   onAddImagePlaceholder,
@@ -99,6 +113,7 @@ const LeftToolbar: React.FC<LeftToolbarProps> = ({
   onLayerSplit,
   onUpscale,
   onMultipleAngles,
+  onVideoWatermarkRemove,
 }) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -150,8 +165,16 @@ const LeftToolbar: React.FC<LeftToolbarProps> = ({
   };
 
   const handleToolClick = (tool: ToolItem) => {
-    if (!isActive || isProcessing) {
-      if (!isActive) toast.error(t("workspace.selectImageFirst"));
+    const isVideoTool = tool.id === "video-watermark-remove";
+    const toolActive = isVideoTool ? isVideoActive : isActive;
+    if (!toolActive || isProcessing) {
+      if (!toolActive) {
+        toast.error(
+          isVideoTool
+            ? t("workspace.selectVideoFirst")
+            : t("workspace.selectImageFirst")
+        );
+      }
       return;
     }
 
@@ -166,6 +189,10 @@ const LeftToolbar: React.FC<LeftToolbarProps> = ({
     }
     if (tool.id === "multiple-angles") {
       setShowAnglesModal(true);
+      return;
+    }
+    if (tool.id === "video-watermark-remove") {
+      onVideoWatermarkRemove?.();
       return;
     }
     // NOTE: "AI enhance" and "AI upscale" click actions are swapped per product UI.
@@ -243,6 +270,46 @@ const LeftToolbar: React.FC<LeftToolbarProps> = ({
             {t("workspace.genVideoShort")}
           </span>
         </button>
+
+        {/* Video Process Section */}
+        <div id="onboarding-toolbar-video-process" className="flex flex-col">
+          <div className="px-1 py-2 text-[10px] font-bold uppercase text-center text-muted-foreground border-b border-foreground/15">
+            {t("workspace.video")}
+          </div>
+
+          {videoTools.map((tool) => {
+            const isToolProcessing =
+              isProcessing && processingState?.type === tool.id;
+            return (
+              <button
+                key={tool.id}
+                onClick={() => handleToolClick(tool)}
+                title={t(tool.descriptionKey)}
+                className={cn(
+                  "relative w-full h-11 flex items-center justify-center border-b border-foreground/10 transition-none",
+                  isToolProcessing && "bg-accent-cyan/20 animate-pulse",
+                  activeTool === tool.id &&
+                    !isToolProcessing &&
+                    "bg-foreground text-card",
+                  isVideoActive && !isProcessing
+                    ? "hover:bg-foreground hover:text-card cursor-pointer"
+                    : !isToolProcessing && "opacity-30 cursor-not-allowed"
+                )}
+              >
+                {isToolProcessing ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  tool.icon
+                )}
+                {tool.cost && !isToolProcessing && (
+                  <span className="absolute top-1 right-1 text-[8px] font-bold bg-accent-cyan text-foreground px-1 leading-tight border border-foreground/30">
+                    -{tool.cost}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
 
         {/* Processing Indicator */}
         {isProcessing && (

@@ -366,6 +366,9 @@
     "genVideo": "Add video generation node on canvas",
     "genImageShort": "Image",
     "genVideoShort": "Video",
+    "video": "Video",
+    "selectVideoFirst": "Please select a video first",
+    "removeVideoWatermark": "Remove video watermark",
     "process": "Process",
     "enhance": "Enhance",
     "quality": "Quality",
@@ -979,6 +982,14 @@
     "advanced": "Advanced Options",
     "canvasImageSlotPrefix": "image",
     "canvasVideoSlotPrefix": "video"
+  },
+  "videoProcessing": {
+    "watermarkRemovalCreated": "Video watermark removal task created...",
+    "watermarkRemovalCompleted": "Video watermark removal completed",
+    "watermarkRemovalFailed": "Video watermark removal failed",
+    "watermarkRemovalStatusFailed": "Failed to fetch watermark removal status",
+    "watermarkRemovalCreateFailed": "Failed to create watermark removal task",
+    "insufficientCredits": "Insufficient credits"
   },
   "affiliate": {
     "title": "Affiliate Program",

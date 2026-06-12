@@ -366,6 +366,9 @@
     "genVideo": "在画布添加视频生成节点",
     "genImageShort": "生图",
     "genVideoShort": "生视频",
+    "video": "视频",
+    "selectVideoFirst": "请先选择一个视频",
+    "removeVideoWatermark": "去除视频水印",
     "process": "处理",
     "enhance": "增强",
     "quality": "质量",
@@ -979,6 +982,14 @@
     "advanced": "高级选项",
     "canvasImageSlotPrefix": "图",
     "canvasVideoSlotPrefix": "视频"
+  },
+  "videoProcessing": {
+    "watermarkRemovalCreated": "视频去水印任务已创建...",
+    "watermarkRemovalCompleted": "视频去水印完成",
+    "watermarkRemovalFailed": "视频去水印失败",
+    "watermarkRemovalStatusFailed": "获取去水印任务状态失败",
+    "watermarkRemovalCreateFailed": "创建去水印任务失败",
+    "insufficientCredits": "积分不足"
   },
   "affiliate": {
     "title": "推广计划",

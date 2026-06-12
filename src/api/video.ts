@@ -7,6 +7,11 @@ import type {
   VideoTaskListData,
   VideoModelsData,
   UploadVideoAssetData,
+  CreateVideoWatermarkRemovalParams,
+  CreateVideoWatermarkRemovalResponse,
+  VideoWatermarkRemovalTaskDetail,
+  ListVideoWatermarkRemovalTasksParams,
+  VideoWatermarkRemovalTaskListData,
 } from "@/types/video";
 import type { ApiResponse } from "@/types/common";
 
@@ -69,6 +74,37 @@ export async function uploadVideoAsset(
   return res.data;
 }
 
+/**
+ * 创建视频水印移除任务
+ */
+export async function createVideoWatermarkRemovalTask(
+  params: CreateVideoWatermarkRemovalParams
+): Promise<CreateVideoWatermarkRemovalResponse> {
+  const res = await http.post<CreateVideoWatermarkRemovalResponse>("/video/remove-watermark", params);
+  return res.data;
+}
+
+/**
+ * 获取视频水印移除任务详情
+ */
+export async function getVideoWatermarkRemovalTask(taskId: string): Promise<VideoWatermarkRemovalTaskDetail> {
+  const res = await http.get<VideoWatermarkRemovalTaskDetail>(`/video/remove-watermark/${taskId}`);
+  return res.data;
+}
+
+/**
+ * 获取视频水印移除任务列表
+ */
+export async function listVideoWatermarkRemovalTasks(
+  params?: ListVideoWatermarkRemovalTasksParams
+): Promise<VideoWatermarkRemovalTaskListData> {
+  const res = await http.get<VideoWatermarkRemovalTaskListData>(
+    "/video/remove-watermark",
+    params as Record<string, unknown>
+  );
+  return res.data;
+}
+
 const videoApi = {
   getVideoModels,
   createVideoTask,
@@ -76,5 +112,8 @@ const videoApi = {
   listVideoTasks,
   deleteVideoTask,
   uploadVideoAsset,
+  createVideoWatermarkRemovalTask,
+  getVideoWatermarkRemovalTask,
+  listVideoWatermarkRemovalTasks,
 };
 export default videoApi;

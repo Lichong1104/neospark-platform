@@ -133,3 +133,67 @@ export interface UploadVideoAssetData {
     height?: number;
   };
 }
+
+/** POST /video/remove-watermark */
+export interface CreateVideoWatermarkRemovalParams {
+  video_url?: string;
+  video_upload_id?: string;
+  video_path?: string;
+  duration?: number;
+}
+
+export interface CreateVideoWatermarkRemovalResponse {
+  task_id: string;
+  external_task_id?: string;
+  status: VideoTaskStatus;
+  progress: number;
+  video_duration: number;
+  pricing?: {
+    estimated_cost: number;
+    currency?: string;
+    price_per_second?: number;
+    minimum_charge_seconds?: number;
+  };
+  available_points_after?: number;
+  created_at: string;
+}
+
+/** GET /video/remove-watermark/{task_id} */
+export interface VideoWatermarkRemovalTaskDetail {
+  task_id: string;
+  external_task_id?: string;
+  status: VideoTaskStatus;
+  progress: number;
+  source_video_url?: string;
+  video_duration?: number;
+  result_video_url?: string;
+  estimated_cost?: number;
+  actual_cost?: number;
+  error_msg?: string | null;
+  created_at: string;
+  completed_at?: string;
+}
+
+/** GET /video/remove-watermark */
+export interface ListVideoWatermarkRemovalTasksParams {
+  page?: number;
+  page_size?: number;
+  status?: VideoTaskStatus;
+}
+
+export interface VideoWatermarkRemovalTaskListItem {
+  task_id: string;
+  status: VideoTaskStatus;
+  progress: number;
+  video_duration?: number;
+  preview_url?: string;
+  estimated_cost?: number;
+  created_at: string;
+}
+
+export interface VideoWatermarkRemovalTaskListData {
+  items: VideoWatermarkRemovalTaskListItem[];
+  total: number;
+  page: number;
+  page_size: number;
+}

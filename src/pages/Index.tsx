@@ -15,6 +15,7 @@ import storageApi from "@/api/storage";
 import { useImageProcessing } from "@/hooks/useImageProcessing";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
+import { useVideoWatermarkRemoval } from "@/hooks/useVideoWatermarkRemoval";
 import {
   getCanvasImageMaxSize,
   toCanvasSize,
@@ -353,6 +354,17 @@ const Index = () => {
     [handleAddToCanvas]
   );
 
+  const { state: watermarkRemovalState, startWatermarkRemoval } =
+    useVideoWatermarkRemoval(handleVideoGenerated);
+
+  const handleVideoWatermarkRemove = useCallback(() => {
+    if (!selectedCanvasImage || selectedCanvasImage.type !== "video") {
+      toast.error(t("workspace.selectVideoFirst"));
+      return;
+    }
+    startWatermarkRemoval(selectedCanvasImage.src, selectedCanvasImage.name);
+  }, [selectedCanvasImage, startWatermarkRemoval, t]);
+
   useEffect(() => {
     if (authLoading || !userInfo?.id) return;
     if (!isWorkspaceOnboardingDone(userInfo.id)) {
@@ -534,16 +546,34 @@ const Index = () => {
         <main className="flex-1 flex overflow-hidden">
           <div className="relative flex-shrink-0">
             <LeftToolbar
-              isActive={selectedImageIds.length === 1}
+              isActive={
+                selectedImageIds.length === 1 &&
+                selectedCanvasImage?.type !== "video"
+              }
+              isVideoActive={
+                selectedImageIds.length === 1 &&
+                selectedCanvasImage?.type === "video"
+              }
               onToolSelect={(toolId) => console.log("Tool selected:", toolId)}
               onAssetClick={() => setIsAssetSidebarOpen(!isAssetSidebarOpen)}
               onAddImagePlaceholder={() => handleAddGenPlaceholder("image")}
               onAddVideoPlaceholder={() => handleAddGenPlaceholder("video")}
-              processingState={processingState}
+              processingState={
+                processingState.isProcessing
+                  ? processingState
+                  : {
+                      isProcessing: watermarkRemovalState.isProcessing,
+                      type: watermarkRemovalState.isProcessing
+                        ? "video-watermark-remove"
+                        : null,
+                      progress: watermarkRemovalState.progress,
+                    }
+              }
               onBgRemove={handleBgRemove}
               onLayerSplit={handleLayerSplit}
               onUpscale={handleUpscale}
               onMultipleAngles={handleMultipleAngles}
+              onVideoWatermarkRemove={handleVideoWatermarkRemove}
             />
             <AssetSidebar
               isOpen={isAssetSidebarOpen}
