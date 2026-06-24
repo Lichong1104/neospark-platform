@@ -437,6 +437,7 @@
     "generationMode": "Generation Mode",
     "standardMode": "STANDARD",
     "agentMode": "AGENT",
+    "agentChatTab": "Agent Chat",
     "startCreating": "Start Creating",
     "startCreatingDesc": "Type your idea below, or open Prompt Library for a quick start.",
     "composeLabel": "Prompt",
@@ -518,6 +519,66 @@
     "canvasImageSlotPrefix": "image",
     "canvasMentionNoImages": "No images on the canvas yet.",
     "canvasMentionNoMatch": "No canvas image matches this query."
+  },
+  "agentHub": {
+    "tab": "Agent",
+    "tabTitle": "Agent Chat",
+    "loadedSkills": "Loaded Skills",
+    "browseMarket": "Browse Market",
+    "clearChat": "Clear chat",
+    "clear": "Clear",
+    "active": "Active",
+    "send": "Send",
+    "selectSkills": "Select Skills",
+    "noSkillsSelected": "No skills selected. Agent will run in general mode.",
+    "skillsActive": "{{count}} skills active",
+    "inputPlaceholder": "Ask the agent anything...",
+    "newLine": "newline",
+    "thinking": "Agent thinking...",
+    "streamError": "Agent stream error. Please retry.",
+    "loadSkillsFailed": "Failed to load skills",
+    "chatFailed": "Agent chat failed",
+    "noOutput": "Agent returned no output. Please check backend logs.",
+    "noSkillsAvailable": "No skills available",
+    "loadingSkills": "Loading...",
+    "welcomeTitle": "Agent Chat",
+    "welcomeDesc": "Select skills above and start chatting with AI agents.",
+    "downloadFile": "Download file",
+    "generatedFile": "Generated file",
+    "generatingDocument": "Generating document...",
+    "example1": "Generate a product photo with professional lighting",
+    "example2": "Write social media copy for this product",
+    "example3": "Batch remove background from selected images"
+  },
+  "skillNames": {
+    "drawing-prompt": {
+      "name": "Drawing Prompt Optimizer",
+      "description": "Convert simple Chinese ideas into high-quality English prompts for AI image models"
+    },
+    "video-script": {
+      "name": "Video Script Generator",
+      "description": "Turn a topic into storyboard + video prompts"
+    },
+    "image-caption": {
+      "name": "Image Caption & Copywriter",
+      "description": "Generate multi-platform marketing copy from image descriptions"
+    },
+    "pricing-calculator": {
+      "name": "Pricing Calculator",
+      "description": "Calculate credit cost and estimate batch cost for tasks"
+    },
+    "content-idea": {
+      "name": "Content Idea Brainstormer",
+      "description": "Generate multiple content ideas from a topic"
+    },
+    "social-media-copy": {
+      "name": "Social Media Copywriter",
+      "description": "Generate multi-platform social media copy"
+    },
+    "docx-generator": {
+      "name": "Word Document Generator",
+      "description": "Generate downloadable .docx documents from a topic or outline"
+    }
   },
   "agents": {
     "ecommerce": "E-Commerce Listing Expert",

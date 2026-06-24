@@ -1,10 +1,119 @@
 import React from "react";
-import { User, Bot, Wrench, CheckCircle, ChevronDown, ChevronRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { User, Bot, Wrench, CheckCircle, ChevronDown, ChevronRight, FileDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { AgentMessage } from "@/types/skills";
+import type { AgentChatMessage } from "@/types/agents";
+
+type MessageLike = AgentMessage | AgentChatMessage;
+
+interface AgentFilePayload {
+  filename: string;
+  url: string;
+  summary?: string;
+}
+
+function parseAgentFilePayload(content: string): AgentFilePayload | null {
+  const trimmed = content.trim();
+  if (!trimmed.startsWith("{")) return null;
+
+  const tryParse = (text: string): AgentFilePayload | null => {
+    try {
+      const parsed = JSON.parse(text);
+      if (
+        typeof parsed.filename === "string" &&
+        typeof parsed.url === "string"
+      ) {
+        return {
+          filename: parsed.filename,
+          url: parsed.url,
+          summary:
+            typeof parsed.summary === "string" ? parsed.summary : undefined,
+        };
+      }
+    } catch {
+      // 解析失败，继续尝试
+    }
+    return null;
+  };
+
+  // 优先尝试完整解析
+  const full = tryParse(trimmed);
+  if (full) return full;
+
+  // 兜底：取最后一个 {...} 对象解析（处理多个 JSON 拼接的情况）
+  const lastBraceStart = trimmed.lastIndexOf("{");
+  if (lastBraceStart > 0) {
+    const lastPart = trimmed.slice(lastBraceStart);
+    return tryParse(lastPart);
+  }
+
+  return null;
+}
+
+function downloadFile(url: string, filename: string): void {
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.target = "_blank";
+  a.rel = "noopener noreferrer";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+const FileDownloadCard: React.FC<{ payload: AgentFilePayload }> = ({
+  payload,
+}) => {
+  const { t } = useTranslation();
+  const { url, filename, summary } = payload;
+  const fileExt = filename.split(".").pop()?.toUpperCase() || "FILE";
+
+  return (
+    <div className="flex gap-3">
+      <div
+        className={cn(
+          "w-7 h-7 flex-shrink-0 flex items-center justify-center border-brutal border-foreground",
+          "bg-accent-pink/10"
+        )}
+      >
+        <Bot className="w-3.5 h-3.5 text-accent-pink" />
+      </div>
+
+      <div className="max-w-[85%] px-3 py-2 border-brutal border-foreground bg-card">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center border-brutal border-foreground bg-accent-yellow">
+            <FileDown className="h-5 w-5 text-foreground" />
+          </div>
+          <div className="min-w-0">
+            <div className="text-xs font-bold uppercase tracking-wider">
+              {fileExt}
+            </div>
+            <div className="truncate text-[10px] font-mono text-muted-foreground">
+              {filename}
+            </div>
+          </div>
+        </div>
+        {summary && (
+          <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
+            {summary}
+          </p>
+        )}
+        <button
+          type="button"
+          onClick={() => downloadFile(url, filename)}
+          className="mt-2 inline-flex items-center gap-1.5 border-brutal border-foreground bg-accent-cyan px-2.5 py-1.5 text-[10px] font-bold uppercase text-foreground brutal-press hover:brightness-110 transition-none"
+        >
+          <FileDown className="h-3 w-3" />
+          {t("agentHub.downloadFile")}
+        </button>
+      </div>
+    </div>
+  );
+};
 
 interface MessageBubbleProps {
-  message: AgentMessage;
+  message: MessageLike;
   isStreaming?: boolean;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
@@ -70,6 +179,12 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
         </div>
       </div>
     );
+  }
+
+  const filePayload =
+    !isUser && !isStreaming ? parseAgentFilePayload(message.content) : null;
+  if (filePayload) {
+    return <FileDownloadCard payload={filePayload} />;
   }
 
   return (

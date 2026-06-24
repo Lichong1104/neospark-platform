@@ -1,10 +1,8 @@
 import React from "react";
 import { X, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { SkillMeta } from "@/types/skills";
-
 interface SkillChipProps {
-  skill: SkillMeta;
+  skill: { name: string };
   isActive: boolean;
   onToggle: () => void;
 }

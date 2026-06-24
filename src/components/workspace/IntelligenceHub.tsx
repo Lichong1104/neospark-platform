@@ -39,6 +39,7 @@ import { cn } from "@/lib/utils";
 import { type DropdownOption } from "@/components/ui/brutal-dropdown";
 import { PresetLibrary } from "./PresetLibrary";
 import { AgentChatArea } from "./AgentChatArea";
+import { AgentHubChatArea } from "./AgentHubChatArea";
 import { VideoGenerationPanel } from "./VideoGenerationPanel";
 import { useTranslation } from "react-i18next";
 import drawingApi from "@/api/drawing";
@@ -873,6 +874,21 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
             pastedImage={pastedImage}
             onPasteImage={setPastedImage}
             isUploadingPaste={isUploadingPaste}
+            selectedCanvasImage={selectedCanvasImage ?? null}
+            selectedCanvasImages={selectedCanvasImages}
+            canvasImages={canvasImages}
+            modeToggle={hubModeToggle}
+          />
+        </div>
+        <div
+          className={cn(
+            "flex flex-col flex-1 min-h-0 overflow-hidden",
+            activeTab !== "AGENT" && "hidden"
+          )}
+        >
+          <AgentHubChatArea
+            onImagesGenerated={onImagesGenerated}
+            onVideoGenerated={onVideoGenerated}
             selectedCanvasImage={selectedCanvasImage ?? null}
             selectedCanvasImages={selectedCanvasImages}
             canvasImages={canvasImages}

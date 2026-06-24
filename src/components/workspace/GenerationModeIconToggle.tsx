@@ -1,9 +1,10 @@
 import React from "react";
 import { Bot, ImageIcon, Video } from "lucide-react";
+// import { MessageSquare } from "lucide-react"; // 智能体对话 tab 图标，以后再用
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
-export type HubMediaTab = "IMAGE" | "VIDEO";
+export type HubMediaTab = "IMAGE" | "VIDEO" | "AGENT";
 
 export const GenerationModeIconToggle: React.FC<{
   isAgentMode: boolean;
@@ -84,6 +85,26 @@ export const GenerationModeIconToggle: React.FC<{
       >
         <Bot className="h-3.5 w-3.5" strokeWidth={2} />
       </button>
+      {/* 智能体对话 tab 图标，以后再用
+      <button
+        type="button"
+        role="tab"
+        aria-selected={activeTab === "AGENT"}
+        title={t("intelligenceHub.agentChatTab")}
+        onClick={() => {
+          onTabChange("AGENT");
+          onModeToggle(false);
+        }}
+        className={cn(
+          "flex h-7 w-7 items-center justify-center rounded-[5px] transition-colors",
+          activeTab === "AGENT"
+            ? "bg-accent-pink text-foreground shadow-sm"
+            : "text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
+        )}
+      >
+        <MessageSquare className="h-3.5 w-3.5" strokeWidth={2} />
+      </button>
+      */}
     </div>
   );
 };

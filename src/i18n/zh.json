@@ -437,6 +437,7 @@
     "generationMode": "生成模式",
     "standardMode": "标准",
     "agentMode": "智能体",
+    "agentChatTab": "智能体对话",
     "startCreating": "开始创作",
     "startCreatingDesc": "在下方输入创意描述，或点「提示词库」选用预设快速开始。",
     "composeLabel": "创意描述",
@@ -518,6 +519,66 @@
     "canvasImageSlotPrefix": "图",
     "canvasMentionNoImages": "画布上还没有图片。",
     "canvasMentionNoMatch": "没有匹配的画布图片。"
+  },
+  "agentHub": {
+    "tab": "智能体",
+    "tabTitle": "智能体对话",
+    "loadedSkills": "已加载技能",
+    "browseMarket": "浏览市场",
+    "clearChat": "清空对话",
+    "clear": "清空",
+    "active": "已激活",
+    "send": "发送",
+    "selectSkills": "选择技能",
+    "noSkillsSelected": "未选择技能，Agent 将以通用模式运行",
+    "skillsActive": "已激活 {{count}} 个技能",
+    "inputPlaceholder": "向智能体提问...",
+    "newLine": "换行",
+    "thinking": "智能体思考中...",
+    "streamError": "智能体流式输出出错，请重试",
+    "loadSkillsFailed": "加载技能列表失败",
+    "chatFailed": "智能体对话失败",
+    "noOutput": "智能体没有返回内容，请查看后端日志。",
+    "noSkillsAvailable": "暂无可用技能",
+    "loadingSkills": "加载中...",
+    "welcomeTitle": "智能体对话",
+    "welcomeDesc": "选择上方技能，开始与 AI 智能体对话。",
+    "downloadFile": "下载文件",
+    "generatedFile": "生成的文件",
+    "generatingDocument": "正在生成文档...",
+    "example1": "生成一张专业灯光下的产品照片",
+    "example2": "为这款产品撰写社交媒体文案",
+    "example3": "批量去除选中图片的背景"
+  },
+  "skillNames": {
+    "drawing-prompt": {
+      "name": "绘画提示词优化助手",
+      "description": "将用户的简单想法转换为适合 AI 绘画模型的高质量英文提示词"
+    },
+    "video-script": {
+      "name": "短视频脚本生成助手",
+      "description": "根据主题生成分镜与视频提示词"
+    },
+    "image-caption": {
+      "name": "图像描述与营销文案助手",
+      "description": "根据画面描述生成多平台营销文案"
+    },
+    "pricing-calculator": {
+      "name": "积分价格计算器",
+      "description": "计算任务积分消耗与批量预估成本"
+    },
+    "content-idea": {
+      "name": "内容创意脑暴助手",
+      "description": "根据主题生成多个内容创意"
+    },
+    "social-media-copy": {
+      "name": "社交媒体文案助手",
+      "description": "生成多平台社交媒体文案"
+    },
+    "docx-generator": {
+      "name": "Word 文档生成助手",
+      "description": "根据主题或大纲生成可下载的 .docx 文档"
+    }
   },
   "agents": {
     "ecommerce": "电商详情页专家",
