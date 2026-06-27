@@ -170,7 +170,7 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
   const imageSlotPrefix = t("intelligenceHub.canvasImageSlotPrefix");
   const [isCreating, setIsCreating] = useState(false);
   const [prompt, setPrompt] = useState("");
-  const [model, setModel] = useState("dreamina-seedance-2-0-260128");
+  const [model, setModel] = useState("seedance-2.0");
   const [ratio, setRatio] = useState("16:9");
   const [duration, setDuration] = useState("5");
   const [resolution, setResolution] = useState<VideoResolution>("720p");
@@ -232,7 +232,8 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
         setModelsData(res);
         setModelOptions(res.models ?? []);
         const firstModel = res.models?.[0]?.id || "";
-        const initialModel = model || firstModel;
+        const currentModelExists = res.models?.some((m) => m.id === model);
+        const initialModel = currentModelExists ? model : firstModel;
         if (res.models?.length) setModel(initialModel);
         const ratioList = filterAllowedRatiosFromApi(res.ratios);
         setRatioOptions(ratioList);

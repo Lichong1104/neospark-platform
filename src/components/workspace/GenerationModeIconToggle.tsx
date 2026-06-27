@@ -1,6 +1,5 @@
 import React from "react";
-import { Bot, ImageIcon, Video } from "lucide-react";
-// import { MessageSquare } from "lucide-react"; // 智能体对话 tab 图标，以后再用
+import { Bot, ImageIcon, Video, MessageSquare } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
@@ -85,7 +84,6 @@ export const GenerationModeIconToggle: React.FC<{
       >
         <Bot className="h-3.5 w-3.5" strokeWidth={2} />
       </button>
-      {/* 智能体对话 tab 图标，以后再用
       <button
         type="button"
         role="tab"
@@ -104,7 +102,6 @@ export const GenerationModeIconToggle: React.FC<{
       >
         <MessageSquare className="h-3.5 w-3.5" strokeWidth={2} />
       </button>
-      */}
     </div>
   );
 };

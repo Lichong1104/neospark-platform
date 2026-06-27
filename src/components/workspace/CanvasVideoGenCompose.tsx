@@ -24,7 +24,7 @@ const getVideoFullUrl = (url: string) =>
 
 const normalizeVideoRatio = (ratio: string) => ratio.replace(/\s+/g, "");
 
-const VIDEO_DURATION_MIN = 5;
+const VIDEO_DURATION_MIN = 4;
 const VIDEO_DURATION_MAX = 15;
 
 const defaultDurationOptions = (): string[] =>
@@ -56,7 +56,7 @@ export const CanvasVideoGenCompose: React.FC<{
   const { t } = useTranslation();
   const imageSlotPrefix = t("intelligenceHub.canvasImageSlotPrefix");
   const [prompt, setPrompt] = useState("");
-  const [model, setModel] = useState("dreamina-seedance-2-0-260128");
+  const [model, setModel] = useState("seedance-2.0");
   const [ratio, setRatio] = useState("16:9");
   const [duration, setDuration] = useState("5");
   const [resolution, setResolution] = useState<VideoResolution>("720p");
@@ -64,7 +64,7 @@ export const CanvasVideoGenCompose: React.FC<{
     VideoModelsData["models"]
   >([]);
   const [ratioOptions, setRatioOptions] = useState<string[]>(["16:9", "9:16", "1:1"]);
-  const [durationOptions, setDurationOptions] = useState<string[]>(["5", "10"]);
+  const [durationOptions, setDurationOptions] = useState<string[]>(defaultDurationOptions());
   const [resolutionOptions, setResolutionOptions] = useState<string[]>([
     "720p",
     "1080p",
