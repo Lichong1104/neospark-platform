@@ -11,7 +11,6 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Switch } from "@/components/ui/switch";
 import { STATIC_BASE_URL } from "@/api/request";
 import { canvasImageSlotLabel } from "@/lib/canvasImageSlots";
 import type { VideoModelConfig, VideoResolution } from "@/types/video";
@@ -29,8 +28,6 @@ interface VideoConfigFormProps {
   setGenerateAudio: (v: boolean) => void;
   watermark: boolean;
   setWatermark: (v: boolean) => void;
-  realPersonMode: boolean;
-  setRealPersonMode: (v: boolean) => void;
   firstFrameUrl: string;
   setFirstFrameUrl: (v: string) => void;
   lastFrameUrl: string;
@@ -106,8 +103,6 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
   setGenerateAudio,
   watermark,
   setWatermark,
-  realPersonMode,
-  setRealPersonMode,
   firstFrameUrl,
   setFirstFrameUrl,
   lastFrameUrl,
@@ -146,8 +141,8 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
   );
   const hasFrameUrls = Boolean(firstFrameUrl.trim() || lastFrameUrl.trim());
   // Omni 模型支持 first_frame + reference_image 同时使用（多参考图模式）
-  const frameMutualLocked = !isOmni && !realPersonMode && refImageLines.length > 0;
-  const refImagesMutualLocked = !isOmni && !realPersonMode && hasFrameUrls;
+  const frameMutualLocked = !isOmni && refImageLines.length > 0;
+  const refImagesMutualLocked = !isOmni && hasFrameUrls;
 
   type MentionField =
     | "firstFrameUrl"
@@ -467,20 +462,6 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
                 >
                   {watermark ? t("video.watermarkOn") : t("video.watermarkOff")}
                 </button>
-
-                <div className="flex items-center gap-2 px-3 py-2 border border-foreground/20 bg-background min-w-0 flex-1 basis-[200px]">
-                  <Switch
-                    id="video-real-person-mode"
-                    checked={realPersonMode}
-                    onCheckedChange={setRealPersonMode}
-                  />
-                  <label
-                    htmlFor="video-real-person-mode"
-                    className="text-[11px] font-bold uppercase cursor-pointer select-none leading-tight"
-                  >
-                    {t("video.realPersonMode")}
-                  </label>
-                </div>
               </>
             )}
             {isOmni && (
@@ -491,11 +472,6 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
               </div>
             )}
           </div>
-          {realPersonMode && !isOmni && (
-            <p className="text-[10px] text-muted-foreground leading-snug border-l-2 border-accent-purple/50 pl-2">
-              {t("video.realPersonModeAssetHint")}
-            </p>
-          )}
         </div>
 
         <div className="px-2.5 pb-2.5 pt-1 border-t border-foreground/15 space-y-2.5">

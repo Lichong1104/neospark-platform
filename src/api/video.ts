@@ -6,7 +6,6 @@ import type {
   ListVideoTasksParams,
   VideoTaskListData,
   VideoModelsData,
-  UploadVideoAssetData,
   CreateVideoWatermarkRemovalParams,
   CreateVideoWatermarkRemovalResponse,
   VideoWatermarkRemovalTaskDetail,
@@ -58,23 +57,6 @@ export async function deleteVideoTask(taskId: string): Promise<ApiResponse<unkno
 }
 
 /**
- * 上传视频资产
- */
-export async function uploadVideoAsset(
-  file: File,
-  assetType: string = "image",
-  name?: string
-): Promise<UploadVideoAssetData> {
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("asset_type", assetType);
-  if (name) formData.append("name", name);
-
-  const res = await http.postForm<UploadVideoAssetData>("/video/assets", formData);
-  return res.data;
-}
-
-/**
  * 创建视频水印移除任务
  */
 export async function createVideoWatermarkRemovalTask(
@@ -111,7 +93,6 @@ const videoApi = {
   getVideoTask,
   listVideoTasks,
   deleteVideoTask,
-  uploadVideoAsset,
   createVideoWatermarkRemovalTask,
   getVideoWatermarkRemovalTask,
   listVideoWatermarkRemovalTasks,

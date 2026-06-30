@@ -7,7 +7,6 @@ import {
   Download,
   RotateCcw,
   Sparkles,
-  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
@@ -15,7 +14,6 @@ import {
   createVideoTask,
   getVideoModels,
   getVideoTask,
-  uploadVideoAsset,
 } from "@/api/video";
 import storageApi from "@/api/storage";
 import { STATIC_BASE_URL } from "@/api/request";
@@ -176,7 +174,6 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
   const [resolution, setResolution] = useState<VideoResolution>("720p");
   const [generateAudio, setGenerateAudio] = useState(false);
   const [watermark, setWatermark] = useState(false);
-  const [realPersonMode, setRealPersonMode] = useState(false);
   const [firstFrameUrl, setFirstFrameUrl] = useState("");
   const [lastFrameUrl, setLastFrameUrl] = useState("");
   const [referenceImageUrls, setReferenceImageUrls] = useState("");
@@ -224,7 +221,6 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
   const activePollingTaskIdRef = useRef<string | null>(null);
   const deliveredTaskIdsRef = useRef<Set<string>>(new Set());
   const completedNoUrlTriesRef = useRef(0);
-  const assetUploadRef = useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     getVideoModels()
@@ -407,21 +403,6 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     [t]
   );
 
-  const handleAssetReview = useCallback(
-    async (file: File) => {
-      try {
-        const result = await uploadVideoAsset(file, "image");
-        toast.success(
-          t("video.assetReviewSuccess", { assetId: result.asset_id })
-        );
-      } catch (err: any) {
-        const msg = getErrorMessage(err, t("video.assetReviewFailed"));
-        toast.error(msg);
-      }
-    },
-    [t]
-  );
-
   const handleUseSelectedCanvasRefs = useCallback(() => {
     const selectedImages = selectedCanvasImages.filter(
       (item) => item.type !== "video"
@@ -436,7 +417,7 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     }
 
     const hasFrame = Boolean(firstFrameUrl.trim() || lastFrameUrl.trim());
-    const blockRefImages = !realPersonMode && hasFrame;
+    const blockRefImages = hasFrame;
 
     let applied = false;
 
@@ -469,7 +450,7 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     if (applied) {
       toast.success(t("video.canvasRefsApplied"));
     }
-  }, [selectedCanvasImages, t, realPersonMode, firstFrameUrl, lastFrameUrl]);
+  }, [selectedCanvasImages, t, firstFrameUrl, lastFrameUrl]);
 
   const handleUseCanvasAsFirstFrame = useCallback(() => {
     const source = selectedCanvasImage?.src;
@@ -529,7 +510,7 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
 
     const hasFrame = Boolean(firstFrameUrl.trim() || lastFrameUrl.trim());
     // Omni 模型支持 first_frame + reference_image 同时使用（多参考图模式）
-    if (!isOmniModel(model) && !realPersonMode && hasFrame && mergedRefImages.length > 0) {
+    if (!isOmniModel(model) && hasFrame && mergedRefImages.length > 0) {
       toast.error(t("video.realPersonConflictFramesRefs"));
       return;
     }
@@ -571,7 +552,6 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
           ...baseParams,
           generate_audio: generateAudio,
           watermark,
-          real_person_mode: realPersonMode,
         };
 
     try {
@@ -607,7 +587,6 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     resolution,
     generateAudio,
     watermark,
-    realPersonMode,
     firstFrameUrl,
     lastFrameUrl,
     referenceImageUrls,
@@ -632,7 +611,6 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     setReferenceVideoUrls("");
     setResolution("720p");
     setWatermark(false);
-    setRealPersonMode(false);
     setEstimatedCost(null);
   };
 
@@ -755,8 +733,6 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
             setGenerateAudio={setGenerateAudio}
             watermark={watermark}
             setWatermark={setWatermark}
-            realPersonMode={realPersonMode}
-            setRealPersonMode={setRealPersonMode}
             firstFrameUrl={firstFrameUrl}
             setFirstFrameUrl={setFirstFrameUrl}
             lastFrameUrl={lastFrameUrl}
@@ -796,14 +772,6 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
                 >
                   {t("video.tutorial")}
                 </a>
-                <button
-                  type="button"
-                  onClick={() => assetUploadRef.current?.click()}
-                  className="text-[10px] font-bold uppercase border border-foreground/30 px-2 py-1 hover:bg-secondary flex items-center gap-1"
-                >
-                  <Shield className="w-3 h-3" />
-                  {t("video.assetReview")}
-                </button>
               </div>
             </div>
 
@@ -821,12 +789,6 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
                 )}
                 footerLeft={modeToggle}
               />
-
-              {realPersonMode && (
-                <p className="text-[10px] text-muted-foreground leading-snug border-l-2 border-accent-purple/40 pl-2">
-                  {t("video.realPersonModePromptHint")}
-                </p>
-              )}
 
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5">
@@ -857,17 +819,6 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
           </div>
         </div>
       )}
-      <input
-        ref={assetUploadRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) handleAssetReview(file);
-          e.currentTarget.value = "";
-        }}
-      />
     </div>
   );
 };

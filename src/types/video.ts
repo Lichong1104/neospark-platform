@@ -38,8 +38,6 @@ export interface CreateVideoParams {
   resolution?: VideoResolution;
   generate_audio?: boolean;
   watermark?: boolean;
-  /** Photorealistic human mode: assets go through security review; allows first/last + reference images together */
-  real_person_mode?: boolean;
   /** Seedance 2.0 new params */
   seed?: number;
   camera_fixed?: boolean;
@@ -117,21 +115,6 @@ export interface VideoTaskListData {
   total: number;
   page: number;
   page_size: number;
-}
-
-/** POST /video/assets */
-export interface UploadVideoAssetData {
-  asset_id: string;
-  name: string;
-  asset_type: string;
-  status: string;
-  url: string;
-  upload_id: string;
-  local_url: string;
-  meta_info?: {
-    width?: number;
-    height?: number;
-  };
 }
 
 /** POST /video/remove-watermark */

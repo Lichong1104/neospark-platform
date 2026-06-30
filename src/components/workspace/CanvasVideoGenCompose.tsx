@@ -181,7 +181,6 @@ export const CanvasVideoGenCompose: React.FC<{
       resolution,
       generate_audio: false,
       watermark: false,
-      real_person_mode: false,
     };
 
     setIsGenerating(true);
