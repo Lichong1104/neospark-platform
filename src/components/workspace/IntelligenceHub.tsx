@@ -51,6 +51,10 @@ import {
   resolveImagesFromPromptSlots,
   validatePromptCanvasSlots,
 } from "@/lib/canvasImageSlots";
+import {
+  calculateImageEstimatedCost,
+  formatEstimatedCost,
+} from "@/lib/pricing";
 import { InlineCanvasMentionEditor } from "./InlineCanvasMentionEditor";
 import { ImageGenerationParams } from "./ImageGenerationParams";
 import {
@@ -850,6 +854,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
             aspectRatioOptions={aspectRatioOptions}
             resolutionOptions={resolutionOptions}
             modelOptions={modelOptions}
+            modelsConfig={modelsConfig}
             isGenerating={isStandardGenerating}
             standardGenHistory={standardGenHistory}
             pendingStandardPrompt={pendingStandardPrompt}
@@ -915,6 +920,7 @@ interface ChatViewProps {
   aspectRatioOptions: DropdownOption[];
   resolutionOptions: DropdownOption[];
   modelOptions: DropdownOption[];
+  modelsConfig: ModelsConfigMap | null;
   isGenerating: boolean;
   standardGenHistory: StandardGenHistoryItem[];
   pendingStandardPrompt: {
@@ -964,6 +970,7 @@ const ChatView: React.FC<ChatViewProps> = ({
   aspectRatioOptions,
   resolutionOptions,
   modelOptions,
+  modelsConfig,
   isGenerating,
   standardGenHistory,
   pendingStandardPrompt,
@@ -996,6 +1003,11 @@ const ChatView: React.FC<ChatViewProps> = ({
   const [historyPromptView, setHistoryPromptView] = useState<
     Record<string, "used" | "original">
   >({});
+
+  const estimatedImageCost = useMemo(
+    () => calculateImageEstimatedCost(modelsConfig, model, resolution, gptImageQuality),
+    [modelsConfig, model, resolution, gptImageQuality]
+  );
 
   const fillPromptFromHistory = useCallback(
     (prompt: string) => {
@@ -1261,22 +1273,27 @@ const ChatView: React.FC<ChatViewProps> = ({
           <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
             {t("intelligenceHub.composeLabel")}
           </span>
-          <button
-            type="button"
-            id="onboarding-hub-presets"
-            onClick={onTogglePresets}
-            className={cn(
-              "inline-flex h-7 shrink-0 items-center gap-1.5 border px-2 text-[10px] font-bold uppercase tracking-wide transition-none brutal-press",
-              showPresets
-                ? "border-accent-pink/50 bg-accent-pink/15 text-foreground"
-                : "border-foreground/25 bg-card text-muted-foreground hover:border-foreground/40 hover:bg-accent-pink/10 hover:text-foreground"
-            )}
-            title={t("intelligenceHub.promptArsenal")}
-            aria-expanded={showPresets}
-          >
-            <Library className="h-3.5 w-3.5" />
-            {t("intelligenceHub.promptArsenalShort")}
-          </button>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold uppercase text-accent-purple">
+              {formatEstimatedCost(estimatedImageCost)}
+            </span>
+            <button
+              type="button"
+              id="onboarding-hub-presets"
+              onClick={onTogglePresets}
+              className={cn(
+                "inline-flex h-7 shrink-0 items-center gap-1.5 border px-2 text-[10px] font-bold uppercase tracking-wide transition-none brutal-press",
+                showPresets
+                  ? "border-accent-pink/50 bg-accent-pink/15 text-foreground"
+                  : "border-foreground/25 bg-card text-muted-foreground hover:border-foreground/40 hover:bg-accent-pink/10 hover:text-foreground"
+              )}
+              title={t("intelligenceHub.promptArsenal")}
+              aria-expanded={showPresets}
+            >
+              <Library className="h-3.5 w-3.5" />
+              {t("intelligenceHub.promptArsenalShort")}
+            </button>
+          </div>
         </div>
 
         {/* Pasted image preview */}

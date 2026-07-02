@@ -32,6 +32,10 @@ import {
   validatePromptCanvasSlots,
 } from "@/lib/canvasImageSlots";
 import { InlineCanvasMentionEditor } from "./InlineCanvasMentionEditor";
+import {
+  calculateVideoEstimatedCost,
+  formatEstimatedCost,
+} from "@/lib/pricing";
 
 interface VideoGenerationPanelProps {
   modeToggle?: React.ReactNode;
@@ -764,6 +768,15 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
                 {t("video.prompt")}
               </span>
               <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold uppercase text-accent-purple">
+                  {formatEstimatedCost(
+                    calculateVideoEstimatedCost(
+                      model,
+                      Number(duration),
+                      resolution
+                    )
+                  )}
+                </span>
                 <a
                   href={VIDEO_TUTORIAL_URL}
                   target="_blank"
