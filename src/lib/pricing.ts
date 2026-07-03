@@ -3,30 +3,45 @@ import type { ModelsConfigMap } from "@/types/drawing";
 /**
  * 视频生成预估积分计算
  *
- * 与后端 services/video_service_v2.py 的 _calculate_price 保持一致。
- * Seedance 2.0 系列按官方价格 × 1.25 ÷ 0.07 换算，已移除 7.9 折补偿。
+ * 与后端 services/video_service_v2.py 的 _calculate_token_cost + 1.1 倍系数保持一致。
+ * Seedance 2.0 系列按新版官方定价计算：
+ *   tokens = duration * width * height * 24 / 1024
+ *   积分 = tokens * 单价(元/百万) / 70_000 * 1.1
+ *
+ * 其中 70_000 = 1_000_000 * 0.07（1 元 = 1/0.07 积分），1.1 为业务溢价系数。
  */
 
-export const VIDEO_SEEDANCE_PRICING: Record<
-  string,
-  Record<string, Record<number, number>>
-> = {
+// 新版 Seedance 2.0 官方 token 单价（元/百万 tokens），不含视频输入场景
+const SEEDANCE_TOKEN_PRICE_PER_MILLION: Record<string, Record<string, number>> = {
   "seedance-2.0": {
-    "480p": { 4: 134, 5: 167, 6: 200, 7: 234, 8: 267, 9: 301, 10: 334, 11: 367, 12: 401, 13: 434, 14: 467, 15: 501 },
-    "720p": { 4: 284, 5: 355, 6: 426, 7: 497, 8: 568, 9: 639, 10: 710, 11: 781, 12: 852, 13: 923, 14: 994, 15: 1065 },
-    "1080p": { 4: 708, 5: 885, 6: 1062, 7: 1239, 8: 1416, 9: 1593, 10: 1770, 11: 1947, 12: 2124, 13: 2302, 14: 2479, 15: 2656 },
-    "4k": { 4: 1444, 5: 1805, 6: 2166, 7: 2527, 8: 2888, 9: 3249, 10: 3610, 11: 3971, 12: 4332, 13: 4693, 14: 5054, 15: 5415 },
+    "480p": 46,
+    "720p": 46,
+    "1080p": 51,
+    "4k": 26,
   },
   "seedance-2.0-fast": {
-    "480p": { 4: 107, 5: 134, 6: 161, 7: 188, 8: 215, 9: 242, 10: 269, 11: 295, 12: 322, 13: 349, 14: 376, 15: 403 },
-    "720p": { 4: 228, 5: 285, 6: 342, 7: 400, 8: 457, 9: 514, 10: 571, 11: 628, 12: 685, 13: 742, 14: 799, 15: 856 },
+    "480p": 37,
+    "720p": 37,
+  },
+  "seedance-2.0-mini": {
+    "480p": 23,
+    "720p": 23,
   },
 };
 
-const VIDEO_FALLBACK_PRICE_PER_SECOND: Record<string, number> = {
-  "seedance-2.0": 22,
-  "seedance-2.0-fast": 18,
+// 各分辨率在长边上的基准像素（对应新版 CSV 的 16:9 长边）
+const SEEDANCE_LONG_EDGE_PIXELS: Record<string, number> = {
+  "480p": 864,
+  "720p": 1280,
+  "1080p": 1920,
+  "4k": 3840,
 };
+
+// 帧率固定 24fps（与新版 CSV 一致）
+const VIDEO_FRAME_RATE = 24;
+
+// 业务溢价系数（与后端 _settle_task 中保持一致）
+const VIDEO_TOKEN_COST_MULTIPLIER = 1.1;
 
 const OMNI_PRICE_PER_SECOND: Record<string, number> = {
   "omni-fast": 15,
@@ -52,12 +67,75 @@ const normalizeSeedanceModel = (model: string): string => {
   return model;
 };
 
+/**
+ * 根据分辨率和宽高比计算视频像素尺寸。
+ *
+ * 16:9 和 9:16 直接使用新版 CSV 中的实际尺寸，其他比例按长边等比估算，
+ * 保证任意时长都可以按官方 token 公式估算价格。
+ */
+const getSeedanceVideoDimensions = (
+  resolution: string,
+  ratio: string
+): { width: number; height: number } => {
+  const normalizedResolution = resolution.toLowerCase();
+
+  // 新版 CSV 中的实际尺寸
+  if (normalizedResolution === "480p") {
+    if (ratio === "16:9") return { width: 864, height: 496 };
+    if (ratio === "9:16") return { width: 496, height: 864 };
+  } else if (normalizedResolution === "720p") {
+    if (ratio === "16:9") return { width: 1280, height: 720 };
+    if (ratio === "9:16") return { width: 720, height: 1280 };
+  } else if (normalizedResolution === "1080p") {
+    if (ratio === "16:9") return { width: 1920, height: 1080 };
+    if (ratio === "9:16") return { width: 1080, height: 1920 };
+  } else if (normalizedResolution === "4k") {
+    if (ratio === "16:9") return { width: 3840, height: 2160 };
+    if (ratio === "9:16") return { width: 2160, height: 3840 };
+  }
+
+  // 其他比例按长边等比估算
+  const longEdge = SEEDANCE_LONG_EDGE_PIXELS[normalizedResolution] || 1280;
+  const [w, h] = ratio.split(":").map((v) => parseInt(v, 10));
+  const ratioValue = (w || 1) / (h || 1);
+
+  if (ratioValue >= 1) {
+    return { width: longEdge, height: Math.round(longEdge / ratioValue) };
+  }
+  return { width: Math.round(longEdge * ratioValue), height: longEdge };
+};
+
+/**
+ * 基于新版 CSV/官方 token 公式估算 Seedance 视频积分。
+ *
+ * 公式：
+ *   tokens = duration * width * height * 24 / 1024
+ *   积分 = floor(tokens * price_per_million / 70_000 * 1.1)
+ */
+const calculateSeedanceTokenEstimatedCost = (
+  model: string,
+  duration: number,
+  resolution: string,
+  ratio: string
+): number | null => {
+  const normalized = normalizeSeedanceModel(model);
+  const pricePerMillion =
+    SEEDANCE_TOKEN_PRICE_PER_MILLION[normalized]?.[resolution.toLowerCase()];
+  if (pricePerMillion === undefined) return null;
+
+  const { width, height } = getSeedanceVideoDimensions(resolution, ratio);
+  const tokens = (duration * width * height * VIDEO_FRAME_RATE) / 1024;
+  const rawCost = (tokens * pricePerMillion) / 70_000;
+  return Math.max(1, Math.floor(rawCost * VIDEO_TOKEN_COST_MULTIPLIER));
+};
+
 export const calculateVideoEstimatedCost = (
   model: string,
   duration: number,
-  resolution: string
+  resolution: string,
+  ratio: string = "16:9"
 ): number | null => {
-  if (!model || !resolution || !Number.isFinite(duration)) {
+  if (!model || !resolution || !Number.isFinite(duration) || duration <= 0) {
     return null;
   }
 
@@ -74,17 +152,10 @@ export const calculateVideoEstimatedCost = (
     return applyCompensation(base);
   }
 
-  // Seedance 2.0 系列
+  // Seedance 2.0 系列：按新版 token 公式（支持任意时长，包括 8s 等中间值）
   const normalized = normalizeSeedanceModel(model);
-  const modelPricing = VIDEO_SEEDANCE_PRICING[normalized];
-  if (modelPricing) {
-    const resolutionPricing = modelPricing[resolution.toLowerCase()];
-    if (resolutionPricing && duration in resolutionPricing) {
-      return resolutionPricing[duration];
-    }
-    // 异常 fallback：按秒计价（无 7.9 折补偿）
-    const fallback = VIDEO_FALLBACK_PRICE_PER_SECOND[normalized] ?? 22;
-    return fallback * duration;
+  if (normalized in SEEDANCE_TOKEN_PRICE_PER_MILLION) {
+    return calculateSeedanceTokenEstimatedCost(model, duration, resolution, ratio);
   }
 
   return null;

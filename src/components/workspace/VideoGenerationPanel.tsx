@@ -773,7 +773,8 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
                     calculateVideoEstimatedCost(
                       model,
                       Number(duration),
-                      resolution
+                      resolution,
+                      ratio
                     )
                   )}
                 </span>
