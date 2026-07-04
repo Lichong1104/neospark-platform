@@ -3,12 +3,13 @@ import type { ModelsConfigMap } from "@/types/drawing";
 /**
  * 视频生成预估积分计算
  *
- * 与后端 services/video_service_v2.py 的 _calculate_token_cost + 1.1 倍系数保持一致。
+ * 与后端 services/video_service_v2.py 的 _calculate_token_cost + 额外倍数保持一致。
+ * Seedance 2.0 / 2.0-fast 使用 2.0 倍系数，其他模型使用 1.1 倍系数。
  * Seedance 2.0 系列按新版官方定价计算：
  *   tokens = duration * width * height * 24 / 1024
- *   积分 = tokens * 单价(元/百万) / 70_000 * 1.1
+ *   积分 = tokens * 单价(元/百万) / 70_000 * multiplier
  *
- * 其中 70_000 = 1_000_000 * 0.07（1 元 = 1/0.07 积分），1.1 为业务溢价系数。
+ * 其中 70_000 = 1_000_000 * 0.07（1 元 = 1/0.07 积分）。
  */
 
 // 新版 Seedance 2.0 官方 token 单价（元/百万 tokens），不含视频输入场景
@@ -40,8 +41,18 @@ const SEEDANCE_LONG_EDGE_PIXELS: Record<string, number> = {
 // 帧率固定 24fps（与新版 CSV 一致）
 const VIDEO_FRAME_RATE = 24;
 
-// 业务溢价系数（与后端 _settle_task 中保持一致）
-const VIDEO_TOKEN_COST_MULTIPLIER = 1.1;
+// Seedance 2.0 / 2.0-fast 使用更高业务系数（与后端 SEEDANCE_MODELS 保持一致）
+const SEEDANCE_HIGH_MULTIPLIER_MODELS = new Set([
+  "seedance-2.0",
+  "seedance-2.0-fast",
+  "doubao-seedance-2-0-260128",
+  "doubao-seedance-2-0-fast-260128",
+]);
+
+/** 返回模型对应的 token 成本额外倍数（后端 _get_token_cost_multiplier 保持一致） */
+const getVideoTokenCostMultiplier = (model: string): number => {
+  return SEEDANCE_HIGH_MULTIPLIER_MODELS.has(model) ? 2.0 : 1.1;
+};
 
 const OMNI_PRICE_PER_SECOND: Record<string, number> = {
   "omni-fast": 15,
@@ -110,7 +121,8 @@ const getSeedanceVideoDimensions = (
  *
  * 公式：
  *   tokens = duration * width * height * 24 / 1024
- *   积分 = floor(tokens * price_per_million / 70_000 * 1.1)
+ *   积分 = floor(tokens * price_per_million / 70_000 * multiplier)
+ *   multiplier: seedance-2.0 / 2.0-fast 为 2.0，其他为 1.1
  */
 const calculateSeedanceTokenEstimatedCost = (
   model: string,
@@ -126,7 +138,8 @@ const calculateSeedanceTokenEstimatedCost = (
   const { width, height } = getSeedanceVideoDimensions(resolution, ratio);
   const tokens = (duration * width * height * VIDEO_FRAME_RATE) / 1024;
   const rawCost = (tokens * pricePerMillion) / 70_000;
-  return Math.max(1, Math.floor(rawCost * VIDEO_TOKEN_COST_MULTIPLIER));
+  const multiplier = getVideoTokenCostMultiplier(model);
+  return Math.max(1, Math.floor(rawCost * multiplier));
 };
 
 export const calculateVideoEstimatedCost = (
