@@ -470,7 +470,7 @@
     "imageUploadFailed": "图片上传失败",
     "uploading": "上传中...",
     "refImage": "参考图",
-    "multiRefModelUnsupported": "gemini-2.5-flash-image 不支持多张参考图，请切换到 gemini-3.1-flash-image-preview 或 gemini-3-pro-image-preview。",
+    "multiRefModelUnsupported": "gemini-2.5-flash-image 不支持多张参考图，请切换到 gemini-3.1-flash-image-preview、gemini-3.1-flash-lite-image 或 gemini-3-pro-image-preview。",
     "presetWorkflows": "预设工作流",
     "nodeLibrary": "节点库",
     "dragNodesHint": "将节点拖到画布上来构建工作流",

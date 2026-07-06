@@ -122,6 +122,15 @@ const DEFAULT_MODELS: DropdownOption[] = [
     ),
   },
   {
+    value: "gemini-3.1-flash-lite-image",
+    label: "Gemini 3.1 Flash Lite (Image)",
+    icon: drawingModelOptionIcon(
+      "gemini-3.1-flash-lite-image",
+      "Gemini 3.1 Flash Lite (Image)",
+      "gemini"
+    ),
+  },
+  {
     value: "gemini-3-pro-image-preview",
     label: "Gemini 3 Pro (Image)",
     icon: drawingModelOptionIcon(
