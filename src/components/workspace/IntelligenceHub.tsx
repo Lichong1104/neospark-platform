@@ -47,9 +47,13 @@ import { optimizePrompt } from "@/api/prompts";
 import type { CanvasImage } from "./CanvasArea";
 import {
   canvasImageSlotLabel,
-  promptHasCanvasSlotMention,
+  canvasVideoSlotLabel,
+  promptHasCanvasImageSlotMention,
+  promptHasCanvasVideoSlotMention,
   resolveImagesFromPromptSlots,
-  validatePromptCanvasSlots,
+  resolveVideosFromPromptSlots,
+  validatePromptCanvasImageSlots,
+  validatePromptCanvasVideoSlots,
 } from "@/lib/canvasImageSlots";
 import {
   calculateImageEstimatedCost,
@@ -573,9 +577,14 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
       const canvasImagesOnly = canvasImages.filter(
         (img) => img.type !== "video"
       );
-      const promptUsesCanvasSlots = promptHasCanvasSlotMention(originalPrompt);
-      if (promptUsesCanvasSlots) {
-        const check = validatePromptCanvasSlots(
+      const canvasVideosOnly = canvasImages.filter((img) => img.type === "video");
+      const promptUsesCanvasImageSlots =
+        promptHasCanvasImageSlotMention(originalPrompt);
+      const promptUsesCanvasVideoSlots =
+        promptHasCanvasVideoSlotMention(originalPrompt);
+
+      if (promptUsesCanvasImageSlots) {
+        const check = validatePromptCanvasImageSlots(
           originalPrompt,
           canvasImagesOnly.length
         );
@@ -603,10 +612,47 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
         }
       }
 
-      const slotRefImages = promptUsesCanvasSlots
+      if (promptUsesCanvasVideoSlots) {
+        const check = validatePromptCanvasVideoSlots(
+          originalPrompt,
+          canvasVideosOnly.length
+        );
+        if (!check.ok) {
+          toast.error(
+            t("intelligenceHub.invalidCanvasSlot", {
+              label: canvasVideoSlotLabel(
+                check.invalidSlot,
+                t("intelligenceHub.canvasVideoSlotPrefix")
+              ),
+              rangeStart: canvasVideoSlotLabel(
+                1,
+                t("intelligenceHub.canvasVideoSlotPrefix")
+              ),
+              rangeEnd: canvasVideoSlotLabel(
+                canvasVideosOnly.length,
+                t("intelligenceHub.canvasVideoSlotPrefix")
+              ),
+              max: canvasVideosOnly.length,
+            })
+          );
+          setIsStandardGenerating(false);
+          setPendingStandardPrompt(null);
+          return;
+        }
+      }
+
+      const slotRefImages = promptUsesCanvasImageSlots
         ? resolveImagesFromPromptSlots(canvasImages, originalPrompt)
         : [];
-      const selectedRefImages = promptUsesCanvasSlots
+      const slotRefVideos = promptUsesCanvasVideoSlots
+        ? resolveVideosFromPromptSlots(canvasImages, originalPrompt)
+        : [];
+
+      if (slotRefVideos.length > 0) {
+        toast.info(t("intelligenceHub.videoSlotIgnoredInImageGen"));
+      }
+
+      const selectedRefImages = promptUsesCanvasImageSlots
         ? slotRefImages
         : selectedCanvasImages.filter((img) => img.type !== "video");
       const hasSelectedRefs = selectedRefImages.length > 0;
@@ -1340,6 +1386,7 @@ const ChatView: React.FC<ChatViewProps> = ({
             value={inputValue}
             onChange={onReuseHistoryPrompt}
             canvasImages={canvasImages}
+            allowedTypes={["image", "video"]}
             placeholder={t("intelligenceHub.inputPlaceholder")}
             onSubmit={isGenerating ? onCancelGeneration : onSend}
             enableSubmitOnEnter={!isGenerating}

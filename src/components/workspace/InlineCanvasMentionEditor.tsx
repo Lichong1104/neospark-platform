@@ -6,8 +6,12 @@ import React, {
   useState,
 } from "react";
 import { cn } from "@/lib/utils";
+import { Film } from "lucide-react";
 import { STATIC_BASE_URL } from "@/api/request";
-import { canvasImageSlotLabel } from "@/lib/canvasImageSlots";
+import {
+  canvasImageSlotLabel,
+  canvasVideoSlotLabel,
+} from "@/lib/canvasImageSlots";
 import { useTranslation } from "react-i18next";
 
 type CanvasItem = {
@@ -94,7 +98,11 @@ function replaceTextInRangeWithNode(
   sel.addRange(del);
 }
 
-function serializeNode(node: Node, imageSlotPrefix: string): string {
+function serializeNode(
+  node: Node,
+  imageSlotPrefix: string,
+  videoSlotPrefix: string
+): string {
   if (node.nodeType === Node.TEXT_NODE) {
     return (node as Text).data;
   }
@@ -103,15 +111,22 @@ function serializeNode(node: Node, imageSlotPrefix: string): string {
   if (el.dataset?.token === "canvas-image" && el.dataset?.slot) {
     return `@${canvasImageSlotLabel(Number(el.dataset.slot), imageSlotPrefix)}`;
   }
+  if (el.dataset?.token === "canvas-video" && el.dataset?.slot) {
+    return `@${canvasVideoSlotLabel(Number(el.dataset.slot), videoSlotPrefix)}`;
+  }
   if (el.tagName === "BR") return "\n";
   let out = "";
   el.childNodes.forEach((child) => {
-    out += serializeNode(child, imageSlotPrefix);
+    out += serializeNode(child, imageSlotPrefix, videoSlotPrefix);
   });
   return out;
 }
 
-function serializeEditor(root: HTMLElement, imageSlotPrefix: string): string {
+function serializeEditor(
+  root: HTMLElement,
+  imageSlotPrefix: string,
+  videoSlotPrefix: string
+): string {
   const parts: string[] = [];
   root.childNodes.forEach((child, index) => {
     if (
@@ -121,7 +136,7 @@ function serializeEditor(root: HTMLElement, imageSlotPrefix: string): string {
     ) {
       parts.push("\n");
     }
-    parts.push(serializeNode(child, imageSlotPrefix));
+    parts.push(serializeNode(child, imageSlotPrefix, videoSlotPrefix));
   });
   return parts.join("");
 }
@@ -129,16 +144,20 @@ function serializeEditor(root: HTMLElement, imageSlotPrefix: string): string {
 function renderFromValue(
   root: HTMLElement,
   value: string,
-  slotItems: { slot: number; item: CanvasItem }[],
-  imageSlotPrefix: string
+  imageSlotItems: { slot: number; item: CanvasItem }[],
+  videoSlotItems: { slot: number; item: CanvasItem }[],
+  imageSlotPrefix: string,
+  videoSlotPrefix: string
 ) {
   // Clear & rebuild simple inline nodes.
   root.innerHTML = "";
 
-  const slotMap = new Map<number, CanvasItem>();
-  slotItems.forEach((r) => slotMap.set(r.slot, r.item));
+  const imageSlotMap = new Map<number, CanvasItem>();
+  imageSlotItems.forEach((r) => imageSlotMap.set(r.slot, r.item));
+  const videoSlotMap = new Map<number, CanvasItem>();
+  videoSlotItems.forEach((r) => videoSlotMap.set(r.slot, r.item));
 
-  const re = /@(图|image)(\d+)/gi;
+  const re = /@(图|图片|image|视频|video)(\d+)/gi;
   let last = 0;
   let m: RegExpExecArray | null;
   while ((m = re.exec(value)) !== null) {
@@ -146,25 +165,43 @@ function renderFromValue(
     const end = start + m[0].length;
     if (start > last)
       root.appendChild(document.createTextNode(value.slice(last, start)));
+    const prefix = m[1];
     const slot = Number(m[2]);
-    const item = slotMap.get(slot);
+    const isVideo = isVideoPrefix(prefix);
+    const item = isVideo
+      ? videoSlotMap.get(slot)
+      : imageSlotMap.get(slot);
     if (item) {
       const span = document.createElement("span");
-      span.dataset.token = "canvas-image";
+      span.dataset.token = isVideo ? "canvas-video" : "canvas-image";
       span.dataset.slot = String(slot);
       span.contentEditable = "false";
       span.className =
         "inline-flex items-center align-middle px-1.5 py-0.5 mx-0.5 border border-foreground/20 bg-secondary/10";
 
-      const img = document.createElement("img");
-      img.src = toFullUrl(item.src);
-      img.alt = item.name;
-      img.className = "w-5 h-5 object-cover border border-foreground/20";
-      span.appendChild(img);
+      if (isVideo) {
+        const iconWrap = document.createElement("span");
+        iconWrap.className =
+          "w-5 h-5 flex items-center justify-center bg-foreground/10 border border-foreground/20";
+        // The Film icon is rendered as a React component; in vanilla DOM we use an SVG string.
+        iconWrap.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M3 7.5h4"/><path d="M3 12h18"/><path d="M3 16.5h4"/><path d="M17 3v18"/><path d="M17 7.5h4"/><path d="M17 16.5h4"/></svg>`;
+        span.appendChild(iconWrap);
+      } else {
+        const img = document.createElement("img");
+        img.src = toFullUrl(item.src);
+        img.alt = item.name;
+        img.className = "w-5 h-5 object-cover border border-foreground/20";
+        span.appendChild(img);
+      }
 
       const label = document.createElement("span");
-      label.className = "ml-1 text-[11px] font-bold font-mono text-accent-cyan";
-      label.textContent = canvasImageSlotLabel(slot, imageSlotPrefix);
+      label.className = cn(
+        "ml-1 text-[11px] font-bold font-mono",
+        isVideo ? "text-accent-purple" : "text-accent-cyan"
+      );
+      label.textContent = isVideo
+        ? canvasVideoSlotLabel(slot, videoSlotPrefix)
+        : canvasImageSlotLabel(slot, imageSlotPrefix);
       span.appendChild(label);
 
       root.appendChild(span);
@@ -177,10 +214,23 @@ function renderFromValue(
     root.appendChild(document.createTextNode(value.slice(last)));
 }
 
+function isImagePrefix(prefix: string): boolean {
+  return ["图", "图片", "image"].some(
+    (a) => a.toLowerCase() === prefix.toLowerCase()
+  );
+}
+
+function isVideoPrefix(prefix: string): boolean {
+  return ["视频", "video"].some(
+    (a) => a.toLowerCase() === prefix.toLowerCase()
+  );
+}
+
 export function InlineCanvasMentionEditor({
   value,
   onChange,
   canvasImages,
+  allowedTypes = ["image"],
   placeholder,
   className,
   onSubmit,
@@ -193,6 +243,7 @@ export function InlineCanvasMentionEditor({
   value: string;
   onChange: (next: string) => void;
   canvasImages: CanvasItem[];
+  allowedTypes?: ("image" | "video")[];
   placeholder?: string;
   className?: string;
   onSubmit?: () => void;
@@ -208,41 +259,84 @@ export function InlineCanvasMentionEditor({
   const { t } = useTranslation();
   const editorRef = useRef<HTMLDivElement>(null);
   const [mentionTail, setMentionTail] = useState<string | null>(null);
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
   const [isFocused, setIsFocused] = useState(false);
   const imageSlotPrefix = t("intelligenceHub.canvasImageSlotPrefix");
+  const videoSlotPrefix = t("intelligenceHub.canvasVideoSlotPrefix");
+  const allowImage = allowedTypes.includes("image");
+  const allowVideo = allowedTypes.includes("video");
 
-  const slotItems = useMemo(() => {
+  const imageSlotItems = useMemo(() => {
     let slot = 0;
     return canvasImages
       .filter((i) => (i.type ?? "image") !== "video")
       .map((item) => {
         slot += 1;
-        return { slot, item };
+        return { slot, item, kind: "image" as const };
       });
   }, [canvasImages]);
+
+  const videoSlotItems = useMemo(() => {
+    let slot = 0;
+    return canvasImages
+      .filter((i) => i.type === "video")
+      .map((item) => {
+        slot += 1;
+        return { slot, item, kind: "video" as const };
+      });
+  }, [canvasImages]);
+
+  const slotItems = useMemo(() => {
+    const items: { slot: number; item: CanvasItem; kind: "image" | "video" }[] = [];
+    if (allowImage) items.push(...imageSlotItems);
+    if (allowVideo) items.push(...videoSlotItems);
+    return items;
+  }, [allowImage, allowVideo, imageSlotItems, videoSlotItems]);
 
   const visibleMentions = useMemo(() => {
     if (mentionTail === null) return [];
     const q = mentionTail.trim().toLowerCase();
-    return slotItems
-      .filter(({ item, slot }) => {
+    const result = slotItems
+      .filter(({ item, slot, kind }) => {
         if (!q) return true;
-        const label = canvasImageSlotLabel(slot, imageSlotPrefix).toLowerCase();
-        if (
-          new RegExp(`^${imageSlotPrefix.toLowerCase()}\\d*$`).test(q) ||
-          /^image\d*$/.test(q)
-        ) {
-          return label.startsWith(q) || `image${slot}`.startsWith(q);
+        const imagePrefix = imageSlotPrefix.toLowerCase();
+        const videoPrefix = videoSlotPrefix.toLowerCase();
+
+        // Exact slot queries like "图1" / "image1" / "视频1" / "video1"
+        const imageExact = new RegExp(`^(?:图|图片|image)(\\d+)$`, "i").exec(q);
+        const videoExact = new RegExp(`^(?:视频|video)(\\d+)$`, "i").exec(q);
+
+        if (imageExact && kind === "image") {
+          return Number(imageExact[1]) === slot;
         }
-        const exact = /^(?:图|image)(\d+)$/.exec(q);
-        if (exact) return Number(exact[1]) === slot;
+        if (videoExact && kind === "video") {
+          return Number(videoExact[1]) === slot;
+        }
+
+        // Prefix-only queries like "图" / "image" / "视频" / "video"
+        const isImagePrefixQuery =
+          new RegExp(`^(?:图|图片|${imagePrefix})\\d*$`, "i").test(q) ||
+          /^image\d*$/i.test(q);
+        const isVideoPrefixQuery =
+          new RegExp(`^(?:视频|${videoPrefix})\\d*$`, "i").test(q) ||
+          /^video\d*$/i.test(q);
+
+        if (isImagePrefixQuery && kind !== "image") return false;
+        if (isVideoPrefixQuery && kind !== "video") return false;
+
         return (
           item.name.toLowerCase().includes(q) ||
           item.src.toLowerCase().includes(q)
         );
       })
       .slice(0, 12);
-  }, [imageSlotPrefix, mentionTail, slotItems]);
+    return result;
+  }, [imageSlotPrefix, videoSlotPrefix, mentionTail, slotItems]);
+
+  // Reset highlight to first item whenever the mention dropdown opens or query changes.
+  useEffect(() => {
+    setHighlightedIndex(0);
+  }, [mentionTail]);
 
   // Keep DOM in sync on external value changes (not while focused to avoid caret jumps).
   useEffect(() => {
@@ -250,18 +344,32 @@ export function InlineCanvasMentionEditor({
     if (!root) return;
     if (isFocused) return;
     // Avoid rebuilding tokens (which can trigger image re-decode / refetch) if DOM already matches.
-    const current = serializeEditor(root, imageSlotPrefix);
+    const current = serializeEditor(root, imageSlotPrefix, videoSlotPrefix);
     if (current !== value) {
-      renderFromValue(root, value, slotItems, imageSlotPrefix);
+      renderFromValue(
+        root,
+        value,
+        imageSlotItems,
+        videoSlotItems,
+        imageSlotPrefix,
+        videoSlotPrefix
+      );
     }
-  }, [value, slotItems, isFocused, imageSlotPrefix]);
+  }, [
+    value,
+    imageSlotItems,
+    videoSlotItems,
+    isFocused,
+    imageSlotPrefix,
+    videoSlotPrefix,
+  ]);
 
   const emitChangeFromDom = useCallback(() => {
     const root = editorRef.current;
     if (!root) return;
-    const next = serializeEditor(root, imageSlotPrefix);
+    const next = serializeEditor(root, imageSlotPrefix, videoSlotPrefix);
     onChange(next);
-  }, [onChange, imageSlotPrefix]);
+  }, [onChange, imageSlotPrefix, videoSlotPrefix]);
 
   const updateMentionTailFromCaret = useCallback(() => {
     const root = editorRef.current;
@@ -281,28 +389,45 @@ export function InlineCanvasMentionEditor({
   }, []);
 
   const applyMention = useCallback(
-    (slot: number) => {
+    (slot: number, kind: "image" | "video") => {
       const root = editorRef.current;
       if (!root) return;
-      const picked = slotItems.find((x) => x.slot === slot);
+      const picked =
+        kind === "video"
+          ? videoSlotItems.find((x) => x.slot === slot)
+          : imageSlotItems.find((x) => x.slot === slot);
       if (!picked) return;
 
       const span = document.createElement("span");
-      span.dataset.token = "canvas-image";
+      span.dataset.token = kind === "video" ? "canvas-video" : "canvas-image";
       span.dataset.slot = String(slot);
       span.contentEditable = "false";
       span.className =
         "inline-flex items-center align-middle px-1.5 py-0.5 mx-0.5 border border-foreground/20 bg-secondary/10";
 
-      const img = document.createElement("img");
-      img.src = toFullUrl(picked.item.src);
-      img.alt = picked.item.name;
-      img.className = "w-5 h-5 object-cover border border-foreground/20";
-      span.appendChild(img);
+      if (kind === "video") {
+        const iconWrap = document.createElement("span");
+        iconWrap.className =
+          "w-5 h-5 flex items-center justify-center bg-foreground/10 border border-foreground/20";
+        iconWrap.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M3 7.5h4"/><path d="M3 12h18"/><path d="M3 16.5h4"/><path d="M17 3v18"/><path d="M17 7.5h4"/><path d="M17 16.5h4"/></svg>`;
+        span.appendChild(iconWrap);
+      } else {
+        const img = document.createElement("img");
+        img.src = toFullUrl(picked.item.src);
+        img.alt = picked.item.name;
+        img.className = "w-5 h-5 object-cover border border-foreground/20";
+        span.appendChild(img);
+      }
 
       const label = document.createElement("span");
-      label.className = "ml-1 text-[11px] font-bold font-mono text-accent-cyan";
-      label.textContent = canvasImageSlotLabel(slot, imageSlotPrefix);
+      label.className = cn(
+        "ml-1 text-[11px] font-bold font-mono",
+        kind === "video" ? "text-accent-purple" : "text-accent-cyan"
+      );
+      label.textContent =
+        kind === "video"
+          ? canvasVideoSlotLabel(slot, videoSlotPrefix)
+          : canvasImageSlotLabel(slot, imageSlotPrefix);
       span.appendChild(label);
 
       // Replace "@<tail>" with token node.
@@ -312,11 +437,41 @@ export function InlineCanvasMentionEditor({
       emitChangeFromDom();
       root.focus();
     },
-    [emitChangeFromDom, imageSlotPrefix, mentionTail, slotItems]
+    [emitChangeFromDom, imageSlotItems, imageSlotPrefix, mentionTail, videoSlotItems, videoSlotPrefix]
   );
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLDivElement>) => {
+      const hasMentions = mentionTail !== null && visibleMentions.length > 0;
+
+      if (hasMentions) {
+        if (e.key === "ArrowDown") {
+          e.preventDefault();
+          setHighlightedIndex((prev) =>
+            Math.min(prev + 1, visibleMentions.length - 1)
+          );
+          return;
+        }
+        if (e.key === "ArrowUp") {
+          e.preventDefault();
+          setHighlightedIndex((prev) => Math.max(prev - 1, 0));
+          return;
+        }
+        if (e.key === "Enter") {
+          e.preventDefault();
+          const picked = visibleMentions[highlightedIndex];
+          if (picked) {
+            applyMention(picked.slot, picked.kind);
+          }
+          return;
+        }
+        if (e.key === "Escape") {
+          e.preventDefault();
+          setMentionTail(null);
+          return;
+        }
+      }
+
       if (
         enableSubmitOnEnter &&
         e.key === "Enter" &&
@@ -329,7 +484,15 @@ export function InlineCanvasMentionEditor({
       // Keep mention tail updated on navigation/backspace.
       window.setTimeout(() => updateMentionTailFromCaret(), 0);
     },
-    [enableSubmitOnEnter, onSubmit, updateMentionTailFromCaret]
+    [
+      mentionTail,
+      visibleMentions,
+      highlightedIndex,
+      applyMention,
+      enableSubmitOnEnter,
+      onSubmit,
+      updateMentionTailFromCaret,
+    ]
   );
 
   const handleInput = useCallback(() => {
@@ -356,10 +519,18 @@ export function InlineCanvasMentionEditor({
 
   const hasFooter = Boolean(footerLeft || submitAction);
 
+  const noItemsMessage = allowImage
+    ? allowVideo
+      ? t("intelligenceHub.canvasMentionNoItems")
+      : t("intelligenceHub.canvasMentionNoImages")
+    : allowVideo
+      ? t("intelligenceHub.canvasMentionNoVideos")
+      : t("intelligenceHub.canvasMentionNoItems");
+
   return (
     <div
       className={cn(
-        "relative flex flex-col overflow-hidden",
+        "relative flex flex-col",
         embedded
           ? "rounded-sm bg-background/90"
           : "border-brutal border-foreground bg-background",
@@ -372,27 +543,47 @@ export function InlineCanvasMentionEditor({
             {visibleMentions.length === 0 ? (
               <div className="px-2.5 py-2 text-[10px] text-muted-foreground">
                 {slotItems.length === 0
-                  ? t("intelligenceHub.canvasMentionNoImages")
+                  ? noItemsMessage
                   : t("intelligenceHub.canvasMentionNoMatch")}
               </div>
             ) : (
-              visibleMentions.map(({ item, slot }) => (
+              visibleMentions.map(({ item, slot, kind }, index) => (
                 <button
-                  key={`${slot}-${item.src}`}
+                  key={`${kind}-${slot}-${item.src}`}
                   type="button"
                   onMouseDown={(ev) => ev.preventDefault()}
-                  onClick={() => applyMention(slot)}
-                  className="w-full px-2.5 py-2 text-left border-b border-foreground/10 last:border-b-0 hover:bg-secondary transition-none flex items-center gap-2"
+                  onClick={() => applyMention(slot, kind)}
+                  className={cn(
+                    "w-full px-2.5 py-2 text-left border-b border-foreground/10 last:border-b-0 transition-none flex items-center gap-2",
+                    index === highlightedIndex
+                      ? "bg-accent-cyan/15"
+                      : "hover:bg-secondary"
+                  )}
                 >
-                  <img
-                    src={toFullUrl(item.src)}
-                    alt={item.name}
-                    className="w-7 h-7 object-cover border border-foreground/20 shrink-0"
-                  />
+                  {kind === "video" ? (
+                    <span className="w-7 h-7 flex items-center justify-center bg-foreground/10 border border-foreground/20 shrink-0">
+                      <Film className="w-4 h-4 text-accent-purple" />
+                    </span>
+                  ) : (
+                    <img
+                      src={toFullUrl(item.src)}
+                      alt={item.name}
+                      className="w-7 h-7 object-cover border border-foreground/20 shrink-0"
+                    />
+                  )}
                   <div className="min-w-0">
                     <div className="text-[11px] font-bold truncate">
-                      <span className="text-accent-cyan mr-1">
-                        {canvasImageSlotLabel(slot, imageSlotPrefix)}
+                      <span
+                        className={cn(
+                          "mr-1",
+                          kind === "video"
+                            ? "text-accent-purple"
+                            : "text-accent-cyan"
+                        )}
+                      >
+                        {kind === "video"
+                          ? canvasVideoSlotLabel(slot, videoSlotPrefix)
+                          : canvasImageSlotLabel(slot, imageSlotPrefix)}
                       </span>
                       {item.name}
                     </div>
@@ -427,9 +618,16 @@ export function InlineCanvasMentionEditor({
             // Normalize DOM only when needed (rebuilding tokens can look like "reloading images").
             const root = editorRef.current;
             if (!root) return;
-            const current = serializeEditor(root, imageSlotPrefix);
+            const current = serializeEditor(root, imageSlotPrefix, videoSlotPrefix);
             if (current !== value) {
-              renderFromValue(root, value, slotItems, imageSlotPrefix);
+              renderFromValue(
+                root,
+                value,
+                imageSlotItems,
+                videoSlotItems,
+                imageSlotPrefix,
+                videoSlotPrefix
+              );
             }
           }}
           onInput={handleInput}

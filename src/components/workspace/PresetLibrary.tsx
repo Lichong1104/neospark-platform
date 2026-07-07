@@ -1,16 +1,26 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import {
-  X,
-  Search,
-  Loader2,
-  BookOpen,
-  ImageOff,
-  ChevronDown,
-  PanelsTopLeft,
-} from "lucide-react";
+import { X, Search, Loader2, BookOpen, Sparkles, Copy, Check, Wand2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
-import { listPrompts, type PromptItem, type CategoryItem } from "@/api/prompts";
+import { BrutalButton } from "@/components/ui/brutal-button";
+import {
+  BrutalCard,
+  BrutalCardContent,
+  BrutalCardHeader,
+  BrutalCardTitle,
+} from "@/components/ui/brutal-card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  listAiDesignTools,
+  type AiDesignTool,
+  type AiDesignToolExampleGroup,
+} from "@/api/prompts";
 
 interface PresetLibraryProps {
   isOpen: boolean;
@@ -24,419 +34,496 @@ const PresetLibrary: React.FC<PresetLibraryProps> = ({
   onSelectPreset,
 }) => {
   const { t } = useTranslation();
-  const [prompts, setPrompts] = useState<PromptItem[]>([]);
-  const [categories, setCategories] = useState<CategoryItem[]>([]);
-  const [activeCategory, setActiveCategory] = useState<string>("all");
+  const [tools, setTools] = useState<AiDesignTool[]>([]);
+  const [filteredTools, setFilteredTools] = useState<AiDesignTool[]>([]);
+  const [activeToolSlug, setActiveToolSlug] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [hasMore, setHasMore] = useState(false);
-  const [showCategoryNav, setShowCategoryNav] = useState(false);
-  const [categoryQuery, setCategoryQuery] = useState("");
-  const pageSize = 24;
   const abortRef = useRef<AbortController | null>(null);
-  const categoryScrollRef = useRef<HTMLDivElement | null>(null);
-  const dragStateRef = useRef<{
-    active: boolean;
-    startX: number;
-    startScrollLeft: number;
-  }>({ active: false, startX: 0, startScrollLeft: 0 });
-  const activeCategoryName =
-    activeCategory === "all"
-      ? t("intelligenceHub.all", { defaultValue: "All" })
-      : categories.find((cat) => cat.id === activeCategory)?.name || activeCategory;
-  const filteredCategories = categories.filter((cat) => {
-    if (!categoryQuery.trim()) return true;
-    const query = categoryQuery.trim().toLowerCase();
-    return (
-      cat.name.toLowerCase().includes(query) || cat.id.toLowerCase().includes(query)
-    );
-  });
 
-  const fetchPrompts = useCallback(
-    async (pageNum: number, reset: boolean = false) => {
-      // 取消上一个未完成的请求
-      if (abortRef.current) {
-        abortRef.current.abort();
+  const fetchTools = useCallback(async () => {
+    if (abortRef.current) {
+      abortRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    setLoading(true);
+    try {
+      const res = await listAiDesignTools();
+      if (controller.signal.aborted) return;
+      setTools(res.items);
+      setFilteredTools(res.items);
+    } catch {
+      // silently fail
+    } finally {
+      if (!controller.signal.aborted) {
+        setLoading(false);
       }
-      const controller = new AbortController();
-      abortRef.current = controller;
-
-      setLoading(true);
-      try {
-        const params: {
-          category?: string;
-          search?: string;
-          promptType?: string;
-          page: number;
-          page_size: number;
-        } = {
-          page: pageNum,
-          page_size: pageSize,
-          promptType: "image",
-        };
-        if (activeCategory && activeCategory !== "all") {
-          params.category = activeCategory;
-        }
-        if (searchQuery.trim()) {
-          params.search = searchQuery.trim();
-        }
-        const res = await listPrompts(params);
-        if (controller.signal.aborted) return;
-
-        if (reset) {
-          setPrompts(res.items);
-        } else {
-          setPrompts((prev) => {
-            const existingIds = new Set(prev.map((p) => p.id));
-            const newItems = res.items.filter(
-              (item) => !existingIds.has(item.id)
-            );
-            return [...prev, ...newItems];
-          });
-        }
-        setTotal(res.total);
-        setCategories(res.categories);
-        setHasMore(pageNum * pageSize < res.total);
-      } catch {
-        // silently fail
-      } finally {
-        if (!controller.signal.aborted) {
-          setLoading(false);
-        }
-      }
-    },
-    [activeCategory, searchQuery]
-  );
+    }
+  }, []);
 
   useEffect(() => {
     if (!isOpen) return;
-    setPage(1);
-    fetchPrompts(1, true);
+    fetchTools();
     return () => {
       if (abortRef.current) {
         abortRef.current.abort();
       }
     };
-  }, [isOpen, fetchPrompts]);
+  }, [isOpen, fetchTools]);
 
-  const handleLoadMore = () => {
-    const nextPage = page + 1;
-    setPage(nextPage);
-    fetchPrompts(nextPage, false);
-  };
-
-  const onCategoryWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
-    const el = categoryScrollRef.current;
-    if (!el) return;
-    // Map vertical wheel to horizontal scroll for better UX.
-    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-      el.scrollLeft += e.deltaY;
-      e.preventDefault();
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredTools(tools);
+      return;
     }
-  }, []);
+    const q = searchQuery.trim().toLowerCase();
+    const filtered = tools.filter(
+      (tool) =>
+        tool.title.toLowerCase().includes(q) ||
+        tool.description.toLowerCase().includes(q) ||
+        tool.default_prompt.toLowerCase().includes(q) ||
+        tool.example_prompts.some(
+          (group) =>
+            group.label.toLowerCase().includes(q) ||
+            group.prompts.some((p) => p.toLowerCase().includes(q))
+        )
+    );
+    setFilteredTools(filtered);
+  }, [searchQuery, tools]);
 
-  const onCategoryPointerDown = useCallback(
-    (e: React.PointerEvent<HTMLDivElement>) => {
-      const el = categoryScrollRef.current;
-      if (!el) return;
-      dragStateRef.current = {
-        active: true,
-        startX: e.clientX,
-        startScrollLeft: el.scrollLeft,
-      };
-      try {
-        (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
-      } catch {
-        // ignore
-      }
-    },
-    []
-  );
+  // 下拉菜单有数据时，默认选中第一个；搜索后若当前选中项被过滤掉，也切到第一个
+  useEffect(() => {
+    if (filteredTools.length === 0) return;
+    const stillExists = filteredTools.some((t) => t.slug === activeToolSlug);
+    if (!stillExists) {
+      setActiveToolSlug(filteredTools[0].slug);
+    }
+  }, [filteredTools, activeToolSlug]);
 
-  const onCategoryPointerMove = useCallback(
-    (e: React.PointerEvent<HTMLDivElement>) => {
-      const el = categoryScrollRef.current;
-      if (!el) return;
-      const state = dragStateRef.current;
-      if (!state.active) return;
-      const dx = e.clientX - state.startX;
-      el.scrollLeft = state.startScrollLeft - dx;
-    },
-    []
-  );
-
-  const onCategoryPointerUp = useCallback(() => {
-    dragStateRef.current.active = false;
-  }, []);
+  const activeTool = filteredTools.find((tool) => tool.slug === activeToolSlug);
 
   if (!isOpen) return null;
 
   return (
-    <div className="absolute inset-0 z-30 flex flex-col bg-background/95 text-foreground backdrop-blur-sm">
+    <div className="absolute inset-0 z-30 flex flex-col bg-background text-foreground">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-        <h2 className="flex items-center gap-2 text-sm font-semibold tracking-wide">
-          <BookOpen className="w-4 h-4" />
-          {t("intelligenceHub.promptArsenal")}
-        </h2>
-        <button
+      <div className="flex items-center justify-between px-5 py-4 border-b-brutal border-foreground bg-card">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 flex items-center justify-center bg-accent-cyan border-brutal border-foreground brutal-shadow-cyan">
+            <BookOpen className="w-4 h-4 text-foreground" />
+          </div>
+          <div>
+            <h2 className="font-mono font-black text-base uppercase tracking-widest">
+              {t("intelligenceHub.promptArsenal", {
+                defaultValue: "Prompt Arsenal",
+              })}
+            </h2>
+            <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider">
+              AI Design Tools · {tools.length} available
+            </p>
+          </div>
+        </div>
+        <BrutalButton
+          variant="ghost"
+          size="icon"
           onClick={onClose}
-          className="flex h-8 w-8 items-center justify-center rounded-sm text-muted-foreground transition-none hover:bg-secondary hover:text-foreground"
+          className="border-brutal border-foreground"
         >
           <X className="w-5 h-5" />
-        </button>
+        </BrutalButton>
       </div>
 
-      {/* Search */}
-      <div className="border-b border-border px-4 py-3">
+      {/* Search & Filter */}
+      <div className="px-5 py-4 border-b-brutal border-foreground bg-background space-y-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={
-              t("intelligenceHub.searchPrompts", {
-                defaultValue: "Search prompts...",
-              })
-            }
-            className="w-full rounded-sm border border-input bg-background py-2 pl-9 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none"
+            placeholder={t("intelligenceHub.searchPrompts", {
+              defaultValue: "Search tools, prompts or examples...",
+            })}
+            className="w-full h-10 border-brutal border-foreground bg-card py-2 pl-10 pr-4 font-mono text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent-cyan/30"
           />
         </div>
+
+        <ToolSelect
+          tools={filteredTools}
+          activeSlug={activeToolSlug}
+          onChange={setActiveToolSlug}
+        />
       </div>
 
-      {/* Categories */}
-      <div className="relative">
-        <div className="border-b border-border p-3">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setActiveCategory("all")}
-              className={cn(
-                "shrink-0 rounded-sm border px-3 py-1.5 text-xs font-medium transition-none",
-                activeCategory === "all"
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border bg-background text-foreground hover:bg-secondary"
-              )}
-            >
-              {t("intelligenceHub.all", { defaultValue: "All" })} ({total})
-            </button>
-
-            <div
-              ref={categoryScrollRef}
-              className={cn(
-                "min-w-0 flex-1 overflow-x-auto scrollbar-hide select-none",
-                "cursor-grab active:cursor-grabbing"
-              )}
-              onWheel={onCategoryWheel}
-              onPointerDown={onCategoryPointerDown}
-              onPointerMove={onCategoryPointerMove}
-              onPointerUp={onCategoryPointerUp}
-              onPointerCancel={onCategoryPointerUp}
-              onPointerLeave={onCategoryPointerUp}
-            >
-              <div className="flex w-max items-center gap-1.5 pr-1">
-                {categories.map((cat) => (
-                  <button
-                    key={cat.id}
-                    onClick={() => setActiveCategory(cat.id)}
-                    className={cn(
-                      "shrink-0 rounded-sm border px-2.5 py-1.5 text-xs font-medium transition-none",
-                      activeCategory === cat.id
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border bg-background text-foreground hover:bg-secondary"
-                    )}
-                  >
-                    {cat.name} ({cat.count})
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <button
-              onClick={() => setShowCategoryNav((prev) => !prev)}
-              className={cn(
-                "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-sm border transition-none",
-                showCategoryNav
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border bg-background text-foreground hover:bg-secondary"
-              )}
-              title={t("intelligenceHub.categoryNav", {
-                defaultValue: "Category nav",
-              })}
-            >
-              <PanelsTopLeft className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-        <div
-          className={cn(
-            "absolute left-0 right-0 top-full z-20 overflow-hidden border-b border-border bg-background shadow-sm transition-all duration-300 ease-out",
-            showCategoryNav
-              ? "max-h-60 translate-y-0 opacity-100"
-              : "pointer-events-none max-h-0 -translate-y-1 opacity-0 border-b-0"
-          )}
-        >
-          <div className="px-3 py-3">
-            <div className="mb-2 flex items-center gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  type="text"
-                  value={categoryQuery}
-                  onChange={(e) => setCategoryQuery(e.target.value)}
-                  placeholder={t("intelligenceHub.searchCategories", {
-                    defaultValue: "Search categories...",
-                  })}
-                  className="w-full rounded-sm border border-input bg-background py-1.5 pl-8 pr-3 text-xs text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none"
-                />
-              </div>
-              <button
-                onClick={() => setShowCategoryNav(false)}
-                className="rounded-sm border border-border bg-background px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-secondary hover:text-foreground"
-              >
-                {t("common.close", { defaultValue: "Close" })}
-              </button>
-            </div>
-            <div className="max-h-32 overflow-y-auto">
-              <div className="grid grid-cols-2 gap-1.5">
-                {filteredCategories.map((cat) => (
-                  <button
-                    key={cat.id}
-                    onClick={() => {
-                      setActiveCategory(cat.id);
-                      setShowCategoryNav(false);
-                    }}
-                    className={cn(
-                      "truncate rounded-sm border px-2.5 py-1.5 text-left text-xs font-medium transition-none",
-                      activeCategory === cat.id
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border bg-background text-foreground hover:bg-secondary"
-                    )}
-                    title={`${cat.name} (${cat.count})`}
-                  >
-                    {cat.name} ({cat.count})
-                  </button>
-                ))}
-              </div>
-              {filteredCategories.length === 0 && (
-                <p className="py-4 text-center text-xs text-muted-foreground">
-                  {t("intelligenceHub.noCategoryMatch", {
-                    defaultValue: "No matching categories",
-                  })}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Prompt Grid */}
-      <div className="flex-1 overflow-y-auto p-4">
-        {loading && prompts.length === 0 ? (
-          <div className="flex items-center justify-center py-12">
+      {/* Tools List */}
+      <div className="flex-1 overflow-y-auto p-5 bg-background">
+        {loading && tools.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
             <Loader2 className="w-8 h-8 text-accent-cyan animate-spin" />
+            <p className="font-mono text-xs uppercase text-muted-foreground">
+              Loading tools...
+            </p>
           </div>
-        ) : prompts.length === 0 ? (
-          <div className="text-center py-12 text-card/50 font-mono text-sm">
-            {t("intelligenceHub.noPrompts", { defaultValue: "No prompts found" })}
+        ) : !activeTool ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
+            <div className="w-14 h-14 flex items-center justify-center border-brutal border-foreground bg-muted">
+              <Search className="w-6 h-6 text-muted-foreground" />
+            </div>
+            <p className="font-mono text-sm text-muted-foreground">
+              {t("intelligenceHub.noPrompts", {
+                defaultValue: "No tools found",
+              })}
+            </p>
           </div>
         ) : (
-          <>
-            <div className="grid grid-cols-2 gap-3">
-              {prompts.map((item) => (
-                <PromptCard
-                  key={item.id}
-                  item={item}
-                  onSelect={() => {
-                    onSelectPreset(item.prompt);
-                    onClose();
-                  }}
-                />
-              ))}
-            </div>
-
-            {hasMore && (
-              <div className="flex justify-center py-6">
-                <button
-                  onClick={handleLoadMore}
-                  disabled={loading}
-                  className="rounded-sm border border-border bg-background px-6 py-2 text-xs font-semibold tracking-wide text-foreground transition-none hover:bg-secondary disabled:opacity-50"
-                >
-                  {loading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    t("intelligenceHub.loadMore", { defaultValue: "Load More" })
-                  )}
-                </button>
-              </div>
-            )}
-          </>
+          <div className="max-w-3xl mx-auto">
+            <ToolCard
+              tool={activeTool}
+              onSelectPrompt={(prompt) => {
+                onSelectPreset(prompt);
+                onClose();
+              }}
+            />
+          </div>
         )}
       </div>
 
-      <div className="border-t border-border p-3">
-        <p className="text-center text-[11px] text-muted-foreground">
-          {t("intelligenceHub.clickPreset")} · {prompts.length} / {total}{" "}
-          {t("intelligenceHub.presetsAvailable", { count: total })}
+      {/* Footer */}
+      <div className="px-5 py-3 border-t-brutal border-foreground bg-card">
+        <p className="text-center font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+          {activeTool
+            ? `${activeTool.title} · ${tools.findIndex((t) => t.slug === activeTool.slug) + 1} / ${tools.length}`
+            : `${tools.length} tools available`}
         </p>
       </div>
     </div>
   );
 };
 
-/* 子组件：单张提示词卡片 */
-const PromptCard: React.FC<{ item: PromptItem; onSelect: () => void }> = ({
-  item,
-  onSelect,
+/* ============== 子组件：工具下拉选择 ============== */
+
+interface ToolSelectProps {
+  tools: AiDesignTool[];
+  activeSlug: string;
+  onChange: (slug: string) => void;
+}
+
+const ToolSelect: React.FC<ToolSelectProps> = ({ tools, activeSlug, onChange }) => {
+  const activeTool = tools.find((t) => t.slug === activeSlug);
+
+  return (
+    <div className="relative">
+      <Select value={activeSlug} onValueChange={onChange} disabled={tools.length === 0}>
+        <SelectTrigger
+          aria-label="Select AI design tool"
+          className="relative h-11 w-full rounded-none border-brutal border-foreground bg-card px-0 font-mono text-sm text-foreground brutal-shadow focus:ring-2 focus:ring-accent-cyan/30 focus:ring-offset-0 [&>svg]:hidden"
+        >
+          <div className="flex flex-1 items-center gap-3 pl-4 pr-12">
+            <span className="text-lg">{activeTool ? getToolIcon(activeTool.title) : "✨"}</span>
+            <SelectValue placeholder="Select a design tool" />
+          </div>
+          <div className="absolute inset-y-0 right-0 flex w-10 items-center justify-center border-l-brutal border-foreground bg-accent-yellow">
+            <svg
+              className="w-4 h-4 text-foreground"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </SelectTrigger>
+
+        <SelectContent
+          position="popper"
+          className="rounded-none border-brutal border-foreground bg-background p-0 brutal-shadow"
+        >
+          {tools.map((tool) => (
+            <SelectItem
+              key={tool.slug}
+              value={tool.slug}
+              className="relative cursor-pointer rounded-none border-b border-foreground/20 py-3 pl-14 pr-4 font-mono text-sm text-foreground transition-none last:border-b-0 focus:bg-accent-yellow focus:text-foreground data-[state=checked]:bg-accent-cyan/10 data-[state=checked]:font-bold"
+            >
+              <span className="absolute left-8 top-1/2 -translate-y-1/2 text-base">
+                {getToolIcon(tool.title)}
+              </span>
+              {tool.title}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      {activeTool && (
+        <p className="mt-2 text-[10px] font-mono text-muted-foreground leading-relaxed">
+          {activeTool.description}
+        </p>
+      )}
+    </div>
+  );
+};
+
+/* ============== 子组件：工具卡片 ============== */
+
+interface ToolCardProps {
+  tool: AiDesignTool;
+  onSelectPrompt: (prompt: string) => void;
+}
+
+const ToolCard: React.FC<ToolCardProps> = ({ tool, onSelectPrompt }) => {
+  const toolIcon = getToolIcon(tool.title);
+
+  return (
+    <BrutalCard shadow="default" className="overflow-hidden">
+      <BrutalCardHeader className="bg-card">
+        <div className="flex items-start gap-4">
+          <div className="shrink-0 w-12 h-12 flex items-center justify-center bg-accent-yellow border-brutal border-foreground brutal-shadow text-2xl">
+            {toolIcon}
+          </div>
+          <div className="min-w-0 flex-1">
+            <BrutalCardTitle className="text-base leading-tight">
+              {tool.title}
+            </BrutalCardTitle>
+            <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">
+              {tool.description}
+            </p>
+          </div>
+        </div>
+      </BrutalCardHeader>
+
+      <BrutalCardContent className="bg-background/50 space-y-5">
+        {/* 默认提示词 */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-[10px] font-mono font-black uppercase tracking-widest text-accent-cyan">
+            <Sparkles className="w-3 h-3" />
+            Default Prompt
+          </div>
+          <DefaultPromptCard
+            prompt={tool.default_prompt}
+            onUse={() => onSelectPrompt(tool.default_prompt)}
+          />
+        </div>
+
+        {/* 示例提示词 */}
+        <div className="pt-3 space-y-5 border-t-brutal border-foreground/20">
+          {tool.example_prompts.map((group, groupIndex) => (
+            <ExampleGroup
+              key={`${tool.slug}-${group.label}-${groupIndex}`}
+              group={group}
+              groupIndex={groupIndex}
+              onSelectPrompt={onSelectPrompt}
+            />
+          ))}
+        </div>
+      </BrutalCardContent>
+    </BrutalCard>
+  );
+};
+
+/* ============== 子组件：默认提示词卡片 ============== */
+
+interface DefaultPromptCardProps {
+  prompt: string;
+  onUse: () => void;
+}
+
+const DefaultPromptCard: React.FC<DefaultPromptCardProps> = ({
+  prompt,
+  onUse,
 }) => {
-  const [imgError, setImgError] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(prompt);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // ignore
+    }
+  };
 
   return (
     <button
-      onClick={onSelect}
-      className="group flex h-full flex-col overflow-hidden rounded-sm border border-border bg-card text-left transition-none hover:bg-secondary/60"
+      onClick={onUse}
+      className="group w-full text-left p-4 border-brutal border-foreground bg-card brutal-shadow hover:brutal-shadow-cyan hover:bg-accent-cyan/5 transition-none"
     >
-      {/* 图片区：始终占位，加载失败显示占位图 */}
-      <div className="relative aspect-video shrink-0 overflow-hidden bg-muted">
-        {!imgError && item.imageUrl ? (
-          <img
-            src={item.imageUrl}
-            alt={item.title}
-            className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-300"
-            loading="lazy"
-            onError={() => setImgError(true)}
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-muted">
-            <ImageOff className="h-6 w-6 text-muted-foreground/60" />
-          </div>
-        )}
-      </div>
-
-      {/* 内容区 */}
-      <div className="flex min-h-0 flex-1 flex-col p-3">
-        <div className="line-clamp-1 text-sm font-semibold text-foreground">
-          {item.title}
+      <div className="flex items-start gap-3">
+        <div className="shrink-0 mt-0.5">
+          <Wand2 className="w-4 h-4 text-accent-cyan" />
         </div>
-        <div className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
-          {item.prompt.slice(0, 120)}
-          {item.prompt.length > 120 ? "..." : ""}
-        </div>
-        <div className="mt-2 flex flex-wrap items-center gap-1.5">
-          {item.tags.slice(0, 3).map((tag) => (
-            <span
-              key={tag}
-              className="rounded-sm bg-secondary px-1.5 py-0.5 text-[10px] text-muted-foreground"
-            >
-              {tag}
+        <div className="flex-1 min-w-0">
+          <p className="font-mono text-xs leading-relaxed text-foreground">
+            {prompt}
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center px-2 py-0.5 bg-accent-cyan border-brutal border-foreground text-[10px] font-bold uppercase tracking-wider text-foreground">
+              Click to use
             </span>
-          ))}
+            <SizeBadge prompt={prompt} />
+          </div>
         </div>
+        <CopyButton copied={copied} onClick={handleCopy} />
       </div>
     </button>
   );
 };
+
+/* ============== 子组件：示例分组 ============== */
+
+const GROUP_ACCENT_COLORS = [
+  "bg-accent-pink",
+  "bg-accent-cyan",
+  "bg-accent-yellow",
+  "bg-accent-green",
+];
+
+interface ExampleGroupProps {
+  group: AiDesignToolExampleGroup;
+  groupIndex: number;
+  onSelectPrompt: (prompt: string) => void;
+}
+
+const ExampleGroup: React.FC<ExampleGroupProps> = ({
+  group,
+  groupIndex,
+  onSelectPrompt,
+}) => {
+  const accentColor =
+    GROUP_ACCENT_COLORS[groupIndex % GROUP_ACCENT_COLORS.length];
+  const borderColor = accentColor.replace("bg-", "border-");
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-3">
+        <div
+          className={cn(
+            "w-8 h-8 flex items-center justify-center border-brutal border-foreground brutal-shadow text-base",
+            accentColor
+          )}
+        >
+          {group.icon}
+        </div>
+        <div className={cn("h-px flex-1 border-b-2 border-dashed", borderColor)} />
+        <span className="text-[10px] font-mono font-black uppercase tracking-widest text-foreground">
+          {group.label}
+        </span>
+      </div>
+
+      <div className="space-y-2 pl-1">
+        {group.prompts.map((prompt, idx) => (
+          <PromptRow
+            key={idx}
+            prompt={prompt}
+            accentColor={accentColor}
+            onSelect={() => onSelectPrompt(prompt)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+/* ============== 子组件：单条提示词 ============== */
+
+interface PromptRowProps {
+  prompt: string;
+  accentColor: string;
+  onSelect: () => void;
+}
+
+const PromptRow: React.FC<PromptRowProps> = ({
+  prompt,
+  accentColor,
+  onSelect,
+}) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(prompt);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // ignore
+    }
+  };
+
+  return (
+    <button
+      onClick={onSelect}
+      className="group w-full text-left flex items-stretch border border-foreground/40 bg-card hover:border-foreground hover:bg-accent-yellow/5 transition-none"
+    >
+      <div
+        className={cn(
+          "w-1.5 shrink-0 border-r-brutal border-foreground",
+          accentColor
+        )}
+      />
+      <div className="flex-1 min-w-0 p-3">
+        <p className="font-mono text-[11px] leading-relaxed text-foreground line-clamp-2">
+          {prompt}
+        </p>
+        <div className="mt-2">
+          <SizeBadge prompt={prompt} />
+        </div>
+      </div>
+      <div className="shrink-0 w-9 flex items-center justify-center border-l border-foreground/40 bg-background">
+        <CopyButton copied={copied} onClick={handleCopy} />
+      </div>
+    </button>
+  );
+};
+
+/* ============== 工具组件：尺寸标签 + 复制按钮 ============== */
+
+const SizeBadge: React.FC<{ prompt: string }> = ({ prompt }) => {
+  const size = extractSizeTag(prompt);
+  if (!size) return null;
+  return (
+    <span className="inline-flex items-center px-1.5 py-0.5 bg-background border-brutal border-foreground text-[9px] font-mono text-muted-foreground">
+      {size}
+    </span>
+  );
+};
+
+interface CopyButtonProps {
+  copied: boolean;
+  onClick: (e: React.MouseEvent) => void;
+}
+
+const CopyButton: React.FC<CopyButtonProps> = ({ copied, onClick }) => (
+  <div
+    onClick={onClick}
+    role="button"
+    tabIndex={0}
+    aria-label={copied ? "Copied" : "Copy prompt"}
+    className="p-1.5 border-brutal border-foreground bg-card hover:bg-accent-yellow"
+  >
+    {copied ? (
+      <Check className="w-3.5 h-3.5 text-green-700" />
+    ) : (
+      <Copy className="w-3.5 h-3.5 text-foreground" />
+    )}
+  </div>
+);
+
+/* ============== 工具函数 ============== */
+
+function extractSizeTag(prompt: string): string | null {
+  const match = prompt.match(/Size:\s*([^.]+)/i);
+  return match ? match[1].trim() : null;
+}
+
+function getToolIcon(title: string): string {
+  const map: Record<string, string> = {
+    "Advertising Poster Generator": "📢",
+  };
+  return map[title] || "✨";
+}
 
 export { PresetLibrary };

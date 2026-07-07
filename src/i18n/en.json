@@ -515,10 +515,14 @@
     "viewOptimizedPrompt": "Optimized",
     "viewOriginalPrompt": "Original",
     "toggleOptimizedPrompt": "Toggle original/optimized prompt",
-    "invalidCanvasSlot": "@{{label}} is invalid. There are {{max}} image(s) on the canvas ({{rangeStart}}–{{rangeEnd}}).",
+    "invalidCanvasSlot": "@{{label}} is invalid. There are {{max}} resource(s) on the canvas ({{rangeStart}}–{{rangeEnd}}).",
     "canvasImageSlotPrefix": "image",
+    "canvasVideoSlotPrefix": "video",
+    "canvasMentionNoItems": "No available canvas resources yet.",
     "canvasMentionNoImages": "No images on the canvas yet.",
-    "canvasMentionNoMatch": "No canvas image matches this query."
+    "canvasMentionNoVideos": "No videos on the canvas yet.",
+    "canvasMentionNoMatch": "No canvas resource matches this query.",
+    "videoSlotIgnoredInImageGen": "Image generation does not support video references; @video mentions have been ignored."
   },
   "agentHub": {
     "tab": "Agent",

@@ -17,6 +17,10 @@ import {
   ImageGenerationParams,
   type GptImageQuality,
 } from "./ImageGenerationParams";
+import {
+  resolveImagesFromPromptSlots,
+  resolveVideosFromPromptSlots,
+} from "@/lib/canvasImageSlots";
 import { type DropdownOption } from "@/components/ui/brutal-dropdown";
 import { drawingModelOptionIcon } from "@/components/icons/DrawingModelIcon";
 import {
@@ -25,6 +29,20 @@ import {
   RectangleVertical,
 } from "lucide-react";
 
+const toServerPath = (fullUrl: string) => {
+  if (!fullUrl) return "";
+  if (fullUrl.startsWith(STATIC_BASE_URL)) {
+    return fullUrl.slice(STATIC_BASE_URL.length);
+  }
+  if (fullUrl.startsWith("http")) {
+    try {
+      return new URL(fullUrl).pathname;
+    } catch {
+      return fullUrl;
+    }
+  }
+  return fullUrl;
+};
 const DEFAULT_ASPECT_RATIOS: DropdownOption[] = [
   { value: "1:1", label: "1:1", icon: <Square className="w-3 h-3" /> },
   {
@@ -159,6 +177,13 @@ export const CanvasImageGenCompose: React.FC<{
     const trimmed = prompt.trim();
     if (!trimmed || isGenerating) return;
 
+    const slotRefImages = resolveImagesFromPromptSlots(canvasImages, trimmed);
+    const slotRefVideos = resolveVideosFromPromptSlots(canvasImages, trimmed);
+
+    if (slotRefVideos.length > 0) {
+      toast.info(t("intelligenceHub.videoSlotIgnoredInImageGen"));
+    }
+
     setIsGenerating(true);
     try {
       let sid = sessionId;
@@ -170,7 +195,12 @@ export const CanvasImageGenCompose: React.FC<{
         setSessionId(sid);
       }
 
-      const params = {
+      const refPaths = slotRefImages
+        .slice(0, 14)
+        .map((img) => toServerPath(img.src))
+        .filter(Boolean);
+
+      const params: import("@/types/drawing").GenerateImageParams = {
         prompt: trimmed,
         model,
         resolution,
@@ -182,6 +212,11 @@ export const CanvasImageGenCompose: React.FC<{
         optimize_prompt: true,
         ...(model === "gpt-image-2" ? { quality: gptImageQuality } : {}),
       };
+      if (refPaths.length > 1) {
+        params.ref_image_paths = refPaths;
+      } else if (refPaths.length === 1) {
+        params.ref_image_path = refPaths[0];
+      }
 
       const res = await drawingApi.generateImage(sid, params);
       toast.info(
@@ -206,6 +241,7 @@ export const CanvasImageGenCompose: React.FC<{
         value={prompt}
         onChange={setPrompt}
         canvasImages={canvasImages}
+        allowedTypes={["image", "video"]}
         placeholder={t("intelligenceHub.inputPlaceholder")}
         onSubmit={handleGenerate}
         enableSubmitOnEnter

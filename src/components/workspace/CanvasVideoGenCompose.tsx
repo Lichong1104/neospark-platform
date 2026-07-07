@@ -12,8 +12,12 @@ import type {
   VideoResolution,
 } from "@/types/video";
 import {
-  validatePromptCanvasSlots,
   canvasImageSlotLabel,
+  canvasVideoSlotLabel,
+  resolveImagesFromPromptSlots,
+  resolveVideosFromPromptSlots,
+  validatePromptCanvasImageSlots,
+  validatePromptCanvasVideoSlots,
 } from "@/lib/canvasImageSlots";
 import type { CanvasImage } from "./CanvasArea";
 import { InlineCanvasMentionEditor } from "./InlineCanvasMentionEditor";
@@ -55,6 +59,7 @@ export const CanvasVideoGenCompose: React.FC<{
 }> = ({ canvasImages, onFulfilled }) => {
   const { t } = useTranslation();
   const imageSlotPrefix = t("intelligenceHub.canvasImageSlotPrefix");
+  const videoSlotPrefix = t("intelligenceHub.canvasVideoSlotPrefix");
   const [prompt, setPrompt] = useState("");
   const [model, setModel] = useState("seedance-2.0");
   const [ratio, setRatio] = useState("16:9");
@@ -160,11 +165,18 @@ export const CanvasVideoGenCompose: React.FC<{
     const canvasImageCount = canvasImages.filter(
       (i) => i.kind !== "gen-placeholder" && (i.type ?? "image") !== "video"
     ).length;
-    const slotCheck = validatePromptCanvasSlots(trimmed, canvasImageCount);
-    if (!slotCheck.ok) {
+    const canvasVideoCount = canvasImages.filter(
+      (i) => i.kind !== "gen-placeholder" && i.type === "video"
+    ).length;
+
+    const imageSlotCheck = validatePromptCanvasImageSlots(
+      trimmed,
+      canvasImageCount
+    );
+    if (!imageSlotCheck.ok) {
       toast.error(
         t("intelligenceHub.invalidCanvasSlot", {
-          label: canvasImageSlotLabel(slotCheck.invalidSlot, imageSlotPrefix),
+          label: canvasImageSlotLabel(imageSlotCheck.invalidSlot, imageSlotPrefix),
           rangeStart: canvasImageSlotLabel(1, imageSlotPrefix),
           rangeEnd: canvasImageSlotLabel(canvasImageCount, imageSlotPrefix),
           max: canvasImageCount,
@@ -172,6 +184,25 @@ export const CanvasVideoGenCompose: React.FC<{
       );
       return;
     }
+
+    const videoSlotCheck = validatePromptCanvasVideoSlots(
+      trimmed,
+      canvasVideoCount
+    );
+    if (!videoSlotCheck.ok) {
+      toast.error(
+        t("intelligenceHub.invalidCanvasSlot", {
+          label: canvasVideoSlotLabel(videoSlotCheck.invalidSlot, videoSlotPrefix),
+          rangeStart: canvasVideoSlotLabel(1, videoSlotPrefix),
+          rangeEnd: canvasVideoSlotLabel(canvasVideoCount, videoSlotPrefix),
+          max: canvasVideoCount,
+        })
+      );
+      return;
+    }
+
+    const slotRefImages = resolveImagesFromPromptSlots(canvasImages, trimmed);
+    const slotRefVideos = resolveVideosFromPromptSlots(canvasImages, trimmed);
 
     const params: CreateVideoParams = {
       prompt: trimmed,
@@ -181,6 +212,18 @@ export const CanvasVideoGenCompose: React.FC<{
       resolution,
       generate_audio: false,
       watermark: false,
+      reference_image_urls:
+        slotRefImages.length > 0
+          ? slotRefImages
+              .map((img) => toServerPath(img.src))
+              .filter(Boolean)
+          : undefined,
+      reference_video_urls:
+        slotRefVideos.length > 0
+          ? slotRefVideos
+              .map((v) => toServerPath(v.src))
+              .filter(Boolean)
+          : undefined,
     };
 
     setIsGenerating(true);
@@ -208,6 +251,7 @@ export const CanvasVideoGenCompose: React.FC<{
         value={prompt}
         onChange={setPrompt}
         canvasImages={canvasImages}
+        allowedTypes={["image", "video"]}
         placeholder={t("video.promptPlaceholder")}
         onSubmit={handleGenerate}
         enableSubmitOnEnter

@@ -28,8 +28,11 @@ import type {
 import { VideoConfigForm } from "./VideoConfigForm";
 import {
   canvasImageSlotLabel,
+  canvasVideoSlotLabel,
   resolveImagesFromPromptSlots,
-  validatePromptCanvasSlots,
+  resolveVideosFromPromptSlots,
+  validatePromptCanvasImageSlots,
+  validatePromptCanvasVideoSlots,
 } from "@/lib/canvasImageSlots";
 import { InlineCanvasMentionEditor } from "./InlineCanvasMentionEditor";
 import {
@@ -170,6 +173,7 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     "https://quantrisk.oss-cn-shenzhen.aliyuncs.com/neospark_video.mp4";
   const { t } = useTranslation();
   const imageSlotPrefix = t("intelligenceHub.canvasImageSlotPrefix");
+  const videoSlotPrefix = t("intelligenceHub.canvasVideoSlotPrefix");
   const [isCreating, setIsCreating] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [model, setModel] = useState("seedance-2.0");
@@ -480,14 +484,18 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     const canvasImageCount = canvasImages.filter(
       (i) => (i.type ?? "image") !== "video"
     ).length;
-    const slotCheck = validatePromptCanvasSlots(
+    const canvasVideoCount = canvasImages.filter(
+      (i) => i.type === "video"
+    ).length;
+
+    const imageSlotCheck = validatePromptCanvasImageSlots(
       prompt.trim(),
       canvasImageCount
     );
-    if (!slotCheck.ok) {
+    if (!imageSlotCheck.ok) {
       toast.error(
         t("intelligenceHub.invalidCanvasSlot", {
-          label: canvasImageSlotLabel(slotCheck.invalidSlot, imageSlotPrefix),
+          label: canvasImageSlotLabel(imageSlotCheck.invalidSlot, imageSlotPrefix),
           rangeStart: canvasImageSlotLabel(1, imageSlotPrefix),
           rangeEnd: canvasImageSlotLabel(canvasImageCount, imageSlotPrefix),
           max: canvasImageCount,
@@ -496,18 +504,45 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
       return;
     }
 
+    const videoSlotCheck = validatePromptCanvasVideoSlots(
+      prompt.trim(),
+      canvasVideoCount
+    );
+    if (!videoSlotCheck.ok) {
+      toast.error(
+        t("intelligenceHub.invalidCanvasSlot", {
+          label: canvasVideoSlotLabel(videoSlotCheck.invalidSlot, videoSlotPrefix),
+          rangeStart: canvasVideoSlotLabel(1, videoSlotPrefix),
+          rangeEnd: canvasVideoSlotLabel(canvasVideoCount, videoSlotPrefix),
+          max: canvasVideoCount,
+        })
+      );
+      return;
+    }
+
     const parsedRefImages = parseMultiLineUrls(referenceImageUrls);
-    const slotRefPaths = resolveImagesFromPromptSlots(
+    const slotRefImagePaths = resolveImagesFromPromptSlots(
       canvasImages,
       prompt.trim()
     )
       .map((img) => toServerPath(img.src))
       .filter(Boolean);
     const mergedRefImages = [...parsedRefImages];
-    for (const p of slotRefPaths) {
+    for (const p of slotRefImagePaths) {
       if (p && !mergedRefImages.includes(p)) mergedRefImages.push(p);
     }
+
     const parsedRefVideos = parseMultiLineUrls(referenceVideoUrls);
+    const slotRefVideoPaths = resolveVideosFromPromptSlots(
+      canvasImages,
+      prompt.trim()
+    )
+      .map((v) => toServerPath(v.src))
+      .filter(Boolean);
+    const mergedRefVideos = [...parsedRefVideos];
+    for (const p of slotRefVideoPaths) {
+      if (p && !mergedRefVideos.includes(p)) mergedRefVideos.push(p);
+    }
     const safeDuration = Number(
       pickDurationInOptions(duration, durationOptions)
     );
@@ -530,7 +565,7 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
       );
       return;
     }
-    if (parsedRefVideos.length > 3) {
+    if (mergedRefVideos.length > 3) {
       toast.error(t("video.tooManyRefVideos"));
       return;
     }
@@ -546,7 +581,7 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
       reference_image_urls:
         mergedRefImages.length > 0 ? mergedRefImages : undefined,
       reference_video_urls:
-        parsedRefVideos.length > 0 ? parsedRefVideos : undefined,
+        mergedRefVideos.length > 0 ? mergedRefVideos : undefined,
     };
 
     // Omni 模型只发送基本参数，不发送 Seedance 特有参数
@@ -597,6 +632,8 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     referenceVideoUrls,
     durationOptions,
     canvasImages,
+    imageSlotPrefix,
+    videoSlotPrefix,
     t,
   ]);
 
@@ -794,6 +831,7 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
                 value={prompt}
                 onChange={setPrompt}
                 canvasImages={canvasImages}
+                allowedTypes={["image", "video"]}
                 placeholder={t("video.promptPlaceholder")}
                 onSubmit={handleGenerate}
                 enableSubmitOnEnter

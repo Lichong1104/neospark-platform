@@ -515,10 +515,14 @@
     "viewOptimizedPrompt": "看优化",
     "viewOriginalPrompt": "看原始",
     "toggleOptimizedPrompt": "切换原始/优化提示词",
-    "invalidCanvasSlot": "@{{label}} 无效。画布上当前有 {{max}} 张图片（{{rangeStart}}–{{rangeEnd}}）。",
+    "invalidCanvasSlot": "@{{label}} 无效。画布上当前有 {{max}} 个资源（{{rangeStart}}–{{rangeEnd}}）。",
     "canvasImageSlotPrefix": "图",
+    "canvasVideoSlotPrefix": "视频",
+    "canvasMentionNoItems": "画布上还没有可用资源。",
     "canvasMentionNoImages": "画布上还没有图片。",
-    "canvasMentionNoMatch": "没有匹配的画布图片。"
+    "canvasMentionNoVideos": "画布上还没有视频。",
+    "canvasMentionNoMatch": "没有匹配的画布资源。",
+    "videoSlotIgnoredInImageGen": "图片生成不支持视频参考，已忽略提示词中的 @视频 引用。"
   },
   "agentHub": {
     "tab": "智能体",
