@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { AxiosInstance, AxiosResponse } from "axios";
+import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import { getToken } from "./token";
 import type { ApiResponse } from "@/types/common";
 
@@ -48,9 +48,17 @@ function post<T, D = unknown>(url: string, data?: D): Promise<ApiResponse<T>> {
   return instance.post(url, data);
 }
 
-function postForm<T>(url: string, formData: FormData): Promise<ApiResponse<T>> {
+function postForm<T>(
+  url: string,
+  formData: FormData,
+  config?: AxiosRequestConfig
+): Promise<ApiResponse<T>> {
   return instance.post(url, formData, {
-    headers: { "Content-Type": "multipart/form-data" },
+    ...config,
+    headers: {
+      "Content-Type": "multipart/form-data",
+      ...config?.headers,
+    },
   });
 }
 

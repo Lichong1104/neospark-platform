@@ -12,22 +12,145 @@ import type {
 } from "@/types/storage";
 import type { ApiResponse } from "@/types/common";
 
+export interface UploadProgress {
+  loaded: number;
+  total: number;
+  percentage: number;
+}
+
+export type UploadProgressCallback = (progress: UploadProgress) => void;
+
+const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB
+const CHUNK_UPLOAD_THRESHOLD = 5 * 1024 * 1024; // 5MB
+const MAX_CHUNK_RETRIES = 3;
+
 /**
  * 上传文件
  * POST /api/v1/storage/upload (multipart/form-data)
+ *
+ * 小文件走单接口，大文件自动走分片上传。
  */
 export async function uploadFile(
   file: File,
-  fileType: "image" | "video" | "other" = "image"
+  fileType: "image" | "video" | "other" = "image",
+  onProgress?: UploadProgressCallback
+): Promise<UploadFileResponse> {
+  if (file.size <= CHUNK_UPLOAD_THRESHOLD) {
+    return uploadSingleFile(file, fileType, onProgress);
+  }
+  return uploadChunkedFile(file, fileType, onProgress);
+}
+
+async function uploadSingleFile(
+  file: File,
+  fileType: "image" | "video" | "other",
+  onProgress?: UploadProgressCallback
 ): Promise<UploadFileResponse> {
   const formData = new FormData();
   formData.append("file", file);
   formData.append("file_type", fileType);
-  const res = await http.postForm<UploadFileResponse>(
-    "/storage/upload",
-    formData
-  );
+  const res = await http.postForm<UploadFileResponse>("/storage/upload", formData, {
+    onUploadProgress: (e) => {
+      if (!onProgress || !e.total) return;
+      onProgress({
+        loaded: e.loaded,
+        total: e.total,
+        percentage: Math.round((e.loaded / e.total) * 100),
+      });
+    },
+  });
   return res.data;
+}
+
+async function uploadChunkedFile(
+  file: File,
+  fileType: "image" | "video" | "other",
+  onProgress?: UploadProgressCallback
+): Promise<UploadFileResponse> {
+  const chunkSize = CHUNK_SIZE;
+  const totalChunks = Math.ceil(file.size / chunkSize);
+
+  const initRes = await http.post<ChunkInitData, ChunkInitPayload>("/storage/upload/chunk/init", {
+    filename: file.name,
+    content_type: file.type || "application/octet-stream",
+    file_type: fileType,
+    total_size: file.size,
+    chunk_size: chunkSize,
+  });
+
+  const { session_id, total_chunks: serverTotalChunks } = initRes.data;
+  const actualTotalChunks = serverTotalChunks || totalChunks;
+  let uploadedBytes = 0;
+
+  try {
+    for (let i = 0; i < actualTotalChunks; i++) {
+      const start = i * chunkSize;
+      const end = Math.min(file.size, start + chunkSize);
+      const blob = file.slice(start, end);
+
+      await uploadChunkWithRetry(session_id, i + 1, blob);
+
+      uploadedBytes += end - start;
+      onProgress?.({
+        loaded: uploadedBytes,
+        total: file.size,
+        percentage: Math.round((uploadedBytes / file.size) * 100),
+      });
+    }
+
+    const completeRes = await http.post<UploadFileResponse>(
+      `/storage/upload/chunk/${session_id}/complete`
+    );
+    return completeRes.data;
+  } catch (err) {
+    // 尽最大努力通知后端清理
+    http.del(`/storage/upload/chunk/${session_id}`).catch(() => {});
+    throw err;
+  }
+}
+
+async function uploadChunkWithRetry(
+  sessionId: string,
+  chunkNumber: number,
+  blob: Blob,
+  retries = MAX_CHUNK_RETRIES
+): Promise<void> {
+  let lastErr: unknown;
+
+  for (let attempt = 0; attempt < retries; attempt++) {
+    const formData = new FormData();
+    formData.append("chunk_number", chunkNumber.toString());
+    formData.append("chunk", blob, `chunk_${chunkNumber}`);
+
+    try {
+      await http.postForm(`/storage/upload/chunk/${sessionId}`, formData);
+      return;
+    } catch (err) {
+      lastErr = err;
+      await sleep(1000 * (attempt + 1));
+    }
+  }
+
+  throw lastErr;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+interface ChunkInitPayload {
+  filename: string;
+  content_type: string;
+  file_type: string;
+  total_size: number;
+  chunk_size: number;
+}
+
+interface ChunkInitData {
+  session_id: string;
+  chunk_size: number;
+  total_chunks: number;
+  expires_at: string;
 }
 
 /**
