@@ -1,4 +1,5 @@
 import http from "./request";
+import type { AxiosRequestConfig } from "axios";
 import type {
   CreateVideoParams,
   CreateVideoResponse,
@@ -33,8 +34,15 @@ export async function createVideoTask(params: CreateVideoParams): Promise<Create
 /**
  * 获取视频任务详情
  */
-export async function getVideoTask(taskId: string): Promise<VideoTaskDetail> {
-  const res = await http.get<VideoTaskDetail>(`/video/generations/${taskId}`);
+export async function getVideoTask(
+  taskId: string,
+  config?: AxiosRequestConfig
+): Promise<VideoTaskDetail> {
+  const res = await http.get<VideoTaskDetail>(
+    `/video/generations/${taskId}`,
+    undefined,
+    config
+  );
   return res.data;
 }
 

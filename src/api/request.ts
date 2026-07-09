@@ -39,9 +39,13 @@ instance.interceptors.response.use(
 
 function get<T>(
   url: string,
-  params?: Record<string, unknown>
+  params?: Record<string, unknown>,
+  config?: AxiosRequestConfig
 ): Promise<ApiResponse<T>> {
-  return instance.get(url, { params });
+  return instance.get(url, {
+    ...config,
+    params: { ...config?.params, ...params },
+  });
 }
 
 function post<T, D = unknown>(url: string, data?: D): Promise<ApiResponse<T>> {

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import {
@@ -13,17 +13,16 @@ import { Progress } from "@/components/ui/progress";
 import {
   createVideoTask,
   getVideoModels,
-  getVideoTask,
 } from "@/api/video";
 import storageApi from "@/api/storage";
 import { STATIC_BASE_URL } from "@/api/request";
 import { getErrorMessage } from "@/lib/errorMessage";
+import { useVideoTaskPolling } from "@/hooks/useVideoTaskPolling";
 import type {
   CreateVideoParams,
   VideoModelConfig,
   VideoModelsData,
   VideoResolution,
-  VideoTaskStatus,
 } from "@/types/video";
 import { VideoConfigForm } from "./VideoConfigForm";
 import {
@@ -200,10 +199,23 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
   ]);
   const [estimatedCost, setEstimatedCost] = useState<number | null>(null);
   const [taskId, setTaskId] = useState("");
-  const [status, setStatus] = useState<"idle" | VideoTaskStatus>("idle");
-  const [progress, setProgress] = useState(0);
-  const [videoUrl, setVideoUrl] = useState("");
-  const [error, setError] = useState("");
+  const {
+    status,
+    progress,
+    videoUrl,
+    error,
+    startPolling,
+    reset: resetPolling,
+  } = useVideoTaskPolling({
+    onCompleted: useCallback(
+      (url: string) => {
+        const fullUrl = getVideoFullUrl(url);
+        toast.success(t("video.completed"));
+        onVideoGenerated?.(fullUrl);
+      },
+      [onVideoGenerated, t]
+    ),
+  });
   // 解析分辨率：后端可能返回数组或按模型分组的对象
   const resolveResolutions = React.useCallback(
     (
@@ -226,9 +238,6 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
 
   // prompt editor now handles inline tokens; we keep prompt as serialized text (@图N)
   const [modelsData, setModelsData] = useState<VideoModelsData | null>(null);
-  const activePollingTaskIdRef = useRef<string | null>(null);
-  const deliveredTaskIdsRef = useRef<Set<string>>(new Set());
-  const completedNoUrlTriesRef = useRef(0);
 
   React.useEffect(() => {
     getVideoModels()
@@ -292,78 +301,6 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     },
     [durationOptions]
   );
-
-  React.useEffect(() => {
-    if (!taskId) return;
-    activePollingTaskIdRef.current = taskId;
-    completedNoUrlTriesRef.current = 0;
-    let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | null = null;
-
-    const pollOnce = async () => {
-      if (cancelled || activePollingTaskIdRef.current !== taskId) return;
-      try {
-        const detail = await getVideoTask(taskId);
-        if (cancelled || activePollingTaskIdRef.current !== taskId) return;
-
-        setStatus(detail.status);
-        setProgress(detail.progress ?? 0);
-        if (detail.video_url) setVideoUrl(detail.video_url);
-
-        if (detail.status === "completed") {
-          // Some backends may mark completed before video_url is ready.
-          // Keep polling briefly to avoid losing the result + hiding the prompt box.
-          if (!detail.video_url) {
-            completedNoUrlTriesRef.current += 1;
-            // If it's taking too long, surface an error instead of getting stuck.
-            if (completedNoUrlTriesRef.current > 30) {
-              setError(detail.error_msg || t("video.fetchFailed"));
-              setStatus("failed");
-              return;
-            }
-            // Keep UI in generating state while we wait for the final URL.
-            setStatus("processing");
-            setProgress((p) => Math.max(p, 99));
-            timer = window.setTimeout(() => {
-              void pollOnce();
-            }, 1500);
-            return;
-          }
-
-          const responseTaskId = detail.task_id || taskId;
-          if (!deliveredTaskIdsRef.current.has(responseTaskId)) {
-            deliveredTaskIdsRef.current.add(responseTaskId);
-            const fullUrl = getVideoFullUrl(detail.video_url || "");
-            toast.success(t("video.completed"));
-            onVideoGenerated?.(fullUrl);
-          }
-          return;
-        }
-
-        if (detail.status === "failed" || detail.status === "cancelled") {
-          if (detail.status === "failed") {
-            setError(detail.error_msg || t("video.failed"));
-          }
-          return;
-        }
-
-        timer = window.setTimeout(() => {
-          void pollOnce();
-        }, 3000);
-      } catch {
-        if (cancelled || activePollingTaskIdRef.current !== taskId) return;
-        setError(t("video.fetchFailed"));
-        setStatus("failed");
-      }
-    };
-
-    void pollOnce();
-
-    return () => {
-      cancelled = true;
-      if (timer) window.clearTimeout(timer);
-    };
-  }, [taskId, t, onVideoGenerated]);
 
   const isGenerating =
     isCreating || status === "pending" || status === "processing";
@@ -596,22 +533,16 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     try {
       // Enter loading immediately when calling /video/generations
       setIsCreating(true);
-      setStatus("pending");
-      setProgress(0);
-      setError("");
-      setVideoUrl("");
+      resetPolling();
 
       const res = await createVideoTask(params);
       const cost = res.pricing?.estimated_cost ?? null;
       setEstimatedCost(cost);
       setTaskId(res.task_id);
-      setStatus(res.status);
-      setProgress(res.progress ?? 0);
-      setError("");
-      setVideoUrl("");
+      startPolling(res.task_id);
       toast.info(t("video.taskCreated", { cost: cost ?? "-" }));
-    } catch (err: any) {
-      setStatus("idle");
+    } catch (err) {
+      resetPolling();
       const msg = getErrorMessage(err, t("video.createFailed"));
       toast.error(msg);
     } finally {
@@ -635,16 +566,14 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     imageSlotPrefix,
     videoSlotPrefix,
     t,
+    resetPolling,
+    startPolling,
   ]);
 
   const handleNewTask = () => {
-    activePollingTaskIdRef.current = null;
+    resetPolling();
     setIsCreating(false);
     setTaskId("");
-    setStatus("idle");
-    setProgress(0);
-    setVideoUrl("");
-    setError("");
     setPrompt("");
     setFirstFrameUrl("");
     setLastFrameUrl("");
