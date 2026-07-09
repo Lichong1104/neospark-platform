@@ -239,20 +239,24 @@ const ToolSelect: React.FC<ToolSelectProps> = ({ tools, activeSlug, onChange }) 
 
         <SelectContent
           position="popper"
-          className="rounded-none border-brutal border-foreground bg-background p-0 brutal-shadow"
+          sideOffset={4}
+          align="start"
+          className="z-50 w-[var(--radix-select-trigger-width)] min-w-[240px] rounded-none border-brutal border-foreground bg-background p-0 brutal-shadow"
         >
-          {tools.map((tool) => (
-            <SelectItem
-              key={tool.slug}
-              value={tool.slug}
-              className="relative cursor-pointer rounded-none border-b border-foreground/20 py-3 pl-12 pr-4 font-mono text-sm text-foreground transition-none last:border-b-0 focus:bg-accent-yellow focus:text-foreground data-[state=checked]:bg-accent-cyan/10 data-[state=checked]:font-bold"
-            >
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-base">
-                {getToolIcon(tool.title)}
-              </span>
-              <span className="truncate">{tool.title}</span>
-            </SelectItem>
-          ))}
+          <div className="flex flex-col">
+            {tools.map((tool) => (
+              <SelectItem
+                key={tool.slug}
+                value={tool.slug}
+                className="relative flex w-full cursor-pointer items-center rounded-none border-b border-foreground/20 py-3 pl-12 pr-4 font-mono text-sm text-foreground transition-none last:border-b-0 focus:bg-accent-yellow focus:text-foreground data-[state=checked]:bg-accent-cyan/10 data-[state=checked]:font-bold"
+              >
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-base">
+                  {getToolIcon(tool.title)}
+                </span>
+                <span className="truncate">{tool.title}</span>
+              </SelectItem>
+            ))}
+          </div>
         </SelectContent>
       </Select>
 
