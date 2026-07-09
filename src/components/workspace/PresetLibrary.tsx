@@ -218,13 +218,13 @@ const ToolSelect: React.FC<ToolSelectProps> = ({ tools, activeSlug, onChange }) 
       <Select value={activeSlug} onValueChange={onChange} disabled={tools.length === 0}>
         <SelectTrigger
           aria-label="Select AI design tool"
-          className="relative h-11 w-full rounded-none border-brutal border-foreground bg-card px-0 font-mono text-sm text-foreground brutal-shadow focus:ring-2 focus:ring-accent-cyan/30 focus:ring-offset-0 [&>svg]:hidden"
+          className="relative h-11 w-full rounded-none border-brutal border-foreground bg-card px-0 font-mono text-sm text-foreground brutal-shadow focus:ring-2 focus:ring-accent-cyan/30 focus:ring-offset-0 [&>svg]:hidden [&>span]:line-clamp-1"
         >
-          <div className="flex flex-1 items-center gap-3 pl-4 pr-12">
+          <div className="flex flex-1 items-center gap-3 pl-4 pr-2">
             <span className="text-lg">{activeTool ? getToolIcon(activeTool.title) : "✨"}</span>
             <SelectValue placeholder="Select a design tool" />
           </div>
-          <div className="absolute inset-y-0 right-0 flex w-10 items-center justify-center border-l-brutal border-foreground bg-accent-yellow">
+          <div className="flex h-full w-10 shrink-0 items-center justify-center border-l-brutal border-foreground bg-accent-yellow">
             <svg
               className="w-4 h-4 text-foreground"
               fill="none"
@@ -245,12 +245,12 @@ const ToolSelect: React.FC<ToolSelectProps> = ({ tools, activeSlug, onChange }) 
             <SelectItem
               key={tool.slug}
               value={tool.slug}
-              className="relative cursor-pointer rounded-none border-b border-foreground/20 py-3 pl-14 pr-4 font-mono text-sm text-foreground transition-none last:border-b-0 focus:bg-accent-yellow focus:text-foreground data-[state=checked]:bg-accent-cyan/10 data-[state=checked]:font-bold"
+              className="relative cursor-pointer rounded-none border-b border-foreground/20 py-3 pl-12 pr-4 font-mono text-sm text-foreground transition-none last:border-b-0 focus:bg-accent-yellow focus:text-foreground data-[state=checked]:bg-accent-cyan/10 data-[state=checked]:font-bold"
             >
-              <span className="absolute left-8 top-1/2 -translate-y-1/2 text-base">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-base">
                 {getToolIcon(tool.title)}
               </span>
-              {tool.title}
+              <span className="truncate">{tool.title}</span>
             </SelectItem>
           ))}
         </SelectContent>
