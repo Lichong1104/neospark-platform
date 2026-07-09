@@ -222,7 +222,9 @@ const ToolSelect: React.FC<ToolSelectProps> = ({ tools, activeSlug, onChange }) 
         >
           <div className="flex flex-1 items-center gap-3 pl-4 pr-2">
             <span className="text-lg">{activeTool ? getToolIcon(activeTool.title) : "✨"}</span>
-            <SelectValue placeholder="Select a design tool" />
+            <SelectValue placeholder="Select a design tool">
+              {activeTool ? activeTool.title : "Select a design tool"}
+            </SelectValue>
           </div>
           <div className="flex h-full w-10 shrink-0 items-center justify-center border-l-brutal border-foreground bg-accent-yellow">
             <svg
