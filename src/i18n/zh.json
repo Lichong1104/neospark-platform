@@ -1080,7 +1080,25 @@
     "convertFailed": "转换失败",
     "loadFailed": "加载推广信息失败",
     "unavailable": "推广系统暂不可用",
-    "fullTimeLink": "申请成为专职分销"
+    "fullTimeLink": "申请成为专职分销",
+    "referrals": {
+      "title": "推荐列表",
+      "empty": "暂无推荐用户",
+      "loadFailed": "加载推荐列表失败",
+      "referee": "被推荐人",
+      "registeredAt": "注册时间",
+      "firstPaidAt": "首次付费",
+      "paidOrders": "付费订单",
+      "consumedPoints": "消耗积分",
+      "status": "状态",
+      "statusPaid": "已付费",
+      "statusConsumed": "已消费",
+      "statusRegistered": "已注册",
+      "page": "第",
+      "pageSize": "每页",
+      "prev": "上一页",
+      "next": "下一页"
+    }
   },
   "fullTimeAffiliate": {
     "title": "专职分销计划",

@@ -740,7 +740,8 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
                       model,
                       Number(duration),
                       resolution,
-                      ratio
+                      ratio,
+                      generateAudio
                     )
                   )}
                 </span>

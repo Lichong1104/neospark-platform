@@ -22,13 +22,7 @@ import { Check, Copy, KeyRound, Plus, RefreshCw, Search, Shield, Trash2, Pencil,
 import apiKeysApi from "@/api/apiKeys";
 import type { ApiKeyItem, ApiKeyStatus, CreateApiKeyData } from "@/types/apiKeys";
 import { useTranslation } from "react-i18next";
-
-function formatMaybeDate(iso: string | null | undefined): string {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleString([], { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
-}
+import { formatMaybeDate } from "@/lib/date";
 
 function statusBadge(status: ApiKeyStatus, labels: { active: string; inactive: string; expired: string; unknown: string }) {
   switch (status) {

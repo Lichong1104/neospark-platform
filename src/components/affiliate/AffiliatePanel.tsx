@@ -22,6 +22,7 @@ import { useNavigate } from "react-router-dom";
 import affiliateApi from "@/api/affiliate";
 import type { AffiliateInfo } from "@/types/affiliate";
 import { getErrorMessage } from "@/lib/errorMessage";
+import ReferralList from "./ReferralList";
 
 const AffiliatePanel = () => {
   const { t } = useTranslation();
@@ -252,6 +253,9 @@ const AffiliatePanel = () => {
             </p>
           </div>
         )}
+
+        {/* 推荐列表 */}
+        <ReferralList />
       </BrutalCardContent>
     </BrutalCard>
   );

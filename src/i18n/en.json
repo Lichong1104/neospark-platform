@@ -1080,7 +1080,25 @@
     "convertFailed": "Convert failed",
     "loadFailed": "Failed to load affiliate info",
     "unavailable": "Affiliate system unavailable",
-    "fullTimeLink": "Apply for Full-Time Affiliate"
+    "fullTimeLink": "Apply for Full-Time Affiliate",
+    "referrals": {
+      "title": "Referral List",
+      "empty": "No referrals yet",
+      "loadFailed": "Failed to load referrals",
+      "referee": "Referee",
+      "registeredAt": "Registered",
+      "firstPaidAt": "First Paid",
+      "paidOrders": "Paid Orders",
+      "consumedPoints": "Consumed Points",
+      "status": "Status",
+      "statusPaid": "Paid",
+      "statusConsumed": "Consumed",
+      "statusRegistered": "Registered",
+      "page": "Page",
+      "pageSize": "Page Size",
+      "prev": "Prev",
+      "next": "Next"
+    }
   },
   "fullTimeAffiliate": {
     "title": "Full-Time Affiliate Program",

@@ -59,18 +59,48 @@ const OMNI_PRICE_PER_SECOND: Record<string, number> = {
   "omni-fast-v2v": 18,
 };
 
+const USD_TO_CREDITS = 274;
+
+/** 腾讯云 Kling 官方美元/秒价格映射
+ *  key1: model
+ *  key2: generate_audio ("true" / "false")
+ *  key3: resolution
+ *  来源：https://kling.ai/dev/pricing
+ */
+const KLING_USD_PER_SECOND: Record<string, Record<string, Record<string, number>>> = {
+  "kling-3.0": {
+    false: {
+      "720p": 0.084,
+      "1080p": 0.112,
+      "2k": 0.084 * 2.5,
+      "4k": 0.420,
+    },
+    true: {
+      "720p": 0.126,
+      "1080p": 0.168,
+      "2k": 0.126 * 2.5,
+      "4k": 0.420,
+    },
+  },
+  "kling-3.0-omni": {
+    false: {
+      "720p": 0.126,
+      "1080p": 0.168,
+      "2k": 0.126 * 2.5,
+      "4k": 0.420,
+    },
+    true: {
+      "720p": 0.084,
+      "1080p": 0.112,
+      "2k": 0.084 * 2.5,
+      "4k": 0.420,
+    },
+  },
+};
+
 /** 7.9 折补偿：ceil(base / 0.79) == (base * 100 + 78) // 79 */
 const applyCompensation = (base: number): number =>
   Math.floor((base * 100 + 78) / 79);
-
-/** 腾讯云 Kling 价格系数（与后端 tencent_vod_client.py 保持一致） */
-const KLING_PRICE_MULTIPLIER: Record<string, number> = {
-  "480p": 0.8,
-  "720p": 1.0,
-  "1080p": 1.5,
-  "2k": 2.5,
-  "4k": 3.5,
-};
 
 const normalizeSeedanceModel = (model: string): string => {
   if (model === "doubao-seedance-2-0-260128") return "seedance-2.0";
@@ -146,7 +176,8 @@ export const calculateVideoEstimatedCost = (
   model: string,
   duration: number,
   resolution: string,
-  ratio: string = "16:9"
+  ratio: string = "16:9",
+  generateAudio: boolean = false
 ): number | null => {
   if (!model || !resolution || !Number.isFinite(duration) || duration <= 0) {
     return null;
@@ -157,12 +188,14 @@ export const calculateVideoEstimatedCost = (
     return applyCompensation(OMNI_PRICE_PER_SECOND[model] * duration);
   }
 
-  // 腾讯云 Kling：基准 15 积分/秒（720p）× 分辨率系数 × 7.9 折补偿
+  // 腾讯云 Kling：按官方美元定价 × 274 积分/美元换算
   if (model === "kling-3.0" || model === "kling-3.0-omni") {
-    const multiplier = KLING_PRICE_MULTIPLIER[resolution.toLowerCase()] ?? 1.0;
-    const omniPremium = model === "kling-3.0-omni" ? 1.2 : 1.0;
-    const base = Math.floor(15 * duration * multiplier * omniPremium);
-    return applyCompensation(base);
+    const usdPerSecond =
+      KLING_USD_PER_SECOND[model]?.[String(generateAudio)]?.[
+        resolution.toLowerCase()
+      ];
+    if (usdPerSecond === undefined) return null;
+    return Math.max(1, Math.round(usdPerSecond * USD_TO_CREDITS * duration));
   }
 
   // Seedance 2.0 系列：按新版 token 公式（支持任意时长，包括 8s 等中间值）

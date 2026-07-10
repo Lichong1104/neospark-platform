@@ -26,6 +26,11 @@ export interface ReferralItem {
   referee_email: string | null;
   referee_name: string | null;
   created_at: string;
+  total_consumed_points: number;
+  paid_order_count: number;
+  first_paid_at: string | null;
+  has_paid: boolean;
+  has_consumed: boolean;
 }
 
 /** 被推荐人列表响应 */
