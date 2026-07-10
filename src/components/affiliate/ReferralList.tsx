@@ -30,7 +30,7 @@ const StatusBadge: React.FC<{ item: ReferralItem }> = ({ item }) => {
     return (
       <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-accent-green text-foreground text-[11px] font-bold uppercase border border-foreground/30">
         <span className="inline-block w-1.5 h-1.5 bg-foreground/70" />
-        {t("affiliate.referrals.statusPaid", { defaultValue: "Paid" })}
+        {t("affiliate.referralsList.statusPaid", { defaultValue: "Paid" })}
       </span>
     );
   }
@@ -39,7 +39,7 @@ const StatusBadge: React.FC<{ item: ReferralItem }> = ({ item }) => {
     return (
       <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-accent-yellow text-foreground text-[11px] font-bold uppercase border border-foreground/30">
         <span className="inline-block w-1.5 h-1.5 bg-foreground/70" />
-        {t("affiliate.referrals.statusConsumed", { defaultValue: "Consumed" })}
+        {t("affiliate.referralsList.statusConsumed", { defaultValue: "Consumed" })}
       </span>
     );
   }
@@ -47,7 +47,7 @@ const StatusBadge: React.FC<{ item: ReferralItem }> = ({ item }) => {
   return (
     <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-secondary text-foreground text-[11px] font-bold uppercase border border-foreground/30">
       <span className="inline-block w-1.5 h-1.5 bg-foreground/40" />
-      {t("affiliate.referrals.statusRegistered", { defaultValue: "Registered" })}
+      {t("affiliate.referralsList.statusRegistered", { defaultValue: "Registered" })}
     </span>
   );
 };
@@ -107,7 +107,7 @@ const ReferralList: React.FC = () => {
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       toast.error(
-        t("affiliate.referrals.loadFailed", {
+        t("affiliate.referralsList.loadFailed", {
           defaultValue: "Failed to load referrals",
         }),
         { description: message }
@@ -133,7 +133,7 @@ const ReferralList: React.FC = () => {
           <div className="p-1.5 bg-accent-green/80 border border-foreground/30">
             <Users className="w-3.5 h-3.5 text-card" />
           </div>
-          {t("affiliate.referrals.title", { defaultValue: "Referral List" })}
+          {t("affiliate.referralsList.title", { defaultValue: "Referral List" })}
         </BrutalCardTitle>
       </BrutalCardHeader>
 
@@ -143,22 +143,22 @@ const ReferralList: React.FC = () => {
             <TableHeader>
               <TableRow className="border-b border-foreground/15">
                 <TableHead className="text-[11px] uppercase tracking-wider">
-                  {t("affiliate.referrals.referee", { defaultValue: "Referee" })}
+                  {t("affiliate.referralsList.referee", { defaultValue: "Referee" })}
                 </TableHead>
                 <TableHead className="text-[11px] uppercase tracking-wider">
-                  {t("affiliate.referrals.registeredAt", { defaultValue: "Registered" })}
+                  {t("affiliate.referralsList.registeredAt", { defaultValue: "Registered" })}
                 </TableHead>
                 <TableHead className="text-[11px] uppercase tracking-wider">
-                  {t("affiliate.referrals.firstPaidAt", { defaultValue: "First Paid" })}
+                  {t("affiliate.referralsList.firstPaidAt", { defaultValue: "First Paid" })}
                 </TableHead>
                 <TableHead className="text-[11px] uppercase tracking-wider text-right">
-                  {t("affiliate.referrals.paidOrders", { defaultValue: "Paid Orders" })}
+                  {t("affiliate.referralsList.paidOrders", { defaultValue: "Paid Orders" })}
                 </TableHead>
                 <TableHead className="text-[11px] uppercase tracking-wider text-right">
-                  {t("affiliate.referrals.consumedPoints", { defaultValue: "Consumed Points" })}
+                  {t("affiliate.referralsList.consumedPoints", { defaultValue: "Consumed Points" })}
                 </TableHead>
                 <TableHead className="text-[11px] uppercase tracking-wider">
-                  {t("affiliate.referrals.status", { defaultValue: "Status" })}
+                  {t("affiliate.referralsList.status", { defaultValue: "Status" })}
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -169,7 +169,7 @@ const ReferralList: React.FC = () => {
                     colSpan={6}
                     className="py-12 text-center text-sm text-muted-foreground"
                   >
-                    {t("affiliate.referrals.empty", { defaultValue: "No referrals yet" })}
+                    {t("affiliate.referralsList.empty", { defaultValue: "No referrals yet" })}
                   </TableCell>
                 </TableRow>
               )}
@@ -190,13 +190,13 @@ const ReferralList: React.FC = () => {
         {data && data.total > 0 && (
           <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-[11px] text-muted-foreground border-t border-foreground/15">
             <div>
-              {t("affiliate.referrals.page", { defaultValue: "Page" })}{" "}
+              {t("affiliate.referralsList.page", { defaultValue: "Page" })}{" "}
               <span className="text-sm font-bold text-foreground">{data.page}</span> /{" "}
               {totalPages} ·{" "}
               <span className="text-sm font-bold text-foreground">{data.total}</span>
             </div>
             <div className="flex items-center gap-2">
-              <span>{t("affiliate.referrals.pageSize", { defaultValue: "Page Size" })}</span>
+              <span>{t("affiliate.referralsList.pageSize", { defaultValue: "Page Size" })}</span>
               <select
                 className="h-8 border-brutal border-foreground bg-background px-2 text-foreground font-mono text-xs"
                 value={pageSize}
@@ -215,7 +215,7 @@ const ReferralList: React.FC = () => {
                 disabled={loading || page <= 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
               >
-                {t("affiliate.referrals.prev", { defaultValue: "Prev" })}
+                {t("affiliate.referralsList.prev", { defaultValue: "Prev" })}
               </BrutalButton>
               <BrutalButton
                 size="sm"
@@ -223,7 +223,7 @@ const ReferralList: React.FC = () => {
                 disabled={loading || page >= totalPages}
                 onClick={() => setPage((p) => p + 1)}
               >
-                {t("affiliate.referrals.next", { defaultValue: "Next" })}
+                {t("affiliate.referralsList.next", { defaultValue: "Next" })}
               </BrutalButton>
             </div>
           </div>

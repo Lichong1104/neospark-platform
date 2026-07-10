@@ -1081,7 +1081,7 @@
     "loadFailed": "Failed to load affiliate info",
     "unavailable": "Affiliate system unavailable",
     "fullTimeLink": "Apply for Full-Time Affiliate",
-    "referrals": {
+    "referralsList": {
       "title": "Referral List",
       "empty": "No referrals yet",
       "loadFailed": "Failed to load referrals",

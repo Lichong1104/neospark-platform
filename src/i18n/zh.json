@@ -1081,7 +1081,7 @@
     "loadFailed": "加载推广信息失败",
     "unavailable": "推广系统暂不可用",
     "fullTimeLink": "申请成为专职分销",
-    "referrals": {
+    "referralsList": {
       "title": "推荐列表",
       "empty": "暂无推荐用户",
       "loadFailed": "加载推荐列表失败",
