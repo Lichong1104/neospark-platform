@@ -582,6 +582,8 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
         promptHasCanvasImageSlotMention(originalPrompt);
       const promptUsesCanvasVideoSlots =
         promptHasCanvasVideoSlotMention(originalPrompt);
+      const promptUsesCanvasSlots =
+        promptUsesCanvasImageSlots || promptUsesCanvasVideoSlots;
 
       if (promptUsesCanvasImageSlots) {
         const check = validatePromptCanvasImageSlots(
