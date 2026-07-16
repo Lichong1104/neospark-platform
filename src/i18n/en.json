@@ -431,6 +431,50 @@
     "genVideoPlaceholder": "Video generation",
     "dragToMove": "Drag to move"
   },
+  "landing": {
+    "title": "What will you create today?",
+    "tagline": "Describe it once — image, video, or agent — and watch it land on your canvas.",
+    "modeImage": "Image",
+    "modeVideo": "Video",
+    "modeAgent": "Agent",
+    "generate": "Generate",
+    "navSkills": "Skills",
+    "navPricing": "Pricing",
+    "navWorkspace": "Workspace",
+    "navAssets": "Assets",
+    "promptLibrary": "Prompt Library",
+    "promptLibraryHint": "Click any prompt to fill the composer.",
+    "promptLibraryEmpty": "No prompts available yet.",
+    "promptLibraryLoading": "Loading prompts...",
+    "skipToCanvas": "Skip to canvas",
+    "promptRequired": "Please enter a prompt first.",
+    "selectSkills": "Select skills",
+    "catAll": "All",
+    "catSocialMedia": "Social Media",
+    "catDigitalMarketing": "Digital Marketing",
+    "catBusinessPrint": "Business & Print",
+    "catStationery": "Stationery",
+    "catCreative": "Creative & Illustration",
+    "catOther": "Other",
+    "usePrompt": "Use",
+    "upload": "Upload ref image/video",
+    "typeImage": [
+      "Create a vibrant poster for a summer music festival.",
+      "Turn a product photo into a clean e-commerce hero image.",
+      "Design a cozy coffee shop Instagram post.",
+      "Make a minimalist business card for a freelance designer."
+    ],
+    "typeVideo": [
+      "Generate a 5s cinematic intro for a travel vlog.",
+      "Animate a product shot with a smooth 360° spin.",
+      "Create a dynamic promo clip for a gym grand opening."
+    ],
+    "typeAgent": [
+      "Research my competitors and draft a positioning statement.",
+      "Turn these notes into a polished one-page brief.",
+      "Brainstorm 10 taglines for a new coffee brand."
+    ]
+  },
   "intelligenceHub": {
     "chat": "CHAT",
     "workflow": "WORKFLOW",

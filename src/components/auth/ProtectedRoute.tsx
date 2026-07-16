@@ -45,7 +45,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   return (
     <>
       {children}
-      {location.pathname !== "/" ? <UserMenuDock /> : null}
+      {/* 过渡页(/)和画布(/canvas)自带用户菜单(导航栏/左侧工具栏),不重复显示固定菜单 */}
+      {location.pathname !== "/" && location.pathname !== "/canvas" ? (
+        <UserMenuDock />
+      ) : null}
     </>
   );
 };

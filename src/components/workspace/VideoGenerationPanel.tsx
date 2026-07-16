@@ -24,6 +24,7 @@ import type {
   VideoModelsData,
   VideoResolution,
 } from "@/types/video";
+import type { UploadedRef } from "@/lib/landingRequest";
 import { VideoConfigForm } from "./VideoConfigForm";
 import {
   canvasImageSlotLabel,
@@ -57,6 +58,18 @@ interface VideoGenerationPanelProps {
     name: string;
     type?: "image" | "video";
   }[];
+  /** 过渡页 VIDEO 模式带来的待生成请求；预填参数并自动提交一次。 */
+  initialRequest?: {
+    prompt: string;
+    model: string;
+    ratio: string;
+    duration: string;
+    resolution: VideoResolution;
+    refImages?: UploadedRef[];
+    refVideos?: UploadedRef[];
+    nonce: number;
+  } | null;
+  onInitialRequestConsumed?: () => void;
 }
 
 const getVideoFullUrl = (url: string) => {
@@ -167,6 +180,8 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
   selectedCanvasImage,
   selectedCanvasImages = [],
   canvasImages = [],
+  initialRequest = null,
+  onInitialRequestConsumed,
 }) => {
   const VIDEO_TUTORIAL_URL =
     "https://quantrisk.oss-cn-shenzhen.aliyuncs.com/neospark_video.mp4";
@@ -174,17 +189,29 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
   const imageSlotPrefix = t("intelligenceHub.canvasImageSlotPrefix");
   const videoSlotPrefix = t("intelligenceHub.canvasVideoSlotPrefix");
   const [isCreating, setIsCreating] = useState(false);
-  const [prompt, setPrompt] = useState("");
-  const [model, setModel] = useState("seedance-2.0");
-  const [ratio, setRatio] = useState("16:9");
-  const [duration, setDuration] = useState("5");
-  const [resolution, setResolution] = useState<VideoResolution>("720p");
+  const [prompt, setPrompt] = useState(initialRequest?.prompt ?? "");
+  const [model, setModel] = useState(initialRequest?.model ?? "seedance-2.0");
+  const [ratio, setRatio] = useState(initialRequest?.ratio ?? "16:9");
+  const [duration, setDuration] = useState(initialRequest?.duration ?? "5");
+  const [resolution, setResolution] = useState<VideoResolution>(
+    initialRequest?.resolution ?? "720p"
+  );
   const [generateAudio, setGenerateAudio] = useState(false);
   const [watermark, setWatermark] = useState(false);
   const [firstFrameUrl, setFirstFrameUrl] = useState("");
   const [lastFrameUrl, setLastFrameUrl] = useState("");
-  const [referenceImageUrls, setReferenceImageUrls] = useState("");
-  const [referenceVideoUrls, setReferenceVideoUrls] = useState("");
+  const [referenceImageUrls, setReferenceImageUrls] = useState(() =>
+    (initialRequest?.refImages ?? [])
+      .map((r) => r.path)
+      .filter(Boolean)
+      .join("\n")
+  );
+  const [referenceVideoUrls, setReferenceVideoUrls] = useState(() =>
+    (initialRequest?.refVideos ?? [])
+      .map((r) => r.path)
+      .filter(Boolean)
+      .join("\n")
+  );
   const [modelOptions, setModelOptions] = useState<VideoModelConfig[]>([]);
   const [ratioOptions, setRatioOptions] = useState<string[]>([
     ...VIDEO_RATIO_ORDER,
@@ -199,6 +226,8 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
   ]);
   const [estimatedCost, setEstimatedCost] = useState<number | null>(null);
   const [taskId, setTaskId] = useState("");
+  // 视频配置加载完成标记：用于 initialRequest 的自动提交闸门。
+  const [configReady, setConfigReady] = useState(false);
   const {
     status,
     progress,
@@ -262,13 +291,25 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
         );
         if (modelResolutions.length) {
           setResolutionOptions(modelResolutions);
-          setResolution(modelResolutions[0] as VideoResolution);
+          // seed 感知：有合法的 initialRequest.resolution 时保留，否则用模型首个分辨率
+          setResolution((prev) =>
+            initialRequest && modelResolutions.includes(prev)
+              ? prev
+              : (modelResolutions[0] as VideoResolution)
+          );
         }
         const durOpts = mergeDurationOptionsFromApi(res.durations);
         setDurationOptions(durOpts);
-        setDuration(pickDurationInOptions(res.durations?.default, durOpts));
+        // seed 感知：有 initialRequest 时保留其 duration（合法），否则用 API 默认
+        setDuration((prev) =>
+          initialRequest
+            ? pickDurationInOptions(prev, durOpts)
+            : pickDurationInOptions(res.durations?.default, durOpts)
+        );
+        setConfigReady(true);
       })
       .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resolveResolutions]);
 
   // 切换模型时更新分辨率选项
@@ -569,6 +610,19 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     resetPolling,
     startPolling,
   ]);
+
+  // 过渡页 initialRequest 自动提交闸门：等视频配置加载完成后，仅触发一次。
+  // handleGenerate 是 useCallback（上方定义，闭包在运行时调用），靠 ref 保证单次。
+  const videoAutoFiredRef = React.useRef(false);
+  React.useEffect(() => {
+    if (!initialRequest || videoAutoFiredRef.current) return;
+    if (!configReady) return;
+    if (!prompt.trim()) return;
+    videoAutoFiredRef.current = true;
+    onInitialRequestConsumed?.();
+    void handleGenerate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialRequest, configReady, prompt]);
 
   const handleNewTask = () => {
     resetPolling();

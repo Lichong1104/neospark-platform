@@ -38,14 +38,15 @@ export const dispatchOpenVideoGuide = () => {
 };
 
 type UserMenuDockProps = {
-  /** fixed: 页面左下角悬浮；sidebar: 嵌入左侧工具栏底部 */
-  variant?: "fixed" | "sidebar";
+  /** fixed: 页面左下角悬浮；sidebar: 嵌入左侧工具栏底部；topbar: 嵌入顶部条 */
+  variant?: "fixed" | "sidebar" | "topbar";
 };
 
 const UserMenuDock: React.FC<UserMenuDockProps> = ({ variant = "fixed" }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const isSidebar = variant === "sidebar";
+  const isTopbar = variant === "topbar";
   const { i18n, t } = useTranslation();
   const { logout, userInfo } = useAuth();
   const [open, setOpen] = useState(false);
@@ -103,6 +104,8 @@ const UserMenuDock: React.FC<UserMenuDockProps> = ({ variant = "fixed" }) => {
               "transition-none brutal-press select-none",
               isSidebar
                 ? "w-full h-14 shrink-0 flex flex-col items-center justify-center border-t-brutal border-foreground bg-card hover:bg-accent-cyan hover:text-foreground data-[state=open]:bg-accent-purple data-[state=open]:text-card"
+                : isTopbar
+                ? "flex h-9 w-9 items-center justify-center border-brutal border-foreground bg-card brutal-shadow hover:bg-accent-cyan hover:text-foreground data-[state=open]:bg-accent-purple data-[state=open]:text-card data-[state=open]:brutal-shadow-purple"
                 : [
                     "fixed z-[100] bottom-5 left-5 flex h-12 w-12 items-center justify-center border-brutal border-foreground bg-card brutal-shadow",
                     "hover:bg-accent-cyan hover:text-foreground",
@@ -124,8 +127,8 @@ const UserMenuDock: React.FC<UserMenuDockProps> = ({ variant = "fixed" }) => {
         </PopoverTrigger>
 
         <PopoverContent
-          side={isSidebar ? "right" : "top"}
-          align={isSidebar ? "end" : "start"}
+          side={isSidebar ? "right" : isTopbar ? "bottom" : "top"}
+          align={isSidebar || isTopbar ? "end" : "start"}
           sideOffset={isSidebar ? 8 : 12}
           className="w-[min(18rem,calc(100vw-2.5rem))] border-brutal border-foreground bg-card p-0 brutal-shadow rounded-none shadow-none"
         >
@@ -155,8 +158,8 @@ const UserMenuDock: React.FC<UserMenuDockProps> = ({ variant = "fixed" }) => {
               className="flex flex-col border-b-brutal border-foreground p-2 gap-1"
             >
               <MenuNavItem
-                to="/"
-                active={isActive("/")}
+                to="/canvas"
+                active={isActive("/canvas")}
                 icon={<Sparkles className="h-4 w-4" />}
                 onNavigate={() => setOpen(false)}
               >

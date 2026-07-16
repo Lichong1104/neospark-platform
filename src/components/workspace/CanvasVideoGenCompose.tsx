@@ -22,36 +22,31 @@ import {
 import type { CanvasImage } from "./CanvasArea";
 import { InlineCanvasMentionEditor } from "./InlineCanvasMentionEditor";
 import { VideoGenerationParams } from "./VideoGenerationParams";
+import {
+  defaultDurationOptions,
+  mergeDurationOptionsFromApi,
+  normalizeVideoRatio,
+  pickDurationInOptions,
+  resolveResolutionList,
+} from "@/lib/videoModelUtils";
 
 const getVideoFullUrl = (url: string) =>
   url.startsWith("http") ? url : `${STATIC_BASE_URL}${url}`;
 
-const normalizeVideoRatio = (ratio: string) => ratio.replace(/\s+/g, "");
-
-const VIDEO_DURATION_MIN = 4;
-const VIDEO_DURATION_MAX = 15;
-
-const defaultDurationOptions = (): string[] =>
-  Array.from({ length: VIDEO_DURATION_MAX - VIDEO_DURATION_MIN + 1 }, (_, i) =>
-    String(VIDEO_DURATION_MIN + i)
-  );
-
-const mergeDurationOptionsFromApi = (
-  d: VideoModelsData["durations"] | undefined
-): string[] => {
-  if (!d) return defaultDurationOptions();
-  const min = Number.isFinite(d.min) ? d.min : VIDEO_DURATION_MIN;
-  const max = Number.isFinite(d.max) ? d.max : VIDEO_DURATION_MAX;
-  const lo = Math.max(VIDEO_DURATION_MIN, Math.ceil(min));
-  const hi = Math.min(VIDEO_DURATION_MAX, Math.floor(max));
-  if (lo > hi) return defaultDurationOptions();
-  return Array.from({ length: hi - lo + 1 }, (_, i) => String(lo + i));
+const toServerPath = (fullUrl: string) => {
+  if (!fullUrl) return "";
+  if (fullUrl.startsWith(STATIC_BASE_URL)) {
+    return fullUrl.slice(STATIC_BASE_URL.length);
+  }
+  if (fullUrl.startsWith("http")) {
+    try {
+      return new URL(fullUrl).pathname;
+    } catch {
+      return fullUrl;
+    }
+  }
+  return fullUrl;
 };
-
-function pickDurationInOptions(value: string, options: string[]): string {
-  if (options.includes(value)) return value;
-  return options[0] ?? "5";
-}
 
 export const CanvasVideoGenCompose: React.FC<{
   canvasImages: CanvasImage[];
@@ -96,11 +91,11 @@ export const CanvasVideoGenCompose: React.FC<{
         }
         const durOpts = mergeDurationOptionsFromApi(res.durations);
         setDurationOptions(durOpts);
-        setDuration(pickDurationInOptions(String(res.durations?.default ?? "5"), durOpts));
-        const resList = Array.isArray(res.resolutions)
-          ? res.resolutions
-          : Object.values(res.resolutions ?? {})[0];
-        if (Array.isArray(resList) && resList.length) {
+        setDuration(
+          pickDurationInOptions(String(res.durations?.default ?? "5"), durOpts)
+        );
+        const resList = resolveResolutionList(res.resolutions);
+        if (resList.length) {
           setResolutionOptions(resList);
           setResolution(resList[0] as VideoResolution);
         }

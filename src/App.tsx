@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import LoginRouteGuard from "@/components/auth/LoginRouteGuard";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
+import Landing from "./pages/Landing";
 import Assets from "./pages/Assets";
 import UserCenter from "./pages/UserCenter";
 import Pricing from "./pages/Pricing";
@@ -44,6 +45,14 @@ const App = () => (
             />
             <Route
               path="/"
+              element={
+                <ProtectedRoute>
+                  <Landing />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/canvas"
               element={
                 <ProtectedRoute>
                   <Index />

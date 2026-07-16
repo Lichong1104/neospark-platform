@@ -71,6 +71,9 @@ import {
   type ModelsConfigMap,
   type GenerateMultiRefParams,
 } from "@/types/drawing";
+import type { VideoResolution } from "@/types/video";
+import type { GptImageQuality } from "./ImageGenerationParams";
+import type { UploadedRef } from "@/lib/landingRequest";
 
 type StatusType =
   | "ecommerce"
@@ -256,6 +259,32 @@ interface IntelligenceHubProps {
   } | null;
   selectedCanvasImages?: CanvasImage[];
   canvasImages?: CanvasImage[];
+  /** 过渡页 AGENT 模式的待发送请求；nonce 变化时强制切到 AGENT 标签并自动发送。 */
+  agentRequest?: { prompt: string; skills: string[]; nonce: number } | null;
+  onAgentRequestConsumed?: () => void;
+  /** 过渡页 IMAGE 模式的待生成请求；预填参数并自动走标准图片生成。 */
+  imageRequest?: {
+    prompt: string;
+    model: string;
+    aspectRatio: string;
+    resolution: string;
+    gptImageQuality: GptImageQuality;
+    refImages?: UploadedRef[];
+    nonce: number;
+  } | null;
+  onImageRequestConsumed?: () => void;
+  /** 过渡页 VIDEO 模式的待生成请求；切到 VIDEO 标签并透传给 VideoGenerationPanel。 */
+  videoRequest?: {
+    prompt: string;
+    model: string;
+    ratio: string;
+    duration: string;
+    resolution: VideoResolution;
+    refImages?: UploadedRef[];
+    refVideos?: UploadedRef[];
+    nonce: number;
+  } | null;
+  onVideoRequestConsumed?: () => void;
 }
 
 const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
@@ -265,6 +294,12 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
   selectedCanvasImage,
   selectedCanvasImages = [],
   canvasImages = [],
+  agentRequest = null,
+  onAgentRequestConsumed,
+  imageRequest = null,
+  onImageRequestConsumed,
+  videoRequest = null,
+  onVideoRequestConsumed,
 }) => {
   const { t } = useTranslation();
   const AGENTS = useAgents();
@@ -272,16 +307,20 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
   const [isAgentMode, setIsAgentMode] = useState(false);
   const [agentStatus, setAgentStatus] = useState<StatusType>("offline");
   const [showPresets, setShowPresets] = useState(false);
-  const [inputValue, setInputValue] = useState("");
+  const [inputValue, setInputValue] = useState(imageRequest?.prompt ?? "");
   const [modelsConfig, setModelsConfig] = useState<ModelsConfigMap | null>(
     null
   );
 
-  const [aspectRatio, setAspectRatio] = useState("1:1");
-  const [resolution, setResolution] = useState("1K");
-  const [model, setModel] = useState(DEFAULT_DRAWING_MODEL);
+  const [aspectRatio, setAspectRatio] = useState(
+    imageRequest?.aspectRatio ?? "1:1"
+  );
+  const [resolution, setResolution] = useState(
+    imageRequest?.resolution ?? "1K"
+  );
+  const [model, setModel] = useState(imageRequest?.model ?? DEFAULT_DRAWING_MODEL);
   const [gptImageQuality, setGptImageQuality] = useState<"low" | "medium" | "high">(
-    "low"
+    imageRequest?.gptImageQuality ?? "low"
   );
   const [standardSessionId, setStandardSessionId] = useState<string | null>(
     null
@@ -308,7 +347,19 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
     path: string;
   } | null>(null);
   const [isUploadingPaste, setIsUploadingPaste] = useState(false);
+  // 过渡页上传的参考图（imageRequest.refImages 初始化；handleSend 合并进 ref_image_path(s) 后清空）
+  const [uploadedRefImages, setUploadedRefImages] = useState<UploadedRef[]>(
+    imageRequest?.refImages ?? []
+  );
   const polling = useGenerationPolling();
+
+  // 过渡页 AGENT 请求：nonce 变化时强制切到 AGENT 标签（AgentHubChatArea 内部负责消费并自动发送）。
+  useEffect(() => {
+    if (!agentRequest) return;
+    setIsAgentMode(false);
+    setActiveTab("AGENT");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [agentRequest?.nonce]);
 
   const handlePasteImage = useCallback(
     async (file: File) => {
@@ -442,6 +493,34 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
       );
     }
   }, [currentModelConfig, resolution, aspectRatio]);
+
+  // 过渡页 VIDEO 请求：切到 VIDEO 标签（VideoGenerationPanel 内部负责预填并自动提交）。
+  useEffect(() => {
+    if (!videoRequest) return;
+    setIsAgentMode(false);
+    setActiveTab("VIDEO");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [videoRequest?.nonce]);
+
+  // 过渡页 IMAGE 请求：等模型配置加载且参数自愈完成后，自动走一次标准图片生成。
+  // handleSend 在下方定义（普通函数，闭包在运行时调用），靠 ref 保证单次，故不列入依赖。
+  const imageAutoFiredRef = useRef(false);
+  useEffect(() => {
+    if (!imageRequest || imageAutoFiredRef.current) return;
+    if (!modelsConfig || !currentModelConfig) return;
+    if (!inputValue.trim()) return;
+    const resOk = currentModelConfig.supported_resolutions.some(
+      (r) => r.value === resolution
+    );
+    const arOk = currentModelConfig.supported_aspect_ratios.some(
+      (ar) => ar.value === aspectRatio
+    );
+    if (!resOk || !arOk) return;
+    imageAutoFiredRef.current = true;
+    onImageRequestConsumed?.();
+    void handleSend();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [imageRequest, modelsConfig, currentModelConfig, resolution, aspectRatio, inputValue]);
 
   const resolutionOptions: DropdownOption[] = useMemo(() => {
     if (!currentModelConfig) return DEFAULT_RESOLUTIONS;
@@ -824,12 +903,25 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
           params.ref_image_path = refPaths[0];
         }
       } else if (
-        pastedImage?.path &&
+        (pastedImage?.path || uploadedRefImages.length > 0) &&
         currentModelConfig?.supports_image_to_image !== false
       ) {
-        params.ref_image_path = pastedImage.path;
+        // 合并粘贴图 + 过渡页上传的参考图(去重)
+        const mergedRefPaths: string[] = [];
+        if (pastedImage?.path) mergedRefPaths.push(pastedImage.path);
+        for (const img of uploadedRefImages.slice(0, 14)) {
+          if (img.path && !mergedRefPaths.includes(img.path)) {
+            mergedRefPaths.push(img.path);
+          }
+        }
+        if (mergedRefPaths.length > 1) {
+          params.ref_image_paths = mergedRefPaths;
+        } else if (mergedRefPaths.length === 1) {
+          params.ref_image_path = mergedRefPaths[0];
+        }
       }
       setPastedImage(null);
+      setUploadedRefImages([]);
 
       if (generateAbortRef.current) {
         setIsStandardGenerating(false);
@@ -889,6 +981,8 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
             selectedCanvasImages={selectedCanvasImages}
             canvasImages={canvasImages}
             modeToggle={hubModeToggle}
+            initialRequest={videoRequest}
+            onInitialRequestConsumed={onVideoRequestConsumed}
           />
         </div>
         <div
@@ -955,6 +1049,8 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
             selectedCanvasImages={selectedCanvasImages}
             canvasImages={canvasImages}
             modeToggle={hubModeToggle}
+            initialRequest={agentRequest}
+            onInitialRequestConsumed={onAgentRequestConsumed}
           />
         </div>
       </div>

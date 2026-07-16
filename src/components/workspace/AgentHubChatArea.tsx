@@ -36,6 +36,9 @@ interface AgentHubChatAreaProps {
   selectedCanvasImages?: CanvasImage[];
   canvasImages?: CanvasImage[];
   modeToggle?: React.ReactNode;
+  /** 过渡页 AGENT 模式带来的待发送请求；按 nonce 消费一次并自动发送。 */
+  initialRequest?: { prompt: string; skills: string[]; nonce: number } | null;
+  onInitialRequestConsumed?: () => void;
 }
 
 const DEFAULT_AGENT_MODEL = "deepseek:deepseek-v4-flash";
@@ -59,6 +62,8 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
   selectedCanvasImages: _selectedCanvasImages,
   canvasImages: _canvasImages,
   modeToggle,
+  initialRequest = null,
+  onInitialRequestConsumed,
 }) => {
   const { t } = useTranslation();
 
@@ -258,6 +263,27 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
     setMessages,
     t,
   ]);
+
+  // 过渡页 AGENT 请求：按 nonce 消费一次 —— 先填入 skills/prompt，再在状态更新后自动发送一次。
+  const consumedNonceRef = useRef<number | null>(null);
+  const [pendingAutoSend, setPendingAutoSend] = useState(false);
+
+  useEffect(() => {
+    if (!initialRequest) return;
+    if (consumedNonceRef.current === initialRequest.nonce) return;
+    consumedNonceRef.current = initialRequest.nonce;
+    setSelectedSkills(initialRequest.skills ?? []);
+    setInputValue(initialRequest.prompt);
+    setPendingAutoSend(true);
+  }, [initialRequest]);
+
+  useEffect(() => {
+    if (!pendingAutoSend) return;
+    setPendingAutoSend(false);
+    onInitialRequestConsumed?.();
+    if (!inputValue.trim()) return;
+    void handleSend();
+  }, [pendingAutoSend, inputValue, handleSend, onInitialRequestConsumed]);
 
   const displayMessages = messages;
   const selectedSkillDisplays = availableSkills

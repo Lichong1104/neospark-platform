@@ -431,6 +431,50 @@
     "genVideoPlaceholder": "视频生成",
     "dragToMove": "拖拽移动"
   },
+  "landing": {
+    "title": "今天想创作点什么？",
+    "tagline": "一次描述——图片、视频或智能体——即可呈现在你的画布上。",
+    "modeImage": "图片",
+    "modeVideo": "视频",
+    "modeAgent": "智能体",
+    "generate": "生成",
+    "navSkills": "技能",
+    "navPricing": "定价",
+    "navWorkspace": "工作台",
+    "navAssets": "资产",
+    "promptLibrary": "提示词库",
+    "promptLibraryHint": "点击任意提示词填入输入框。",
+    "promptLibraryEmpty": "暂无可用提示词。",
+    "promptLibraryLoading": "正在加载提示词...",
+    "skipToCanvas": "直接进入画布",
+    "promptRequired": "请先输入提示词。",
+    "selectSkills": "选择技能",
+    "catAll": "全部",
+    "catSocialMedia": "社交媒体",
+    "catDigitalMarketing": "数字营销",
+    "catBusinessPrint": "商务打印",
+    "catStationery": "办公文具",
+    "catCreative": "创意插画",
+    "catOther": "其他",
+    "usePrompt": "使用",
+    "upload": "上传参考图/视频",
+    "typeImage": [
+      "为夏日音乐节设计一张活力海报。",
+      "把产品图变成干净的电商主图。",
+      "设计一张温馨的咖啡店 Instagram 帖子。",
+      "为自由设计师做一张极简名片。"
+    ],
+    "typeVideo": [
+      "生成一段 5 秒的电影感旅行 vlog 开场。",
+      "让产品图做一段平滑的 360° 旋转展示。",
+      "为健身房开业做一支动感宣传短片。"
+    ],
+    "typeAgent": [
+      "调研竞争对手，并拟一份定位陈述。",
+      "把这些笔记整理成一页精美的简报。",
+      "为新咖啡品牌脑暴 10 条广告语。"
+    ]
+  },
   "intelligenceHub": {
     "chat": "对话",
     "workflow": "工作流",

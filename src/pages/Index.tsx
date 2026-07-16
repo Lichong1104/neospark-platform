@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LeftToolbar } from "@/components/workspace/LeftToolbar";
@@ -9,6 +10,7 @@ import {
 } from "@/components/workspace/CanvasArea";
 import { WorkflowCanvas } from "@/components/workspace/WorkflowCanvas";
 import { IntelligenceHub } from "@/components/workspace/IntelligenceHub";
+import type { PendingRequest } from "@/lib/landingRequest";
 import { STATIC_BASE_URL } from "@/api/request";
 import { toast } from "sonner";
 import storageApi from "@/api/storage";
@@ -112,12 +114,69 @@ const Index = () => {
   const [hubPanelExpanded, setHubPanelExpanded] = useState(true);
   const [hasResolvedOnboardingState, setHasResolvedOnboardingState] =
     useState(false);
+
+  // 画布工作区（独立路由 /canvas）。从过渡页路由 state 读取待生成请求。
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [pendingRequest, setPendingRequest] = useState<PendingRequest | null>(
+    () =>
+      (location.state as { request?: PendingRequest } | null)?.request ?? null
+  );
+
+  // 读取后清空 location.state，避免刷新/后退时重复触发生成
+  useEffect(() => {
+    if ((location.state as { request?: unknown } | null)?.request) {
+      navigate(location.pathname, { replace: true, state: null });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const isChineseLanguage = (i18n.resolvedLanguage || i18n.language || "en")
     .split("-")[0]
     .toLowerCase() === "zh";
 
   // 全局批次偏移：确保多次生成的图片不会堆叠在同一个位置
   const generationBatchRef = useRef(0);
+
+  // 从 pendingRequest 派生各模式请求（仅对应模式非空）
+  const agentRequest =
+    pendingRequest?.mode === "AGENT"
+      ? {
+          prompt: pendingRequest.seed.prompt,
+          skills: pendingRequest.seed.skills,
+          nonce: pendingRequest.nonce,
+        }
+      : null;
+  const imageRequest =
+    pendingRequest?.mode === "IMAGE"
+      ? {
+          prompt: pendingRequest.seed.prompt,
+          model: pendingRequest.seed.model,
+          aspectRatio: pendingRequest.seed.aspectRatio,
+          resolution: pendingRequest.seed.resolution,
+          gptImageQuality: pendingRequest.seed.gptImageQuality,
+          refImages: pendingRequest.seed.refImages,
+          nonce: pendingRequest.nonce,
+        }
+      : null;
+  const videoRequest =
+    pendingRequest?.mode === "VIDEO"
+      ? {
+          prompt: pendingRequest.seed.prompt,
+          model: pendingRequest.seed.model,
+          ratio: pendingRequest.seed.ratio,
+          duration: pendingRequest.seed.duration,
+          resolution: pendingRequest.seed.resolution,
+          refImages: pendingRequest.seed.refImages,
+          refVideos: pendingRequest.seed.refVideos,
+          nonce: pendingRequest.nonce,
+        }
+      : null;
+
+  // 任一请求被对应面板消费后清空 pendingRequest
+  const handleHubRequestConsumed = useCallback(() => {
+    setPendingRequest(null);
+  }, []);
 
   // Get selected canvas image info
   const selectedCanvasImage = canvasImages.find(
@@ -626,6 +685,12 @@ const Index = () => {
                 selectedCanvasImage={selectedCanvasImage ?? null}
                 selectedCanvasImages={selectedCanvasImages}
                 canvasImages={canvasImages}
+                agentRequest={agentRequest}
+                onAgentRequestConsumed={handleHubRequestConsumed}
+                imageRequest={imageRequest}
+                onImageRequestConsumed={handleHubRequestConsumed}
+                videoRequest={videoRequest}
+                onVideoRequestConsumed={handleHubRequestConsumed}
               />
             ) : (
               <button
