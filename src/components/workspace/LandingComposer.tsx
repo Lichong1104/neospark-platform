@@ -864,6 +864,18 @@ export const LandingComposer: React.FC<{
                     />
                   )}
                 </div>
+                {/* 直接进入画布（放在生成按钮旁边） */}
+                {onSkipToCanvas ? (
+                  <button
+                    type="button"
+                    onClick={onSkipToCanvas}
+                    className="inline-flex h-8 shrink-0 items-center gap-1 px-2.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
+                    title={t("landing.skipToCanvas")}
+                  >
+                    {t("landing.skipToCanvas")}
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   onClick={handleSubmit}
@@ -899,18 +911,6 @@ export const LandingComposer: React.FC<{
               <ModeChip mode="AGENT" current={mode} onChange={setMode} icon={<Sparkles className="h-3.5 w-3.5" />} label={t("landing.modeAgent")} />
             </div>
           </div>
-
-          {/* 直接进入画布 */}
-          {onSkipToCanvas ? (
-            <button
-              type="button"
-              onClick={onSkipToCanvas}
-              className="group mt-8 inline-flex items-center gap-1.5 border-brutal border-foreground bg-card px-4 py-2 text-[11px] font-bold uppercase tracking-wider brutal-shadow brutal-press hover:bg-secondary"
-            >
-              {t("landing.skipToCanvas")}
-              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-            </button>
-          ) : null}
         </section>
 
         {/* 提示词库（分类 + icon + 工具卡片） */}
