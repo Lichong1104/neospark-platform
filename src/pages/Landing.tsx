@@ -19,8 +19,8 @@ const Landing = () => {
   );
 
   const handleSkipToCanvas = useCallback(() => {
-    navigate("/canvas");
-  }, [navigate]);
+    window.open("/canvas", "_blank", "noopener,noreferrer");
+  }, []);
 
   return (
     <LandingComposer

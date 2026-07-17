@@ -1,0 +1,640 @@
+{
+  "advertising-poster-generator": [
+    {
+      "icon": "🏋️",
+      "label": "Gym Opening",
+      "prompts": [
+        "Create a print-ready advertising poster for a fitness gym grand opening. Include 'Grand Opening Special - First Month Free'. Bold, energetic design with action imagery. Size: 18x24 inches.",
+        "Design a yoga studio grand opening poster with calming colors and zen imagery. Include free first class offer. Size: 11x17 inches.",
+        "Create a CrossFit gym promotional poster featuring intense workout imagery and 'No Limits' tagline. Industrial, gritty design. Size: A2."
+      ]
+    },
+    {
+      "icon": "🎸",
+      "label": "Concert Poster",
+      "prompts": [
+        "Design a concert poster for a local band's album release. Include date, venue, and ticket info. Vintage rock style with distressed textures. Size: 11x17 inches.",
+        "Create a jazz festival poster with elegant typography and trumpet imagery. Include multiple artist lineup. Art deco style. Size: 18x24 inches.",
+        "Design an EDM concert poster with neon colors and abstract geometric patterns. Include DJ names and venue details. Size: A1."
+      ]
+    },
+    {
+      "icon": "🍝",
+      "label": "Restaurant Promo",
+      "prompts": [
+        "Create a promotional poster for a restaurant's new menu. Feature appetizing food imagery and special discount code. Elegant, modern design. Size: A2.",
+        "Design a pizza restaurant poster showcasing artisanal toppings and 'Wood-Fired' message. Rustic Italian style. Size: 11x17 inches.",
+        "Create a sushi restaurant grand opening poster with premium fish photography and Japanese-inspired design. Size: 18x24 inches."
+      ]
+    }
+  ],
+  "ai-cartoon-character-maker": [
+    {
+      "icon": "👧",
+      "label": "Chibi Style",
+      "prompts": [
+        "Turn a photo of a smiling girl with curly hair into a cute chibi cartoon character. Big sparkling eyes, pastel pink hoodie, small backpack, soft shading, white background.",
+        "Create a chibi cartoon version of a boy wearing glasses and a baseball cap. Oversized head, tiny body, cheerful expression, blue and yellow color scheme.",
+        "Transform a portrait into a kawaii chibi character with blushing cheeks, rainbow hair, and a unicorn onesie. Soft pastel colors, anime eyes."
+      ]
+    },
+    {
+      "icon": "🐶",
+      "label": "Pet Cartoon",
+      "prompts": [
+        "Turn a golden retriever photo into a Disney-style cartoon dog. Fluffy fur, big expressive eyes, tongue out, warm sunlight background.",
+        "Create a cartoon version of a black cat with green eyes. Stylized fluffy fur, playful pose, minimalist flat illustration style.",
+        "Transform a corgi photo into a Pixar-style 3D cartoon character. Cute oversized paws, happy smile, soft studio lighting."
+      ]
+    },
+    {
+      "icon": "🦸",
+      "label": "Hero Character",
+      "prompts": [
+        "Create a comic book style superhero character with a red cape, mask, and muscular build. Bold outlines, dynamic pose, vintage Marvel aesthetic.",
+        "Design a Pixar-style 3D animated hero with curly hair, freckles, and a futuristic suit. Friendly smile, cinematic lighting.",
+        "Generate a classic 2D cartoon villain character. Sharp features, dark cloak, sinister grin, 1930s rubber-hose animation style."
+      ]
+    }
+  ],
+  "booklet-generator": [
+    {
+      "icon": "📖",
+      "label": "Company Report",
+      "prompts": [
+        "Create a 12-page product catalog booklet for a furniture store. Include cover, product showcase pages with descriptions, and back cover with contact info. Professional binding layout.",
+        "Design a 20-page annual report for a tech startup with infographics. Include company milestones, financial highlights, and team photos. Modern, data-driven design.",
+        "Create a product manual booklet for a smart home device with step-by-step guides. Include troubleshooting section, safety information, and warranty details. Clean, instructional layout."
+      ]
+    },
+    {
+      "icon": "📊",
+      "label": "Annual Report",
+      "prompts": [
+        "Design an annual report booklet for a nonprofit organization. Include mission statement, achievements, financial summary, and donor recognition. Professional, trustworthy design.",
+        "Create an impact report for a charitable foundation highlighting achievements. Include success stories, beneficiary testimonials, and future goals. Warm, inspiring design.",
+        "Design a sustainability report for an eco-friendly company with green theme. Include environmental metrics, green initiatives, and carbon footprint data. Nature-inspired layout."
+      ]
+    },
+    {
+      "icon": "👗",
+      "label": "Fashion Lookbook",
+      "prompts": [
+        "Create a lookbook for a fashion brand's summer collection. Feature styled photos, product details, pricing, and ordering info. Trendy, editorial layout.",
+        "Design a winter collection catalog with cozy, warm aesthetics. Include layering guides, fabric details, and care instructions. Elegant, seasonal design.",
+        "Create a streetwear lookbook with urban, edgy photography style. Include brand story, size guide, and limited edition highlights. Bold, contemporary layout."
+      ]
+    }
+  ],
+  "brochure-generator": [
+    {
+      "icon": "🌴",
+      "label": "Travel Brochure",
+      "prompts": [
+        "Design a tri-fold travel brochure for a Costa Rica vacation package. Front: stunning beach photo with 'Paradise Awaits'. Inside: itinerary, pricing, and booking info. Fold guides included.",
+        "Create a bi-fold brochure for a European city tour highlighting historic landmarks. Include daily itinerary, accommodation details, and cultural experiences. Elegant, wanderlust design.",
+        "Design an adventure travel brochure for hiking and outdoor expeditions. Feature trail maps, difficulty levels, and gear recommendations. Rugged, adventurous layout."
+      ]
+    },
+    {
+      "icon": "🧘",
+      "label": "Spa Brochure",
+      "prompts": [
+        "Create a bi-fold brochure for a spa and wellness center. Feature services, pricing, and special packages. Calming, luxurious design with soft colors.",
+        "Design a wellness retreat brochure with yoga and meditation programs. Include class schedules, instructor bios, and facility amenities. Serene, holistic layout.",
+        "Create a medical spa brochure featuring aesthetic treatments and services. Include before/after photos, treatment descriptions, and consultation info. Clinical yet elegant design."
+      ]
+    },
+    {
+      "icon": "🏠",
+      "label": "Real Estate Brochure",
+      "prompts": [
+        "Design a real estate property brochure showcasing luxury homes. Include property photos, features, floor plans, and agent contact info. Premium, professional design.",
+        "Create a neighborhood guide brochure for prospective homebuyers. Include local amenities, school information, and community highlights. Welcoming, informative layout.",
+        "Design a commercial property brochure for office spaces and retail locations. Include floor plans, square footage, and leasing information. Corporate, professional design."
+      ]
+    }
+  ],
+  "business-card-generator": [
+    {
+      "icon": "🎨",
+      "label": "Designer Card",
+      "prompts": [
+        "Create a professional business card for a freelance graphic designer. Name: Alex Chen, contact info, minimalist logo. Modern, creative style. Standard 3.5x2 inch, double-sided with portfolio URL on back.",
+        "Design a bold business card for a creative director with artistic flair. Include hand-drawn elements, vibrant colors, and typography showcase. Eye-catching, portfolio-style design.",
+        "Create an elegant business card for an interior designer with sophisticated style. Include texture effects, muted color palette, and clean lines. Refined, professional layout."
+      ]
+    },
+    {
+      "icon": "🏢",
+      "label": "Real Estate Card",
+      "prompts": [
+        "Design a luxurious business card for a real estate agent. Premium paper feel, gold accents, property silhouette. Include name, title, phone, email, and company logo. Elegant, trustworthy design.",
+        "Create a modern business card for a commercial real estate broker. Include property icons, professional headshot placeholder, and market expertise. Corporate, polished design.",
+        "Design a stylish business card for a luxury property specialist. Feature embossed effects, premium finishes, and exclusive branding. High-end, sophisticated layout."
+      ]
+    },
+    {
+      "icon": "💻",
+      "label": "Startup Founder Card",
+      "prompts": [
+        "Create a modern business card for a tech startup founder. Clean, minimalist design with QR code. Include social links and company tagline. Sleek, innovative style.",
+        "Design a tech-forward business card for a software engineer with coding elements. Include GitHub profile, tech stack icons, and modern typography. Contemporary, developer-friendly design.",
+        "Create a dynamic business card for a product manager in fintech. Include app icons, contactless payment symbol, and data visualization elements. Professional, tech-savvy layout."
+      ]
+    }
+  ],
+  "calendar-generator": [
+    {
+      "icon": "📸",
+      "label": "Photo Studio Calendar",
+      "prompts": [
+        "Design a 2025 wall calendar for a photography studio. Each month features a different landscape photo with mini calendar grid. Include studio branding and contact info. Size: 12x12 inches when closed.",
+        "Create a 2025 calendar for a wedding photographer showcasing best shots. Include seasonal themes, booking reminders, and package highlights. Romantic, elegant design.",
+        "Design a nature photography calendar with wildlife and scenic landscapes. Include photography tips, best shooting times, and equipment notes. Inspiring, outdoor-focused layout."
+      ]
+    },
+    {
+      "icon": "👨‍👩‍👧",
+      "label": "Family Calendar",
+      "prompts": [
+        "Create a family photo calendar with birthdays marked. Include 12 family photos, important dates highlighted, and personalized captions. Warm, nostalgic design.",
+        "Design a family activity calendar with space for scheduling and notes. Include seasonal activities, holiday reminders, and milestone tracking. Colorful, organized layout.",
+        "Create a grandparents calendar with large print dates and family photos. Include grandchildren's birthdays, school events, and family gatherings. Easy-to-read, heartfelt design."
+      ]
+    },
+    {
+      "icon": "🏢",
+      "label": "Corporate Calendar",
+      "prompts": [
+        "Design a corporate desk calendar with company branding. Include company values, motivational quotes, and team photos. Professional, clean layout with logo on each page.",
+        "Create a business planning calendar with fiscal year quarters highlighted. Include project milestones, conference dates, and industry events. Functional, business-focused design.",
+        "Design a client appreciation calendar with industry insights and tips. Include seasonal greetings, company achievements, and contact information. Professional, relationship-building layout."
+      ]
+    }
+  ],
+  "case-study-generator": [
+    {
+      "icon": "💼",
+      "label": "Software Success",
+      "prompts": [
+        "Design a case study document showcasing how our software helped Acme Corp increase productivity by 40%. Include challenge, solution, results, and testimonial. Professional, data-rich layout.",
+        "Create a SaaS implementation case study for an enterprise client. Include integration process, user adoption metrics, and ROI analysis. Technical yet accessible design.",
+        "Design a digital transformation case study highlighting cloud migration success. Include timeline, challenges overcome, and business impact metrics. Modern, tech-focused layout."
+      ]
+    },
+    {
+      "icon": "📈",
+      "label": "Marketing Case Study",
+      "prompts": [
+        "Create a client success story for a marketing agency. Show campaign results, metrics, and client quote. Visual, engaging design with before/after comparisons.",
+        "Design a social media campaign case study with engagement analytics. Include strategy overview, creative assets, and performance highlights. Dynamic, visual layout.",
+        "Create an SEO success case study showing organic growth over time. Include keyword rankings, traffic increases, and conversion improvements. Data-driven, professional design."
+      ]
+    },
+    {
+      "icon": "🔨",
+      "label": "Renovation Before/After",
+      "prompts": [
+        "Design a before/after case study for a renovation company. Showcase transformation photos, project timeline, budget, and client satisfaction. Clean, portfolio-style layout.",
+        "Create an interior design case study highlighting space transformation. Include design concept, material selections, and client feedback. Elegant, visual-focused layout.",
+        "Design a commercial construction case study for office renovation. Include project scope, timeline adherence, and cost management. Professional, corporate design."
+      ]
+    }
+  ],
+  "character-generator": [
+    {
+      "icon": "🎮",
+      "label": "Game Character",
+      "prompts": [
+        "Create a character three-view sheet for a cyberpunk female hacker with short neon-blue hair, tactical jacket with glowing circuits, fingerless gloves, and combat boots. Anime art style, clean line art, white background.",
+        "Generate a three-view character sheet for a fantasy knight in heavy plate armor with a lion crest helmet, cape, and greatsword. Semi-realistic style, detailed shading, neutral pose.",
+        "Create a three-view reference for a cute forest spirit character with leaf clothing, wooden antlers, glowing eyes, and bare feet. Ghibli-inspired style, soft colors, white background."
+      ]
+    },
+    {
+      "icon": "🎬",
+      "label": "Animation",
+      "prompts": [
+        "Generate a three-view sheet for a teenage protagonist with messy brown hair, hoodie, jeans, and sneakers. Western cartoon style, clean lines, turnaround format.",
+        "Create a character reference sheet showing front, side, and back views of a robot assistant with round head, LED face display, wheeled base, and mechanical arms. Flat color style, technical illustration look.",
+        "Design a three-view turnaround for a magical girl character with twin tails, frilly dress, ribbon accessories, and winged boots. Classic anime style, bright pastel colors."
+      ]
+    },
+    {
+      "icon": "🎤",
+      "label": "VTuber Avatar",
+      "prompts": [
+        "Create a three-view character sheet for a VTuber avatar: long silver hair, cat ears, modern streetwear hoodie, choker, and expressive eyes. Anime style, detailed hair strands, white background.",
+        "Generate front, side, and back views of a dragon-themed VTuber with horns, tail, scales on arms, and elegant gothic outfit. Detailed anime style, rich color palette.",
+        "Design a three-view reference for a cozy gamer VTuber with pastel pink hair, oversized sweater, headphones, and thigh-high socks. Soft kawaii aesthetic, clean illustration."
+      ]
+    }
+  ],
+  "ebook-generator": [
+    {
+      "icon": "📱",
+      "label": "Marketing Guide",
+      "prompts": [
+        "Design a professional 20-page ebook about 'Digital Marketing Strategies for Small Business'. Include chapter covers, table of contents, and clean layout. Modern, readable typography. Export to PDF.",
+        "Create a comprehensive marketing playbook ebook for B2B SaaS companies. Include case studies, actionable frameworks, and ROI calculators. Professional blue and white design.",
+        "Design an email marketing mastery ebook with templates, subject line formulas, and automation workflows. Visual examples and step-by-step guides included."
+      ]
+    },
+    {
+      "icon": "🥗",
+      "label": "Recipe Book",
+      "prompts": [
+        "Create a recipe ebook for a healthy meal prep guide. Include 30 recipes with photos, nutritional info, and shopping lists. Warm, inviting design with food photography.",
+        "Design a vegan cookbook ebook with 50 plant-based recipes. Include ingredient substitutions, meal planning tips, and beautiful food styling. Earthy green and orange palette.",
+        "Create a 30-day healthy eating challenge ebook with daily meal plans, prep instructions, and progress tracker. Bright, motivating design with weekly shopping lists."
+      ]
+    },
+    {
+      "icon": "🚀",
+      "label": "Startup Guide",
+      "prompts": [
+        "Design a business guide ebook for startup founders. Cover funding, marketing, and scaling. Professional corporate style with infographics. 50 pages.",
+        "Create a startup pitch deck guide ebook with investor presentation templates, storytelling frameworks, and financial projection examples. Clean, modern tech aesthetic.",
+        "Design a bootstrapping playbook ebook for entrepreneurs. Include cost-saving strategies, revenue optimization tactics, and growth hacking techniques. Bold, energetic design."
+      ]
+    }
+  ],
+  "event-poster-generator": [
+    {
+      "icon": "💻",
+      "label": "Tech Conference",
+      "prompts": [
+        "Create an event poster for a Tech Conference 2024. Include date (March 15-17), venue (Convention Center), and keynote speaker. Modern tech aesthetic with gradient backgrounds.",
+        "Design a startup summit poster with speaker headshots, agenda highlights, and networking event details. Clean, minimalist tech style with geometric patterns.",
+        "Create an AI expo poster featuring cutting-edge technology visuals, exhibitor list, and demo session times. Futuristic blue and purple color scheme."
+      ]
+    },
+    {
+      "icon": "🎵",
+      "label": "Music Festival",
+      "prompts": [
+        "Design a music festival poster with lineup and ticket info. Vibrant colors, artistic typography. Include headliner bands and venue details.",
+        "Create an indie rock concert poster with band names, ticket prices, and venue information. Retro vintage style with bold, distressed typography.",
+        "Design an EDM festival poster with DJ lineup, stage times, and festival map. Neon colors, abstract waveforms, and energetic visual effects."
+      ]
+    },
+    {
+      "icon": "🎩",
+      "label": "Charity Gala",
+      "prompts": [
+        "Create a charity gala poster with elegant design. Black tie event, include date, location, and donation info. Sophisticated, formal style.",
+        "Design a fundraising dinner poster with auction items preview, sponsor logos, and RSVP details. Gold and black elegant theme with script fonts.",
+        "Create a charity run poster with route map, registration info, and beneficiary details. Bright, inspiring design showing community impact."
+      ]
+    }
+  ],
+  "facebook-post-generator": [
+    {
+      "icon": "🏷️",
+      "label": "Summer Sale",
+      "prompts": [
+        "Create a Facebook post announcing our summer sale. We're offering 30% off all products. Target audience is young professionals aged 25-35.",
+        "Design a flash sale announcement post with countdown timer graphic. 24-hour only 50% off selected items. Urgent, exciting tone with bold red accents.",
+        "Create a back-to-school sale post featuring bundle deals and free shipping. Target parents and students. Bright, energetic design with emoji accents."
+      ]
+    },
+    {
+      "icon": "🆕",
+      "label": "Product Launch",
+      "prompts": [
+        "Write an engaging post about our new product launch. Highlight key features and benefits for busy parents looking for convenience.",
+        "Create a teaser post for an upcoming tech gadget launch. Mystery and intrigue with sneak peek images. Pre-order link and early bird discount.",
+        "Design a product announcement post showcasing innovative features with before/after comparisons. Customer testimonial quote included."
+      ]
+    },
+    {
+      "icon": "🤝",
+      "label": "Charity Event",
+      "prompts": [
+        "Design a community-focused post for our local charity event this weekend. Warm, inviting tone with a call-to-action for volunteers.",
+        "Create a fundraising milestone celebration post. Thank you message to donors with progress bar showing goal achievement. Heartwarming success story.",
+        "Design a volunteer recruitment post for an animal shelter. Cute pet photos with compelling statistics about impact. Easy sign-up call-to-action."
+      ]
+    }
+  ],
+  "financial-report-generator": [
+    {
+      "icon": "📈",
+      "label": "Q4 Financial Report",
+      "prompts": [
+        "Create a Q4 2024 financial report with executive summary, revenue breakdown, expense analysis, and year-over-year comparisons. Professional charts and graphs. Board-ready format.",
+        "Design a quarterly performance dashboard with KPI metrics, trend analysis, and departmental breakdowns. Clean, modern data visualization with executive insights.",
+        "Create a month-over-month financial comparison report highlighting growth areas and cost savings. Color-coded performance indicators and variance analysis."
+      ]
+    },
+    {
+      "icon": "📊",
+      "label": "Annual Shareholder Report",
+      "prompts": [
+        "Design an annual report for shareholders. Include CEO letter, financial highlights, business achievements, and future outlook. Premium, trustworthy design.",
+        "Create a comprehensive annual review with ESG metrics, sustainability initiatives, and corporate social responsibility highlights. Professional green and gold theme.",
+        "Design an investor-focused annual report with market analysis, competitive positioning, and 5-year growth projections. Sophisticated financial graphics."
+      ]
+    },
+    {
+      "icon": "💰",
+      "label": "Budget Proposal",
+      "prompts": [
+        "Create a budget proposal document for a new project. Include cost breakdown, ROI projections, and funding requirements. Clear, persuasive layout.",
+        "Design a department budget request with resource allocation, staffing costs, and expected deliverables. Professional presentation with risk assessment section.",
+        "Create a capital expenditure proposal with equipment costs, depreciation schedules, and payback period analysis. Executive summary with recommendation highlights."
+      ]
+    }
+  ],
+  "flyer-generator": [
+    {
+      "icon": "🍕",
+      "label": "Restaurant Grand Opening",
+      "prompts": [
+        "Design a double-sided flyer for a local pizza restaurant's grand opening. Front: mouth-watering pizza photo with 'Grand Opening Special'. Back: menu highlights and 20% off coupon.",
+        "Create a grand opening flyer for a coffee shop with loyalty punch card on the back. Cozy, inviting design with artisan coffee imagery and opening week promotions.",
+        "Design a food truck launch flyer with location schedule and social media handles. Vibrant, street-food aesthetic with bold typography and appetizing food photos."
+      ]
+    },
+    {
+      "icon": "💼",
+      "label": "Tech Job Fair",
+      "prompts": [
+        "Create a hiring flyer for a tech company's job fair. List open positions, requirements, and event details. Modern, professional design with company branding.",
+        "Design a recruitment flyer for a startup looking for developers and designers. Include company culture highlights, benefits package, and application QR code. Fun, innovative style.",
+        "Create a campus recruiting flyer for engineering graduates. Career growth opportunities, internship programs, and mentorship details. Clean, youthful design with tech icons."
+      ]
+    },
+    {
+      "icon": "🏡",
+      "label": "Open House",
+      "prompts": [
+        "Design a real estate open house flyer. Feature property photo, date/time, agent contact, and key selling points. Elegant, high-end design.",
+        "Create a luxury property showcase flyer with virtual tour QR code, neighborhood amenities, and financing options. Premium gold and navy color scheme.",
+        "Design a first-time homebuyer seminar flyer with mortgage pre-approval info and home buying checklist. Friendly, approachable design with key graphics."
+      ]
+    }
+  ],
+  "id-card-generator": [
+    {
+      "icon": "🏢",
+      "label": "Employee ID Card",
+      "prompts": [
+        "Design an AI generated employee ID card for TechCorp Industries. Include id photos placeholder, name, title, department, employee number, and barcode. Corporate branding with security features.",
+        "Create a custom id card for a marketing manager at a tech startup. Modern design with company logo, QR code, and access level indicator. Blue and white color scheme.",
+        "Generate a professional employee badge for a healthcare worker. Include id photos space, name, role, department, and emergency contact. Clean, medical-grade design."
+      ]
+    },
+    {
+      "icon": "🎓",
+      "label": "Student ID Card",
+      "prompts": [
+        "Create a student personal id card for a university. Include id photos space, student name, ID number, major, and valid dates. School colors and mascot. Durable design.",
+        "Design a high school student ID with vibrant colors. Include student id photos, name, grade level, student ID, and lunch code. Fun but professional layout.",
+        "Generate a graduate student ID for a business school. Premium look with gold accents, id photos, program name, and valid through date. Sophisticated design."
+      ]
+    },
+    {
+      "icon": "🎫",
+      "label": "Conference Badge",
+      "prompts": [
+        "Design an AI generated conference attendee badge for an event. Include name, company, attendee type, QR code, and event branding. Professional, easy-to-read layout.",
+        "Create a VIP event badge for a tech conference. Include attendee name, company, access level, and NFC chip indicator. Sleek, modern design with holographic elements.",
+        "Generate a multi-day conference badge with schedule integration. Include name, title, workshop track, and networking QR code. Color-coded by track."
+      ]
+    }
+  ],
+  "instagram-post-generator": [
+    {
+      "icon": "☕",
+      "label": "Coffee Shop Feature",
+      "prompts": [
+        "Create an Instagram post for a boutique coffee shop showcasing their new lavender latte. Pastel aesthetic, latte art close-up, cozy vibe. Caption about the flavor notes.",
+        "Design an Instagram story for a coffee shop's morning rush promotion. Show steaming cups, warm lighting, and 'Buy One Get One' offer. Cozy morning aesthetic.",
+        "Generate a carousel post for a coffee shop's brewing guide. Step-by-step photos of pour-over technique with tips in captions. Educational and engaging."
+      ]
+    },
+    {
+      "icon": "👗",
+      "label": "Fashion Brand",
+      "prompts": [
+        "Design a fashion-forward post for a clothing brand's new summer collection. Model wearing outfit, bold colors, trendy typography. Swipe-through carousel style.",
+        "Create an Instagram post showcasing a sustainable fashion line. Earth tones, natural fabrics, eco-friendly messaging. Model in outdoor setting.",
+        "Generate a 'Shop the Look' Instagram post with multiple outfit pieces tagged. Clean white background, flat lay styling, price tags visible."
+      ]
+    },
+    {
+      "icon": "💪",
+      "label": "Motivational Quote",
+      "prompts": [
+        "Create a motivational quote post with aesthetic background. 'Create your own sunshine' text over gradient sunrise. Minimalist, inspiring design for wellness brand.",
+        "Design a fitness motivation post with bold typography. 'Stronger than yesterday' over dynamic workout image. Energetic colors and powerful layout.",
+        "Generate a mindfulness quote post for a wellness brand. Soft pastel background, elegant script font, 'Breathe in peace, exhale stress' message. Calming aesthetic."
+      ]
+    }
+  ],
+  "invitation-generator": [
+    {
+      "icon": "💒",
+      "label": "Wedding Invitation",
+      "prompts": [
+        "Design an elegant wedding invitation for Sarah & Michael. Classic serif fonts, floral watercolor accents, RSVP by June 1st. Soft pink and gold color palette. Print-ready format.",
+        "Create a rustic barn wedding invitation with kraft paper texture. Include twine ribbon graphic, wildflower illustrations, and vintage typography. Outdoor ceremony details.",
+        "Generate a modern minimalist wedding invitation. Clean sans-serif fonts, geometric accents, black and white with copper foil details. City venue, formal attire."
+      ]
+    },
+    {
+      "icon": "🎂",
+      "label": "Birthday Party",
+      "prompts": [
+        "Create a fun birthday party invitation for a kids party. Superhero theme, bold colors, include date, time, and location. Digital shareable format.",
+        "Design an elegant 50th birthday celebration invitation. Gold and black color scheme, champagne graphics, sophisticated typography. Formal dinner party.",
+        "Generate a tropical themed birthday party invitation. Palm leaves, bright colors, pineapple accents. Pool party with BBQ, casual and fun vibe."
+      ]
+    },
+    {
+      "icon": "🏢",
+      "label": "Corporate Event",
+      "prompts": [
+        "Design a corporate event invitation for a product launch. Modern minimalist style, include company logo space, date and venue details. Professional look.",
+        "Create an executive dinner invitation for VIP clients. Premium black and gold design, embossed texture effect, exclusive language. Five-star venue.",
+        "Generate a tech conference invitation with modern geometric patterns. Include speaker highlights, agenda preview, and registration QR code. Sleek and innovative."
+      ]
+    }
+  ],
+  "letterhead-generator": [
+    {
+      "icon": "⚖️",
+      "label": "Law Firm Letterhead",
+      "prompts": [
+        "Create a professional letterhead for a law firm. Traditional, authoritative design with firm logo, address, phone, and email. Conservative color scheme, premium feel.",
+        "Design a prestigious law firm letterhead with classic serif typography. Include partners' names, bar association credentials, and multiple office locations. Navy and gold accents.",
+        "Generate a modern legal practice letterhead. Clean layout with subtle watermark, professional headshot space, and practice area highlights. Trust-building design."
+      ]
+    },
+    {
+      "icon": "💼",
+      "label": "Consulting Letterhead",
+      "prompts": [
+        "Design a modern letterhead for a consulting company. Clean layout with logo, tagline, and contact details. Professional blue and gray color palette.",
+        "Create a management consulting letterhead with global presence indicators. Include international office locations, certification badges, and LinkedIn integration. Corporate blue theme.",
+        "Generate a boutique consulting firm letterhead. Minimalist design with custom monogram, premium paper texture effect, and appointment scheduling link. Sophisticated and exclusive."
+      ]
+    },
+    {
+      "icon": "🎨",
+      "label": "Design Agency Letterhead",
+      "prompts": [
+        "Create a creative letterhead for a design agency. Bold typography, vibrant accent color, portfolio website link. Showcases creative expertise.",
+        "Design an edgy letterhead for a branding agency. Asymmetric layout, bold geometric shapes, and spot UV effect simulation. Portfolio showcase integration.",
+        "Generate a minimalist design studio letterhead. White space focused, subtle logo placement, QR code linking to digital portfolio. Contemporary and artistic."
+      ]
+    }
+  ],
+  "linkedin-post-generator": [
+    {
+      "icon": "🌱",
+      "label": "Sustainability Initiative",
+      "prompts": [
+        "Design a professional LinkedIn post image about our company's new sustainability initiative. Highlight our commitment to carbon neutrality by 2030 and renewable energy investments. Corporate layout with text overlay and brand colors.",
+        "Create a LinkedIn social media graphic announcing our transition to 100% recycled packaging. Include environmental impact statistics, team celebration photo concept, and customer thank you message. Clean, eco-friendly design.",
+        "Generate a thought leadership LinkedIn image about ESG practices in our industry. Share concrete steps companies can take, include data visualization concept, and invite discussion. Professional B2B layout."
+      ]
+    },
+    {
+      "icon": "📊",
+      "label": "Thought Leadership",
+      "prompts": [
+        "Create a thought leadership LinkedIn image about industry trends in AI and automation. Share insights on how businesses can adapt and thrive. Expert, authoritative design with clean typography.",
+        "Design a LinkedIn article-style graphic about the future of remote work. Include research findings, actionable tips for managers, and engaging carousel layout concept. Modern corporate aesthetic.",
+        "Design a contrarian opinion LinkedIn graphic challenging common industry assumptions. Professional but provocative tone, invite respectful debate, include supporting data points. Bold layout."
+      ]
+    },
+    {
+      "icon": "🏢",
+      "label": "Company Expansion",
+      "prompts": [
+        "Design an engaging LinkedIn post image announcing our company expansion to three new markets. Celebrate team growth, thank customers, and share vision for the future. Professional corporate design.",
+        "Create a hiring announcement LinkedIn graphic for 50 new positions. Highlight company culture benefits, growth trajectory, and include 'We're hiring' visual concept. Energetic and inviting layout.",
+        "Generate a LinkedIn post graphic announcing a strategic partnership with a major industry player. Professional tone, mutual benefits focus, and future opportunities highlight. Clean B2B design."
+      ]
+    }
+  ],
+  "newsletter-generator": [
+    {
+      "icon": "🏢",
+      "label": "Company Newsletter",
+      "prompts": [
+        "Create a monthly company newsletter for TechCorp. Include CEO message, team highlights, and upcoming events. Clean, email-optimized layout with brand colors (blue #0066CC).",
+        "Design a quarterly corporate newsletter featuring department updates, employee achievements, and industry news. Professional layout with company branding.",
+        "Create an internal company newsletter with team introductions, project milestones, and upcoming training opportunities. Clean, readable design."
+      ]
+    },
+    {
+      "icon": "🏘️",
+      "label": "Community Newsletter",
+      "prompts": [
+        "Design a weekly community newsletter for a neighborhood. Include local events, safety tips, and resident spotlights. Friendly, approachable design.",
+        "Create a monthly HOA newsletter with community announcements, maintenance schedules, and neighborhood photos. Warm, welcoming aesthetic.",
+        "Design a community association newsletter featuring volunteer opportunities, local business spotlights, and seasonal activities. Engaging, friendly layout."
+      ]
+    },
+    {
+      "icon": "🔄",
+      "label": "Product Update",
+      "prompts": [
+        "Create a product update newsletter for SaaS customers. Feature new features, tutorials, and customer success stories. Modern tech aesthetic.",
+        "Design a feature release newsletter highlighting product improvements, how-to guides, and upcoming roadmap items. Clean, modern tech design.",
+        "Create a customer success newsletter showcasing user achievements, tips and tricks, and community highlights. Professional SaaS styling."
+      ]
+    }
+  ],
+  "postcard-generator": [
+    {
+      "icon": "🏠",
+      "label": "Real Estate Mailer",
+      "prompts": [
+        "Create a direct mail postcard for a real estate agent. Feature just-sold property, market stats, and agent contact. Professional, trustworthy design with clear call-to-action.",
+        "Design a 'Just Listed' postcard for a luxury home. High-end property photography, agent branding, and open house details. Elegant, sophisticated layout.",
+        "Create a real estate farming postcard introducing an agent to a neighborhood. Market expertise, recent sales, and contact information. Professional, friendly design."
+      ]
+    },
+    {
+      "icon": "💌",
+      "label": "Wedding Thank You",
+      "prompts": [
+        "Design a thank you postcard for a wedding. Elegant photo of the couple, heartfelt message template, return address. Rustic chic style with floral accents.",
+        "Create a wedding thank you postcard with watercolor floral design. Photo placeholder, gratitude message, and couple's names. Romantic, delicate aesthetic.",
+        "Design a modern minimalist wedding thank you postcard. Clean typography, single accent photo, simple gratitude message. Contemporary, elegant style."
+      ]
+    },
+    {
+      "icon": "✈️",
+      "label": "Travel Promotion",
+      "prompts": [
+        "Create a promotional postcard for a travel destination. Stunning beach photo, limited-time offer, booking QR code. Dreamy, wanderlust-inspiring design.",
+        "Design a tropical resort promotion postcard. Palm trees, turquoise water, special package deal. Vibrant, vacation-inspiring colors and layout.",
+        "Create an adventure travel postcard featuring mountain landscapes. Expedition packages, contact info, and stunning nature photography. Bold, exciting design."
+      ]
+    }
+  ],
+  "resume-generator": [
+    {
+      "icon": "📈",
+      "label": "Marketing Manager",
+      "prompts": [
+        "Design a modern professional resume for a Marketing Manager with 5 years experience. Clean layout, ATS-friendly format. Sections: Summary, Experience, Skills, Education. Minimalist black and white design.",
+        "Create a results-driven marketing resume highlighting campaign metrics, ROI achievements, and digital marketing expertise. Modern, professional layout.",
+        "Design a senior marketing specialist resume with emphasis on brand management, team leadership, and strategic planning. Clean, executive-ready format."
+      ]
+    },
+    {
+      "icon": "🎨",
+      "label": "Creative Designer",
+      "prompts": [
+        "Create a creative resume for a graphic designer. Showcase portfolio links, skills with visual indicators. Bold, colorful design that reflects creativity.",
+        "Design a portfolio-integrated resume for a UX/UI designer. Project highlights, design process showcase, and tool proficiencies. Modern, visually engaging layout.",
+        "Create an artistic resume for a multimedia designer. Creative typography, color accents, and visual skill representations. Unique but professional aesthetic."
+      ]
+    },
+    {
+      "icon": "💼",
+      "label": "Executive Resume",
+      "prompts": [
+        "Design an executive resume for a C-suite position. Sophisticated, elegant layout. Emphasize leadership achievements and strategic impact. Conservative color scheme.",
+        "Create a CEO-level executive resume highlighting board experience, P&L responsibility, and organizational transformation. Refined, prestigious design.",
+        "Design a senior leadership resume for a VP position. Strategic initiatives, team scaling achievements, and industry expertise. Professional, commanding presence."
+      ]
+    }
+  ],
+  "youtube-thumbnail-generator": [
+    {
+      "icon": "🐍",
+      "label": "Python Tutorial",
+      "prompts": [
+        "Design a YouTube thumbnail for a tutorial video about '10 Python Tips for Beginners'. Bold text, Python logo, code snippets in background. Bright, eye-catching colors. 1280x720 pixels.",
+        "Create a coding tutorial thumbnail featuring 'Learn JavaScript in 1 Hour'. Large text overlay, laptop with code, vibrant gradient background. High CTR design.",
+        "Design a programming thumbnail for 'React Hooks Explained'. Modern tech aesthetic, React logo, clean typography. Professional developer-focused design."
+      ]
+    },
+    {
+      "icon": "✈️",
+      "label": "Travel Vlog",
+      "prompts": [
+        "Create a viral-style thumbnail for a travel vlog about Bali adventure. Stunning beach photo, surprised facial expression overlay, 'You Won't Believe' text. High contrast, saturated colors.",
+        "Design an adventure travel thumbnail featuring mountain hiking. Dramatic landscape, explorer silhouette, 'Epic Journey' text. Cinematic, breathtaking composition.",
+        "Create a city travel vlog thumbnail for Tokyo exploration. Neon lights, busy street scene, excited expression. Vibrant, energetic urban aesthetic."
+      ]
+    },
+    {
+      "icon": "💼",
+      "label": "Business Interview",
+      "prompts": [
+        "Design a professional thumbnail for a business interview with a CEO. Split-screen style, both speakers visible, company logos. Clean, corporate aesthetic with subtle gradient.",
+        "Create a podcast thumbnail featuring entrepreneur interview. Professional headshots, microphone element, 'Success Stories' text. Polished, business-casual design.",
+        "Design a business advice thumbnail with solo speaker. Confident pose, office background, 'How I Built This' text. Authoritative, inspirational layout."
+      ]
+    }
+  ]
+}

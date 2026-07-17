@@ -991,9 +991,9 @@ export const LandingComposer: React.FC<{
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         {catTools.map((tool) => (
                           <ToolCard
-                            key={tool.slug}
+                            key={tool.id}
                             tool={tool}
-                            onUse={() => setPromptValue(tool.default_prompt)}
+                            onUse={(prompt) => setPromptValue(prompt)}
                           />
                         ))}
                       </div>
@@ -1125,16 +1125,44 @@ const CategoryChip: React.FC<{
   </button>
 );
 
-/* ============== 子组件：工具卡片（彩色 icon glyph + 标题 + 描述 + 提示词 + 使用） ============== */
+/* ============== 子组件：工具卡片（彩色 icon glyph + 标题 + 描述 + 下拉提示词选择） ============== */
 const ToolCard: React.FC<{
   tool: AiDesignTool;
-  onUse: () => void;
+  onUse: (prompt: string) => void;
 }> = ({ tool, onUse }) => {
   const { t } = useTranslation();
   const brand = getBrandIcon(tool.title);
   const ToolIcon = brand?.icon ?? getToolIcon(tool.title);
   const iconColor = getToolIconColor(tool.title);
   const catMeta = getCategoryMeta(getToolCategory(tool.title));
+
+  const exampleGroups = useMemo(
+    () => tool.example_prompts ?? [],
+    [tool.example_prompts]
+  );
+
+  const selectOptions = useMemo(
+    () =>
+      exampleGroups.map((group) => ({
+        value: group.label,
+        label: `${group.icon} ${group.label}`,
+      })),
+    [exampleGroups]
+  );
+
+  const [selectedLabel, setSelectedLabel] = useState(
+    () => selectOptions[0]?.value ?? ""
+  );
+
+  const currentPrompt = useMemo(() => {
+    const group = exampleGroups.find((group) => group.label === selectedLabel);
+    return group?.prompts[0] ?? tool.default_prompt;
+  }, [exampleGroups, selectedLabel, tool.default_prompt]);
+
+  const handleSelect = useCallback((value: string) => {
+    setSelectedLabel(value);
+  }, []);
+
   return (
     <div className="group flex flex-col border-brutal border-foreground bg-card transition-shadow hover:brutal-shadow">
       {/* 头部：彩色 icon glyph + 标题 + 描述 */}
@@ -1148,26 +1176,54 @@ const ToolCard: React.FC<{
         </div>
       </div>
 
-      {/* 提示词 */}
+      {/* 提示词（随下拉选择变化） */}
       <div className="border-t border-foreground/10 px-3.5 py-2.5">
         <p className="text-[11px] leading-relaxed text-foreground/80 line-clamp-3">
-          {tool.default_prompt}
+          {currentPrompt}
         </p>
       </div>
 
-      {/* 底部：分类标签 + 使用按钮 */}
-      <div className="mt-auto flex items-center justify-between border-t border-foreground/10 px-3.5 py-2">
+      {/* 底部：分类标签 + 提示词下拉 + 使用默认提示词 */}
+      <div className="mt-auto flex items-center justify-between border-t border-foreground/10 px-3.5 py-2 gap-2">
         <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
           {t(catMeta?.labelKey ?? "landing.catOther")}
         </span>
-        <button
-          type="button"
-          onClick={onUse}
-          className="inline-flex items-center gap-1 border-brutal border-foreground bg-accent-cyan px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-foreground transition-none brutal-press hover:brightness-110"
-        >
-          <Send className="h-3 w-3" />
-          {t("landing.usePrompt")}
-        </button>
+        <div className="flex items-center gap-1.5">
+          <Select
+            value={selectedLabel}
+            onValueChange={handleSelect}
+            disabled={selectOptions.length === 0}
+          >
+            <SelectTrigger
+              aria-label={t("landing.selectPromptIdea")}
+              className="h-7 w-auto min-w-[100px] max-w-[150px] gap-1 border border-foreground/20 bg-transparent px-2 font-mono text-[10px] font-bold text-foreground/80 transition-colors hover:border-foreground/50 hover:text-foreground focus:ring-0 focus:ring-offset-0 disabled:opacity-50 [&>svg]:h-3 [&>svg]:w-3"
+            >
+              <SelectValue placeholder={t("landing.selectPromptIdea")} />
+            </SelectTrigger>
+            {selectOptions.length > 0 && (
+              <SelectContent className="border-brutal border-foreground bg-card">
+                {selectOptions.map((opt) => (
+                  <SelectItem
+                    key={opt.value}
+                    value={opt.value}
+                    className="font-mono text-[11px]"
+                  >
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            )}
+          </Select>
+          <button
+            type="button"
+            onClick={() => onUse(currentPrompt)}
+            className="inline-flex h-7 items-center gap-1 border-brutal border-foreground bg-accent-cyan px-2 text-[10px] font-bold uppercase tracking-wider text-foreground transition-none brutal-press hover:brightness-110"
+            title={t("landing.usePrompt")}
+          >
+            <Send className="h-3 w-3" />
+            {t("landing.usePrompt")}
+          </button>
+        </div>
       </div>
     </div>
   );

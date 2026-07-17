@@ -1,4 +1,5 @@
 import { http } from "./request";
+import aiDesignToolExamples from "@/data/aiDesignToolExamples.json";
 
 // ============== 旧 Prompt Lib 类型（保留以兼容可能的外部引用）=============
 
@@ -66,7 +67,7 @@ export interface AiDesignTool {
   default_prompt: string;
   sizes: AiDesignToolSize[];
   style_presets: AiDesignToolStylePreset[];
-  example_prompts: AiDesignToolExampleGroup[];
+  example_prompts?: AiDesignToolExampleGroup[];
 }
 
 export interface AiDesignToolListResponse {
@@ -127,47 +128,37 @@ export async function listAiDesignTools(params?: {
 }
 
 /**
- * 清洗前端展示的 AI Design Tools 数据
- * 用于在不修改后端的情况下，控制 Prompt Arsenal 中展示的内容。
+ * 清洗并合并 AI Design Tools 数据。
+ * 1. 将本地抓取的 example_prompts 按 slug 合并到对应工具上（后端暂时没配全时做兜底）。
+ * 2. 保留对特定工具的前端覆盖能力。
  */
 function cleanAiDesignTools(tools: AiDesignTool[]): AiDesignTool[] {
+  const exampleMap = aiDesignToolExamples as Record<string, AiDesignToolExampleGroup[]>;
+
+  const deriveSlugFromTitle = (title: string): string =>
+    title
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9-]/g, "");
+
   return tools.map((tool) => {
-    if (tool.title !== "Advertising Poster Generator") {
-      return tool;
+    const slugKey = tool.slug || deriveSlugFromTitle(tool.title);
+    const scrapedExamples = exampleMap[slugKey] ?? exampleMap[deriveSlugFromTitle(tool.title)];
+    const merged: AiDesignTool =
+      scrapedExamples && scrapedExamples.length > 0
+        ? { ...tool, example_prompts: scrapedExamples }
+        : tool;
+
+    // 保留对 Advertising Poster 的前端覆盖（使用更完整的本地示例）
+    if (merged.title === "Advertising Poster Generator") {
+      return {
+        ...merged,
+        default_prompt:
+          "Create a print-ready advertising poster for a fitness gym grand opening. Include 'Grand Opening Special - First Month Free'. Bold, energetic design with action imagery. Size: 18x24 inches.",
+      };
     }
 
-    return {
-      ...tool,
-      default_prompt:
-        "Create a print-ready advertising poster for a fitness gym grand opening. Include 'Grand Opening Special - First Month Free'. Bold, energetic design with action imagery. Size: 18x24 inches.",
-      example_prompts: [
-        {
-          icon: "🏋️",
-          label: "Gym Opening",
-          prompts: [
-            "Create a print-ready advertising poster for a fitness gym grand opening. Include 'Grand Opening Special - First Month Free'. Bold, energetic design with action imagery. Size: 18x24 inches.",
-            "Design a yoga studio grand opening poster with calming colors and zen imagery. Include free first class offer. Size: 11x17 inches.",
-            "Create a CrossFit gym promotional poster featuring intense workout imagery and 'No Limits' tagline. Industrial, gritty design. Size: A2.",
-          ],
-        },
-        {
-          icon: "🎸",
-          label: "Concert Poster",
-          prompts: [
-            "Design a concert poster for a local band's album release. Include date, venue, and ticket info. Vintage rock style with distressed textures. Size: 11x17 inches.",
-            "Create a jazz festival poster with elegant typography and trumpet imagery. Include multiple artist lineup. Art deco style. Size: 18x24 inches.",
-            "Design an EDM concert poster with neon colors and abstract geometric patterns. Include DJ names and venue details. Size: A1.",
-          ],
-        },
-        {
-          icon: "🍝",
-          label: "Restaurant Promo",
-          prompts: [
-            "Create a promotional poster for a restaurant's new menu. Feature appetizing food imagery and special discount code. Elegant, modern design. Size: A2.",
-          ],
-        },
-      ],
-    };
+    return merged;
   });
 }
 
