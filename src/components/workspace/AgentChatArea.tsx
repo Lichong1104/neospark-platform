@@ -47,7 +47,9 @@ import {
   type MessageStatusResponse,
   type ModelsConfigMap,
 } from "@/types/drawing";
+import type { VideoTaskSummary } from "@/types/video";
 import type { CanvasImage } from "./CanvasArea";
+import MessageVideoTaskList from "./MessageVideoTaskList";
 
 type StatusType =
   | "ecommerce"
@@ -58,6 +60,15 @@ type StatusType =
 
 const ECOMMERCE_GUIDE_VIDEO_URL =
   "https://fquantplus.oss-cn-qingdao.aliyuncs.com/neospark/%E7%94%B5%E5%95%86%E8%AF%A6%E6%83%85%E9%A1%B5%E6%95%99%E7%A8%8B%E8%84%9A%E6%9C%AC.mp4";
+
+/** 取一条本地消息对应的后端绘画 message_id */
+function getBackendMessageId(message: Message): string | undefined {
+  return (
+    message.messageId ||
+    message.phase1MessageId ||
+    message.ecommerceBatchMessageIds?.[0]
+  );
+}
 const ECOMMERCE_GUIDE_VIDEO_URL_EN =
   "https://ustrader-73014.oss-us-east-1.aliyuncs.com/ecommerce_listing_en.mp4";
 
@@ -102,6 +113,9 @@ interface Message {
   isEcommerceFinalAdded?: boolean;
   isEcommerceResult?: boolean;
   isFinalResult?: boolean;
+  /** 电商阶段2批量生成对应的后端 message_id 列表，用于生成视频等二次操作 */
+  ecommerceBatchMessageIds?: string[];
+  video_tasks?: VideoTaskSummary[];
 }
 
 interface Agent {
@@ -1256,6 +1270,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
                 isEcommerceFinalAdded: true,
                 images: generatedBatchImages,
                 ecommercePhase: undefined,
+                ecommerceBatchMessageIds: ids,
                 content: t("ecommerceAgent.finalReady"),
               }
             : m
@@ -1552,21 +1567,59 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
                           </span>
                         </div>
                       ) : null}
+                      {getBackendMessageId(message) && (
+                        <MessageVideoTaskList
+                          messageId={getBackendMessageId(message)!}
+                          role={message.role}
+                          status={message.status}
+                          images={message.images}
+                          videoTasks={message.video_tasks}
+                          onChange={(tasks) =>
+                            setMessages((prev) =>
+                              prev.map((m) =>
+                                m.id === message.id
+                                  ? { ...m, video_tasks: tasks }
+                                  : m
+                              )
+                            )
+                          }
+                        />
+                      )}
                     </div>
                   </ChatMessageBlock>
                 ) : message.isEcommercePreview &&
                   message.status === "completed" &&
                   message.images ? (
-                  <EcommercePreviewGrid
-                    previewImage={message.images[0] ?? null}
-                    cost={message.cost}
-                    onRegenerate={handleEcommerceRegeneratePreview}
-                    onConfirm={() => handleEcommerceConfirmPreview(message)}
-                    onModify={handleEcommerceModify}
-                    onPreviewLoaded={() => scrollToBottom("smooth")}
-                    agentColor={currentAgent.color}
-                    agentIcon={currentAgent.icon}
-                  />
+                  <>
+                    <EcommercePreviewGrid
+                      previewImage={message.images[0] ?? null}
+                      cost={message.cost}
+                      onRegenerate={handleEcommerceRegeneratePreview}
+                      onConfirm={() => handleEcommerceConfirmPreview(message)}
+                      onModify={handleEcommerceModify}
+                      onPreviewLoaded={() => scrollToBottom("smooth")}
+                      agentColor={currentAgent.color}
+                      agentIcon={currentAgent.icon}
+                    />
+                    {getBackendMessageId(message) && (
+                      <MessageVideoTaskList
+                        messageId={getBackendMessageId(message)!}
+                        role={message.role}
+                        status={message.status}
+                        images={message.images}
+                        videoTasks={message.video_tasks}
+                        onChange={(tasks) =>
+                          setMessages((prev) =>
+                            prev.map((m) =>
+                              m.id === message.id
+                                ? { ...m, video_tasks: tasks }
+                                : m
+                            )
+                          )
+                        }
+                      />
+                    )}
+                  </>
                 ) : message.isEcommerceFinalAdded &&
                   message.status === "completed" ? (
                   <ChatMessageBlock
@@ -1608,6 +1661,24 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
                           })
                         : t("ecommerceAgent.downloadAll")}
                     </button>
+                    {getBackendMessageId(message) && (
+                      <MessageVideoTaskList
+                        messageId={getBackendMessageId(message)!}
+                        role={message.role}
+                        status={message.status}
+                        images={message.images}
+                        videoTasks={message.video_tasks}
+                        onChange={(tasks) =>
+                          setMessages((prev) =>
+                            prev.map((m) =>
+                              m.id === message.id
+                                ? { ...m, video_tasks: tasks }
+                                : m
+                            )
+                          )
+                        }
+                      />
+                    )}
                   </ChatMessageBlock>
                 ) : (
                   <div>
@@ -1660,6 +1731,26 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
                                   <span className="text-accent-green font-bold">
                                     -{message.cost} pts
                                   </span>
+                                </div>
+                              )}
+                              {getBackendMessageId(message) && (
+                                <div className="col-span-2">
+                                  <MessageVideoTaskList
+                                    messageId={getBackendMessageId(message)!}
+                                    role={message.role}
+                                    status={message.status}
+                                    images={message.images}
+                                    videoTasks={message.video_tasks}
+                                    onChange={(tasks) =>
+                                      setMessages((prev) =>
+                                        prev.map((m) =>
+                                          m.id === message.id
+                                            ? { ...m, video_tasks: tasks }
+                                            : m
+                                        )
+                                      )
+                                    }
+                                  />
                                 </div>
                               )}
                             </div>

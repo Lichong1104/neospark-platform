@@ -1054,6 +1054,15 @@
     "newTask": "新任务",
     "retry": "重试",
     "generate": "生成视频",
+    "insufficientPoints": "积分不足，无法生成视频",
+    "forbidden": "无权限执行该操作",
+    "status": {
+      "pending": "等待中",
+      "processing": "生成中",
+      "completed": "已完成",
+      "failed": "失败",
+      "cancelled": "已取消"
+    },
     "prompt": "提示词",
     "selectCanvasImageHint": "请在画布中选中一张图片作为参考图",
     "canvasImageDetected": "已检测到画布选中图片，可直接作为首帧 URL 使用",

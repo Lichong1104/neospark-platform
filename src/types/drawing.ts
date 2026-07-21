@@ -1,3 +1,5 @@
+import type { VideoTaskSummary, CreateVideoResponse } from "@/types/video";
+
 /** 模型分辨率配置 */
 export interface ResolutionOption {
   value: string;
@@ -78,6 +80,7 @@ export interface SessionMessage {
   images?: GeneratedImage[];
   actual_cost?: number;
   created_at: string;
+  video_tasks?: VideoTaskSummary[];
 }
 
 /** 会话详情 */
@@ -202,6 +205,7 @@ export interface MessageStatusResponse {
   error_msg?: string;
   created_at: string;
   completed_at?: string;
+  video_tasks?: VideoTaskSummary[];
 }
 
 /** 修改会话标题请求 */
@@ -241,4 +245,20 @@ export interface BillingHistoryData {
   offset: number;
   limit: number;
   transactions: BillingTransaction[];
+}
+
+/** 基于绘画消息生成视频请求 */
+export interface GenerateVideoFromMessageParams {
+  prompt?: string;
+  model?: string;
+  duration?: number;
+  ratio?: string;
+  resolution?: string;
+  generate_audio?: boolean;
+  watermark?: boolean;
+}
+
+/** 基于绘画消息生成视频响应 */
+export interface GenerateVideoFromMessageResponse extends CreateVideoResponse {
+  source_message_id: string;
 }

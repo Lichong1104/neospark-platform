@@ -1054,6 +1054,15 @@
     "newTask": "New Task",
     "retry": "Retry",
     "generate": "GENERATE",
+    "insufficientPoints": "Insufficient points to generate video",
+    "forbidden": "You don't have permission to perform this action",
+    "status": {
+      "pending": "PENDING",
+      "processing": "PROCESSING",
+      "completed": "COMPLETED",
+      "failed": "FAILED",
+      "cancelled": "CANCELLED"
+    },
     "prompt": "Prompt",
     "selectCanvasImageHint": "Please select an image on the canvas as reference",
     "canvasImageDetected": "Selected canvas image detected. You can use it as first-frame URL.",

@@ -8,6 +8,27 @@ export type VideoTaskStatus =
 /** Output resolution for video generation (API `resolution` field) */
 export type VideoResolution = "480p" | "720p" | "1080p" | "2k" | "4k";
 
+/** 由绘画消息创建的视频任务摘要（也用于消息详情里的 video_tasks） */
+export interface VideoTaskSummary {
+  task_id: string;
+  external_task_id?: string;
+  status: VideoTaskStatus;
+  progress: number;
+  model?: string;
+  duration?: number;
+  ratio?: string;
+  resolution?: VideoResolution;
+  generate_audio?: boolean;
+  watermark?: boolean;
+  video_url?: string;
+  estimated_cost?: number;
+  actual_cost?: number;
+  error_msg?: string;
+  source_message_id?: string;
+  created_at: string;
+  completed_at?: string;
+}
+
 /** GET /video/models */
 export interface VideoModelConfig {
   id: string;
@@ -69,6 +90,7 @@ export interface CreateVideoResponse {
   };
   available_points_after?: number;
   created_at: string;
+  source_message_id?: string;
 }
 
 /** GET /video/generations/{task_id} */
@@ -90,6 +112,7 @@ export interface VideoTaskDetail {
   error_msg?: string;
   created_at: string;
   completed_at?: string;
+  source_message_id?: string;
 }
 
 /** GET /video/generations */

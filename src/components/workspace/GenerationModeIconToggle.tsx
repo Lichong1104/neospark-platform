@@ -1,7 +1,46 @@
 import React from "react";
-import { Bot, ImageIcon, Video, MessageSquare } from "lucide-react";
+import { ImageIcon, Video } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
+
+/** 渐变填充的 Bot 图标（粉 → 青） */
+const BotGradientIcon: React.FC<{ className?: string }> = ({ className }) => {
+  const id = React.useId();
+  const gradientId = `${id}-botGradient`;
+
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={`url(#${gradientId})`}
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={cn("h-4 w-4", className)}
+    >
+      <defs>
+        <linearGradient
+          id={gradientId}
+          x1="0"
+          y1="0"
+          x2="24"
+          y2="24"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop offset="0%" stopColor="hsl(var(--accent-pink))" />
+          <stop offset="100%" stopColor="hsl(var(--accent-cyan))" />
+        </linearGradient>
+      </defs>
+      <path d="M12 8V4H8" />
+      <rect width="16" height="12" x="4" y="8" rx="2" />
+      <path d="M2 14h2" />
+      <path d="M20 14h2" />
+      <path d="M15 13v2" />
+      <path d="M9 13v2" />
+    </svg>
+  );
+};
 
 export type HubMediaTab = "IMAGE" | "VIDEO" | "AGENT";
 
@@ -82,25 +121,11 @@ export const GenerationModeIconToggle: React.FC<{
             : "text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
         )}
       >
-        <Bot className="h-3.5 w-3.5" strokeWidth={2} />
-      </button>
-      <button
-        type="button"
-        role="tab"
-        aria-selected={activeTab === "AGENT"}
-        title={t("intelligenceHub.agentChatTab")}
-        onClick={() => {
-          onTabChange("AGENT");
-          onModeToggle(false);
-        }}
-        className={cn(
-          "flex h-7 w-7 items-center justify-center rounded-[5px] transition-colors",
-          activeTab === "AGENT"
-            ? "bg-accent-pink text-foreground shadow-sm"
-            : "text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
-        )}
-      >
-        <MessageSquare className="h-3.5 w-3.5" strokeWidth={2} />
+        <span className="relative inline-flex h-4 w-4 items-center justify-center">
+          {/* 粉青渐变柔光背景 */}
+          <span className="absolute -inset-1 rounded-full bg-gradient-to-br from-accent-pink/30 to-accent-cyan/30 blur-[6px] animate-pulse" />
+          <BotGradientIcon />
+        </span>
       </button>
     </div>
   );

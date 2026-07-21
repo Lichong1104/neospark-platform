@@ -74,6 +74,7 @@ import {
 import type { VideoResolution } from "@/types/video";
 import type { GptImageQuality } from "./ImageGenerationParams";
 import type { UploadedRef } from "@/lib/landingRequest";
+import MessageVideoTaskList from "./MessageVideoTaskList";
 
 type StatusType =
   | "ecommerce"
@@ -228,12 +229,14 @@ const AGENT_DEFS = [
 
 type StandardGenHistoryItem = {
   id: string;
+  messageId: string;
   prompt: string;
   originalPrompt?: string;
   optimizedPrompt?: string;
   images: { url: string; local_path: string }[];
   cost: number | null;
   createdAt: number;
+  video_tasks?: import("@/types/video").VideoTaskSummary[];
 };
 
 const useAgents = () => {
@@ -334,6 +337,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
   } | null>(null);
   const batchAbortRef = useRef(false);
   const generateAbortRef = useRef(false);
+  const pendingMessageIdRef = useRef<string>("");
   const [standardGenHistory, setStandardGenHistory] = useState<
     StandardGenHistoryItem[]
   >([]);
@@ -396,6 +400,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
             typeof crypto !== "undefined" && crypto.randomUUID
               ? crypto.randomUUID()
               : `gen-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+          messageId: pendingMessageIdRef.current,
           prompt: promptText,
           originalPrompt: pendingStandardPrompt?.original,
           optimizedPrompt: pendingStandardPrompt?.optimized,
@@ -930,6 +935,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
       }
 
       const res = await drawingApi.generateImage(sid, params);
+      pendingMessageIdRef.current = res.message_id;
 
       if (generateAbortRef.current) {
         setIsStandardGenerating(false);
@@ -1008,6 +1014,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
             modelsConfig={modelsConfig}
             isGenerating={isStandardGenerating}
             standardGenHistory={standardGenHistory}
+            setStandardGenHistory={setStandardGenHistory}
             pendingStandardPrompt={pendingStandardPrompt}
             onAspectRatioChange={setAspectRatio}
             onResolutionChange={setResolution}
@@ -1076,6 +1083,9 @@ interface ChatViewProps {
   modelsConfig: ModelsConfigMap | null;
   isGenerating: boolean;
   standardGenHistory: StandardGenHistoryItem[];
+  setStandardGenHistory: React.Dispatch<
+    React.SetStateAction<StandardGenHistoryItem[]>
+  >;
   pendingStandardPrompt: {
     original: string;
     used: string;
@@ -1126,6 +1136,7 @@ const ChatView: React.FC<ChatViewProps> = ({
   modelsConfig,
   isGenerating,
   standardGenHistory,
+  setStandardGenHistory,
   pendingStandardPrompt,
   onAspectRatioChange,
   onResolutionChange,
@@ -1334,6 +1345,22 @@ const ChatView: React.FC<ChatViewProps> = ({
                   {t("agentResponse.modify")}
                 </button>
               </div>
+              {entry.messageId && (
+                <MessageVideoTaskList
+                  messageId={entry.messageId}
+                  role="agent"
+                  status="completed"
+                  images={entry.images}
+                  videoTasks={entry.video_tasks}
+                  onChange={(tasks) =>
+                    setStandardGenHistory((prev) =>
+                      prev.map((e) =>
+                        e.id === entry.id ? { ...e, video_tasks: tasks } : e
+                      )
+                    )
+                  }
+                />
+              )}
             </div>
           ))}
 

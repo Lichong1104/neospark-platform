@@ -17,6 +17,8 @@ import type {
   DeleteSessionParams,
   BillingHistoryParams,
   BillingHistoryData,
+  GenerateVideoFromMessageParams,
+  GenerateVideoFromMessageResponse,
 } from "@/types/drawing";
 import type { ApiResponse } from "@/types/common";
 
@@ -103,6 +105,20 @@ export async function getMessageStatus(messageId: string): Promise<MessageStatus
 }
 
 /**
+ * 基于已完成的绘画消息生成视频
+ */
+export async function generateVideoFromMessage(
+  messageId: string,
+  params: GenerateVideoFromMessageParams
+): Promise<GenerateVideoFromMessageResponse> {
+  const res = await http.post<GenerateVideoFromMessageResponse>(
+    `/drawing/messages/${messageId}/generate-video`,
+    params
+  );
+  return res.data ?? (res as unknown as GenerateVideoFromMessageResponse);
+}
+
+/**
  * 修改会话标题
  */
 export async function updateSessionTitle(
@@ -165,6 +181,7 @@ const drawingApi = {
   generateBatch,
   generateMultiRef,
   getMessageStatus,
+  generateVideoFromMessage,
   updateSessionTitle,
   deleteSession,
   getBillingHistory,
