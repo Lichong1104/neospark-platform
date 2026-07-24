@@ -28,22 +28,22 @@ const getVideoFullUrl = (url: string) => {
 const isTerminalStatus = (status?: VideoTaskStatus | "idle") =>
   status === "completed" || status === "failed" || status === "cancelled";
 
-interface MessageVideoTaskListProps {
+interface GenerateVideoButtonProps {
   messageId: string;
   role: "user" | "agent";
   status?: string;
   images?: { url: string; local_path: string }[];
-  videoTasks?: VideoTaskSummary[];
-  onChange?: (tasks: VideoTaskSummary[]) => void;
+  onCreated: (task: VideoTaskSummary) => void;
+  className?: string;
 }
 
-const MessageVideoTaskList: React.FC<MessageVideoTaskListProps> = ({
+const GenerateVideoButton: React.FC<GenerateVideoButtonProps> = ({
   messageId,
   role,
   status,
   images,
-  videoTasks = [],
-  onChange,
+  onCreated,
+  className,
 }) => {
   const { t } = useTranslation();
   const [isCreating, setIsCreating] = useState(false);
@@ -77,7 +77,7 @@ const MessageVideoTaskList: React.FC<MessageVideoTaskListProps> = ({
         created_at: res.created_at,
         source_message_id: res.source_message_id ?? messageId,
       };
-      onChange?.([...videoTasks, optimistic]);
+      onCreated(optimistic);
       toast.info(
         t("video.taskCreated", {
           cost: res.pricing?.estimated_cost ?? "?",
@@ -114,6 +114,52 @@ const MessageVideoTaskList: React.FC<MessageVideoTaskListProps> = ({
     }
   };
 
+  if (!canGenerate) return null;
+
+  return (
+    <button
+      type="button"
+      onClick={handleGenerate}
+      disabled={isCreating}
+      className={cn(
+        "inline-flex items-center gap-1.5 border-brutal border-foreground font-bold uppercase brutal-press transition-none",
+        isCreating
+          ? "bg-muted text-muted-foreground cursor-not-allowed"
+          : "bg-accent-purple text-foreground hover:brightness-110",
+        className
+      )}
+    >
+      {isCreating ? (
+        <Loader2 className="h-3 w-3 animate-spin" />
+      ) : (
+        <Video className="h-3 w-3" />
+      )}
+      {t("video.generate", { defaultValue: "生成视频" })}
+    </button>
+  );
+};
+
+interface MessageVideoTaskListProps {
+  messageId: string;
+  role: "user" | "agent";
+  status?: string;
+  images?: { url: string; local_path: string }[];
+  videoTasks?: VideoTaskSummary[];
+  onChange?: (tasks: VideoTaskSummary[]) => void;
+  hideGenerateButton?: boolean;
+  className?: string;
+}
+
+const MessageVideoTaskList: React.FC<MessageVideoTaskListProps> = ({
+  messageId,
+  role,
+  status,
+  images,
+  videoTasks = [],
+  onChange,
+  hideGenerateButton = false,
+  className,
+}) => {
   const handleTaskUpdate = (updated: VideoTaskSummary) => {
     onChange?.(videoTasks.map((t) => (t.task_id === updated.task_id ? updated : t)));
   };
@@ -128,26 +174,16 @@ const MessageVideoTaskList: React.FC<MessageVideoTaskListProps> = ({
   };
 
   return (
-    <div className="mt-3 space-y-2">
-      {canGenerate && (
-        <button
-          type="button"
-          onClick={handleGenerate}
-          disabled={isCreating}
-          className={cn(
-            "inline-flex items-center gap-1.5 border-brutal border-foreground px-2.5 py-1.5 text-[10px] font-bold uppercase brutal-press transition-none",
-            isCreating
-              ? "bg-muted text-muted-foreground cursor-not-allowed"
-              : "bg-accent-purple text-foreground hover:brightness-110"
-          )}
-        >
-          {isCreating ? (
-            <Loader2 className="h-3 w-3 animate-spin" />
-          ) : (
-            <Video className="h-3 w-3" />
-          )}
-          {t("video.generate", { defaultValue: "生成视频" })}
-        </button>
+    <div className={cn("mt-3 space-y-2", className)}>
+      {!hideGenerateButton && (
+        <GenerateVideoButton
+          messageId={messageId}
+          role={role}
+          status={status}
+          images={images}
+          onCreated={(task) => onChange?.([...videoTasks, task])}
+          className="px-2.5 py-1.5 text-[10px]"
+        />
       )}
       {videoTasks.map((task) => (
         <VideoTaskItem
@@ -285,4 +321,5 @@ const VideoTaskItem: React.FC<VideoTaskItemProps> = ({
   );
 };
 
+export { GenerateVideoButton };
 export default MessageVideoTaskList;

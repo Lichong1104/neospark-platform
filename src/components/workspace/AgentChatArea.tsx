@@ -49,7 +49,7 @@ import {
 } from "@/types/drawing";
 import type { VideoTaskSummary } from "@/types/video";
 import type { CanvasImage } from "./CanvasArea";
-import MessageVideoTaskList from "./MessageVideoTaskList";
+import MessageVideoTaskList, { GenerateVideoButton } from "./MessageVideoTaskList";
 
 type StatusType =
   | "ecommerce"
@@ -1590,36 +1590,16 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
                 ) : message.isEcommercePreview &&
                   message.status === "completed" &&
                   message.images ? (
-                  <>
-                    <EcommercePreviewGrid
-                      previewImage={message.images[0] ?? null}
-                      cost={message.cost}
-                      onRegenerate={handleEcommerceRegeneratePreview}
-                      onConfirm={() => handleEcommerceConfirmPreview(message)}
-                      onModify={handleEcommerceModify}
-                      onPreviewLoaded={() => scrollToBottom("smooth")}
-                      agentColor={currentAgent.color}
-                      agentIcon={currentAgent.icon}
-                    />
-                    {getBackendMessageId(message) && (
-                      <MessageVideoTaskList
-                        messageId={getBackendMessageId(message)!}
-                        role={message.role}
-                        status={message.status}
-                        images={message.images}
-                        videoTasks={message.video_tasks}
-                        onChange={(tasks) =>
-                          setMessages((prev) =>
-                            prev.map((m) =>
-                              m.id === message.id
-                                ? { ...m, video_tasks: tasks }
-                                : m
-                            )
-                          )
-                        }
-                      />
-                    )}
-                  </>
+                  <EcommercePreviewGrid
+                    previewImage={message.images[0] ?? null}
+                    cost={message.cost}
+                    onRegenerate={handleEcommerceRegeneratePreview}
+                    onConfirm={() => handleEcommerceConfirmPreview(message)}
+                    onModify={handleEcommerceModify}
+                    onPreviewLoaded={() => scrollToBottom("smooth")}
+                    agentColor={currentAgent.color}
+                    agentIcon={currentAgent.icon}
+                  />
                 ) : message.isEcommerceFinalAdded &&
                   message.status === "completed" ? (
                   <ChatMessageBlock
@@ -1636,31 +1616,54 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
                     >
                       {message.content}
                     </p>
-                    <button
-                      onClick={() =>
-                        handleDownloadEcommerceImages(
-                          message.images ?? [],
-                          message.message_id
-                        )
-                      }
-                      disabled={
-                        !message.images ||
-                        message.images.length === 0 ||
-                        downloadingMessageId === message.message_id
-                      }
-                      className="flex items-center gap-1.5 border-brutal border-foreground bg-accent-cyan px-3 py-2 text-xs font-bold hover:brightness-110 brutal-press disabled:opacity-50"
-                    >
-                      {downloadingMessageId === message.message_id ? (
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                      ) : (
-                        <Download className="h-3 w-3" />
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        onClick={() =>
+                          handleDownloadEcommerceImages(
+                            message.images ?? [],
+                            message.message_id
+                          )
+                        }
+                        disabled={
+                          !message.images ||
+                          message.images.length === 0 ||
+                          downloadingMessageId === message.message_id
+                        }
+                        className="inline-flex items-center gap-1.5 border-brutal border-foreground bg-accent-cyan px-3 py-2 text-xs font-bold hover:brightness-110 brutal-press disabled:opacity-50 transition-none"
+                      >
+                        {downloadingMessageId === message.message_id ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Download className="h-3 w-3" />
+                        )}
+                        {downloadingMessageId === message.message_id
+                          ? t("ecommerceAgent.downloading", {
+                              defaultValue: "Downloading...",
+                            })
+                          : t("ecommerceAgent.downloadAll")}
+                      </button>
+                      {getBackendMessageId(message) && (
+                        <GenerateVideoButton
+                          messageId={getBackendMessageId(message)!}
+                          role={message.role}
+                          status={message.status}
+                          images={message.images}
+                          onCreated={(task) =>
+                            setMessages((prev) =>
+                              prev.map((m) =>
+                                m.id === message.id
+                                  ? {
+                                      ...m,
+                                      video_tasks: [...(m.video_tasks ?? []), task],
+                                    }
+                                  : m
+                              )
+                            )
+                          }
+                          className="px-3 py-2 text-xs"
+                        />
                       )}
-                      {downloadingMessageId === message.message_id
-                        ? t("ecommerceAgent.downloading", {
-                            defaultValue: "Downloading...",
-                          })
-                        : t("ecommerceAgent.downloadAll")}
-                    </button>
+                    </div>
                     {getBackendMessageId(message) && (
                       <MessageVideoTaskList
                         messageId={getBackendMessageId(message)!}
@@ -1677,6 +1680,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
                             )
                           )
                         }
+                        hideGenerateButton
                       />
                     )}
                   </ChatMessageBlock>
