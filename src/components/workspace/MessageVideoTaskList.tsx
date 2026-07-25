@@ -36,6 +36,14 @@ const VIDEO_RATIO_ORDER = ["16:9", "4:3", "1:1", "3:4", "9:16", "21:9"] as const
 const VIDEO_DURATION_OPTIONS = ["4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"];
 const VIDEO_RESOLUTION_OPTIONS: VideoResolution[] = ["480p", "720p", "1080p", "2k"];
 
+const getVideoFullUrl = (url: string) => {
+  if (!url) return url;
+  return url.startsWith("http") ? url : `${STATIC_BASE_URL}${url}`;
+};
+
+const isTerminalStatus = (status?: VideoTaskStatus | "idle") =>
+  status === "completed" || status === "failed" || status === "cancelled";
+
 const ChipSelect: React.FC<{
   options: { value: string; label: string }[];
   value: string;
