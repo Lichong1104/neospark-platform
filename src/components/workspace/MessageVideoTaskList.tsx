@@ -1,14 +1,26 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Video, Loader2, AlertCircle } from "lucide-react";
+import { Video, Loader2, AlertCircle, Volume2, VolumeX } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import drawingApi from "@/api/drawing";
+import videoApi from "@/api/video";
 import { STATIC_BASE_URL } from "@/api/request";
 import { useVideoTaskPolling } from "@/hooks/useVideoTaskPolling";
 import { getErrorMessage } from "@/lib/errorMessage";
-import type { VideoTaskSummary, VideoTaskStatus } from "@/types/video";
+import type {
+  VideoTaskSummary,
+  VideoTaskStatus,
+  VideoResolution,
+  VideoModelConfig,
+} from "@/types/video";
 import type { GenerateVideoFromMessageParams } from "@/types/drawing";
 
 const VIDEO_DEFAULTS: GenerateVideoFromMessageParams = {
@@ -20,13 +32,33 @@ const VIDEO_DEFAULTS: GenerateVideoFromMessageParams = {
   watermark: false,
 };
 
-const getVideoFullUrl = (url: string) => {
-  if (!url) return url;
-  return url.startsWith("http") ? url : `${STATIC_BASE_URL}${url}`;
-};
+const VIDEO_RATIO_ORDER = ["16:9", "4:3", "1:1", "3:4", "9:16", "21:9"] as const;
+const VIDEO_DURATION_OPTIONS = ["4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"];
+const VIDEO_RESOLUTION_OPTIONS: VideoResolution[] = ["480p", "720p", "1080p", "2k"];
 
-const isTerminalStatus = (status?: VideoTaskStatus | "idle") =>
-  status === "completed" || status === "failed" || status === "cancelled";
+const ChipSelect: React.FC<{
+  options: { value: string; label: string }[];
+  value: string;
+  onChange: (v: string) => void;
+}> = ({ options, value, onChange }) => (
+  <div className="flex flex-wrap gap-1.5">
+    {options.map((option) => (
+      <button
+        key={option.value}
+        type="button"
+        onClick={() => onChange(option.value)}
+        className={cn(
+          "px-3 py-1.5 text-[11px] font-mono border transition-none",
+          value === option.value
+            ? "bg-accent-yellow text-foreground border-foreground brutal-shadow-yellow"
+            : "bg-background text-muted-foreground border-foreground/20 hover:bg-secondary hover:text-foreground"
+        )}
+      >
+        {option.label}
+      </button>
+    ))}
+  </div>
+);
 
 interface GenerateVideoButtonProps {
   messageId: string;
@@ -46,7 +78,41 @@ const GenerateVideoButton: React.FC<GenerateVideoButtonProps> = ({
   className,
 }) => {
   const { t } = useTranslation();
+  const [isOpen, setIsOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [modelOptions, setModelOptions] = useState<VideoModelConfig[]>([
+    { id: "seedance-2.0", name: "Seedance 2.0", price_per_second: 0 },
+  ]);
+
+  const [model, setModel] = useState(VIDEO_DEFAULTS.model ?? "seedance-2.0");
+  const [ratio, setRatio] = useState(VIDEO_DEFAULTS.ratio ?? "16:9");
+  const [duration, setDuration] = useState(String(VIDEO_DEFAULTS.duration ?? 5));
+  const [resolution, setResolution] = useState<VideoResolution>(
+    (VIDEO_DEFAULTS.resolution as VideoResolution) ?? "720p"
+  );
+  const [generateAudio, setGenerateAudio] = useState(
+    VIDEO_DEFAULTS.generate_audio ?? false
+  );
+  const [watermark, setWatermark] = useState(VIDEO_DEFAULTS.watermark ?? false);
+
+  useEffect(() => {
+    let cancelled = false;
+    videoApi
+      .getVideoModels()
+      .then((data) => {
+        if (cancelled) return;
+        if (data.models?.length) {
+          setModelOptions(data.models);
+          setModel((prev) =>
+            data.models.some((m) => m.id === prev) ? prev : data.models[0].id
+          );
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const canGenerate =
     role === "agent" &&
@@ -54,14 +120,24 @@ const GenerateVideoButton: React.FC<GenerateVideoButtonProps> = ({
     Array.isArray(images) &&
     images.length > 0;
 
-  const handleGenerate = async () => {
+  const handleOpen = () => {
+    if (!canGenerate) return;
+    setIsOpen(true);
+  };
+
+  const handleConfirm = async () => {
     if (!canGenerate || isCreating) return;
     setIsCreating(true);
     try {
-      const res = await drawingApi.generateVideoFromMessage(
-        messageId,
-        VIDEO_DEFAULTS
-      );
+      const params: GenerateVideoFromMessageParams = {
+        model,
+        duration: Number(duration),
+        ratio,
+        resolution,
+        generate_audio: generateAudio,
+        watermark,
+      };
+      const res = await drawingApi.generateVideoFromMessage(messageId, params);
       const optimistic: VideoTaskSummary = {
         task_id: res.task_id,
         external_task_id: res.external_task_id,
@@ -71,13 +147,14 @@ const GenerateVideoButton: React.FC<GenerateVideoButtonProps> = ({
         duration: res.duration,
         ratio: res.ratio,
         resolution: res.resolution,
-        generate_audio: VIDEO_DEFAULTS.generate_audio,
-        watermark: VIDEO_DEFAULTS.watermark,
+        generate_audio: params.generate_audio,
+        watermark: params.watermark,
         estimated_cost: res.pricing?.estimated_cost,
         created_at: res.created_at,
         source_message_id: res.source_message_id ?? messageId,
       };
       onCreated(optimistic);
+      setIsOpen(false);
       toast.info(
         t("video.taskCreated", {
           cost: res.pricing?.estimated_cost ?? "?",
@@ -117,27 +194,163 @@ const GenerateVideoButton: React.FC<GenerateVideoButtonProps> = ({
   if (!canGenerate) return null;
 
   return (
-    <button
-      type="button"
-      onClick={handleGenerate}
-      disabled={isCreating}
-      className={cn(
-        "inline-flex items-center gap-1.5 border-brutal border-foreground font-bold uppercase brutal-press transition-none",
-        isCreating
-          ? "bg-muted text-muted-foreground cursor-not-allowed"
-          : "bg-accent-purple text-foreground hover:brightness-110",
-        className
-      )}
-    >
-      {isCreating ? (
-        <Loader2 className="h-3 w-3 animate-spin" />
-      ) : (
-        <Video className="h-3 w-3" />
-      )}
-      {t("video.generate", { defaultValue: "生成视频" })}
-    </button>
+    <>
+      <button
+        type="button"
+        onClick={handleOpen}
+        disabled={isCreating}
+        className={cn(
+          "inline-flex items-center gap-1.5 border-brutal border-foreground font-bold uppercase brutal-press transition-none",
+          isCreating
+            ? "bg-muted text-muted-foreground cursor-not-allowed"
+            : "bg-accent-purple text-foreground hover:brightness-110",
+          className
+        )}
+      >
+        {isCreating ? (
+          <Loader2 className="h-3 w-3 animate-spin" />
+        ) : (
+          <Video className="h-3 w-3" />
+        )}
+        {t("video.generate", { defaultValue: "生成视频" })}
+      </button>
+
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="sm:max-w-md border-brutal border-foreground">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold uppercase tracking-wider">
+              {t("video.generate", { defaultValue: "生成视频" })}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 pt-2">
+            <section className="border-brutal border-foreground bg-card brutal-shadow">
+              <div className="px-3 py-2 border-b border-foreground/15">
+                <span className="text-[10px] font-bold uppercase text-muted-foreground">
+                  {t("video.model")}
+                </span>
+              </div>
+              <div className="p-2.5">
+                <select
+                  value={model}
+                  onChange={(e) => setModel(e.target.value)}
+                  className="w-full px-2.5 py-2 text-[11px] font-mono border border-foreground/20 bg-background focus:outline-none focus:border-accent-purple"
+                >
+                  {modelOptions.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </section>
+
+            <section className="border-brutal border-foreground bg-card brutal-shadow">
+              <div className="px-3 py-2 border-b border-foreground/15">
+                <span className="text-[10px] font-bold uppercase text-muted-foreground">
+                  {t("video.ratio")} · {t("video.duration")} · {t("video.resolution")}
+                </span>
+              </div>
+              <div className="p-2.5 space-y-3">
+                <div className="flex items-start gap-3">
+                  <span className="text-[10px] font-bold uppercase text-muted-foreground w-16 shrink-0 pt-1">
+                    {t("video.ratio")}
+                  </span>
+                  <ChipSelect
+                    options={VIDEO_RATIO_ORDER.map((r) => ({ value: r, label: r }))}
+                    value={ratio}
+                    onChange={setRatio}
+                  />
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="text-[10px] font-bold uppercase text-muted-foreground w-16 shrink-0 pt-1">
+                    {t("video.duration")}
+                  </span>
+                  <ChipSelect
+                    options={VIDEO_DURATION_OPTIONS.map((d) => ({ value: d, label: `${d}s` }))}
+                    value={duration}
+                    onChange={setDuration}
+                  />
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="text-[10px] font-bold uppercase text-muted-foreground w-16 shrink-0 pt-1">
+                    {t("video.resolution")}
+                  </span>
+                  <ChipSelect
+                    options={VIDEO_RESOLUTION_OPTIONS.map((r) => ({ value: r, label: r }))}
+                    value={resolution}
+                    onChange={(v) => setResolution(v as VideoResolution)}
+                  />
+                </div>
+              </div>
+            </section>
+
+            <section className="border-brutal border-foreground bg-card brutal-shadow">
+              <div className="p-2.5 flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => setGenerateAudio(!generateAudio)}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-2 text-[11px] font-bold uppercase border border-foreground/20 transition-none",
+                    generateAudio
+                      ? "bg-accent-cyan/15 text-foreground border-accent-cyan/40"
+                      : "bg-background text-muted-foreground"
+                  )}
+                >
+                  {generateAudio ? (
+                    <Volume2 className="w-3.5 h-3.5" />
+                  ) : (
+                    <VolumeX className="w-3.5 h-3.5" />
+                  )}
+                  {generateAudio ? t("video.audioOn") : t("video.audioOff")}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setWatermark(!watermark)}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-2 text-[11px] font-bold uppercase border border-foreground/20 transition-none",
+                    watermark
+                      ? "bg-accent-orange/15 text-foreground border-accent-orange/40"
+                      : "bg-background text-muted-foreground"
+                  )}
+                >
+                  {watermark ? t("video.watermarkOn") : t("video.watermarkOff")}
+                </button>
+              </div>
+            </section>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                disabled={isCreating}
+                className="px-3 py-2 text-xs font-bold uppercase border-brutal border-foreground bg-card hover:bg-secondary transition-none disabled:opacity-50"
+              >
+                {t("common.cancel", { defaultValue: "取消" })}
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirm}
+                disabled={isCreating}
+                className={cn(
+                  "px-3 py-2 text-xs font-bold uppercase border-brutal border-foreground brutal-press transition-none flex items-center gap-1.5",
+                  isCreating
+                    ? "bg-muted text-muted-foreground cursor-not-allowed"
+                    : "bg-accent-purple text-foreground hover:brightness-110"
+                )}
+              >
+                {isCreating && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                {t("video.generate", { defaultValue: "生成视频" })}
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
+
 
 interface MessageVideoTaskListProps {
   messageId: string;
