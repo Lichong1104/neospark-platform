@@ -129,7 +129,10 @@ export interface GenerateImageParams {
 /** 电商批量出图（第二阶段） */
 export interface GenerateBatchParams {
   assistant_message_id: string;
-  ref_upload_id: string;
+  /** 单张参考图 upload_id（向后兼容） */
+  ref_upload_id?: string;
+  /** 多张参考图 upload_id 列表（需后端支持） */
+  ref_upload_ids?: string[];
   model: string;
   resolution: string;
   aspect_ratio: string;

@@ -671,7 +671,7 @@
     "copy": "Copy"
   },
   "ecommerceAgent": {
-    "greeting": "Hello! I'm your E-Commerce Visual Creative Director. To build a precise brand visual plan, please provide the following (upload 1-2 product reference images):",
+    "greeting": "Hello! I'm your E-Commerce Visual Creative Director. To build a precise brand visual plan, please provide the following (upload 1-3 product reference images):",
     "field1Label": "Product Description",
     "field1Example": "e.g.: Minimalist smart watch",
     "field2Label": "Product Type/Brand Model",
@@ -685,6 +685,7 @@
     "field6Label": "Reference Images",
     "field6Example": "Please paste images for design analysis",
     "imageRequired": "Please paste at least one product reference image",
+    "maxProductRefsReached": "Up to 3 product reference images are supported",
     "pasteImageHint": "Upload, paste, or use the selected canvas image as product reference",
     "inputPlaceholder": "Fill in product details as prompted above...",
     "resultReady": "Visual plan generated. Preview the 3×3 grid below:",

@@ -65,12 +65,15 @@ const ECOMMERCE_GUIDE_VIDEO_URL =
 function getBackendMessageId(message: Message): string | undefined {
   return (
     message.messageId ||
-    message.phase1MessageId ||
-    message.ecommerceBatchMessageIds?.[0]
+    message.ecommerceBatchMessageIds?.[0] ||
+    message.phase1MessageId
   );
 }
 const ECOMMERCE_GUIDE_VIDEO_URL_EN =
   "https://ustrader-73014.oss-us-east-1.aliyuncs.com/ecommerce_listing_en.mp4";
+
+/** 电商模式产品参考图最大数量 */
+const MAX_PRODUCT_REFS = 3;
 
 async function pollMessageUntilTerminal(
   messageId: string,
@@ -107,7 +110,8 @@ interface Message {
   ecommercePhase?: "phase1" | "phase2";
   /** 电商详情页大师：阶段1 generate 返回的 assistant_message_id */
   phase1MessageId?: string;
-  ecommerceRefUploadId?: string;
+  /** 电商详情页大师：阶段1提交时的参考图 upload_id 列表 */
+  ecommerceRefUploadIds?: string[];
   ecommercePrompt?: string;
   /** 阶段2最终结果已添加到画布 */
   isEcommerceFinalAdded?: boolean;
@@ -531,7 +535,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [pastedPreviews, setPastedPreviews] = useState<string[]>([]);
   const [pastedPaths, setPastedPaths] = useState<string[]>([]);
-  /** 电商模式：产品参考图（粘贴/上传/画布），最多选 2 张；后端接口只需要其一的 ref_upload_id */
+  /** 电商模式：产品参考图（粘贴/上传/画布），最多选 MAX_PRODUCT_REFS 张 */
   const [productRefs, setProductRefs] = useState<
     { preview: string; uploadId: string }[]
   >([]);
@@ -547,7 +551,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const lastEcommerceCtxRef = useRef<{
-    refUploadId: string;
+    refUploadIds: string[];
     prompt: string;
     phase1MessageId?: string;
   } | null>(null);
@@ -763,12 +767,16 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
 
   const uploadProductFile = useCallback(
     async (file: File) => {
+      if (productRefs.length >= MAX_PRODUCT_REFS) {
+        toast.info(t("ecommerceAgent.maxProductRefsReached"));
+        return;
+      }
       setIsUploadingPaste(true);
       try {
         const preview = URL.createObjectURL(file);
         const res = await storageApi.uploadFile(file, "image");
         setProductRefs((prev) => {
-          if (prev.length >= 2) return prev;
+          if (prev.length >= MAX_PRODUCT_REFS) return prev;
           return [...prev, { preview, uploadId: res.upload_id }];
         });
         toast.success(t("intelligenceHub.imagePasted"));
@@ -778,11 +786,15 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
         setIsUploadingPaste(false);
       }
     },
-    [t]
+    [t, productRefs]
   );
 
   const handlePaste = useCallback(
     (e: React.ClipboardEvent) => {
+      if (isEcommerce && productRefs.length >= MAX_PRODUCT_REFS) {
+        toast.info(t("ecommerceAgent.maxProductRefsReached"));
+        return;
+      }
       const items = e.clipboardData?.items;
       if (!items) return;
       for (const item of Array.from(items)) {
@@ -801,11 +813,12 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
         }
       }
     },
-    [t, isEcommerce, uploadProductFile]
+    [t, isEcommerce, uploadProductFile, productRefs]
   );
 
   const handleProductFilePick = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files ? Array.from(e.target.files).slice(0, 2) : [];
+    const remainingSlots = Math.max(0, MAX_PRODUCT_REFS - productRefs.length);
+    const files = e.target.files ? Array.from(e.target.files).slice(0, remainingSlots) : [];
     for (const file of files) {
       if (file.type.startsWith("image/")) void uploadProductFile(file);
     }
@@ -856,7 +869,9 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
     }
 
     const userContent = inputValue.trim();
-    const ecommerceRefUploadId = isEcommerce ? productRefs[0]!.uploadId : null;
+    const ecommerceRefUploadIds = isEcommerce
+      ? productRefs.map((p) => p.uploadId)
+      : null;
     setLastUserContent(userContent);
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -899,8 +914,8 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
       };
       setMessages((prev) => [...prev, agentMessage]);
 
-      const refUploadId = ecommerceRefUploadId!;
-      lastEcommerceCtxRef.current = { refUploadId, prompt: userContent };
+      const refUploadIds = ecommerceRefUploadIds!;
+      lastEcommerceCtxRef.current = { refUploadIds, prompt: userContent };
       setEcommerceBatchProgress(null);
 
       void (async () => {
@@ -919,7 +934,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
               currentModelConfig?.provider ??
               (model.startsWith("gemini") ? "gemini" : "tengda"),
             optimize_prompt: true,
-            ref_upload_id: refUploadId,
+            ref_upload_ids: refUploadIds,
             strength: 0.7,
             type: 1,
           };
@@ -941,7 +956,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
 
           const previewImg = phase1.images[0];
           lastEcommerceCtxRef.current = {
-            refUploadId,
+            refUploadIds,
             prompt: userContent,
             phase1MessageId: phase1Res.message_id,
           };
@@ -958,7 +973,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
                     isEcommercePreview: true,
                     ecommercePhase: undefined,
                     phase1MessageId: phase1Res.message_id,
-                    ecommerceRefUploadId: refUploadId,
+                    ecommerceRefUploadIds: refUploadIds,
                     ecommercePrompt: userContent,
                     isEcommerceResult: false,
                     isEcommerceFinalAdded: false,
@@ -1093,7 +1108,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
             currentModelConfig?.provider ??
             (model.startsWith("gemini") ? "gemini" : "tengda"),
           optimize_prompt: true,
-          ref_upload_id: ctx.refUploadId,
+          ref_upload_ids: ctx.refUploadIds,
           strength: 0.7,
           type: 1,
         };
@@ -1112,7 +1127,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
         }
 
         lastEcommerceCtxRef.current = {
-          refUploadId: ctx.refUploadId,
+          refUploadIds: ctx.refUploadIds,
           prompt: ctx.prompt,
           phase1MessageId: phase1Res.message_id,
         };
@@ -1128,7 +1143,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
                   isEcommercePreview: true,
                   ecommercePhase: undefined,
                   phase1MessageId: phase1Res.message_id,
-                  ecommerceRefUploadId: ctx.refUploadId,
+                  ecommerceRefUploadIds: ctx.refUploadIds,
                   ecommercePrompt: ctx.prompt,
                   isEcommerceResult: false,
                   isEcommerceFinalAdded: false,
@@ -1180,9 +1195,10 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
   };
 
   const handleEcommerceConfirmPreview = async (targetMessage: Message) => {
-    const refUploadId =
-      targetMessage.ecommerceRefUploadId ||
-      lastEcommerceCtxRef.current?.refUploadId;
+    const refUploadIds =
+      targetMessage.ecommerceRefUploadIds ||
+      lastEcommerceCtxRef.current?.refUploadIds;
+    const refUploadId = refUploadIds?.[0];
     const phase1MessageId =
       targetMessage.phase1MessageId ||
       lastEcommerceCtxRef.current?.phase1MessageId;

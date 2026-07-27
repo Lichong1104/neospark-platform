@@ -671,7 +671,7 @@
     "copy": "复制"
   },
   "ecommerceAgent": {
-    "greeting": "您好！我是您的电商视觉创意总监。为了精准构建品牌视觉方案，请提供以下信息（建议上传 1-2 张产品参考图）：",
+    "greeting": "您好！我是您的电商视觉创意总监。为了精准构建品牌视觉方案，请提供以下信息（建议上传 1-3 张产品参考图）：",
     "field1Label": "产品描述",
     "field1Example": "如：极简风格智能手表",
     "field2Label": "产品类型/品牌型号",
@@ -685,6 +685,7 @@
     "field6Label": "参考图片",
     "field6Example": "请粘贴图片以便我分析工业设计细节",
     "imageRequired": "请至少粘贴一张产品参考图片",
+    "maxProductRefsReached": "最多支持 3 张产品参考图",
     "pasteImageHint": "请上传、粘贴或使用画布中的图片作为产品参考图",
     "inputPlaceholder": "请按照上方提示填写产品信息...",
     "resultReady": "视觉方案已生成，请查看以下预览图：",
