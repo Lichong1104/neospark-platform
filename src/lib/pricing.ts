@@ -57,6 +57,7 @@ const getVideoTokenCostMultiplier = (model: string): number => {
 const OMNI_PRICE_PER_SECOND: Record<string, number> = {
   "omni-fast": 15,
   "omni-fast-v2v": 18,
+  "gemini-omni-flash-preview": 15,
 };
 
 const USD_TO_CREDITS = 274;

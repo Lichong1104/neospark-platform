@@ -352,7 +352,7 @@ export const LandingComposer: React.FC<{
   const [imageConfigLoaded, setImageConfigLoaded] = useState(false);
 
   // ---- 视频参数 ----
-  const [videoModel, setVideoModel] = useState("seedance-2.0");
+  const [videoModel, setVideoModel] = useState("gemini-omni-flash-preview");
   const [videoRatio, setVideoRatio] = useState("16:9");
   const [videoDuration, setVideoDuration] = useState("5");
   const [videoResolution, setVideoResolution] = useState<VideoResolution>("720p");

@@ -56,7 +56,7 @@ export const CanvasVideoGenCompose: React.FC<{
   const imageSlotPrefix = t("intelligenceHub.canvasImageSlotPrefix");
   const videoSlotPrefix = t("intelligenceHub.canvasVideoSlotPrefix");
   const [prompt, setPrompt] = useState("");
-  const [model, setModel] = useState("seedance-2.0");
+  const [model, setModel] = useState("gemini-omni-flash-preview");
   const [ratio, setRatio] = useState("16:9");
   const [duration, setDuration] = useState("5");
   const [resolution, setResolution] = useState<VideoResolution>("720p");

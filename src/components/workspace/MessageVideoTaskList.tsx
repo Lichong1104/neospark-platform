@@ -24,7 +24,7 @@ import type {
 import type { GenerateVideoFromMessageParams } from "@/types/drawing";
 
 const VIDEO_DEFAULTS: GenerateVideoFromMessageParams = {
-  model: "seedance-2.0",
+  model: "gemini-omni-flash-preview",
   duration: 5,
   ratio: "16:9",
   resolution: "720p",

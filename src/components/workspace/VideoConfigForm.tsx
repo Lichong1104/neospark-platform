@@ -86,8 +86,8 @@ const ChipSelect: React.FC<{
   </div>
 );
 
-/** Omni 模型集合 */
-const OMNI_MODELS = new Set(["omni-fast", "omni-fast-v2v"]);
+/** Omni 模型集合（含 Vertex AI Gemini Omni Flash） */
+const OMNI_MODELS = new Set(["omni-fast", "omni-fast-v2v", "gemini-omni-flash-preview"]);
 const isOmniModel = (model: string) => OMNI_MODELS.has(model);
 
 const VideoConfigForm: React.FC<VideoConfigFormProps> = ({

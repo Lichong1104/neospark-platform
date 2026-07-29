@@ -166,8 +166,8 @@ const pickDurationInOptions = (
   return String(best);
 };
 
-/** Omni 模型常量 */
-const OMNI_MODELS = new Set(["omni-fast", "omni-fast-v2v"]);
+/** Omni 模型常量（含 Vertex AI Gemini Omni Flash） */
+const OMNI_MODELS = new Set(["omni-fast", "omni-fast-v2v", "gemini-omni-flash-preview"]);
 const isOmniModel = (model: string) => OMNI_MODELS.has(model);
 
 /** 获取当前模型允许的最大参考图数量 */
@@ -190,7 +190,7 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
   const videoSlotPrefix = t("intelligenceHub.canvasVideoSlotPrefix");
   const [isCreating, setIsCreating] = useState(false);
   const [prompt, setPrompt] = useState(initialRequest?.prompt ?? "");
-  const [model, setModel] = useState(initialRequest?.model ?? "seedance-2.0");
+  const [model, setModel] = useState(initialRequest?.model ?? "gemini-omni-flash-preview");
   const [ratio, setRatio] = useState(initialRequest?.ratio ?? "16:9");
   const [duration, setDuration] = useState(initialRequest?.duration ?? "5");
   const [resolution, setResolution] = useState<VideoResolution>(
