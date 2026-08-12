@@ -57,10 +57,10 @@ import storageApi from "@/api/storage";
 import { STATIC_BASE_URL } from "@/api/request";
 import { listAiDesignTools, type AiDesignTool } from "@/api/prompts";
 import { DEFAULT_DRAWING_MODEL, type ModelsConfigMap } from "@/types/drawing";
-import type { VideoModelConfig, VideoResolution } from "@/types/video";
+import type { VideoModelConfig, VideoModelsData, VideoResolution } from "@/types/video";
 import type { AgentSkill } from "@/types/agents";
 import {
-  defaultDurationOptions,
+  defaultDurationOptionsForModel,
   mergeDurationOptionsFromApi,
   normalizeVideoRatio,
   pickDurationInOptions,
@@ -357,13 +357,14 @@ export const LandingComposer: React.FC<{
   const [videoDuration, setVideoDuration] = useState("5");
   const [videoResolution, setVideoResolution] = useState<VideoResolution>("720p");
   const [videoModelOptions, setVideoModelOptions] = useState<VideoModelConfig[]>([]);
+  const [videoModelsData, setVideoModelsData] = useState<VideoModelsData | null>(null);
   const [videoRatioOptions, setVideoRatioOptions] = useState<string[]>([
     "16:9",
     "9:16",
     "1:1",
   ]);
   const [videoDurationOptions, setVideoDurationOptions] = useState<string[]>(
-    defaultDurationOptions()
+    defaultDurationOptionsForModel(videoModel)
   );
   const [videoResolutionOptions, setVideoResolutionOptions] = useState<string[]>([
     "720p",
@@ -477,6 +478,7 @@ export const LandingComposer: React.FC<{
     if (mode !== "VIDEO" || videoConfigLoaded) return;
     getVideoModels()
       .then((res) => {
+        setVideoModelsData(res);
         setVideoModelOptions(res.models ?? []);
         if (res.models?.length) {
           setVideoModel((prev) =>
@@ -492,9 +494,6 @@ export const LandingComposer: React.FC<{
               : ratios[0]
           );
         }
-        const durOpts = mergeDurationOptionsFromApi(res.durations);
-        setVideoDurationOptions(durOpts);
-        setVideoDuration((prev) => pickDurationInOptions(prev, durOpts));
         const resList = resolveResolutionList(res.resolutions);
         if (resList.length) {
           setVideoResolutionOptions(resList);
@@ -506,6 +505,29 @@ export const LandingComposer: React.FC<{
       })
       .catch(() => {});
   }, [mode, videoConfigLoaded]);
+
+  // 视频参数随模型切换更新（时长上限、分辨率列表）
+  useEffect(() => {
+    if (!videoModel || !videoModelsData) return;
+    const durOpts = mergeDurationOptionsFromApi(videoModelsData.durations, videoModel);
+    setVideoDurationOptions(durOpts);
+    setVideoDuration((prev) => pickDurationInOptions(prev, durOpts));
+
+    const modelResolutions =
+      videoModelsData.resolutions &&
+      typeof videoModelsData.resolutions === "object" &&
+      !Array.isArray(videoModelsData.resolutions)
+        ? (videoModelsData.resolutions as Record<string, string[]>)[videoModel]
+        : resolveResolutionList(videoModelsData.resolutions);
+    if (modelResolutions?.length) {
+      setVideoResolutionOptions(modelResolutions);
+      setVideoResolution((prev) =>
+        modelResolutions.includes(prev)
+          ? prev
+          : (modelResolutions[0] as VideoResolution)
+      );
+    }
+  }, [videoModel, videoModelsData]);
 
   // Agent 技能：切到 AGENT 时加载一次
   useEffect(() => {

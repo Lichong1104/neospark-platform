@@ -12,7 +12,7 @@ import type { ModelsConfigMap } from "@/types/drawing";
  * 其中 70_000 = 1_000_000 * 0.07（1 元 = 1/0.07 积分）。
  */
 
-// 新版 Seedance 2.0 官方 token 单价（元/百万 tokens），不含视频输入场景
+// 新版 Seedance 2.0 / 2.5 官方 token 单价（元/百万 tokens），不含视频输入场景
 const SEEDANCE_TOKEN_PRICE_PER_MILLION: Record<string, Record<string, number>> = {
   "seedance-2.0": {
     "480p": 46,
@@ -28,6 +28,12 @@ const SEEDANCE_TOKEN_PRICE_PER_MILLION: Record<string, Record<string, number>> =
     "480p": 23,
     "720p": 23,
   },
+  "seedance-2.5": {
+    "480p": 70,
+    "720p": 70,
+    "1080p": 70,
+    "4k": 70,
+  },
 };
 
 // 各分辨率在长边上的基准像素（对应新版 CSV 的 16:9 长边）
@@ -41,12 +47,14 @@ const SEEDANCE_LONG_EDGE_PIXELS: Record<string, number> = {
 // 帧率固定 24fps（与新版 CSV 一致）
 const VIDEO_FRAME_RATE = 24;
 
-// Seedance 2.0 / 2.0-fast 使用更高业务系数（与后端 SEEDANCE_MODELS 保持一致）
+// Seedance 2.0 / 2.0-fast / 2.5 使用更高业务系数（与后端 SEEDANCE_MODELS 保持一致）
 const SEEDANCE_HIGH_MULTIPLIER_MODELS = new Set([
   "seedance-2.0",
   "seedance-2.0-fast",
+  "seedance-2.5",
   "doubao-seedance-2-0-260128",
   "doubao-seedance-2-0-fast-260128",
+  "doubao-seedance-2.5",
 ]);
 
 /** 返回模型对应的 token 成本额外倍数（后端 _get_token_cost_multiplier 保持一致） */
@@ -106,6 +114,7 @@ const applyCompensation = (base: number): number =>
 const normalizeSeedanceModel = (model: string): string => {
   if (model === "doubao-seedance-2-0-260128") return "seedance-2.0";
   if (model === "doubao-seedance-2-0-fast-260128") return "seedance-2.0-fast";
+  if (model === "doubao-seedance-2.5") return "seedance-2.5";
   return model;
 };
 

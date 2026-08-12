@@ -20,11 +20,19 @@ import type {
   VideoTaskStatus,
   VideoResolution,
   VideoModelConfig,
+  VideoModelsData,
 } from "@/types/video";
 import type { GenerateVideoFromMessageParams } from "@/types/drawing";
+import {
+  defaultDurationOptionsForModel,
+  mergeDurationOptionsFromApi,
+  normalizeVideoRatio,
+  pickDurationInOptions,
+  resolveResolutionList,
+} from "@/lib/videoModelUtils";
 
 const VIDEO_DEFAULTS: GenerateVideoFromMessageParams = {
-  model: "gemini-omni-flash-preview",
+  model: "seedance-2.0",
   duration: 5,
   ratio: "16:9",
   resolution: "720p",
@@ -33,8 +41,21 @@ const VIDEO_DEFAULTS: GenerateVideoFromMessageParams = {
 };
 
 const VIDEO_RATIO_ORDER = ["16:9", "4:3", "1:1", "3:4", "9:16", "21:9"] as const;
-const VIDEO_DURATION_OPTIONS = ["4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"];
-const VIDEO_RESOLUTION_OPTIONS: VideoResolution[] = ["480p", "720p", "1080p", "2k"];
+
+const resolveModelResolutions = (
+  resolutions: VideoModelsData["resolutions"],
+  currentModel: string
+): string[] => {
+  if (Array.isArray(resolutions)) return resolutions;
+  if (typeof resolutions === "object" && resolutions !== null) {
+    return (
+      (resolutions as Record<string, string[]>)[currentModel] ||
+      Object.values(resolutions as Record<string, string[]>)[0] ||
+      []
+    );
+  }
+  return [];
+};
 
 const getVideoFullUrl = (url: string) => {
   if (!url) return url;
@@ -91,6 +112,17 @@ const GenerateVideoButton: React.FC<GenerateVideoButtonProps> = ({
   const [modelOptions, setModelOptions] = useState<VideoModelConfig[]>([
     { id: "seedance-2.0", name: "Seedance 2.0", price_per_second: 0 },
   ]);
+  const [videoModelsData, setVideoModelsData] = useState<VideoModelsData | null>(null);
+  const [ratioOptions, setRatioOptions] = useState<string[]>([...VIDEO_RATIO_ORDER]);
+  const [durationOptions, setDurationOptions] = useState<string[]>(
+    defaultDurationOptionsForModel(VIDEO_DEFAULTS.model ?? "seedance-2.0")
+  );
+  const [resolutionOptions, setResolutionOptions] = useState<string[]>([
+    "480p",
+    "720p",
+    "1080p",
+    "2k",
+  ]);
 
   const [model, setModel] = useState(VIDEO_DEFAULTS.model ?? "seedance-2.0");
   const [ratio, setRatio] = useState(VIDEO_DEFAULTS.ratio ?? "16:9");
@@ -109,11 +141,16 @@ const GenerateVideoButton: React.FC<GenerateVideoButtonProps> = ({
       .getVideoModels()
       .then((data) => {
         if (cancelled) return;
+        setVideoModelsData(data);
         if (data.models?.length) {
           setModelOptions(data.models);
           setModel((prev) =>
             data.models.some((m) => m.id === prev) ? prev : data.models[0].id
           );
+        }
+        if (data.ratios?.length) {
+          const ratios = data.ratios.map(normalizeVideoRatio);
+          setRatioOptions(ratios);
         }
       })
       .catch(() => {});
@@ -121,6 +158,23 @@ const GenerateVideoButton: React.FC<GenerateVideoButtonProps> = ({
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!model || !videoModelsData) return;
+    const durOpts = mergeDurationOptionsFromApi(videoModelsData.durations, model);
+    setDurationOptions(durOpts);
+    setDuration((prev) => pickDurationInOptions(prev, durOpts));
+
+    const modelResolutions = resolveModelResolutions(videoModelsData.resolutions, model);
+    if (modelResolutions.length) {
+      setResolutionOptions(modelResolutions);
+      setResolution((prev) =>
+        modelResolutions.includes(prev)
+          ? prev
+          : (modelResolutions[0] as VideoResolution)
+      );
+    }
+  }, [model, videoModelsData]);
 
   const canGenerate =
     role === "agent" &&
@@ -265,7 +319,7 @@ const GenerateVideoButton: React.FC<GenerateVideoButtonProps> = ({
                     {t("video.ratio")}
                   </span>
                   <ChipSelect
-                    options={VIDEO_RATIO_ORDER.map((r) => ({ value: r, label: r }))}
+                    options={ratioOptions.map((r) => ({ value: r, label: r }))}
                     value={ratio}
                     onChange={setRatio}
                   />
@@ -275,7 +329,7 @@ const GenerateVideoButton: React.FC<GenerateVideoButtonProps> = ({
                     {t("video.duration")}
                   </span>
                   <ChipSelect
-                    options={VIDEO_DURATION_OPTIONS.map((d) => ({ value: d, label: `${d}s` }))}
+                    options={durationOptions.map((d) => ({ value: d, label: `${d}s` }))}
                     value={duration}
                     onChange={setDuration}
                   />
@@ -285,7 +339,7 @@ const GenerateVideoButton: React.FC<GenerateVideoButtonProps> = ({
                     {t("video.resolution")}
                   </span>
                   <ChipSelect
-                    options={VIDEO_RESOLUTION_OPTIONS.map((r) => ({ value: r, label: r }))}
+                    options={resolutionOptions.map((r) => ({ value: r, label: r }))}
                     value={resolution}
                     onChange={(v) => setResolution(v as VideoResolution)}
                   />

@@ -23,7 +23,7 @@ import type { CanvasImage } from "./CanvasArea";
 import { InlineCanvasMentionEditor } from "./InlineCanvasMentionEditor";
 import { VideoGenerationParams } from "./VideoGenerationParams";
 import {
-  defaultDurationOptions,
+  defaultDurationOptionsForModel,
   mergeDurationOptionsFromApi,
   normalizeVideoRatio,
   pickDurationInOptions,
@@ -63,8 +63,9 @@ export const CanvasVideoGenCompose: React.FC<{
   const [modelOptions, setModelOptions] = useState<
     VideoModelsData["models"]
   >([]);
+  const [videoModelsData, setVideoModelsData] = useState<VideoModelsData | null>(null);
   const [ratioOptions, setRatioOptions] = useState<string[]>(["16:9", "9:16", "1:1"]);
-  const [durationOptions, setDurationOptions] = useState<string[]>(defaultDurationOptions());
+  const [durationOptions, setDurationOptions] = useState<string[]>(defaultDurationOptionsForModel(model));
   const [resolutionOptions, setResolutionOptions] = useState<string[]>([
     "720p",
     "1080p",
@@ -76,6 +77,7 @@ export const CanvasVideoGenCompose: React.FC<{
   useEffect(() => {
     getVideoModels()
       .then((res) => {
+        setVideoModelsData(res);
         setModelOptions(res.models ?? []);
         if (res.models?.length) {
           setModel(res.models[0].id);
@@ -89,11 +91,6 @@ export const CanvasVideoGenCompose: React.FC<{
               : ratios[0]
           );
         }
-        const durOpts = mergeDurationOptionsFromApi(res.durations);
-        setDurationOptions(durOpts);
-        setDuration(
-          pickDurationInOptions(String(res.durations?.default ?? "5"), durOpts)
-        );
         const resList = resolveResolutionList(res.resolutions);
         if (resList.length) {
           setResolutionOptions(resList);
@@ -102,6 +99,26 @@ export const CanvasVideoGenCompose: React.FC<{
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!model || !videoModelsData) return;
+    const durOpts = mergeDurationOptionsFromApi(videoModelsData.durations, model);
+    setDurationOptions(durOpts);
+    setDuration((prev) => pickDurationInOptions(prev, durOpts));
+
+    const modelResolutions =
+      videoModelsData.resolutions &&
+      typeof videoModelsData.resolutions === "object" &&
+      !Array.isArray(videoModelsData.resolutions)
+        ? (videoModelsData.resolutions as Record<string, string[]>)[model]
+        : resolveResolutionList(videoModelsData.resolutions);
+    if (modelResolutions?.length) {
+      setResolutionOptions(modelResolutions);
+      setResolution((prev) =>
+        modelResolutions.includes(prev) ? prev : (modelResolutions[0] as VideoResolution)
+      );
+    }
+  }, [model, videoModelsData]);
 
   const pollTask = useCallback(
     async (taskId: string) => {

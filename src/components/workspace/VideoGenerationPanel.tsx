@@ -39,6 +39,11 @@ import {
   calculateVideoEstimatedCost,
   formatEstimatedCost,
 } from "@/lib/pricing";
+import {
+  mergeDurationOptionsFromApi,
+  normalizeVideoRatio,
+  pickDurationInOptions,
+} from "@/lib/videoModelUtils";
 
 interface VideoGenerationPanelProps {
   modeToggle?: React.ReactNode;
@@ -120,21 +125,27 @@ const filterAllowedRatiosFromApi = (
 };
 
 const VIDEO_DURATION_MIN = 4;
-const VIDEO_DURATION_MAX = 15;
+const VIDEO_DURATION_MAX = 30;
+const VIDEO_DURATION_MAX_NON_25 = 15;
+
+const getModelMaxDuration = (model: string | undefined): number =>
+  model === "seedance-2.5" ? VIDEO_DURATION_MAX : VIDEO_DURATION_MAX_NON_25;
 
 const defaultDurationOptions = (): string[] =>
-  Array.from({ length: VIDEO_DURATION_MAX - VIDEO_DURATION_MIN + 1 }, (_, i) =>
+  Array.from({ length: VIDEO_DURATION_MAX_NON_25 - VIDEO_DURATION_MIN + 1 }, (_, i) =>
     String(VIDEO_DURATION_MIN + i)
   );
 
-const mergeDurationOptionsFromApi = (
-  d: VideoModelsData["durations"] | undefined
+const mergeDurationOptionsFromApiLocal = (
+  d: VideoModelsData["durations"] | undefined,
+  model?: string
 ): string[] => {
+  const max = getModelMaxDuration(model);
   if (!d) return defaultDurationOptions();
   const min = Number.isFinite(d.min) ? d.min : VIDEO_DURATION_MIN;
-  const max = Number.isFinite(d.max) ? d.max : VIDEO_DURATION_MAX;
+  const apiMax = Number.isFinite(d.max) ? d.max : max;
   const lo = Math.max(VIDEO_DURATION_MIN, Math.ceil(min));
-  const hi = Math.min(VIDEO_DURATION_MAX, Math.floor(max));
+  const hi = Math.min(max, Math.floor(apiMax));
   if (lo > hi) return defaultDurationOptions();
   return Array.from({ length: hi - lo + 1 }, (_, i) => String(lo + i));
 };
@@ -298,7 +309,7 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
               : (modelResolutions[0] as VideoResolution)
           );
         }
-        const durOpts = mergeDurationOptionsFromApi(res.durations);
+        const durOpts = mergeDurationOptionsFromApiLocal(res.durations, initialModel);
         setDurationOptions(durOpts);
         // seed 感知：有 initialRequest 时保留其 duration（合法），否则用 API 默认
         setDuration((prev) =>
@@ -312,13 +323,16 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resolveResolutions]);
 
-  // 切换模型时更新分辨率选项
+  // 切换模型时更新分辨率、时长选项
   React.useEffect(() => {
     if (!modelsData || !model) return;
     const modelResolutions = resolveResolutions(modelsData.resolutions, model);
     if (modelResolutions.length) {
       setResolutionOptions(modelResolutions);
     }
+    const durOpts = mergeDurationOptionsFromApiLocal(modelsData.durations, model);
+    setDurationOptions(durOpts);
+    setDuration((prev) => pickDurationInOptions(prev, durOpts));
   }, [model, modelsData, resolveResolutions]);
 
   React.useEffect(() => {
