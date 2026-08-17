@@ -9,8 +9,8 @@ import type {
   AdminPagedResponse,
   AdminStripePayment,
   AdminWechatPayment,
-  AdminPointsAddParams,
-  AdminPointsAddResponse,
+  AdminPointsSetParams,
+  AdminPointsSetResponse,
   AdminPointsCheckExpiryResponse,
   AdminUpdateRestrictionsParams,
   AdminUpdateRestrictionsResponse,
@@ -84,14 +84,14 @@ export async function getWechatPayments(params?: {
   return res.data;
 }
 
-export async function addPoints(
-  payload: AdminPointsAddParams
-): Promise<AdminPointsAddResponse> {
-  const res = await http.post<AdminPointsAddResponse, AdminPointsAddParams>(
-    "/admin/points/add",
+export async function setPoints(
+  payload: AdminPointsSetParams
+): Promise<AdminPointsSetResponse> {
+  const res = await http.post<AdminPointsSetResponse, AdminPointsSetParams>(
+    "/admin/points/set",
     payload
   );
-  return (res as unknown as AdminPointsAddResponse) ?? res.data;
+  return (res as unknown as AdminPointsSetResponse) ?? res.data;
 }
 
 export async function checkPointsExpiry(params?: {
@@ -124,7 +124,7 @@ const adminApi = {
   getUserVideoRecords,
   getStripePayments,
   getWechatPayments,
-  addPoints,
+  setPoints,
   checkPointsExpiry,
   updateRestrictions,
 };

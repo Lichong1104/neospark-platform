@@ -146,16 +146,18 @@ export type AdminWechatPayment = {
   created_at: string;
 };
 
-export type AdminPointsAddParams = {
+export type AdminPointsSetParams = {
   user_id: number;
-  points: number;
+  target_total_points: number;
   note?: string;
 };
 
-export type AdminPointsAddResponse = {
+export type AdminPointsSetResponse = {
   success: boolean;
   user_id: number;
-  points_added: number;
+  previous_total_points: number;
+  target_total_points: number;
+  points_changed: number;
   total_points: number;
   frozen_points: number;
   available_points: number;

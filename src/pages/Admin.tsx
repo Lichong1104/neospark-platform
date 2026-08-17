@@ -253,35 +253,35 @@ const Admin: React.FC = () => {
     name: string | null;
     can_generate_image: boolean;
     can_generate_video: boolean;
+    total_points?: number;
   }) => {
     setManageTargetUser(user);
-    setPointsValue("10");
+    setPointsValue(String(user.total_points ?? 0));
     setPointsNote("");
     setManageDialogOpen(true);
   };
 
-  const submitAddPointsForUser = async () => {
+  const submitSetPointsForUser = async () => {
     if (!manageTargetUser) return;
-    const points = Number(pointsValue);
-    if (!Number.isFinite(points) || points === 0) {
+    const targetTotalPoints = Number(pointsValue);
+    if (!Number.isFinite(targetTotalPoints) || targetTotalPoints < 0) {
       toast.error(t("admin.toast.pointsInvalidAmount"));
       return;
     }
 
     setPointsSubmitting(true);
     try {
-      await adminApi.addPoints({
+      await adminApi.setPoints({
         user_id: manageTargetUser.id,
-        points,
+        target_total_points: targetTotalPoints,
         note: pointsNote.trim() ? pointsNote.trim() : undefined,
       });
       toast.success(t("admin.toast.pointsUpdated"));
-      setPointsValue("10");
       setPointsNote("");
       await loadUsers();
       if (selectedUserId === manageTargetUser.id) await loadUserDetail();
     } catch {
-      toast.error(t("admin.toast.pointsAddFailed"));
+      toast.error(t("admin.toast.pointsSetFailed"));
     } finally {
       setPointsSubmitting(false);
     }
@@ -614,6 +614,7 @@ const Admin: React.FC = () => {
                                         name: u.name,
                                         can_generate_image: u.can_generate_image,
                                         can_generate_video: u.can_generate_video,
+                                        total_points: u.total_points,
                                       })
                                     }
                                   >
@@ -1071,19 +1072,19 @@ const Admin: React.FC = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-5">
-            {/* 加积分 */}
+            {/* 设置积分 */}
             <div className="space-y-3 border-b border-foreground/15 pb-4">
               <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                {t("admin.actions.addPoints")}
+                {t("admin.actions.setPoints")}
               </div>
               <div className="space-y-1">
                 <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  {t("admin.points.points")}
+                  {t("admin.points.targetTotal")}
                 </div>
                 <BrutalInput
                   value={pointsValue}
                   onChange={(e) => setPointsValue(e.target.value)}
-                  placeholder={t("admin.points.amountPlaceholder")}
+                  placeholder={t("admin.points.targetTotalPlaceholder")}
                 />
               </div>
               <div className="space-y-1">
@@ -1100,7 +1101,7 @@ const Admin: React.FC = () => {
                 variant="primary"
                 size="sm"
                 disabled={pointsSubmitting}
-                onClick={() => void submitAddPointsForUser()}
+                onClick={() => void submitSetPointsForUser()}
               >
                 {pointsSubmitting
                   ? t("admin.state.loading")
