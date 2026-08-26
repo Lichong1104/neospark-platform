@@ -40,6 +40,11 @@ import {
   formatEstimatedCost,
 } from "@/lib/pricing";
 import {
+  getMaxRefImages,
+  isBaseParamsOnlyModel,
+  isMinimaxH3Model,
+  isOmniModel,
+  isWan3Model,
   mergeDurationOptionsFromApi,
   normalizeVideoRatio,
   pickDurationInOptions,
@@ -178,16 +183,6 @@ const pickDurationInOptions = (
   return String(best);
 };
 
-/** Omni 模型常量（含 Vertex AI Gemini Omni Flash） */
-const OMNI_MODELS = new Set(["omni-fast", "omni-fast-v2v", "gemini-omni-flash-preview"]);
-const isOmniModel = (model: string) => OMNI_MODELS.has(model);
-
-/** MiniMax-H3 模型常量 */
-const MINIMAX_H3_MODELS = new Set(["minimax-h3"]);
-const isMinimaxH3Model = (model: string) => MINIMAX_H3_MODELS.has(model);
-
-/** 获取当前模型允许的最大参考图数量 */
-const getMaxRefImages = (model: string) => (isOmniModel(model) ? 5 : 9);
 const getMaxRefVideos = (_model: string) => 3;
 
 const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
@@ -550,8 +545,8 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     );
 
     const hasFrame = Boolean(firstFrameUrl.trim() || lastFrameUrl.trim());
-    // Omni 模型与 MiniMax-H3 均支持 first_frame + reference_image 同时使用
-    if (!isOmniModel(model) && !isMinimaxH3Model(model) && hasFrame && mergedRefImages.length > 0) {
+    // Omni / MiniMax-H3 / Wan 3.0 均支持 first_frame + reference_image 同时使用
+    if (!isBaseParamsOnlyModel(model) && hasFrame && mergedRefImages.length > 0) {
       toast.error(t("video.realPersonConflictFramesRefs"));
       return;
     }
@@ -586,8 +581,8 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
         mergedRefVideos.length > 0 ? mergedRefVideos : undefined,
     };
 
-    // Omni 模型与 MiniMax-H3 只发送基本参数，不发送 Seedance 特有参数
-    const params: CreateVideoParams = isOmniModel(model) || isMinimaxH3Model(model)
+    // Omni / MiniMax-H3 / Wan 3.0 只发送基本参数，不发送 Seedance 特有参数
+    const params: CreateVideoParams = isBaseParamsOnlyModel(model)
       ? baseParams
       : {
           ...baseParams,

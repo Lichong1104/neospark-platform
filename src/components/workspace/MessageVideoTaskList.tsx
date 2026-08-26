@@ -29,6 +29,7 @@ import {
   normalizeVideoRatio,
   pickDurationInOptions,
   resolveResolutionList,
+  isBaseParamsOnlyModel,
 } from "@/lib/videoModelUtils";
 
 const VIDEO_DEFAULTS: GenerateVideoFromMessageParams = {
@@ -134,6 +135,7 @@ const GenerateVideoButton: React.FC<GenerateVideoButtonProps> = ({
     VIDEO_DEFAULTS.generate_audio ?? false
   );
   const [watermark, setWatermark] = useState(VIDEO_DEFAULTS.watermark ?? false);
+  const isBaseParamsOnly = isBaseParamsOnlyModel(model);
 
   useEffect(() => {
     let cancelled = false;
@@ -196,8 +198,9 @@ const GenerateVideoButton: React.FC<GenerateVideoButtonProps> = ({
         duration: Number(duration),
         ratio,
         resolution,
-        generate_audio: generateAudio,
-        watermark,
+        ...(isBaseParamsOnly
+          ? {}
+          : { generate_audio: generateAudio, watermark }),
       };
       const res = await drawingApi.generateVideoFromMessage(messageId, params);
       const optimistic: VideoTaskSummary = {
@@ -349,36 +352,40 @@ const GenerateVideoButton: React.FC<GenerateVideoButtonProps> = ({
 
             <section className="border-brutal border-foreground bg-card brutal-shadow">
               <div className="p-2.5 flex items-center gap-2 flex-wrap">
-                <button
-                  type="button"
-                  onClick={() => setGenerateAudio(!generateAudio)}
-                  className={cn(
-                    "flex items-center gap-2 px-3 py-2 text-[11px] font-bold uppercase border border-foreground/20 transition-none",
-                    generateAudio
-                      ? "bg-accent-cyan/15 text-foreground border-accent-cyan/40"
-                      : "bg-background text-muted-foreground"
-                  )}
-                >
-                  {generateAudio ? (
-                    <Volume2 className="w-3.5 h-3.5" />
-                  ) : (
-                    <VolumeX className="w-3.5 h-3.5" />
-                  )}
-                  {generateAudio ? t("video.audioOn") : t("video.audioOff")}
-                </button>
+                {!isBaseParamsOnly && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setGenerateAudio(!generateAudio)}
+                      className={cn(
+                        "flex items-center gap-2 px-3 py-2 text-[11px] font-bold uppercase border border-foreground/20 transition-none",
+                        generateAudio
+                          ? "bg-accent-cyan/15 text-foreground border-accent-cyan/40"
+                          : "bg-background text-muted-foreground"
+                      )}
+                    >
+                      {generateAudio ? (
+                        <Volume2 className="w-3.5 h-3.5" />
+                      ) : (
+                        <VolumeX className="w-3.5 h-3.5" />
+                      )}
+                      {generateAudio ? t("video.audioOn") : t("video.audioOff")}
+                    </button>
 
-                <button
-                  type="button"
-                  onClick={() => setWatermark(!watermark)}
-                  className={cn(
-                    "flex items-center gap-2 px-3 py-2 text-[11px] font-bold uppercase border border-foreground/20 transition-none",
-                    watermark
-                      ? "bg-accent-orange/15 text-foreground border-accent-orange/40"
-                      : "bg-background text-muted-foreground"
-                  )}
-                >
-                  {watermark ? t("video.watermarkOn") : t("video.watermarkOff")}
-                </button>
+                    <button
+                      type="button"
+                      onClick={() => setWatermark(!watermark)}
+                      className={cn(
+                        "flex items-center gap-2 px-3 py-2 text-[11px] font-bold uppercase border border-foreground/20 transition-none",
+                        watermark
+                          ? "bg-accent-orange/15 text-foreground border-accent-orange/40"
+                          : "bg-background text-muted-foreground"
+                      )}
+                    >
+                      {watermark ? t("video.watermarkOn") : t("video.watermarkOff")}
+                    </button>
+                  </>
+                )}
               </div>
             </section>
 

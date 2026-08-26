@@ -12,9 +12,34 @@ export const VIDEO_DURATION_MIN = 4;
 export const VIDEO_DURATION_MAX = 30;
 export const VIDEO_DURATION_MAX_NON_25 = 15;
 
-/** 根据模型返回支持的最大时长：Seedance 2.5 最长 30 秒，其他保持 15 秒。 */
+/** Omni 模型集合（含 Vertex AI Gemini Omni Flash） */
+export const OMNI_MODELS = new Set([
+  "omni-fast",
+  "omni-fast-v2v",
+  "gemini-omni-flash-preview",
+]);
+export const isOmniModel = (model: string) => OMNI_MODELS.has(model);
+
+/** MiniMax-H3 模型集合 */
+export const MINIMAX_H3_MODELS = new Set(["minimax-h3"]);
+export const isMinimaxH3Model = (model: string) => MINIMAX_H3_MODELS.has(model);
+
+/** 阿里云 DashScope Wan 3.0 模型集合 */
+export const WAN3_MODELS = new Set(["wan3.0-video"]);
+export const isWan3Model = (model: string) => WAN3_MODELS.has(model);
+
+/** 判断模型是否只发送基础参数（不携带 generate_audio / watermark） */
+export const isBaseParamsOnlyModel = (model: string) =>
+  isOmniModel(model) || isMinimaxH3Model(model) || isWan3Model(model);
+
+/** 返回模型支持的最大参考图数量 */
+export const getMaxRefImages = (model: string) => (isOmniModel(model) ? 5 : 9);
+
+/** 根据模型返回支持的最大时长：Seedance 2.5 / Wan 3.0 最长 30 秒，其他保持 15 秒。 */
 export const getModelMaxDuration = (model: string | undefined): number =>
-  model === "seedance-2.5" ? VIDEO_DURATION_MAX : VIDEO_DURATION_MAX_NON_25;
+  model === "seedance-2.5" || model === "wan3.0-video"
+    ? VIDEO_DURATION_MAX
+    : VIDEO_DURATION_MAX_NON_25;
 
 export const defaultDurationOptions = (): string[] =>
   Array.from({ length: VIDEO_DURATION_MAX_NON_25 - VIDEO_DURATION_MIN + 1 }, (_, i) =>

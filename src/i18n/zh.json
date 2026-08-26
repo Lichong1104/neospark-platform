@@ -1028,6 +1028,7 @@
     "watermarkOff": "无水印",
     "omniModeHint": "Omni 模式支持首帧/尾帧与参考图片同时使用，最多 5 张参考图。",
     "minimaxModeHint": "MiniMax-H3 支持文生/图生/首尾帧/多模态参考，输出 768P / 2K。",
+    "wan3ModeHint": "Wan 3.0 支持文生/图生视频、首帧/尾帧与多参考图同时使用。",
     "realPersonConflictFramesRefs": "普通模式下，首帧/尾帧和参考图片不能同时使用",
     "tooManyRefImages": "图片资源最多 9 张",
     "tooManyRefVideos": "参考视频最多 3 个",

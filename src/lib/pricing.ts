@@ -68,6 +68,16 @@ const OMNI_PRICE_PER_SECOND: Record<string, number> = {
   "gemini-omni-flash-preview": 15,
 };
 
+/** DashScope Wan 3.0 视频官方美元/秒价格映射
+ *  key: resolution
+ *  来源：阿里云 DashScope 万相 3.0 视频生成定价
+ */
+const WAN3_USD_PER_SECOND: Record<string, number> = {
+  "480p": 0.05,
+  "720p": 0.10,
+  "1080p": 0.20,
+};
+
 const USD_TO_CREDITS = 274;
 
 /** 腾讯云 Kling 官方美元/秒价格映射
@@ -212,6 +222,12 @@ export const calculateVideoEstimatedCost = (
   // 与后端 services/video_service_v2.py 的 _calculate_price 保持一致
   if (model === "minimax-h3") {
     return Math.max(1, Math.floor((duration * 8000 + 552) / 553));
+  }
+
+  // 阿里云 DashScope Wan 3.0：按分辨率美元定价 × 274 积分/美元换算
+  if (model === "wan3.0-video") {
+    const usdPerSecond = WAN3_USD_PER_SECOND[resolution.toLowerCase()] ?? 0.10;
+    return applyCompensation(Math.round(usdPerSecond * USD_TO_CREDITS) * duration);
   }
 
   // Seedance 2.0 系列：按新版 token 公式（支持任意时长，包括 8s 等中间值）

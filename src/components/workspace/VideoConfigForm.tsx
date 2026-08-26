@@ -14,6 +14,12 @@ import { cn } from "@/lib/utils";
 import { STATIC_BASE_URL } from "@/api/request";
 import { canvasImageSlotLabel } from "@/lib/canvasImageSlots";
 import type { VideoModelConfig, VideoResolution } from "@/types/video";
+import {
+  isBaseParamsOnlyModel,
+  isMinimaxH3Model,
+  isOmniModel,
+  isWan3Model,
+} from "@/lib/videoModelUtils";
 
 interface VideoConfigFormProps {
   model: string;
@@ -90,10 +96,6 @@ const ChipSelect: React.FC<{
 const OMNI_MODELS = new Set(["omni-fast", "omni-fast-v2v", "gemini-omni-flash-preview"]);
 const isOmniModel = (model: string) => OMNI_MODELS.has(model);
 
-/** MiniMax-H3 模型集合 */
-const MINIMAX_H3_MODELS = new Set(["minimax-h3"]);
-const isMinimaxH3Model = (model: string) => MINIMAX_H3_MODELS.has(model);
-
 const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
   model,
   setModel,
@@ -135,6 +137,7 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
   const selectedCanvasCount = selectedCanvasImages.length;
   const isOmni = isOmniModel(model);
   const isMinimax = isMinimaxH3Model(model);
+  const isWan3 = isWan3Model(model);
 
   const refImageLines = React.useMemo(
     () =>
@@ -145,10 +148,9 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
     [referenceImageUrls]
   );
   const hasFrameUrls = Boolean(firstFrameUrl.trim() || lastFrameUrl.trim());
-  // Omni 模型支持 first_frame + reference_image 同时使用（多参考图模式）
-  // MiniMax-H3 同样支持首帧/尾帧与参考图同时使用
-  const frameMutualLocked = !isOmni && !isMinimax && refImageLines.length > 0;
-  const refImagesMutualLocked = !isOmni && !isMinimax && hasFrameUrls;
+  // Omni / MiniMax-H3 / Wan 3.0 支持 first_frame + reference_image 同时使用（多参考图模式）
+  const frameMutualLocked = !isOmni && !isMinimax && !isWan3 && refImageLines.length > 0;
+  const refImagesMutualLocked = !isOmni && !isMinimax && !isWan3 && hasFrameUrls;
 
   type MentionField =
     | "firstFrameUrl"
@@ -436,7 +438,7 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
       <section className="border-brutal border-foreground bg-card brutal-shadow animate-fade-in">
         <div className="p-2.5 flex flex-col gap-2.5">
           <div className="flex items-center gap-2 flex-wrap">
-            {!isOmni && !isMinimax && (
+            {!isOmni && !isMinimax && !isWan3 && (
               <>
                 <button
                   type="button"
@@ -481,6 +483,13 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
               <div className="px-3 py-2 border border-foreground/20 bg-background">
                 <span className="text-[11px] text-muted-foreground">
                   {t("video.minimaxModeHint")}
+                </span>
+              </div>
+            )}
+            {isWan3 && (
+              <div className="px-3 py-2 border border-foreground/20 bg-background">
+                <span className="text-[11px] text-muted-foreground">
+                  {t("video.wan3ModeHint")}
                 </span>
               </div>
             )}
