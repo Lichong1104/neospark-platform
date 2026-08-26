@@ -1027,6 +1027,7 @@
     "watermarkOn": "Watermark ON",
     "watermarkOff": "Watermark OFF",
     "omniModeHint": "Omni mode supports first/last frame together with reference images (up to 5 reference images).",
+    "minimaxModeHint": "MiniMax-H3 supports text/image/first-frame/last-frame/multimodal references, outputting 768P / 2K.",
     "realPersonConflictFramesRefs": "In normal mode, first/last frame and reference images cannot be used together.",
     "tooManyRefImages": "At most 9 images in total (first + last + references).",
     "tooManyRefVideos": "At most 3 reference videos.",

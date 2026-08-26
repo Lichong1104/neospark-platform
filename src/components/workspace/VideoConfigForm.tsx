@@ -90,6 +90,10 @@ const ChipSelect: React.FC<{
 const OMNI_MODELS = new Set(["omni-fast", "omni-fast-v2v", "gemini-omni-flash-preview"]);
 const isOmniModel = (model: string) => OMNI_MODELS.has(model);
 
+/** MiniMax-H3 模型集合 */
+const MINIMAX_H3_MODELS = new Set(["minimax-h3"]);
+const isMinimaxH3Model = (model: string) => MINIMAX_H3_MODELS.has(model);
+
 const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
   model,
   setModel,
@@ -130,6 +134,7 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
   const videoUploadRef = React.useRef<HTMLInputElement>(null);
   const selectedCanvasCount = selectedCanvasImages.length;
   const isOmni = isOmniModel(model);
+  const isMinimax = isMinimaxH3Model(model);
 
   const refImageLines = React.useMemo(
     () =>
@@ -141,8 +146,9 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
   );
   const hasFrameUrls = Boolean(firstFrameUrl.trim() || lastFrameUrl.trim());
   // Omni 模型支持 first_frame + reference_image 同时使用（多参考图模式）
-  const frameMutualLocked = !isOmni && refImageLines.length > 0;
-  const refImagesMutualLocked = !isOmni && hasFrameUrls;
+  // MiniMax-H3 同样支持首帧/尾帧与参考图同时使用
+  const frameMutualLocked = !isOmni && !isMinimax && refImageLines.length > 0;
+  const refImagesMutualLocked = !isOmni && !isMinimax && hasFrameUrls;
 
   type MentionField =
     | "firstFrameUrl"
@@ -430,7 +436,7 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
       <section className="border-brutal border-foreground bg-card brutal-shadow animate-fade-in">
         <div className="p-2.5 flex flex-col gap-2.5">
           <div className="flex items-center gap-2 flex-wrap">
-            {!isOmni && (
+            {!isOmni && !isMinimax && (
               <>
                 <button
                   type="button"
@@ -468,6 +474,13 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
               <div className="px-3 py-2 border border-foreground/20 bg-background">
                 <span className="text-[11px] text-muted-foreground">
                   {t("video.omniModeHint")}
+                </span>
+              </div>
+            )}
+            {isMinimax && (
+              <div className="px-3 py-2 border border-foreground/20 bg-background">
+                <span className="text-[11px] text-muted-foreground">
+                  {t("video.minimaxModeHint")}
                 </span>
               </div>
             )}

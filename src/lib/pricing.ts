@@ -208,6 +208,12 @@ export const calculateVideoEstimatedCost = (
     return Math.max(1, Math.round(usdPerSecond * USD_TO_CREDITS * duration));
   }
 
+  // MiniMax-H3：¥0.800/秒，1 credit = 0.07 CNY，应用 7.9 折补偿
+  // 与后端 services/video_service_v2.py 的 _calculate_price 保持一致
+  if (model === "minimax-h3") {
+    return Math.max(1, Math.floor((duration * 8000 + 552) / 553));
+  }
+
   // Seedance 2.0 系列：按新版 token 公式（支持任意时长，包括 8s 等中间值）
   const normalized = normalizeSeedanceModel(model);
   if (normalized in SEEDANCE_TOKEN_PRICE_PER_MILLION) {

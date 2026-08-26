@@ -105,12 +105,13 @@ const VIDEO_RATIO_ORDER = [
   "3:4",
   "9:16",
   "21:9",
+  "adaptive",
 ] as const;
 
 const normalizeVideoRatio = (r: string | undefined): string => {
   if (!r) return "16:9";
   const key = r.trim().toLowerCase();
-  if (key === "adaptive") return "16:9";
+  if (key === "adaptive") return "adaptive";
   const hit = VIDEO_RATIO_ORDER.find((x) => x.toLowerCase() === key);
   return hit ?? r.trim();
 };
@@ -180,6 +181,10 @@ const pickDurationInOptions = (
 /** Omni 模型常量（含 Vertex AI Gemini Omni Flash） */
 const OMNI_MODELS = new Set(["omni-fast", "omni-fast-v2v", "gemini-omni-flash-preview"]);
 const isOmniModel = (model: string) => OMNI_MODELS.has(model);
+
+/** MiniMax-H3 模型常量 */
+const MINIMAX_H3_MODELS = new Set(["minimax-h3"]);
+const isMinimaxH3Model = (model: string) => MINIMAX_H3_MODELS.has(model);
 
 /** 获取当前模型允许的最大参考图数量 */
 const getMaxRefImages = (model: string) => (isOmniModel(model) ? 5 : 9);
@@ -540,8 +545,8 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     );
 
     const hasFrame = Boolean(firstFrameUrl.trim() || lastFrameUrl.trim());
-    // Omni 模型支持 first_frame + reference_image 同时使用（多参考图模式）
-    if (!isOmniModel(model) && hasFrame && mergedRefImages.length > 0) {
+    // Omni 模型与 MiniMax-H3 均支持 first_frame + reference_image 同时使用
+    if (!isOmniModel(model) && !isMinimaxH3Model(model) && hasFrame && mergedRefImages.length > 0) {
       toast.error(t("video.realPersonConflictFramesRefs"));
       return;
     }
@@ -576,8 +581,8 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
         mergedRefVideos.length > 0 ? mergedRefVideos : undefined,
     };
 
-    // Omni 模型只发送基本参数，不发送 Seedance 特有参数
-    const params: CreateVideoParams = isOmniModel(model)
+    // Omni 模型与 MiniMax-H3 只发送基本参数，不发送 Seedance 特有参数
+    const params: CreateVideoParams = isOmniModel(model) || isMinimaxH3Model(model)
       ? baseParams
       : {
           ...baseParams,
