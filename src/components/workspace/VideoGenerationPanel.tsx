@@ -334,6 +334,11 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     const modelResolutions = resolveResolutions(modelsData.resolutions, model);
     if (modelResolutions.length) {
       setResolutionOptions(modelResolutions);
+      setResolution((prev) =>
+        modelResolutions.includes(prev)
+          ? (prev as VideoResolution)
+          : (modelResolutions[0] as VideoResolution)
+      );
     }
     const durOpts = mergeDurationOptionsFromApiLocal(modelsData.durations, model);
     setDurationOptions(durOpts);
