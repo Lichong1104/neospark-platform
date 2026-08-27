@@ -224,10 +224,10 @@ export const calculateVideoEstimatedCost = (
     return Math.max(1, Math.floor((duration * 8000 + 552) / 553));
   }
 
-  // 阿里云 DashScope Wan 3.0：按分辨率美元定价 × 274 积分/美元换算
+  // 阿里云 DashScope Wan 3.0：按分辨率美元定价 × 274 积分/美元换算（不使用 7.9 折补偿）
   if (model === "wan3.0-video") {
     const usdPerSecond = WAN3_USD_PER_SECOND[resolution.toLowerCase()] ?? 0.10;
-    return applyCompensation(Math.round(usdPerSecond * USD_TO_CREDITS) * duration);
+    return Math.max(1, Math.round(usdPerSecond * USD_TO_CREDITS) * duration);
   }
 
   // Seedance 2.0 系列：按新版 token 公式（支持任意时长，包括 8s 等中间值）
