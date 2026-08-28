@@ -5,7 +5,7 @@ import {
   BrutalCardTitle,
   BrutalCardContent,
 } from "@/components/ui/brutal-card";
-import { BarChart3, Maximize2, X, ChevronDown, ChevronUp } from "lucide-react";
+import { BarChart3, Maximize2, ChevronDown, ChevronUp, Play, FileQuestion } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
   Dialog,
@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { STATIC_BASE_URL } from "@/api/request";
 
 export interface UsageLogDetails {
   prompt?: string | null;
@@ -71,6 +72,177 @@ interface UsageMonitorProps {
   offset?: number;
 }
 
+const getResultUrls = (details: UsageLogDetails | null | undefined): string[] => {
+  if (!details) return [];
+  return [
+    ...(details.result_image_urls || []),
+    ...(details.result_url ? [details.result_url] : []),
+    ...(details.video_url ? [details.video_url] : []),
+    ...(details.result_video_url ? [details.result_video_url] : []),
+    ...(details.layer_urls || []),
+  ].filter(Boolean) as string[];
+};
+
+const resolveMediaUrl = (url: string): string => {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  if (url.startsWith("//")) return `https:${url}`;
+  if (url.startsWith("/")) {
+    return STATIC_BASE_URL ? `${STATIC_BASE_URL}${url}` : url;
+  }
+  return url;
+};
+
+const isVideoUrl = (url: string): boolean => {
+  const videoExtensions = new Set([".mp4", ".webm", ".mov", ".mkv", ".avi", ".m4v"]);
+  const lower = url.split("?")[0].toLowerCase();
+  return videoExtensions.has(lower.slice(lower.lastIndexOf(".")));
+};
+
+const isImageUrl = (url: string): boolean => {
+  const imageExtensions = new Set([".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".svg"]);
+  const lower = url.split("?")[0].toLowerCase();
+  const ext = lower.includes(".") ? lower.slice(lower.lastIndexOf(".")) : "";
+  return imageExtensions.has(ext);
+};
+
+const getMediaType = (url: string): "image" | "video" | "unknown" => {
+  if (isImageUrl(url)) return "image";
+  if (isVideoUrl(url)) return "video";
+  return "unknown";
+};
+
+interface MediaLightboxProps {
+  urls: string[];
+  initialIndex: number;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+const MediaLightbox: React.FC<MediaLightboxProps> = ({
+  urls,
+  initialIndex,
+  open,
+  onOpenChange,
+}) => {
+  const [index, setIndex] = useState(initialIndex);
+  const currentUrl = urls[index];
+  const type = currentUrl ? getMediaType(currentUrl) : "unknown";
+
+  if (!open || !currentUrl) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-5xl w-[95vw] p-0 border-foreground/30 bg-card overflow-hidden">
+        <DialogHeader className="px-4 py-3 border-b border-foreground/10">
+          <DialogTitle className="text-sm flex items-center justify-between">
+            <span>
+              Preview {index + 1} / {urls.length}
+            </span>
+            {urls.length > 1 && (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={index === 0}
+                  onClick={() => setIndex((i) => Math.max(0, i - 1))}
+                  className="px-2 py-1 text-xs border border-foreground/30 disabled:opacity-40 hover:border-accent-cyan"
+                >
+                  Prev
+                </button>
+                <button
+                  type="button"
+                  disabled={index === urls.length - 1}
+                  onClick={() => setIndex((i) => Math.min(urls.length - 1, i + 1))}
+                  className="px-2 py-1 text-xs border border-foreground/30 disabled:opacity-40 hover:border-accent-cyan"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="flex items-center justify-center bg-black min-h-[300px] max-h-[75vh] p-2">
+          {type === "image" ? (
+            <img
+              src={currentUrl}
+              alt="Preview"
+              className="max-w-full max-h-[70vh] object-contain"
+            />
+          ) : type === "video" ? (
+            <video
+              src={currentUrl}
+              controls
+              autoPlay
+              className="max-w-full max-h-[70vh]"
+            />
+          ) : (
+            <div className="text-card-foreground text-sm">
+              <a
+                href={currentUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-accent-cyan hover:underline"
+              >
+                Open file
+              </a>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+interface MediaThumbnailProps {
+  url: string;
+  size?: "sm" | "md" | "lg";
+  onClick?: () => void;
+}
+
+const MediaThumbnail: React.FC<MediaThumbnailProps> = ({
+  url,
+  size = "md",
+  onClick,
+}) => {
+  const type = getMediaType(url);
+  const dimension = size === "sm" ? "w-8 h-8" : size === "md" ? "w-12 h-12" : "w-20 h-20";
+  const iconSize = size === "sm" ? "w-3 h-3" : size === "md" ? "w-4 h-4" : "w-6 h-6";
+
+  const content =
+    type === "image" ? (
+      <img
+        src={url}
+        alt=""
+        className={`${dimension} object-cover border border-card/30 bg-foreground`}
+        loading="lazy"
+      />
+    ) : (
+      <div
+        className={`${dimension} flex items-center justify-center border border-card/30 bg-foreground relative`}
+      >
+        {type === "video" ? (
+          <Play className={`${iconSize} text-accent-cyan`} />
+        ) : (
+          <FileQuestion className={`${iconSize} text-card/60`} />
+        )}
+      </div>
+    );
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className="shrink-0 hover:opacity-80 transition-opacity"
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return <a href={url} target="_blank" rel="noreferrer" className="shrink-0">{content}</a>;
+};
+
 const hasDetails = (log: UsageLog): boolean => {
   if (!log.details) return false;
   return Object.values(log.details).some((v) => {
@@ -111,8 +283,13 @@ const DetailRow: React.FC<{ label: string; value: React.ReactNode }> = ({
   );
 };
 
-const UsageLogDetailPanel: React.FC<{ log: UsageLog }> = ({ log }) => {
+const UsageLogDetailPanel: React.FC<{ log: UsageLog; onPreview: (urls: string[], index: number) => void }> = ({
+  log,
+  onPreview,
+}) => {
   const { details } = log;
+  const urls = getResultUrls(details).map(resolveMediaUrl);
+
   if (!hasDetails(log)) {
     return (
       <div className="text-xs text-card/55 py-2">
@@ -120,14 +297,6 @@ const UsageLogDetailPanel: React.FC<{ log: UsageLog }> = ({ log }) => {
       </div>
     );
   }
-
-  const urls: string[] = [
-    ...(details?.result_image_urls || []),
-    ...(details?.result_url ? [details.result_url] : []),
-    ...(details?.video_url ? [details.video_url] : []),
-    ...(details?.result_video_url ? [details.result_video_url] : []),
-    ...(details?.layer_urls || []),
-  ].filter(Boolean) as string[];
 
   return (
     <div className="bg-foreground/50 border border-card/10 p-3 mt-2 space-y-1">
@@ -153,19 +322,16 @@ const UsageLogDetailPanel: React.FC<{ log: UsageLog }> = ({ log }) => {
       <DetailRow label="Status" value={details?.status} />
       <DetailRow label="Error" value={details?.error_msg} />
       {urls.length > 0 && (
-        <div className="grid grid-cols-[120px_1fr] gap-2 py-1 border-b border-card/10 last:border-0">
-          <span className="text-card/55 text-[11px] uppercase">Results</span>
+        <div className="py-1 border-b border-card/10 last:border-0">
+          <div className="text-card/55 text-[11px] uppercase mb-1.5">Results</div>
           <div className="flex flex-wrap gap-2">
             {urls.map((url, idx) => (
-              <a
+              <MediaThumbnail
                 key={idx}
-                href={url}
-                target="_blank"
-                rel="noreferrer"
-                className="text-accent-cyan text-xs hover:underline break-all"
-              >
-                {url.length > 60 ? `${url.slice(0, 60)}...` : url}
-              </a>
+                url={url}
+                size="md"
+                onClick={() => onPreview(urls, idx)}
+              />
             ))}
           </div>
         </div>
@@ -182,6 +348,7 @@ export const UsageMonitor: React.FC<UsageMonitorProps> = ({
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [lightbox, setLightbox] = useState<{ urls: string[]; index: number } | null>(null);
 
   const displayLogs = React.useMemo(() => {
     return [...logs].sort(
@@ -211,6 +378,10 @@ export const UsageMonitor: React.FC<UsageMonitorProps> = ({
 
   const toggleExpanded = (id: number) => {
     setExpandedId((prev) => (prev === id ? null : id));
+  };
+
+  const openPreview = (urls: string[], index: number) => {
+    setLightbox({ urls, index });
   };
 
   return (
@@ -254,34 +425,44 @@ export const UsageMonitor: React.FC<UsageMonitorProps> = ({
             </div>
 
             <div className="max-h-64 overflow-y-auto">
-              {displayLogs.map((log) => (
-                <div
-                  key={log.id}
-                  className="grid grid-cols-[1.35fr_0.8fr_0.95fr_1.05fr_3.85fr] gap-2 px-2 py-1.5 border-b border-card/10 last:border-0 text-xs leading-5"
-                >
-                  <span className="text-accent-cyan whitespace-nowrap">{formatDateTime(log.date)}</span>
-                  <span className={`w-fit h-fit px-1 py-[1px] border text-[10px] leading-4 ${getTypeBadgeClass(log.type)}`}>
-                    {log.typeName}
-                  </span>
-                  <span
-                    className={`text-right font-bold ${
-                      log.type.toLowerCase() === "consume" ? "text-accent-red" : "text-accent-green"
-                    }`}
+              {displayLogs.map((log) => {
+                const urls = getResultUrls(log.details).map(resolveMediaUrl);
+                return (
+                  <div
+                    key={log.id}
+                    className="grid grid-cols-[1.35fr_0.8fr_0.95fr_1.05fr_3.85fr] gap-2 px-2 py-1.5 border-b border-card/10 last:border-0 text-xs leading-5"
                   >
-                    {log.type.toLowerCase() === "consume" ? "-" : "+"}
-                    {log.points}pts
-                  </span>
-                  <span className="text-right text-card/80 whitespace-nowrap pr-2">
-                    {log.totalPointsAfter}pts
-                  </span>
-                  <span className="text-card/80 break-words border-l border-card/10 pl-3" title={log.description}>
-                    {log.description || "-"}
-                    <span className="block text-[11px] text-card/55 mt-0.5 uppercase">
-                      {log.bizType || "unknown"}
+                    <span className="text-accent-cyan whitespace-nowrap">{formatDateTime(log.date)}</span>
+                    <span className={`w-fit h-fit px-1 py-[1px] border text-[10px] leading-4 ${getTypeBadgeClass(log.type)}`}>
+                      {log.typeName}
                     </span>
-                  </span>
-                </div>
-              ))}
+                    <span
+                      className={`text-right font-bold ${
+                        log.type.toLowerCase() === "consume" ? "text-accent-red" : "text-accent-green"
+                      }`}
+                    >
+                      {log.type.toLowerCase() === "consume" ? "-" : "+"}
+                      {log.points}pts
+                    </span>
+                    <span className="text-right text-card/80 whitespace-nowrap pr-2">
+                      {log.totalPointsAfter}pts
+                    </span>
+                    <span className="text-card/80 break-words border-l border-card/10 pl-3" title={log.description}>
+                      <span className="flex items-start gap-2">
+                        {urls.length > 0 && (
+                          <MediaThumbnail url={urls[0]} size="sm" onClick={() => openPreview(urls, 0)} />
+                        )}
+                        <span className="flex-1">
+                          {log.description || "-"}
+                          <span className="block text-[11px] text-card/55 mt-0.5 uppercase">
+                            {log.bizType || "unknown"}
+                          </span>
+                        </span>
+                      </span>
+                    </span>
+                  </div>
+                );
+              })}
               {displayLogs.length === 0 ? (
                 <div className="text-center text-card/60 py-6 text-xs">No transaction records</div>
               ) : null}
@@ -315,6 +496,7 @@ export const UsageMonitor: React.FC<UsageMonitorProps> = ({
             {displayLogs.map((log) => {
               const isExpanded = expandedId === log.id;
               const detailPreview = log.details?.prompt || log.details?.model || log.details?.task_type;
+              const urls = getResultUrls(log.details).map(resolveMediaUrl);
               return (
                 <React.Fragment key={log.id}>
                   <div
@@ -338,18 +520,25 @@ export const UsageMonitor: React.FC<UsageMonitorProps> = ({
                       {log.totalPointsAfter}pts
                     </span>
                     <div className="text-card/80 border-l border-card/10 pl-3 min-w-0">
-                      <div className="break-words" title={log.description}>
-                        {log.description || "-"}
-                      </div>
-                      <div className="text-[11px] text-card/55 uppercase mt-0.5">
-                        {log.bizType || "unknown"}
-                        {detailPreview ? ` · ${formatValue(detailPreview)}` : ""}
-                      </div>
-                      {log.details?.prompt && (
-                        <div className="text-[11px] text-accent-cyan mt-1 line-clamp-2" title={log.details.prompt}>
-                          {log.details.prompt}
+                      <div className="flex items-start gap-3">
+                        {urls.length > 0 && (
+                          <MediaThumbnail url={urls[0]} size="lg" onClick={() => openPreview(urls, 0)} />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="break-words" title={log.description}>
+                            {log.description || "-"}
+                          </div>
+                          <div className="text-[11px] text-card/55 uppercase mt-0.5">
+                            {log.bizType || "unknown"}
+                            {detailPreview ? ` · ${formatValue(detailPreview)}` : ""}
+                          </div>
+                          {log.details?.prompt && (
+                            <div className="text-[11px] text-accent-cyan mt-1 line-clamp-2" title={log.details.prompt}>
+                              {log.details.prompt}
+                            </div>
+                          )}
                         </div>
-                      )}
+                      </div>
                     </div>
                     <div className="flex items-center justify-center">
                       <button
@@ -368,7 +557,7 @@ export const UsageMonitor: React.FC<UsageMonitorProps> = ({
                   </div>
                   {isExpanded && (
                     <div className="col-span-full px-2 pb-2 border-b border-card/10">
-                      <UsageLogDetailPanel log={log} />
+                      <UsageLogDetailPanel log={log} onPreview={openPreview} />
                     </div>
                   )}
                 </React.Fragment>
@@ -380,6 +569,13 @@ export const UsageMonitor: React.FC<UsageMonitorProps> = ({
           </div>
         </DialogContent>
       </Dialog>
+
+      <MediaLightbox
+        urls={lightbox?.urls || []}
+        initialIndex={lightbox?.index || 0}
+        open={!!lightbox}
+        onOpenChange={(open) => !open && setLightbox(null)}
+      />
     </>
   );
 };
