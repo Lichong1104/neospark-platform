@@ -10,6 +10,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import drawingApi from "@/api/drawing";
 import billingApi, { type BillingSubscriptionSummary } from "@/api/billing";
 
+import type { UsageLog } from "@/components/user-center/UsageMonitor";
+
 type BillingHistoryTransaction = {
   id: number;
   type: string;
@@ -22,6 +24,7 @@ type BillingHistoryTransaction = {
   total_points_after?: number;
   frozen_points_after?: number;
   idempotency_key?: string;
+  details?: UsageLog["details"];
 };
 
 const UserCenter = () => {
@@ -87,6 +90,7 @@ const UserCenter = () => {
           totalPointsAfter: tx.total_points_after ?? 0,
           frozenPointsAfter: tx.frozen_points_after ?? 0,
           idempotencyKey: tx.idempotency_key || "",
+          details: (tx as { details?: UsageLog["details"] }).details,
         }));
         setUsageLogs(logs);
         setBillingMeta({
