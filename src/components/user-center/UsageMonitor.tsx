@@ -216,7 +216,7 @@ export const UsageMonitor: React.FC<UsageMonitorProps> = ({
   return (
     <>
       <BrutalCard shadow="default" className="h-full overflow-hidden">
-        <BrutalCardHeader className="bg-card pb-3 pt-4 px-4 flex items-center justify-between">
+        <BrutalCardHeader className="bg-card pb-3 pt-4 px-4 !flex-row items-center justify-between gap-3">
           <BrutalCardTitle className="flex items-center gap-2 text-sm">
             <div className="p-1.5 bg-accent-cyan/80 border border-foreground/30">
               <BarChart3 className="w-3.5 h-3.5" />
@@ -226,11 +226,11 @@ export const UsageMonitor: React.FC<UsageMonitorProps> = ({
           <button
             type="button"
             onClick={() => setIsOpen(true)}
-            className="p-1.5 border border-foreground/30 hover:bg-accent-cyan/20 transition-colors"
+            className="shrink-0 p-1 bg-card border border-foreground/30 hover:border-accent-cyan hover:text-accent-cyan transition-colors"
             aria-label={t("uc.expandUsageMonitor", "Expand usage monitor")}
             title={t("uc.expandUsageMonitor", "Expand usage monitor")}
           >
-            <Maximize2 className="w-3.5 h-3.5" />
+            <Maximize2 className="w-3 h-3" />
           </button>
         </BrutalCardHeader>
         <BrutalCardContent className="space-y-3 px-4 pb-3">
