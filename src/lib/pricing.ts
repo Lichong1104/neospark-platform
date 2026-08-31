@@ -65,7 +65,17 @@ const getVideoTokenCostMultiplier = (model: string): number => {
 const OMNI_PRICE_PER_SECOND: Record<string, number> = {
   "omni-fast": 15,
   "omni-fast-v2v": 18,
-  "gemini-omni-flash-preview": 15,
+};
+
+/** Gemini Omni Flash 按分辨率的 Google 官方视频输出成本（USD/秒）
+ *  来源：https://ai.google.dev/gemini-api/docs/pricing
+ *  360p 为草稿/预览，4K 为超分放大。
+ */
+const GEMINI_OMNI_USD_PER_SECOND: Record<string, number> = {
+  "360p": 0.0338,
+  "720p": 0.1014,
+  "1080p": 0.1520,
+  "4k": 0.3041,
 };
 
 /** DashScope Wan 3.0 视频官方美元/秒价格映射
@@ -206,6 +216,14 @@ export const calculateVideoEstimatedCost = (
   // Omni 模型：保持原固定单价 + 7.9 折补偿
   if (model in OMNI_PRICE_PER_SECOND) {
     return applyCompensation(OMNI_PRICE_PER_SECOND[model] * duration);
+  }
+
+  // Gemini Omni Flash：按分辨率美元定价 × 274 credits/USD 换算 + 7.9 折补偿
+  if (model === "gemini-omni-flash-preview") {
+    const usdPerSecond =
+      GEMINI_OMNI_USD_PER_SECOND[resolution.toLowerCase()] ?? 0.1014;
+    const base = Math.round(usdPerSecond * USD_TO_CREDITS) * duration;
+    return applyCompensation(base);
   }
 
   // 腾讯云 Kling：按官方美元定价 × 274 积分/美元换算

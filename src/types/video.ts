@@ -6,7 +6,14 @@ export type VideoTaskStatus =
   | "cancelled";
 
 /** Output resolution for video generation (API `resolution` field) */
-export type VideoResolution = "480p" | "720p" | "1080p" | "2k" | "4k" | "768p";
+export type VideoResolution =
+  | "360p"
+  | "480p"
+  | "720p"
+  | "1080p"
+  | "2k"
+  | "4k"
+  | "768p";
 
 /** 由绘画消息创建的视频任务摘要（也用于消息详情里的 video_tasks） */
 export interface VideoTaskSummary {
