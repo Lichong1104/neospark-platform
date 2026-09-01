@@ -1248,6 +1248,7 @@
     "running": "Running",
     "backToCanvas": "Canvas",
     "clear": "Clear",
+    "deleteNode": "Delete",
     "nodeLibrary": "Node Library",
     "groupInputs": "Inputs",
     "groupGenerators": "Generators",

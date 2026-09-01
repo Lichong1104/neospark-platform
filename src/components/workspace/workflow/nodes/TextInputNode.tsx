@@ -11,6 +11,7 @@ function TextInputNodeImpl({ id, data }: NodeProps<WorkflowNode>) {
 
   return (
     <NodeCard
+      id={id}
       label={t("workflow.nodeText")}
       status="idle"
       showStatus={false}
@@ -22,7 +23,7 @@ function TextInputNodeImpl({ id, data }: NodeProps<WorkflowNode>) {
         value={data.text ?? ""}
         onChange={(e) => updateNodeData(id, { text: e.target.value })}
         placeholder={t("workflow.textPlaceholder")}
-        className="h-20 w-full resize-none rounded border border-foreground/20 bg-background p-1.5 text-xs text-foreground outline-none focus:border-foreground/50"
+        className="nodrag h-20 w-full resize-none rounded border border-foreground/20 bg-background p-1.5 text-xs text-foreground outline-none focus:border-foreground/50"
       />
     </NodeCard>
   );

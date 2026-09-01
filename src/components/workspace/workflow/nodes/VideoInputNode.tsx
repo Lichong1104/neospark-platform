@@ -1,6 +1,6 @@
 import { memo, useRef, useState } from "react";
 import { type NodeProps, useReactFlow } from "@xyflow/react";
-import { Film, Upload } from "lucide-react";
+import { Film, Loader2, Upload } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { uploadFile } from "@/api/storage";
@@ -32,6 +32,7 @@ function VideoInputNodeImpl({ id, data }: NodeProps<WorkflowNode>) {
 
   return (
     <NodeCard
+      id={id}
       label={t("workflow.nodeVideoInput")}
       status="idle"
       showStatus={false}
@@ -56,16 +57,16 @@ function VideoInputNodeImpl({ id, data }: NodeProps<WorkflowNode>) {
             value={data.videoUrl ?? ""}
             onChange={(e) => updateNodeData(id, { videoUrl: e.target.value })}
             placeholder={t("workflow.videoUrlPlaceholder")}
-            className="min-w-0 flex-1 rounded border border-foreground/20 bg-background px-1.5 py-1 text-[10px] text-foreground outline-none focus:border-foreground/50"
+            className="nodrag min-w-0 flex-1 rounded border border-foreground/20 bg-background px-1.5 py-1 text-[10px] text-foreground outline-none focus:border-foreground/50"
           />
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
             disabled={uploading}
-            className="inline-flex shrink-0 items-center rounded border border-foreground/20 px-1.5 text-[10px] hover:bg-secondary disabled:opacity-50"
+            className="nodrag inline-flex shrink-0 items-center rounded border border-foreground/20 px-1.5 text-[10px] hover:bg-secondary disabled:opacity-50"
             title={t("workflow.upload")}
           >
-            <Upload className="h-3 w-3" />
+            {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
           </button>
         </div>
         <input

@@ -1,5 +1,7 @@
-import type { ReactNode } from "react";
-import { Handle, Position } from "@xyflow/react";
+import { useCallback, type ReactNode } from "react";
+import { Handle, Position, useReactFlow } from "@xyflow/react";
+import { X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import type { WorkflowNodeStatus } from "@/lib/workflow/types";
 
@@ -18,6 +20,7 @@ const STATUS_CLASS: Record<WorkflowNodeStatus, string> = {
 };
 
 export function NodeCard({
+  id,
   label,
   status,
   icon,
@@ -27,6 +30,7 @@ export function NodeCard({
   hasSource = false,
   showStatus = true,
 }: {
+  id: string;
   label: string;
   status: WorkflowNodeStatus;
   icon: ReactNode;
@@ -36,6 +40,18 @@ export function NodeCard({
   hasSource?: boolean;
   showStatus?: boolean;
 }) {
+  const { t } = useTranslation();
+  const { setNodes, setEdges } = useReactFlow();
+
+  const handleDelete = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setNodes((nds) => nds.filter((n) => n.id !== id));
+      setEdges((eds) => eds.filter((ed) => ed.source !== id && ed.target !== id));
+    },
+    [id, setNodes, setEdges]
+  );
+
   return (
     <div
       className={cn(
@@ -72,6 +88,14 @@ export function NodeCard({
             {STATUS_LABEL[status]}
           </span>
         ) : null}
+        <button
+          type="button"
+          onClick={handleDelete}
+          className="nodrag flex h-4 w-4 shrink-0 items-center justify-center rounded border border-foreground/30 text-muted-foreground transition-colors hover:border-accent-red hover:bg-accent-red hover:text-foreground"
+          title={t("workflow.deleteNode")}
+        >
+          <X className="h-2.5 w-2.5" />
+        </button>
       </header>
       <div className="p-2">{children}</div>
       {hasTarget && <Handle type="target" position={Position.Left} id="in" />}
@@ -104,7 +128,7 @@ export function NodeSelect({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-6 w-full cursor-pointer rounded border border-foreground/20 bg-background px-1 text-[10px] text-foreground outline-none transition-colors hover:border-foreground/40 focus:border-foreground"
+        className="nodrag h-6 w-full cursor-pointer rounded border border-foreground/20 bg-background px-1 text-[10px] text-foreground outline-none transition-colors hover:border-foreground/40 focus:border-foreground"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>

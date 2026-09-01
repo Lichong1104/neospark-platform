@@ -1248,6 +1248,7 @@
     "running": "运行中",
     "backToCanvas": "画布",
     "clear": "清空",
+    "deleteNode": "删除节点",
     "nodeLibrary": "节点库",
     "groupInputs": "输入",
     "groupGenerators": "生成",

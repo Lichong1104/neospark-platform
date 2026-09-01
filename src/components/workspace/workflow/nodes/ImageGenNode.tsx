@@ -170,6 +170,7 @@ function ImageGenNodeImpl({ id, data }: NodeProps<WorkflowNode>) {
 
   return (
     <NodeCard
+      id={id}
       label={t("workflow.nodeImage")}
       status={status}
       icon={<ImageIcon className="h-3 w-3" />}
@@ -182,7 +183,7 @@ function ImageGenNodeImpl({ id, data }: NodeProps<WorkflowNode>) {
           value={inlinePrompt}
           onChange={(e) => setInlinePrompt(e.target.value)}
           placeholder={t("workflow.promptPlaceholder")}
-          className="h-14 w-full resize-none rounded border border-foreground/20 bg-background p-1.5 text-xs text-foreground outline-none focus:border-foreground/50"
+          className="nodrag h-14 w-full resize-none rounded border border-foreground/20 bg-background p-1.5 text-xs text-foreground outline-none focus:border-foreground/50"
         />
         <div className="flex gap-1.5">
           <NodeSelect
