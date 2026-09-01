@@ -122,7 +122,7 @@ function WorkflowCanvasInner({ onExit }: { onExit?: () => void }) {
   }, [genNodeCount, run, t]);
 
   return (
-    <div className="relative flex h-full w-full overflow-hidden bg-accent-yellow">
+    <div className="relative flex h-full w-full overflow-hidden bg-background">
       <WorkflowNodeLibrary onAddNode={addNodeAt} />
 
       <div className="relative h-full min-w-0 flex-1">
@@ -138,7 +138,7 @@ function WorkflowCanvasInner({ onExit }: { onExit?: () => void }) {
           onDrop={onDrop}
           proOptions={{ hideAttribution: true }}
         >
-          <Background gap={24} size={1} />
+          <Background variant="dots" gap={20} size={1.2} color="hsl(var(--foreground) / 0.10)" />
           <Controls />
           <MiniMap />
         </ReactFlow>
@@ -148,7 +148,7 @@ function WorkflowCanvasInner({ onExit }: { onExit?: () => void }) {
             <button
               type="button"
               onClick={onExit}
-              className="inline-flex items-center gap-1.5 rounded border-brutal border-foreground bg-card px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wide brutal-shadow transition-none hover:bg-secondary"
+              className="inline-flex items-center gap-1.5 rounded border-brutal border-foreground bg-card px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wide brutal-shadow brutal-press transition-none hover:bg-secondary"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
               {t("workflow.backToCanvas")}
@@ -164,7 +164,7 @@ function WorkflowCanvasInner({ onExit }: { onExit?: () => void }) {
             type="button"
             onClick={handleClear}
             disabled={isRunning}
-            className="inline-flex items-center gap-1.5 rounded border-brutal border-foreground bg-card px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wide brutal-shadow transition-none hover:bg-secondary disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded border-brutal border-foreground bg-card px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wide brutal-shadow brutal-press transition-none hover:bg-secondary disabled:opacity-50"
           >
             <Trash2 className="h-3.5 w-3.5" />
             {t("workflow.clear")}
@@ -174,7 +174,7 @@ function WorkflowCanvasInner({ onExit }: { onExit?: () => void }) {
             onClick={handleRun}
             disabled={isRunning}
             className={cn(
-              "inline-flex items-center gap-1.5 rounded border-brutal border-foreground px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide brutal-shadow transition-none disabled:opacity-60",
+              "inline-flex items-center gap-1.5 rounded border-brutal border-foreground px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide brutal-shadow brutal-press transition-none disabled:opacity-60",
               isRunning ? "bg-muted text-muted-foreground" : "bg-accent-green text-foreground hover:brightness-110"
             )}
           >

@@ -1249,6 +1249,8 @@
     "backToCanvas": "Canvas",
     "clear": "Clear",
     "nodeLibrary": "Node Library",
+    "groupInputs": "Inputs",
+    "groupGenerators": "Generators",
     "libraryHint": "Drag or click to add",
     "textPlaceholder": "Enter prompt text...",
     "promptPlaceholder": "Prompt (or connect a Text node)...",

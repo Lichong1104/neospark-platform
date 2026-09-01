@@ -413,3 +413,69 @@
     background: hsl(var(--foreground) / 0.32);
   }
 }
+
+/* ============================================================
+   Workflow Canvas — React Flow chrome (Neo-Brutalism)
+   ============================================================ */
+
+/* Selected node ring */
+.react-flow__node.selected .neo-node-card {
+  outline: 2px solid hsl(var(--accent-cyan));
+  outline-offset: 1px;
+}
+
+/* Connection handles */
+.react-flow__handle {
+  width: 11px !important;
+  height: 11px !important;
+  border: 2px solid hsl(var(--foreground)) !important;
+  transition: transform 0.12s ease, background-color 0.12s ease;
+}
+.react-flow__handle:hover {
+  transform: scale(1.4);
+}
+.react-flow__handle.target {
+  background: hsl(var(--accent-yellow)) !important;
+}
+.react-flow__handle.source {
+  background: hsl(var(--accent-cyan)) !important;
+}
+
+/* Edges */
+.react-flow__edge-path {
+  stroke: hsl(var(--foreground)) !important;
+  stroke-width: 2 !important;
+}
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: hsl(var(--accent-cyan)) !important;
+}
+
+/* Controls */
+.react-flow__controls {
+  border: 2px solid hsl(var(--foreground));
+  box-shadow: 4px 4px 0 0 hsl(var(--foreground));
+  border-radius: 0;
+  overflow: hidden;
+}
+.react-flow__controls-button {
+  width: 28px;
+  height: 28px;
+  background: hsl(var(--card));
+  color: hsl(var(--foreground));
+  border: none;
+  border-bottom: 1px solid hsl(var(--foreground) / 0.15);
+  border-radius: 0;
+}
+.react-flow__controls-button:hover {
+  background: hsl(var(--secondary));
+}
+.react-flow__controls-button svg {
+  fill: currentColor;
+}
+
+/* Minimap */
+.react-flow__minimap {
+  border: 2px solid hsl(var(--foreground));
+  box-shadow: 4px 4px 0 0 hsl(var(--foreground));
+  border-radius: 0;
+}

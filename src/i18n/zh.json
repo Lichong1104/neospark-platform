@@ -1249,6 +1249,8 @@
     "backToCanvas": "画布",
     "clear": "清空",
     "nodeLibrary": "节点库",
+    "groupInputs": "输入",
+    "groupGenerators": "生成",
     "libraryHint": "拖拽或点击添加节点",
     "textPlaceholder": "输入提示词文本...",
     "promptPlaceholder": "提示词（或连接文本节点）...",

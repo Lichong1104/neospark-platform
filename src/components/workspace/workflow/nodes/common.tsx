@@ -39,14 +39,15 @@ export function NodeCard({
   return (
     <div
       className={cn(
-        "w-full overflow-hidden rounded-lg border-brutal border-foreground bg-card brutal-shadow",
+        "neo-node-card w-full border-brutal border-foreground bg-card brutal-shadow",
         status === "error" && "border-accent-pink"
       )}
     >
+      <div className={cn("h-1.5 w-full", accent)} />
       <header className="flex items-center gap-1.5 border-b-brutal border-foreground px-2 py-1.5">
         <span
           className={cn(
-            "flex h-5 w-5 items-center justify-center border border-foreground",
+            "flex h-5 w-5 shrink-0 items-center justify-center border border-foreground",
             accent
           )}
         >
@@ -58,31 +59,23 @@ export function NodeCard({
         {showStatus ? (
           <span
             className={cn(
-              "rounded px-1 py-0.5 text-[9px] font-bold uppercase leading-none",
+              "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase leading-none",
               STATUS_CLASS[status]
             )}
           >
+            <span
+              className={cn(
+                "h-1.5 w-1.5 rounded-full bg-current",
+                status === "running" && "animate-pulse"
+              )}
+            />
             {STATUS_LABEL[status]}
           </span>
         ) : null}
       </header>
       <div className="p-2">{children}</div>
-      {hasTarget && (
-        <Handle
-          type="target"
-          position={Position.Left}
-          id="in"
-          className="!h-3 !w-3 !border-2 !border-foreground !bg-accent-yellow"
-        />
-      )}
-      {hasSource && (
-        <Handle
-          type="source"
-          position={Position.Right}
-          id="out"
-          className="!h-3 !w-3 !border-2 !border-foreground !bg-accent-cyan"
-        />
-      )}
+      {hasTarget && <Handle type="target" position={Position.Left} id="in" />}
+      {hasSource && <Handle type="source" position={Position.Right} id="out" />}
     </div>
   );
 }
@@ -111,7 +104,7 @@ export function NodeSelect({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded border border-foreground/20 bg-background px-1 py-1 text-[10px] text-foreground outline-none focus:border-foreground/50"
+        className="h-6 w-full cursor-pointer rounded border border-foreground/20 bg-background px-1 text-[10px] text-foreground outline-none transition-colors hover:border-foreground/40 focus:border-foreground"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>
