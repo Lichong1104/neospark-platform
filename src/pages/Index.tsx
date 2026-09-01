@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Workflow } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LeftToolbar } from "@/components/workspace/LeftToolbar";
 import { AssetSidebar } from "@/components/workspace/AssetSidebar";
@@ -653,7 +653,17 @@ const Index = () => {
                 onGenPlaceholderFulfilled={handleGenPlaceholderFulfilled}
               />
             ) : (
-              <WorkflowCanvas />
+              <WorkflowCanvas onExit={() => setActiveView("canvas")} />
+            )}
+            {activeView === "canvas" && (
+              <button
+                type="button"
+                onClick={() => setActiveView("workflow")}
+                className="absolute bottom-3 right-3 z-20 inline-flex items-center gap-1.5 rounded border-brutal border-foreground bg-accent-cyan px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide brutal-shadow transition-none hover:brightness-110"
+              >
+                <Workflow className="h-3.5 w-3.5" />
+                {t("workflow.enterWorkflow")}
+              </button>
             )}
           </div>
 
