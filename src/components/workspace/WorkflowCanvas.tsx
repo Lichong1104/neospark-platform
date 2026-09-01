@@ -24,6 +24,7 @@ import {
   type WorkflowNode,
   type WorkflowNodeType,
 } from "@/lib/workflow/types";
+import type { WorkflowTemplate } from "@/lib/workflow/templates";
 import { WorkflowNodeLibrary } from "./workflow/WorkflowNodeLibrary";
 import { TextInputNode } from "./workflow/nodes/TextInputNode";
 import { ImageInputNode } from "./workflow/nodes/ImageInputNode";
@@ -85,6 +86,33 @@ function WorkflowCanvasInner({ onExit }: { onExit?: () => void }) {
     [nodes.length, setNodes]
   );
 
+  const applyTemplate = useCallback(
+    (template: WorkflowTemplate) => {
+      let x = 60;
+      const nextNodes: WorkflowNode[] = template.chain.map((type) => {
+        const w = WORKFLOW_NODE_SIZE[type].w;
+        const node: WorkflowNode = {
+          id: makeId(),
+          type,
+          position: { x, y: 80 },
+          data: { status: "idle" },
+          style: { width: w },
+        };
+        x += w + 80;
+        return node;
+      });
+      const nextEdges: Edge[] = nextNodes.slice(1).map((node, i) => ({
+        id: `e_${nextNodes[i].id}_${node.id}`,
+        source: nextNodes[i].id,
+        target: node.id,
+        type: "smoothstep",
+      }));
+      setNodes(nextNodes);
+      setEdges(nextEdges);
+    },
+    [setNodes, setEdges]
+  );
+
   const onConnect = useCallback(
     (conn: Connection) => {
       setEdges((eds) => addEdge({ ...conn, type: "smoothstep" }, eds));
@@ -123,7 +151,7 @@ function WorkflowCanvasInner({ onExit }: { onExit?: () => void }) {
 
   return (
     <div className="relative flex h-full w-full overflow-hidden bg-background">
-      <WorkflowNodeLibrary onAddNode={addNodeAt} />
+      <WorkflowNodeLibrary onAddNode={addNodeAt} onApplyTemplate={applyTemplate} />
 
       <div className="relative h-full min-w-0 flex-1">
         <ReactFlow

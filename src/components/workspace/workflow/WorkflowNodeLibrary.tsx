@@ -1,8 +1,9 @@
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
-import { Film, Image as ImageIcon, MessageSquare, Sparkles, Clapperboard } from "lucide-react";
+import { Film, Image as ImageIcon, MessageSquare, Sparkles, Clapperboard, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { WorkflowNodeType } from "@/lib/workflow/types";
+import { WORKFLOW_TEMPLATES, type WorkflowTemplate } from "@/lib/workflow/templates";
 
 interface LibraryItem {
   type: WorkflowNodeType;
@@ -31,8 +32,10 @@ const GROUPS: Array<{ labelKey: string; items: LibraryItem[] }> = [
 
 export const WorkflowNodeLibrary = memo(function WorkflowNodeLibrary({
   onAddNode,
+  onApplyTemplate,
 }: {
   onAddNode: (type: WorkflowNodeType) => void;
+  onApplyTemplate: (template: WorkflowTemplate) => void;
 }) {
   const { t } = useTranslation();
 
@@ -42,6 +45,27 @@ export const WorkflowNodeLibrary = memo(function WorkflowNodeLibrary({
         {t("workflow.nodeLibrary")}
       </div>
       <div className="scrollbar-brutal flex-1 space-y-4 overflow-y-auto p-2.5">
+        {/* 一键模板 */}
+        <div className="space-y-1.5">
+          <div className="px-1 text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+            {t("workflow.templates")}
+          </div>
+          {WORKFLOW_TEMPLATES.map((tpl) => (
+            <button
+              key={tpl.id}
+              type="button"
+              onClick={() => onApplyTemplate(tpl)}
+              className="flex w-full items-center gap-2 rounded border-brutal border-foreground bg-accent-yellow px-2.5 py-2 text-left brutal-shadow transition-none hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+            >
+              <Zap className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate text-xs font-bold uppercase tracking-wide text-foreground">
+                {t(tpl.labelKey)}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* 节点分组 */}
         {GROUPS.map((group) => (
           <div key={group.labelKey} className="space-y-2">
             <div className="px-1 text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
