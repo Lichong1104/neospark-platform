@@ -15,7 +15,14 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Clapperboard, MessageSquare, Sparkles, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Clapperboard,
+  Image,
+  MessageSquare,
+  Sparkles,
+  Trash2,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MaterialsPanel, type WorkflowAsset } from "./MaterialsPanel";
 import { TextInputNode } from "./nodes/TextInputNode";
@@ -37,14 +44,6 @@ const nodeTypes: NodeTypes = {
   videoGen: VideoGenNode,
 };
 
-const KNOWN_TYPES = new Set<string>([
-  "textInput",
-  "imageInput",
-  "videoInput",
-  "imageGen",
-  "videoGen",
-]);
-
 let seq = 0;
 const makeId = () => `wf_${Date.now().toString(36)}_${(seq += 1)}`;
 
@@ -54,8 +53,8 @@ export function WorkflowEditor() {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState<WorkflowNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
-  const { updateNodeData, screenToFlowPosition } = useReactFlow();
-  const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const { screenToFlowPosition } = useReactFlow();
+  const [isMaterialsOpen, setIsMaterialsOpen] = useState(false);
 
   const addNodeAt = useCallback(
     (type: WorkflowNodeType, position?: { x: number; y: number }) => {
@@ -113,28 +112,6 @@ export function WorkflowEditor() {
     [setEdges]
   );
 
-  const onDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-    setIsDraggingOver(true);
-  }, []);
-
-  const onDragLeave = useCallback(() => {
-    setIsDraggingOver(false);
-  }, []);
-
-  const onDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      setIsDraggingOver(false);
-      const type = e.dataTransfer.getData("application/reactflow");
-      if (!KNOWN_TYPES.has(type)) return;
-      const position = screenToFlowPosition({ x: e.clientX, y: e.clientY });
-      addNodeAt(type as WorkflowNodeType, position);
-    },
-    [screenToFlowPosition, addNodeAt]
-  );
-
   const handleClear = useCallback(() => {
     setNodes([]);
     setEdges([]);
@@ -149,34 +126,64 @@ export function WorkflowEditor() {
 
   return (
     <div className="flex h-full flex-col">
-      <header className="flex items-center gap-3 border-b-brutal border-foreground bg-card px-3 py-2">
-        <button
-          type="button"
-          onClick={() => navigate("/canvas")}
-          className="inline-flex items-center gap-1.5 rounded border-brutal border-foreground bg-card px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wide brutal-shadow brutal-press transition-none hover:bg-secondary"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          {t("workflow.backToCanvas")}
-        </button>
+      {/* Header */}
+      <header className="flex items-center justify-between gap-3 border-b-brutal border-foreground bg-card px-4 py-3">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => navigate("/canvas")}
+            className="inline-flex h-8 items-center gap-1.5 rounded border-brutal border-foreground bg-card px-2.5 text-[11px] font-bold uppercase tracking-wide brutal-shadow brutal-press transition-none hover:bg-secondary"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            {t("workflow.backToCanvas")}
+          </button>
 
-        <h1 className="text-sm font-bold uppercase tracking-wide text-foreground">
-          {t("workflowCanvas.title")}
-        </h1>
+          <div className="h-6 w-px bg-foreground/20" />
 
-        <div className="flex items-center gap-1.5">
-          <ToolbarButton onClick={addTextNode} icon={<MessageSquare className="h-3 w-3" />} label={t("workflow.addTextNode")} />
-          <ToolbarButton onClick={addImageGenNode} icon={<Sparkles className="h-3 w-3" />} label={t("workflow.addImageGenNode")} accent="bg-accent-cyan" />
-          <ToolbarButton onClick={addVideoGenNode} icon={<Clapperboard className="h-3 w-3" />} label={t("workflow.addVideoGenNode")} accent="bg-accent-purple" />
+          <h1 className="text-sm font-bold uppercase tracking-wide text-foreground">
+            {t("workflowCanvas.title")}
+          </h1>
         </div>
 
-        <div className="ml-auto flex items-center gap-2">
-          <div className="rounded border-brutal border-foreground bg-card px-2.5 py-1.5 font-mono text-[11px] text-foreground">
-            {t("workflowCanvas.nodes")}: <span className="font-bold">{nodes.length}</span>
+        <div className="flex items-center gap-2">
+          <ToolbarButton
+            onClick={() => setIsMaterialsOpen((v) => !v)}
+            active={isMaterialsOpen}
+            icon={<Image className="h-3 w-3" />}
+            label={t("workflow.materials")}
+          />
+
+          <div className="h-5 w-px bg-foreground/20" />
+
+          <ToolbarButton
+            onClick={addTextNode}
+            icon={<MessageSquare className="h-3 w-3" />}
+            label={t("workflow.addTextNode")}
+          />
+          <ToolbarButton
+            onClick={addImageGenNode}
+            icon={<Sparkles className="h-3 w-3" />}
+            label={t("workflow.addImageGenNode")}
+            accent="bg-accent-cyan"
+          />
+          <ToolbarButton
+            onClick={addVideoGenNode}
+            icon={<Clapperboard className="h-3 w-3" />}
+            label={t("workflow.addVideoGenNode")}
+            accent="bg-accent-purple"
+          />
+
+          <div className="h-5 w-px bg-foreground/20" />
+
+          <div className="flex h-8 items-center rounded border-brutal border-foreground bg-card px-2.5 font-mono text-[11px] text-foreground">
+            <span className="text-muted-foreground">{t("workflowCanvas.nodes")}:</span>
+            <span className="ml-1 font-bold">{nodes.length}</span>
           </div>
+
           <button
             type="button"
             onClick={handleClear}
-            className="inline-flex items-center gap-1.5 rounded border-brutal border-foreground bg-card px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wide brutal-shadow brutal-press transition-none hover:bg-secondary"
+            className="inline-flex h-8 items-center gap-1.5 rounded border-brutal border-foreground bg-card px-2.5 text-[11px] font-bold uppercase tracking-wide brutal-shadow brutal-press transition-none hover:bg-secondary"
           >
             <Trash2 className="h-3.5 w-3.5" />
             {t("workflow.clear")}
@@ -184,16 +191,20 @@ export function WorkflowEditor() {
         </div>
       </header>
 
+      {/* Body */}
       <div className="flex flex-1 overflow-hidden">
-        <MaterialsPanel onAddAsset={handleAddAsset} />
-
         <div
-          ref={canvasRef}
           className={cn(
-            "relative h-full min-w-0 flex-1 bg-background transition-colors",
-            isDraggingOver && "bg-accent-cyan/5"
+            "shrink-0 overflow-hidden border-r-brutal border-foreground bg-card transition-all duration-200 ease-in-out",
+            isMaterialsOpen ? "w-72" : "w-0 border-r-0"
           )}
         >
+          <div className="h-full w-72">
+            <MaterialsPanel onAddAsset={handleAddAsset} />
+          </div>
+        </div>
+
+        <div ref={canvasRef} className="relative h-full min-w-0 flex-1 bg-background">
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -202,9 +213,6 @@ export function WorkflowEditor() {
             onConnect={onConnect}
             nodeTypes={nodeTypes}
             deleteKeyCode={["Backspace", "Delete"]}
-            onDragOver={onDragOver}
-            onDragLeave={onDragLeave}
-            onDrop={onDrop}
             proOptions={{ hideAttribution: true }}
           >
             <Background variant="dots" gap={20} size={1.2} color="hsl(var(--foreground) / 0.10)" />
@@ -214,9 +222,12 @@ export function WorkflowEditor() {
 
           {nodes.length === 0 && (
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-              <div className="rounded border-brutal border-foreground bg-card px-6 py-4 brutal-shadow text-center">
-                <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+              <div className="max-w-xs rounded border-brutal border-foreground bg-card px-6 py-5 brutal-shadow text-center">
+                <p className="text-xs font-bold uppercase tracking-wide text-foreground">
                   {t("workflowCanvas.emptyHint")}
+                </p>
+                <p className="mt-1.5 text-[10px] text-muted-foreground">
+                  {t("workflow.materialsHint")}
                 </p>
               </div>
             </div>
@@ -232,22 +243,34 @@ function ToolbarButton({
   icon,
   label,
   accent,
+  active,
 }: {
   onClick: () => void;
   icon: React.ReactNode;
   label: string;
   accent?: string;
+  active?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        "inline-flex items-center gap-1 rounded border-brutal border-foreground px-2 py-1 text-[10px] font-bold uppercase tracking-wide brutal-shadow brutal-press transition-none hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none",
-        accent || "bg-card hover:bg-secondary"
+        "inline-flex h-8 items-center gap-1.5 rounded border-brutal border-foreground px-2.5 text-[10px] font-bold uppercase tracking-wide brutal-shadow transition-none",
+        active
+          ? "bg-foreground text-card brutal-shadow"
+          : "brutal-press hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none",
+        !active && (accent || "bg-card hover:bg-secondary")
       )}
     >
-      <span className={cn("flex h-4 w-4 items-center justify-center border border-foreground/30", accent)}>{icon}</span>
+      <span
+        className={cn(
+          "flex h-4 w-4 items-center justify-center rounded-sm border border-foreground/30",
+          active ? "bg-card text-foreground" : accent
+        )}
+      >
+        {icon}
+      </span>
       {label}
     </button>
   );

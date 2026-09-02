@@ -768,7 +768,7 @@
     "workflowMode": "Workflow Mode",
     "nodes": "NODES",
     "title": "Workflow Canvas",
-    "emptyHint": "Drag nodes from the right panel or select a preset",
+    "emptyHint": "Add nodes from the toolbar, or open Materials to pick an image/video",
     "createConnections": "Click bottom handle to create connections",
     "deleteNode": "Click node then × to delete"
   },

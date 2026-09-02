@@ -768,7 +768,7 @@
     "workflowMode": "工作流模式",
     "nodes": "节点",
     "title": "工作流画布",
-    "emptyHint": "从右侧面板拖拽节点或选择预设",
+    "emptyHint": "点击顶部按钮添加节点，或打开左侧素材选择图片/视频",
     "createConnections": "点击底部手柄创建连接",
     "deleteNode": "点击节点后按 × 删除"
   },
