@@ -15,16 +15,21 @@ function TextInputNodeImpl({ id, data }: NodeProps<WorkflowNode>) {
       label={t("workflow.nodeText")}
       status="idle"
       showStatus={false}
-      icon={<MessageSquare className="h-3 w-3" />}
+      icon={<MessageSquare className="h-3.5 w-3.5" />}
       accent="bg-accent-green"
       hasSource
     >
-      <textarea
-        value={data.text ?? ""}
-        onChange={(e) => updateNodeData(id, { text: e.target.value })}
-        placeholder={t("workflow.textPlaceholder")}
-        className="nodrag h-20 w-full resize-none rounded border border-foreground/20 bg-background p-1.5 text-xs text-foreground outline-none focus:border-foreground/50"
-      />
+      <div className="flex flex-col gap-1">
+        <span className="text-[9px] font-bold uppercase text-muted-foreground">
+          {t("workflow.prompt")}
+        </span>
+        <textarea
+          value={data.text ?? ""}
+          onChange={(e) => updateNodeData(id, { text: e.target.value })}
+          placeholder={t("workflow.textPlaceholder")}
+          className="nodrag h-24 w-full resize-none rounded border border-foreground/20 bg-background p-2 text-xs leading-relaxed text-foreground outline-none transition-colors focus:border-foreground/50"
+        />
+      </div>
     </NodeCard>
   );
 }

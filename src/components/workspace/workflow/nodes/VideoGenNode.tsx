@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { type NodeProps, useReactFlow } from "@xyflow/react";
 import { Film, Loader2, Play } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -171,7 +171,7 @@ function VideoGenNodeImpl({ id, data }: NodeProps<WorkflowNode>) {
       id={id}
       label={t("workflow.nodeVideo")}
       status={status}
-      icon={<Film className="h-3 w-3" />}
+      icon={<Film className="h-3.5 w-3.5" />}
       accent="bg-accent-purple"
       hasTarget
       hasSource
@@ -180,25 +180,31 @@ function VideoGenNodeImpl({ id, data }: NodeProps<WorkflowNode>) {
           type="button"
           onClick={handleRun}
           disabled={status === "running"}
-          className="nodrag flex h-4 w-4 items-center justify-center rounded border border-foreground/30 text-muted-foreground transition-colors hover:border-accent-purple hover:bg-accent-purple hover:text-foreground disabled:opacity-50"
+          className="nodrag flex h-5 w-5 items-center justify-center rounded border border-foreground/30 text-muted-foreground transition-colors hover:border-accent-purple hover:bg-accent-purple hover:text-foreground disabled:opacity-50"
           title={t("workflow.runNode")}
         >
           {status === "running" ? (
-            <Loader2 className="h-2.5 w-2.5 animate-spin" />
+            <Loader2 className="h-3 w-3 animate-spin" />
           ) : (
-            <Play className="h-2.5 w-2.5" />
+            <Play className="h-3 w-3" />
           )}
         </button>
       }
     >
-      <div className="space-y-2">
-        <textarea
-          value={inlinePrompt}
-          onChange={(e) => setInlinePrompt(e.target.value)}
-          placeholder={t("workflow.promptPlaceholder")}
-          className="nodrag h-14 w-full resize-none rounded border border-foreground/20 bg-background p-1.5 text-xs text-foreground outline-none focus:border-foreground/50"
-        />
-        <div className="flex gap-1.5">
+      <div className="space-y-2.5">
+        <div className="flex flex-col gap-1">
+          <span className="text-[9px] font-bold uppercase text-muted-foreground">
+            {t("workflow.prompt")}
+          </span>
+          <textarea
+            value={inlinePrompt}
+            onChange={(e) => setInlinePrompt(e.target.value)}
+            placeholder={t("workflow.promptPlaceholder")}
+            className="nodrag h-14 w-full resize-none rounded border border-foreground/20 bg-background p-2 text-xs leading-relaxed text-foreground outline-none transition-colors focus:border-foreground/50"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-1.5">
           <NodeSelect
             label={t("workflow.model")}
             value={model}
@@ -224,20 +230,22 @@ function VideoGenNodeImpl({ id, data }: NodeProps<WorkflowNode>) {
             options={resolutionOptions}
           />
         </div>
+
         {output ? (
           <video
             src={output}
             controls
-            className="h-24 w-full rounded border border-foreground/20 object-cover"
+            className="h-28 w-full rounded border border-foreground/20 object-cover"
           />
         ) : status === "running" ? (
-          <div className="flex h-12 items-center justify-center gap-2 text-[10px] text-muted-foreground">
+          <div className="flex h-14 items-center justify-center gap-2 rounded border border-dashed border-foreground/20 text-[10px] text-muted-foreground">
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
             {t("workflow.generating")}
           </div>
         ) : null}
+
         {data.error ? (
-          <p className="text-[10px] text-accent-pink">{data.error}</p>
+          <p className="text-[10px] leading-snug text-accent-pink">{data.error}</p>
         ) : null}
       </div>
     </NodeCard>

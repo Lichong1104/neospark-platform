@@ -62,10 +62,10 @@ export function NodeCard({
       )}
     >
       <div className={cn("h-1.5 w-full", accent)} />
-      <header className="flex items-center gap-1.5 border-b-brutal border-foreground px-2 py-1.5">
+      <header className="flex items-center gap-2 border-b-brutal border-foreground px-2.5 py-2">
         <span
           className={cn(
-            "flex h-5 w-5 shrink-0 items-center justify-center border border-foreground",
+            "flex h-6 w-6 shrink-0 items-center justify-center border border-foreground",
             accent
           )}
         >
@@ -90,17 +90,17 @@ export function NodeCard({
             {STATUS_LABEL[status]}
           </span>
         ) : null}
-        {action ? <span className="nodrag">{action}</span> : null}
+        {action ? <span className="nodrag flex items-center">{action}</span> : null}
         <button
           type="button"
           onClick={handleDelete}
-          className="nodrag flex h-4 w-4 shrink-0 items-center justify-center rounded border border-foreground/30 text-muted-foreground transition-colors hover:border-accent-red hover:bg-accent-red hover:text-foreground"
+          className="nodrag flex h-5 w-5 shrink-0 items-center justify-center rounded border border-foreground/30 text-muted-foreground transition-colors hover:border-accent-red hover:bg-accent-red hover:text-foreground"
           title={t("workflow.deleteNode")}
         >
-          <X className="h-2.5 w-2.5" />
+          <X className="h-3 w-3" />
         </button>
       </header>
-      <div className="p-2">{children}</div>
+      <div className="p-2.5">{children}</div>
       {hasTarget && <Handle type="target" position={Position.Left} id="in" />}
       {hasSource && <Handle type="source" position={Position.Right} id="out" />}
     </div>
@@ -131,7 +131,7 @@ export function NodeSelect({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="nodrag h-6 w-full cursor-pointer rounded border border-foreground/20 bg-background px-1 text-[10px] text-foreground outline-none transition-colors hover:border-foreground/40 focus:border-foreground"
+        className="nodrag h-7 w-full cursor-pointer rounded border border-foreground/20 bg-background px-1.5 text-[10px] text-foreground outline-none transition-colors hover:border-foreground/40 focus:border-foreground"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>

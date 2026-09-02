@@ -1245,6 +1245,7 @@
     "nodeVideoInput": "Ref Video",
     "nodeImage": "Image",
     "nodeVideo": "Video",
+    "prompt": "Prompt",
     "backToCanvas": "Canvas",
     "clear": "Clear",
     "deleteNode": "Delete",

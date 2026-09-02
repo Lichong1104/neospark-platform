@@ -1245,6 +1245,7 @@
     "nodeVideoInput": "参考视频",
     "nodeImage": "图片",
     "nodeVideo": "视频",
+    "prompt": "提示词",
     "backToCanvas": "画布",
     "clear": "清空",
     "deleteNode": "删除节点",
