@@ -1,6 +1,6 @@
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { type NodeProps, useReactFlow } from "@xyflow/react";
-import { Film, Loader2 } from "lucide-react";
+import { Film, Loader2, Play } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { createVideoTask, getVideoModels } from "@/api/video";
 import { useVideoTaskPolling } from "@/hooks/useVideoTaskPolling";
@@ -95,15 +95,11 @@ function VideoGenNodeImpl({ id, data }: NodeProps<WorkflowNode>) {
     }
   }, [videoModelsData, model]);
 
-  const startedRef = useRef(false);
-  useEffect(() => {
-    if (data.pendingGenerate && !startedRef.current) {
-      startedRef.current = true;
-      void runGenerate();
-    }
-    if (!data.pendingGenerate) startedRef.current = false;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data.pendingGenerate]);
+  const handleRun = useCallback(() => {
+    if (data.status === "running") return;
+    updateNodeData(id, { outputVideo: undefined, error: undefined });
+    void runGenerate();
+  }, [data.status, id, updateNodeData]);
 
   const runGenerate = async () => {
     const params = paramsRef.current;
@@ -179,6 +175,21 @@ function VideoGenNodeImpl({ id, data }: NodeProps<WorkflowNode>) {
       accent="bg-accent-purple"
       hasTarget
       hasSource
+      action={
+        <button
+          type="button"
+          onClick={handleRun}
+          disabled={status === "running"}
+          className="nodrag flex h-4 w-4 items-center justify-center rounded border border-foreground/30 text-muted-foreground transition-colors hover:border-accent-purple hover:bg-accent-purple hover:text-foreground disabled:opacity-50"
+          title={t("workflow.runNode")}
+        >
+          {status === "running" ? (
+            <Loader2 className="h-2.5 w-2.5 animate-spin" />
+          ) : (
+            <Play className="h-2.5 w-2.5" />
+          )}
+        </button>
+      }
     >
       <div className="space-y-2">
         <textarea

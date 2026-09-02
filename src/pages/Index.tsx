@@ -8,7 +8,6 @@ import {
   CanvasArea,
   type CanvasImage,
 } from "@/components/workspace/CanvasArea";
-import { WorkflowCanvas } from "@/components/workspace/WorkflowCanvas";
 import { IntelligenceHub } from "@/components/workspace/IntelligenceHub";
 import type { PendingRequest } from "@/lib/landingRequest";
 import { STATIC_BASE_URL } from "@/api/request";
@@ -106,7 +105,6 @@ const Index = () => {
   const [showWorkspaceOnboarding, setShowWorkspaceOnboarding] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedImageIds, setSelectedImageIds] = useState<string[]>([]);
-  const [activeView, setActiveView] = useState<"canvas" | "workflow">("canvas");
   const [isAssetSidebarOpen, setIsAssetSidebarOpen] = useState(false);
   const [canvasImages, setCanvasImages] = useState<CanvasImage[]>([]);
   const [isFileDropUploading, setIsFileDropUploading] = useState(false);
@@ -642,29 +640,23 @@ const Index = () => {
           </div>
 
           <div className="flex-1 relative min-w-0">
-            {activeView === "canvas" ? (
-              <CanvasArea
-                onImageSelect={setSelectedImage}
-                onSelectionChange={setSelectedImageIds}
-                canvasImages={canvasImages}
-                onCanvasImagesChange={setCanvasImages}
-                onFileDrop={handleFileDrop}
-                isFileDropLoading={isFileDropUploading}
-                onGenPlaceholderFulfilled={handleGenPlaceholderFulfilled}
-              />
-            ) : (
-              <WorkflowCanvas onExit={() => setActiveView("canvas")} />
-            )}
-            {activeView === "canvas" && (
-              <button
-                type="button"
-                onClick={() => setActiveView("workflow")}
-                className="absolute bottom-3 right-3 z-20 inline-flex items-center gap-1.5 rounded border-brutal border-foreground bg-accent-cyan px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide brutal-shadow transition-none hover:brightness-110"
-              >
-                <Workflow className="h-3.5 w-3.5" />
-                {t("workflow.enterWorkflow")}
-              </button>
-            )}
+            <CanvasArea
+              onImageSelect={setSelectedImage}
+              onSelectionChange={setSelectedImageIds}
+              canvasImages={canvasImages}
+              onCanvasImagesChange={setCanvasImages}
+              onFileDrop={handleFileDrop}
+              isFileDropLoading={isFileDropUploading}
+              onGenPlaceholderFulfilled={handleGenPlaceholderFulfilled}
+            />
+            <button
+              type="button"
+              onClick={() => navigate("/workflow")}
+              className="absolute bottom-3 right-3 z-20 inline-flex items-center gap-1.5 rounded border-brutal border-foreground bg-accent-cyan px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide brutal-shadow transition-none hover:brightness-110"
+            >
+              <Workflow className="h-3.5 w-3.5" />
+              {t("workflow.enterWorkflow")}
+            </button>
           </div>
 
           <aside

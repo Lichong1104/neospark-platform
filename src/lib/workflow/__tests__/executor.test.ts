@@ -1,14 +1,13 @@
 import { describe, it, expect } from "vitest";
 import type { Edge, Node } from "@xyflow/react";
-import {
-  buildPipelineWaves,
-  topoSort,
-  resolveInputs,
-  isGeneratorNode,
-} from "@/lib/workflow/executor";
+import { resolveInputs, isGeneratorNode } from "@/lib/workflow/executor";
 import type { WorkflowNodeData } from "@/lib/workflow/types";
 
-function node(id: string, type: string, data: Partial<WorkflowNodeData> = {}): Node<WorkflowNodeData> {
+function node(
+  id: string,
+  type: string,
+  data: Partial<WorkflowNodeData> = {}
+): Node<WorkflowNodeData> {
   return {
     id,
     type: type as never,
@@ -20,66 +19,6 @@ function node(id: string, type: string, data: Partial<WorkflowNodeData> = {}): N
 function edge(id: string, source: string, target: string): Edge {
   return { id, source, target };
 }
-
-describe("topoSort", () => {
-  it("按依赖顺序排序线性链", () => {
-    const nodes = [
-      node("t", "textInput", { text: "hi" }),
-      node("i", "imageGen"),
-      node("v", "videoGen"),
-    ];
-    const edges = [edge("e1", "t", "i"), edge("e2", "i", "v")];
-    expect(topoSort(nodes, edges)).toEqual(["t", "i", "v"]);
-  });
-
-  it("无依赖节点按任意顺序输出", () => {
-    const nodes = [node("a", "imageGen"), node("b", "imageGen")];
-    const result = topoSort(nodes, []);
-    expect(result.sort()).toEqual(["a", "b"]);
-  });
-});
-
-describe("buildPipelineWaves", () => {
-  it("线性链切成 3 波", () => {
-    const nodes = [
-      node("t", "textInput", { text: "hi" }),
-      node("i", "imageGen"),
-      node("v", "videoGen"),
-    ];
-    const edges = [edge("e1", "t", "i"), edge("e2", "i", "v")];
-    expect(buildPipelineWaves(nodes, edges)).toEqual([["t"], ["i"], ["v"]]);
-  });
-
-  it("两个独立分支落在同一波", () => {
-    const nodes = [
-      node("t", "textInput", { text: "hi" }),
-      node("i1", "imageGen"),
-      node("i2", "imageGen"),
-    ];
-    const edges = [edge("e1", "t", "i1"), edge("e2", "t", "i2")];
-    const waves = buildPipelineWaves(nodes, edges);
-    expect(waves).toEqual([["t"], ["i1", "i2"]]);
-  });
-
-  it("菱形依赖正确分层", () => {
-    const nodes = [
-      node("a", "textInput", { text: "x" }),
-      node("b", "imageGen"),
-      node("c", "imageGen"),
-      node("d", "videoGen"),
-    ];
-    const edges = [
-      edge("ab", "a", "b"),
-      edge("ac", "a", "c"),
-      edge("bd", "b", "d"),
-      edge("cd", "c", "d"),
-    ];
-    const waves = buildPipelineWaves(nodes, edges);
-    expect(waves[0]).toEqual(["a"]);
-    expect(waves[1].sort()).toEqual(["b", "c"]);
-    expect(waves[2]).toEqual(["d"]);
-  });
-});
 
 describe("resolveInputs", () => {
   it("按上游节点类型收集 prompt/images/videos", () => {
@@ -109,6 +48,20 @@ describe("resolveInputs", () => {
     ];
     const edges = [edge("e1", "t", "other")];
     expect(resolveInputs("target", nodes, edges).prompt).toBe("");
+  });
+
+  it("多个上游图片/视频输入可收集到同一目标（fan-out 反向聚合）", () => {
+    const nodes = [
+      node("img1", "imageInput", { imageUrl: "https://x/1.jpg" }),
+      node("img2", "imageInput", { imageUrl: "https://x/2.jpg" }),
+      node("target", "imageGen"),
+    ];
+    const edges = [
+      edge("e1", "img1", "target"),
+      edge("e2", "img2", "target"),
+    ];
+    const res = resolveInputs("target", nodes, edges);
+    expect(res.images).toEqual(["https://x/1.jpg", "https://x/2.jpg"]);
   });
 });
 

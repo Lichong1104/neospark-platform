@@ -23,6 +23,7 @@ import Affiliate from "./pages/Affiliate";
 import FullTimeAffiliate from "./pages/FullTimeAffiliate";
 import SkillMarket from "./pages/SkillMarket";
 import SkillDetail from "./pages/SkillDetail";
+import Workflow from "./pages/Workflow";
 import AdminRouteGuard from "@/components/auth/AdminRouteGuard";
 
 const queryClient = new QueryClient();
@@ -146,6 +147,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <SkillDetail />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/workflow"
+              element={
+                <ProtectedRoute>
+                  <Workflow />
                 </ProtectedRoute>
               }
             />

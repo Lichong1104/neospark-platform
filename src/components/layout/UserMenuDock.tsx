@@ -10,6 +10,7 @@ import {
   Shield,
   CirclePlay,
   ChevronRight,
+  Workflow,
 } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -164,6 +165,14 @@ const UserMenuDock: React.FC<UserMenuDockProps> = ({ variant = "fixed" }) => {
                 onNavigate={() => setOpen(false)}
               >
                 {t("header.workspace", { defaultValue: "Workspace" })}
+              </MenuNavItem>
+              <MenuNavItem
+                to="/workflow"
+                active={isActive("/workflow")}
+                icon={<Workflow className="h-4 w-4" />}
+                onNavigate={() => setOpen(false)}
+              >
+                {t("header.workflow", { defaultValue: "Workflow" })}
               </MenuNavItem>
               <MenuNavItem
                 to="/pricing"

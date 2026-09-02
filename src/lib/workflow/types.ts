@@ -15,10 +15,6 @@ export type WorkflowNodeStatus = "idle" | "running" | "done" | "error";
 export interface WorkflowNodeData extends Record<string, unknown> {
   label?: string;
   status: WorkflowNodeStatus;
-  /** 由 runner 置位，触发该节点执行生成 */
-  pendingGenerate?: boolean;
-  /** 尚未轮到的波次节点，仅用于 UI 等待标记 */
-  pipelineQueued?: boolean;
   error?: string;
 
   // 文本输入节点

@@ -29,6 +29,7 @@ export function NodeCard({
   hasTarget = false,
   hasSource = false,
   showStatus = true,
+  action,
 }: {
   id: string;
   label: string;
@@ -39,6 +40,7 @@ export function NodeCard({
   hasTarget?: boolean;
   hasSource?: boolean;
   showStatus?: boolean;
+  action?: ReactNode;
 }) {
   const { t } = useTranslation();
   const { setNodes, setEdges } = useReactFlow();
@@ -88,6 +90,7 @@ export function NodeCard({
             {STATUS_LABEL[status]}
           </span>
         ) : null}
+        {action ? <span className="nodrag">{action}</span> : null}
         <button
           type="button"
           onClick={handleDelete}
