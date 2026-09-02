@@ -1283,6 +1283,7 @@
     "addImageGenNode": "生图",
     "addVideoGenNode": "生视频",
     "addedToWorkflow": "已添加到工作流",
-    "runNode": "运行节点"
+    "runNode": "运行节点",
+    "loadMore": "加载更多"
   }
 }

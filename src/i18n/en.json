@@ -1283,6 +1283,7 @@
     "addImageGenNode": "Image",
     "addVideoGenNode": "Video",
     "addedToWorkflow": "Added to workflow",
-    "runNode": "Run node"
+    "runNode": "Run node",
+    "loadMore": "Load more"
   }
 }

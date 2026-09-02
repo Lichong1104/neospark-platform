@@ -37,6 +37,7 @@ export function MaterialsPanel({ onAddAsset }: MaterialsPanelProps) {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const isLoadingMoreRef = useRef(false);
 
   const loadImages = useCallback(async () => {
     setIsLoadingImages(true);
@@ -57,8 +58,8 @@ export function MaterialsPanel({ onAddAsset }: MaterialsPanelProps) {
   }, [imageSource]);
 
   const loadMoreImages = useCallback(async () => {
-    if (isLoadingImages || isLoadingMoreImages) return;
-    if (images.length >= imageTotal) return;
+    if (isLoadingImages || isLoadingMoreRef.current || images.length >= imageTotal) return;
+    isLoadingMoreRef.current = true;
     setIsLoadingMoreImages(true);
     try {
       const data = await storageApi.listUserImages({
@@ -72,9 +73,10 @@ export function MaterialsPanel({ onAddAsset }: MaterialsPanelProps) {
       }
       setImageTotal(data.total || imageTotal);
     } finally {
+      isLoadingMoreRef.current = false;
       setIsLoadingMoreImages(false);
     }
-  }, [imageSource, imageTotal, images.length, isLoadingImages, isLoadingMoreImages]);
+  }, [imageSource, imageTotal, images.length, isLoadingImages]);
 
   const loadVideos = useCallback(async () => {
     setIsLoadingVideos(true);
@@ -98,7 +100,7 @@ export function MaterialsPanel({ onAddAsset }: MaterialsPanelProps) {
     const container = listRef.current;
     if (!container) return;
     const distance = container.scrollHeight - container.scrollTop - container.clientHeight;
-    if (distance <= 120) loadMoreImages();
+    if (distance <= 200) loadMoreImages();
   }, [activeTab, loadMoreImages]);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -141,7 +143,7 @@ export function MaterialsPanel({ onAddAsset }: MaterialsPanelProps) {
   ];
 
   return (
-    <div className="flex w-72 shrink-0 flex-col border-r-brutal border-foreground bg-card">
+    <div className="flex h-full w-72 shrink-0 flex-col border-r-brutal border-foreground bg-card">
       <input
         ref={fileInputRef}
         type="file"
@@ -239,14 +241,22 @@ export function MaterialsPanel({ onAddAsset }: MaterialsPanelProps) {
           />
         )}
 
-        {activeTab === "images" && (isLoadingMoreImages || images.length < imageTotal) && (
-          <div className="flex items-center justify-center py-3 text-[10px] font-bold uppercase text-muted-foreground">
+        {activeTab === "images" && images.length < imageTotal && (
+          <div className="flex items-center justify-center py-3">
             {isLoadingMoreImages ? (
-              <span className="inline-flex items-center gap-1.5">
+              <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase text-muted-foreground">
                 <Loader2 className="h-3 w-3 animate-spin" />
                 {t("workflow.loading")}
               </span>
-            ) : null}
+            ) : (
+              <button
+                type="button"
+                onClick={loadMoreImages}
+                className="rounded border border-foreground/20 bg-card px-3 py-1 text-[10px] font-bold uppercase text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground"
+              >
+                {t("workflow.loadMore")}
+              </button>
+            )}
           </div>
         )}
       </div>
