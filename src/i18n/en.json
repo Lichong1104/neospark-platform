@@ -871,6 +871,7 @@
     "resend": "Resend Code",
     "resendIn": "Resend in {{seconds}}s",
     "invalidEmail": "Please enter a valid email address",
+    "verifyHuman": "Please complete the human verification",
     "invalidCode": "Please enter the complete 6-digit code",
     "codeSent": "Verification code sent to {{email}}",
     "loginSuccess": "Login successful!",

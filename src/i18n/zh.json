@@ -871,6 +871,7 @@
     "resend": "重新发送",
     "resendIn": "{{seconds}}秒后重发",
     "invalidEmail": "请输入有效的邮箱地址",
+    "verifyHuman": "请先完成人机验证",
     "invalidCode": "请输入完整的6位验证码",
     "codeSent": "验证码已发送至 {{email}}",
     "loginSuccess": "登录成功！",

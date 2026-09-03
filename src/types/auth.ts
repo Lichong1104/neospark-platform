@@ -1,6 +1,8 @@
 /** 发送验证码请求 */
 export interface SendCodeParams {
   email: string;
+  /** Cloudflare Turnstile 人机验证 token（后端未配置密钥时可省略） */
+  turnstile_token?: string;
 }
 
 /** 发送验证码响应 */
@@ -11,6 +13,8 @@ export interface LoginParams {
   email: string;
   code?: string;
   referral_code?: string;
+  /** Cloudflare Turnstile 人机验证 token（后端未配置密钥时可省略） */
+  turnstile_token?: string;
 }
 
 /** 登录响应 */

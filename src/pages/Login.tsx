@@ -1,10 +1,11 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "react-i18next";
 import { Sparkles, Zap, Globe, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { googleLogin, sendCode, login as apiLogin } from "@/api/auth";
+import TurnstileWidget, { TurnstileWidgetHandle } from "@/components/auth/TurnstileWidget";
 import { getErrorMessage } from "@/lib/errorMessage";
 
 const Login = () => {
@@ -41,6 +42,21 @@ const Login = () => {
   const [countdown, setCountdown] = useState(0);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
+  // Cloudflare Turnstile 人机验证（未配置 site key 时保持原行为）
+  const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
+  const turnstileRef = useRef<TurnstileWidgetHandle>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+
+  const handleTurnstileVerify = useCallback((token: string) => {
+    setTurnstileToken(token);
+  }, []);
+  const handleTurnstileExpire = useCallback(() => {
+    setTurnstileToken(null);
+  }, []);
+  const handleTurnstileError = useCallback(() => {
+    setTurnstileToken(null);
+  }, []);
+
   useEffect(() => {
     if (isAuthenticated) {
       navigate(redirectTo, { replace: true });
@@ -60,9 +76,15 @@ const Login = () => {
       toast.error(t("login.invalidEmail"));
       return;
     }
+    if (turnstileSiteKey && !turnstileToken) {
+      toast.error(t("login.verifyHuman"));
+      return;
+    }
     setIsLoading(true);
     try {
-      await sendCode({ email });
+      await sendCode({ email, turnstile_token: turnstileToken ?? undefined });
+      // token 一次性，发送成功后重置以获取新 token（登录/重发时复用）
+      turnstileRef.current?.reset();
       setStep("code");
       setCountdown(60);
       setCode(["", "", "", "", "", ""]);
@@ -71,6 +93,7 @@ const Login = () => {
     } catch (err: any) {
       const msg = getErrorMessage(err, "Failed");
       toast.error(msg);
+      turnstileRef.current?.reset();
     } finally {
       setIsLoading(false);
     }
@@ -121,11 +144,16 @@ const Login = () => {
       toast.error(t("login.invalidCode"));
       return;
     }
+    if (turnstileSiteKey && !turnstileToken) {
+      toast.error(t("login.verifyHuman"));
+      return;
+    }
     setIsLoading(true);
     try {
-      const params: { email: string; code: string; referral_code?: string } = {
+      const params: { email: string; code: string; referral_code?: string; turnstile_token?: string } = {
         email,
         code: codeStr,
+        turnstile_token: turnstileToken ?? undefined,
       };
       if (referralCode) {
         params.referral_code = referralCode;
@@ -141,6 +169,7 @@ const Login = () => {
       );
       toast.error(msg);
       setCode(["", "", "", "", "", ""]);
+      turnstileRef.current?.reset();
       inputRefs.current[0]?.focus();
     } finally {
       setIsLoading(false);
@@ -149,9 +178,14 @@ const Login = () => {
 
   const handleResend = async () => {
     if (countdown > 0) return;
+    if (turnstileSiteKey && !turnstileToken) {
+      toast.error(t("login.verifyHuman"));
+      return;
+    }
     try {
-      await sendCode({ email });
+      await sendCode({ email, turnstile_token: turnstileToken ?? undefined });
       setCountdown(60);
+      turnstileRef.current?.reset();
       toast.success(t("login.codeSent", { email }));
     } catch (err: any) {
       const msg = getErrorMessage(
@@ -159,6 +193,7 @@ const Login = () => {
         t("login.sendFailed", { defaultValue: "Failed to send, please try again." })
       );
       toast.error(msg);
+      turnstileRef.current?.reset();
     }
   };
 
@@ -295,6 +330,16 @@ const Login = () => {
                   {countdown > 0 ? t("login.resendIn", { seconds: countdown }) : t("login.resend")}
                 </button>
               </div>
+            </div>
+          )}
+          {turnstileSiteKey && (
+            <div className="mt-4">
+              <TurnstileWidget
+                ref={turnstileRef}
+                onVerify={handleTurnstileVerify}
+                onExpire={handleTurnstileExpire}
+                onError={handleTurnstileError}
+              />
             </div>
           )}
           <div className="mt-4">
