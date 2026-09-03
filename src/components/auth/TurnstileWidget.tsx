@@ -24,7 +24,8 @@ declare global {
           "expired-callback"?: () => void;
           "error-callback"?: () => void;
           theme?: "light" | "dark" | "auto";
-          size?: "normal" | "compact" | "invisible";
+          /** flexible: 宽度跟随父容器（最小 150px），用于与表单控件对齐 */
+          size?: "normal" | "compact" | "flexible" | "invisible";
         }
       ) => string;
       reset: (widgetId: string) => void;
@@ -93,6 +94,8 @@ const TurnstileWidget = forwardRef<TurnstileWidgetHandle, TurnstileWidgetProps>(
         callback: (token: string) => onVerify(token),
         "expired-callback": () => onExpire?.(),
         "error-callback": () => onError?.(),
+        // flexible 尺寸让 iframe 宽度跟随容器，与登录页全宽输入框/按钮对齐
+        size: "flexible",
       });
     }, [siteKey, onVerify, onExpire, onError]);
 
