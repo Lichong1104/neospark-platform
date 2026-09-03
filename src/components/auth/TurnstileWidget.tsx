@@ -25,11 +25,6 @@ declare global {
           "error-callback"?: () => void;
           theme?: "light" | "dark" | "auto";
           size?: "normal" | "compact" | "invisible";
-          /**
-           * interaction-only: 验证自动通过时不渲染 widget（保持页面原有排版），
-           * 仅当 Cloudflare 要求交互验证时才浮出验证框。
-           */
-          appearance?: "always" | "execute" | "interaction-only";
         }
       ) => string;
       reset: (widgetId: string) => void;
@@ -98,9 +93,6 @@ const TurnstileWidget = forwardRef<TurnstileWidgetHandle, TurnstileWidgetProps>(
         callback: (token: string) => onVerify(token),
         "expired-callback": () => onExpire?.(),
         "error-callback": () => onError?.(),
-        // 自动验证通过时不渲染 widget，保持登录页排版不被灰框破坏；
-        // 仅可疑流量需要交互验证时才浮出验证框
-        appearance: "interaction-only",
       });
     }, [siteKey, onVerify, onExpire, onError]);
 
@@ -120,7 +112,8 @@ const TurnstileWidget = forwardRef<TurnstileWidgetHandle, TurnstileWidgetProps>(
 
     if (!siteKey) return null;
 
-    return <div ref={containerRef} className="flex justify-center" />;
+    // widget iframe 会拉伸到容器宽度，与登录页全宽输入框/按钮保持一致
+    return <div ref={containerRef} className="w-full" />;
   }
 );
 
