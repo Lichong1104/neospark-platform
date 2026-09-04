@@ -94,8 +94,7 @@
       "status": "状态",
       "model": "模型"
     },
-    "payments": {
-      "stripeTitle": "Stripe 付款记录",    "skillReviews": {
+    "skillReviews": {
       "title": "Skill 提交审核",
       "file": "文件",
       "empty": "暂无提交记录",
@@ -141,7 +140,8 @@
         "reject": "驳回"
       }
     },
-
+    "payments": {
+      "stripeTitle": "Stripe 付款记录",
       "wechatTitle": "微信支付记录",
       "columnsStripe": {
         "user": "用户",
@@ -1257,10 +1257,11 @@
     "free": "免费",
     "viewDetails": "查看详情",
     "upload": "上传",
-    "uploadTitle": "上传 Skill",    "submit": "提交 Skill",
+    "uploadTitle": "上传 Skill",
+    "submit": "提交 Skill",
     "submitTitle": "提交 Skill 审核",
     "submitDesc": "上传 ZIP 包（须含 SKILL.md）或 .md 文件，管理员审核通过后上架到市场，所有用户可见可用。",
-    "clickOrDrop": "点击选择 .zip 或 .md 文件",
+    "clickOrDrop": "点击选择 .zip 文件",
     "submitSuccess": "Skill {{name}} 已提交，等待管理员审核",
     "submitFailed": "提交失败",
     "confirmSubmit": "提交审核",
@@ -1270,11 +1271,9 @@
       "approved": "已通过",
       "rejected": "已驳回"
     },
-
     "uploadDesc": "上传 ZIP 格式的 Skill 包（必须包含 SKILL.md）",
     "uploadFile": "选择文件",
     "removeFile": "移除",
-    "clickOrDrop": "点击选择 .zip 文件",
     "uploadValidation": "请填写 Skill ID 并选择文件",
     "uploadSuccess": "Skill {{name}} 上传成功",
     "uploadFailed": "上传失败",
