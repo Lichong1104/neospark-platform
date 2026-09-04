@@ -1,9 +1,10 @@
 import React, { useRef, useState } from "react";
-import { Upload, Loader2, X, FileArchive } from "lucide-react";
+import { Upload, Loader2, FileArchive } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import skillsApi from "@/api/skills";
+import SkillAuthoringGuide from "@/components/skills/SkillAuthoringGuide";
 import {
   Dialog,
   DialogContent,
@@ -14,9 +15,11 @@ import {
 
 interface UploadSkillButtonProps {
   onUploaded?: () => void;
+  /** 自定义触发按钮（默认渲染「提交 Skill」按钮） */
+  trigger?: React.ReactNode;
 }
 
-const UploadSkillButton: React.FC<UploadSkillButtonProps> = ({ onUploaded }) => {
+const UploadSkillButton: React.FC<UploadSkillButtonProps> = ({ onUploaded, trigger }) => {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -62,13 +65,17 @@ const UploadSkillButton: React.FC<UploadSkillButtonProps> = ({ onUploaded }) => 
 
   return (
     <>
-      <button
-        onClick={() => setIsOpen(true)}
-        className="h-9 px-3 flex items-center gap-2 border-brutal border-foreground brutal-press bg-accent-pink text-foreground text-xs font-bold uppercase hover:brightness-110 transition-none"
-      >
-        <Upload className="w-4 h-4" />
-        {t("skill.submit")}
-      </button>
+      {trigger ? (
+        <span onClick={() => setIsOpen(true)}>{trigger}</span>
+      ) : (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="h-9 px-3 flex items-center gap-2 border-brutal border-foreground brutal-press bg-accent-pink text-foreground text-xs font-bold uppercase hover:brightness-110 transition-none"
+        >
+          <Upload className="w-4 h-4" />
+          {t("skill.submit")}
+        </button>
+      )}
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-md border-brutal border-foreground">
@@ -138,27 +145,36 @@ const UploadSkillButton: React.FC<UploadSkillButtonProps> = ({ onUploaded }) => 
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                onClick={() => setIsOpen(false)}
-                className="px-3 py-2 text-xs font-bold uppercase border-brutal border-foreground bg-card hover:bg-secondary transition-none"
-                disabled={isUploading}
-              >
-                {t("skill.cancel")}
-              </button>
-              <button
-                onClick={handleUpload}
-                disabled={isUploading || !selectedFile || !skillId.trim()}
-                className={cn(
-                  "px-3 py-2 text-xs font-bold uppercase border-brutal border-foreground brutal-press transition-none flex items-center gap-1.5",
-                  isUploading || !selectedFile || !skillId.trim()
-                    ? "bg-muted text-muted-foreground cursor-not-allowed"
-                    : "bg-accent-pink text-foreground hover:brightness-110"
-                )}
-              >
-                {isUploading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                {t("skill.confirmSubmit")}
-              </button>
+            <div className="flex items-center justify-between gap-2 pt-2">
+              <SkillAuthoringGuide
+                trigger={
+                  <button className="text-[10px] font-bold uppercase tracking-wider text-accent-pink hover:underline">
+                    {t("skill.guide.button")} →
+                  </button>
+                }
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="px-3 py-2 text-xs font-bold uppercase border-brutal border-foreground bg-card hover:bg-secondary transition-none"
+                  disabled={isUploading}
+                >
+                  {t("skill.cancel")}
+                </button>
+                <button
+                  onClick={handleUpload}
+                  disabled={isUploading || !selectedFile || !skillId.trim()}
+                  className={cn(
+                    "px-3 py-2 text-xs font-bold uppercase border-brutal border-foreground brutal-press transition-none flex items-center gap-1.5",
+                    isUploading || !selectedFile || !skillId.trim()
+                      ? "bg-muted text-muted-foreground cursor-not-allowed"
+                      : "bg-accent-pink text-foreground hover:brightness-110"
+                  )}
+                >
+                  {isUploading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  {t("skill.confirmSubmit")}
+                </button>
+              </div>
             </div>
           </div>
         </DialogContent>

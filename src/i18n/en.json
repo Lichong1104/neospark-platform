@@ -1259,7 +1259,7 @@
     "submit": "Submit Skill",
     "submitTitle": "Submit Skill for Review",
     "submitDesc": "Upload a ZIP package (must include SKILL.md) or a .md file. It will be listed in the market once approved by an admin.",
-    "clickOrDrop": "Click to select a .zip or .md file",
+    "clickOrDrop": "Click to select .zip file",
     "submitSuccess": "Skill {{name}} submitted. Waiting for admin review.",
     "submitFailed": "Submission failed",
     "confirmSubmit": "Submit for Review",
@@ -1274,7 +1274,6 @@
     "uploadDesc": "Upload a ZIP skill package (must include SKILL.md)",
     "uploadFile": "Select File",
     "removeFile": "Remove",
-    "clickOrDrop": "Click to select .zip file",
     "uploadValidation": "Please enter Skill ID and select a file",
     "uploadSuccess": "Skill {{name}} uploaded successfully",
     "uploadFailed": "Upload failed",
@@ -1299,7 +1298,245 @@
     "welcomeDesc": "Select skills above and enter commands to invoke AI capabilities.",
     "example1": "Generate a cyberpunk cat image for me",
     "example2": "Remove background from selected image",
-    "example3": "Generate a 5-second product promo video"
+    "example3": "Generate a 5-second product promo video",
+    "guide": {
+      "button": "Authoring Guide",
+      "title": "Skill Authoring Guide",
+      "updated": "For the NeoSpark Agent platform",
+      "sections": [
+        {
+          "title": "What is a Skill",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "A Skill is a capability package attached to the NeoSpark Agent: a SKILL.md file (YAML frontmatter + Markdown instructions) defines what it is and how it works, and optional Python scripts become tools the AI can call during a conversation. Submit it under \"My Submissions\" — once approved by an admin it is published to the market and available to all users."
+            },
+            {
+              "type": "p",
+              "text": "Two execution modes: inline compiles ```python code blocks in the body into in-process tools — lightweight, but no network access; subprocess runs standalone scripts in a child process — network access, installable dependencies and file output are allowed. Use subprocess whenever you need to call the NeoSpark API to generate images/videos or need third-party packages."
+            }
+          ]
+        },
+        {
+          "title": "Publishing Flow",
+          "blocks": [
+            {
+              "type": "list",
+              "items": [
+                "Author SKILL.md (and scripts) locally and package as a .zip",
+                "Upload the .zip or a single .md under \"My Submissions\" — status becomes Pending",
+                "An admin reviews content and security compliance",
+                "Once approved it is registered and listed automatically; if rejected a reason is given and you can resubmit after fixing"
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Directory Structure",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "The ZIP must contain a SKILL.md (any directory level works; a single top-level folder is recommended). Scripts and reference docs are referenced by relative paths."
+            },
+            {
+              "type": "code",
+              "text": "my-skill/\n├─ SKILL.md           # Required: frontmatter + instructions\n├─ requirements.txt   # Optional: third-party deps, auto-installed\n├─ .env.example       # Optional: declare required env vars\n├─ scripts/\n│  └─ generate.py     # Subprocess-mode script\n└─ references/\n   └─ guide.md        # Optional: reference docs"
+            }
+          ]
+        },
+        {
+          "title": "Frontmatter Fields",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "YAML metadata wrapped in --- at the top of SKILL.md. Field reference:"
+            },
+            {
+              "type": "table",
+              "columns": [
+                "Field",
+                "Required",
+                "Default",
+                "Description"
+              ],
+              "rows": [
+                [
+                  "id",
+                  "Yes*",
+                  "file name",
+                  "Globally unique ID: lowercase letters/digits/dashes/underscores; *optional for a single .md submission (file name is used)"
+                ],
+                [
+                  "name",
+                  "No",
+                  "same as id",
+                  "Display name"
+                ],
+                [
+                  "description",
+                  "No",
+                  "empty",
+                  "One-line summary shown on the market card and in the Agent tool description"
+                ],
+                [
+                  "version",
+                  "No",
+                  "0.0.0",
+                  "Semantic version, e.g. 1.0.0"
+                ],
+                [
+                  "model",
+                  "No",
+                  "openai:gpt-4o",
+                  "Agent chat model; deepseek:deepseek-v4-flash recommended"
+                ],
+                [
+                  "execution_mode",
+                  "No",
+                  "inline",
+                  "inline (in-process code blocks) or subprocess (child-process scripts)"
+                ],
+                [
+                  "scripts",
+                  "Required for subprocess",
+                  "—",
+                  "Map of tool name → script relative path, e.g. generate: scripts/generate.py"
+                ],
+                [
+                  "file_generating_scripts",
+                  "No",
+                  "[]",
+                  "Names of scripts that produce files; the platform collects their outputs"
+                ],
+                [
+                  "env_whitelist",
+                  "No",
+                  "[]",
+                  "Environment variables the script may read; NEOSPARK_API_KEY is injected automatically — never hardcode it"
+                ],
+                [
+                  "requirements",
+                  "No",
+                  "requirements.txt",
+                  "Dependency file path; pip-installed into an isolated directory when present"
+                ],
+                [
+                  "tools / dependencies",
+                  "No",
+                  "[]",
+                  "Reserved fields; leave empty arrays when unused"
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Subprocess Script Contract",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "The platform invokes scripts as follows (both arguments are required):"
+            },
+            {
+              "type": "code",
+              "text": "python scripts/generate.py --output-dir <output dir> --input-json '<JSON parameter string>'"
+            },
+            {
+              "type": "list",
+              "items": [
+                "Use argparse to receive --input-json (a JSON string) and --output-dir (output directory)",
+                "Write generated files into --output-dir and return their names in the result JSON",
+                "The exit code must be 0; the LAST line of stdout must be a JSON result object the platform parses, e.g. {\"content\": \"Generated x.png\", \"files\": [\"x.png\"]}",
+                "Any environment variable you read must be declared in env_whitelist; never hardcode secrets in the script",
+                "Use NEOSPARK_BASE_URL for the API base (default https://api.useneospark.com/api/v1) and the injected NEOSPARK_API_KEY for auth (X-API-Key header)",
+                "List third-party packages in requirements.txt — the platform installs them into an isolated directory without affecting other skills"
+              ]
+            },
+            {
+              "type": "p",
+              "text": "Minimal runnable example:"
+            },
+            {
+              "type": "code",
+              "text": "import argparse\nimport json\nimport sys\nfrom pathlib import Path\n\ndef main() -> int:\n    parser = argparse.ArgumentParser()\n    parser.add_argument(\"--input-json\", required=True)\n    parser.add_argument(\"--output-dir\", required=True)\n    args = parser.parse_args()\n    params = json.loads(args.input_json)\n\n    out_dir = Path(args.output_dir)\n    out_dir.mkdir(parents=True, exist_ok=True)\n    result_file = out_dir / \"result.txt\"\n    result_file.write_text(f\"prompt: {params.get('prompt', '')}\", encoding=\"utf-8\")\n\n    # The last stdout line must be a JSON result\n    print(json.dumps({\"content\": f\"Generated {result_file.name}\", \"files\": [result_file.name]}))\n    return 0\n\nif __name__ == \"__main__\":\n    sys.exit(main())"
+            }
+          ]
+        },
+        {
+          "title": "In-process Code Blocks (inline)",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Write ```python code blocks in the SKILL.md body — every top-level function becomes a tool the AI can call, named {skill_id}_{function_name}. Functions need type annotations and a docstring; the docstring is shown to the AI as the tool description."
+            },
+            {
+              "type": "list",
+              "items": [
+                "Only whitelisted standard-library imports are allowed: json, math, random, datetime, time, re, typing, collections, itertools, functools, decimal, statistics, hashlib, uuid, string, textwrap, copy, enum, dataclasses, pathlib, urllib.parse, etc.",
+                "Forbidden imports include os, sys, subprocess, socket, http, urllib (network), ctypes, pickle, threading and other system/network/concurrency modules",
+                "Inline code runs inside the platform process and cannot access the network; use subprocess for network or file generation"
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Writing the Instructions",
+          "blocks": [
+            {
+              "type": "list",
+              "items": [
+                "Open with a role and core capabilities so the AI knows who it is and what it can do",
+                "Describe the workflow in steps (gather info → plan → call tools → summarize)",
+                "State clearly when to call which tool and with what parameters (tool name is {skill_id}_{script_name})",
+                "Define the output format and deliverables, e.g. file links or a text report"
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Review Criteria",
+          "blocks": [
+            {
+              "type": "list",
+              "items": [
+                "skill_id must be globally unique and well-formed; frontmatter complete with valid fields",
+                "Must pass the platform compile pre-check: inline imports within the whitelist; subprocess script paths exist and stay inside the package",
+                "No malicious code, hardcoded secrets, intranet access or unauthorized domains",
+                "description must match actual behavior — no exaggeration or misleading claims",
+                "Admins may reject with a reason; you can fix and resubmit"
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Full Example",
+          "blocks": [
+            {
+              "type": "code",
+              "text": "---\nid: my-first-skill\nname: My First Skill\ndescription: Minimal subprocess skill demonstrating the script contract\nversion: 1.0.0\nmodel: deepseek:deepseek-v4-flash\nexecution_mode: subprocess\nscripts:\n  generate: scripts/generate.py\nfile_generating_scripts:\n  - generate\nenv_whitelist:\n  - NEOSPARK_API_KEY\n  - NEOSPARK_BASE_URL\ntools: []\ndependencies: []\n---\n\nYou are a demo assistant. When the user asks to generate content:\n\n1. Build the {\"prompt\": \"...\"} parameter from the user's request\n2. Call the tool my-first-skill_generate\n3. Relay the files and summary returned by the tool to the user"
+            }
+          ]
+        }
+      ]
+    },
+    "tabs": {
+      "market": "Market",
+      "mine": "My Submissions"
+    },
+    "mode": {
+      "inline": "Inline",
+      "subprocess": "Subprocess"
+    },
+    "costPoints": "{{count}} pts/call",
+    "emptyMineTitle": "No submissions yet",
+    "emptyMineDesc": "Submit your first Skill — it will be listed once approved by an admin",
+    "emptyMineAction": "Submit a Skill",
+    "colId": "ID",
+    "colSkill": "SKILL",
+    "colVersion": "VERSION",
+    "colMode": "MODE",
+    "colStatus": "STATUS",
+    "colTime": "SUBMITTED"
   },
   "workflow": {
     "nodeText": "Text",

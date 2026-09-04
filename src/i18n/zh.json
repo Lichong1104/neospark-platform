@@ -1298,7 +1298,245 @@
     "welcomeDesc": "选择上方技能，输入命令即可调用 AI 能力。",
     "example1": "帮我生成一张赛博朋克风格的猫",
     "example2": "将选中的图片去除背景",
-    "example3": "生成一个 5 秒的产品宣传视频"
+    "example3": "生成一个 5 秒的产品宣传视频",
+    "guide": {
+      "button": "编写规范",
+      "title": "Skill 编写规范",
+      "updated": "适用于 NeoSpark Agent 平台",
+      "sections": [
+        {
+          "title": "什么是 Skill",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Skill 是挂载到 NeoSpark Agent 上的能力包：一份 SKILL.md（YAML frontmatter + Markdown 指令）定义它“是什么、怎么做”，可选的 Python 脚本作为工具被 AI 在对话中调用。编写完成后上传到「我的提交」，管理员审核通过后自动上架市场，全部用户可见可用。"
+            },
+            {
+              "type": "p",
+              "text": "两种执行模式：inline 把正文中的 ```python 代码块编译为进程内工具，轻量但禁止联网；subprocess 把独立脚本跑在子进程里，可以联网、安装依赖、生成文件。需要调用 NeoSpark API 生成图片/视频，或需要第三方依赖时，必须使用 subprocess。"
+            }
+          ]
+        },
+        {
+          "title": "上架流程",
+          "blocks": [
+            {
+              "type": "list",
+              "items": [
+                "本地编写 SKILL.md（及脚本），打包为 .zip",
+                "在「我的提交」页上传 .zip 或单个 .md，状态变为待审核",
+                "管理员审核文件内容与安全合规性",
+                "通过后自动注册上架；被驳回会注明原因，修改后可重新提交"
+              ]
+            }
+          ]
+        },
+        {
+          "title": "目录结构",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "ZIP 包内必须包含 SKILL.md（可在任意一层目录，建议顶层单文件夹打包）。脚本与参考文档用相对路径引用。"
+            },
+            {
+              "type": "code",
+              "text": "my-skill/\n├─ SKILL.md           # 必需：frontmatter + 指令正文\n├─ requirements.txt   # 可选：第三方依赖，存在即自动安装\n├─ .env.example       # 可选：声明需要的环境变量\n├─ scripts/\n│  └─ generate.py     # subprocess 模式的脚本\n└─ references/\n   └─ guide.md        # 可选：参考文档"
+            }
+          ]
+        },
+        {
+          "title": "Frontmatter 字段",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "SKILL.md 顶部以 --- 包裹的 YAML 元数据，字段说明："
+            },
+            {
+              "type": "table",
+              "columns": [
+                "字段",
+                "必填",
+                "默认",
+                "说明"
+              ],
+              "rows": [
+                [
+                  "id",
+                  "是*",
+                  "文件名",
+                  "全局唯一标识：小写字母/数字/中划线/下划线；单 .md 提交可省略，以文件名代替"
+                ],
+                [
+                  "name",
+                  "否",
+                  "同 id",
+                  "展示名称"
+                ],
+                [
+                  "description",
+                  "否",
+                  "空",
+                  "一句话说明，展示在市场卡片与 Agent 工具描述中"
+                ],
+                [
+                  "version",
+                  "否",
+                  "0.0.0",
+                  "语义化版本号，如 1.0.0"
+                ],
+                [
+                  "model",
+                  "否",
+                  "openai:gpt-4o",
+                  "Agent 对话模型，推荐 deepseek:deepseek-v4-flash"
+                ],
+                [
+                  "execution_mode",
+                  "否",
+                  "inline",
+                  "inline（进程内代码块）或 subprocess（子进程脚本）"
+                ],
+                [
+                  "scripts",
+                  "subprocess 必填",
+                  "—",
+                  "工具名 → 脚本相对路径映射，如 generate: scripts/generate.py"
+                ],
+                [
+                  "file_generating_scripts",
+                  "否",
+                  "[]",
+                  "会产出文件的脚本名列表，平台会收集其输出文件"
+                ],
+                [
+                  "env_whitelist",
+                  "否",
+                  "[]",
+                  "允许脚本读取的环境变量名单；NEOSPARK_API_KEY 由平台自动注入，无需硬编码"
+                ],
+                [
+                  "requirements",
+                  "否",
+                  "requirements.txt",
+                  "依赖文件路径，存在即自动 pip 安装到隔离目录"
+                ],
+                [
+                  "tools / dependencies",
+                  "否",
+                  "[]",
+                  "预留字段，无外部依赖时留空数组"
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "title": "子进程脚本契约（subprocess）",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "平台以下列方式调用脚本（两个参数均为必传）："
+            },
+            {
+              "type": "code",
+              "text": "python scripts/generate.py --output-dir <输出目录> --input-json '<JSON 参数字符串>'"
+            },
+            {
+              "type": "list",
+              "items": [
+                "用 argparse 接收 --input-json（JSON 字符串）与 --output-dir（输出目录）",
+                "生成的文件写入 --output-dir，并在结果 JSON 中返回文件名列表",
+                "进程退出码必须为 0；stdout 最后一行输出 JSON 结果对象，平台据此解析，例如 {\"content\": \"已生成 x.png\", \"files\": [\"x.png\"]}",
+                "需要读取的环境变量必须在 env_whitelist 中声明；脚本内禁止硬编码任何密钥",
+                "API 地址使用 NEOSPARK_BASE_URL（默认 https://api.useneospark.com/api/v1），鉴权使用平台注入的 NEOSPARK_API_KEY（X-API-Key 请求头）",
+                "第三方依赖写入 requirements.txt，平台自动安装到隔离目录，不影响其他 Skill"
+              ]
+            },
+            {
+              "type": "p",
+              "text": "最小可运行示例："
+            },
+            {
+              "type": "code",
+              "text": "import argparse\nimport json\nimport sys\nfrom pathlib import Path\n\ndef main() -> int:\n    parser = argparse.ArgumentParser()\n    parser.add_argument(\"--input-json\", required=True)\n    parser.add_argument(\"--output-dir\", required=True)\n    args = parser.parse_args()\n    params = json.loads(args.input_json)\n\n    out_dir = Path(args.output_dir)\n    out_dir.mkdir(parents=True, exist_ok=True)\n    result_file = out_dir / \"result.txt\"\n    result_file.write_text(f\"prompt: {params.get('prompt', '')}\", encoding=\"utf-8\")\n\n    # 最后一行必须输出 JSON 结果\n    print(json.dumps({\"content\": f\"已生成 {result_file.name}\", \"files\": [result_file.name]}))\n    return 0\n\nif __name__ == \"__main__\":\n    sys.exit(main())"
+            }
+          ]
+        },
+        {
+          "title": "进程内代码块（inline）",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "在 SKILL.md 正文中编写 ```python 代码块，每个顶层函数会成为一个可被 AI 调用的工具，工具名为 {skill_id}_{函数名}。函数需包含类型注解与 docstring，docstring 会展示给 AI 作为工具说明。"
+            },
+            {
+              "type": "list",
+              "items": [
+                "仅允许导入白名单标准库：json、math、random、datetime、time、re、typing、collections、itertools、functools、decimal、statistics、hashlib、uuid、string、textwrap、copy、enum、dataclasses、pathlib、urllib.parse 等",
+                "禁止导入 os、sys、subprocess、socket、http、urllib（网络访问）、ctypes、pickle、threading 等系统/网络/并发模块",
+                "inline 代码在平台进程内执行，不能联网；需要联网或生成文件请改用 subprocess"
+              ]
+            }
+          ]
+        },
+        {
+          "title": "指令正文写作建议",
+          "blocks": [
+            {
+              "type": "list",
+              "items": [
+                "开头定义角色与核心能力，让 AI 知道“自己是谁、能做什么”",
+                "用分步工作流描述任务流程（收集信息 → 制定策略 → 调用工具 → 汇总输出）",
+                "明确说明何时调用哪个工具、传什么参数（工具名为 {skill_id}_{脚本名}）",
+                "说明输出格式与交付物，例如返回文件链接或文本报告"
+              ]
+            }
+          ]
+        },
+        {
+          "title": "审核标准",
+          "blocks": [
+            {
+              "type": "list",
+              "items": [
+                "skill_id 全局唯一且符合命名规范；frontmatter 完整、字段合法",
+                "通过平台编译预检：inline 代码符合导入白名单；subprocess 脚本路径存在且位于包内",
+                "不得包含恶意代码、硬编码密钥、越权访问内网或非授权域名",
+                "description 与实际功能一致，不得夸大或误导",
+                "管理员有权驳回并注明原因；被驳回后可修改重新提交"
+              ]
+            }
+          ]
+        },
+        {
+          "title": "完整示例",
+          "blocks": [
+            {
+              "type": "code",
+              "text": "---\nid: my-first-skill\nname: 我的第一个 Skill\ndescription: 演示子进程脚本调用的最小可用 Skill\nversion: 1.0.0\nmodel: deepseek:deepseek-v4-flash\nexecution_mode: subprocess\nscripts:\n  generate: scripts/generate.py\nfile_generating_scripts:\n  - generate\nenv_whitelist:\n  - NEOSPARK_API_KEY\n  - NEOSPARK_BASE_URL\ntools: []\ndependencies: []\n---\n\n你是一位演示助手。当用户要求生成内容时：\n\n1. 整理用户的生成需求为 {\"prompt\": \"...\"} 参数\n2. 调用工具 my-first-skill_generate\n3. 把工具返回的文件与说明转达给用户"
+            }
+          ]
+        }
+      ]
+    },
+    "tabs": {
+      "market": "市场",
+      "mine": "我的提交"
+    },
+    "mode": {
+      "inline": "进程内",
+      "subprocess": "子进程"
+    },
+    "costPoints": "{{count}} 积分/次",
+    "emptyMineTitle": "还没有提交记录",
+    "emptyMineDesc": "上传你的第一个 Skill，管理员审核通过后会自动上架到市场",
+    "emptyMineAction": "去提交 Skill",
+    "colId": "ID",
+    "colSkill": "SKILL",
+    "colVersion": "版本",
+    "colMode": "模式",
+    "colStatus": "状态",
+    "colTime": "提交时间"
   },
   "workflow": {
     "nodeText": "文本",

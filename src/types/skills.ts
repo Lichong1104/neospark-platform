@@ -10,6 +10,8 @@ export interface SkillMeta {
   is_active: boolean;
   credit_cost_per_call: number;
   icon?: string;
+  /** 执行模式：inline（进程内代码块）/ subprocess（子进程脚本） */
+  execution_mode?: string;
 }
 
 /** Skill 详情 */
