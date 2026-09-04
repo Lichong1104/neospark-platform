@@ -56,21 +56,21 @@ function toSkillMeta(skill: BackendSkill): SkillMeta {
 
 /**
  * 获取 Skill 列表（市场）
+ * 注意：/agents/skills 返回裸数组（非 {code,data} 包装），http 拦截器已解包 response.data
  */
 export async function listSkills(params?: {
   type?: string;
   tag?: string;
 }): Promise<SkillMeta[]> {
-  const res = await http.get<BackendSkill[]>("/agents/skills", params as Record<string, unknown>);
-  return (res.data ?? []).map(toSkillMeta);
+  const res = (await http.get<BackendSkill[]>("/agents/skills", params as Record<string, unknown>)) as unknown as BackendSkill[];
+  return (res ?? []).map(toSkillMeta);
 }
 
 /**
  * 获取 Skill 详情（市场详情页；instructions 仅管理员可见，普通用户为空）
  */
 export async function getSkill(skillId: string): Promise<SkillDetail> {
-  const res = await http.get<BackendSkill>(`/agents/skills/${skillId}`);
-  const skill = res.data;
+  const skill = (await http.get<BackendSkill>(`/agents/skills/${skillId}`)) as unknown as BackendSkill;
   return {
     ...toSkillMeta(skill),
     instructions: skill.instructions ?? "",
@@ -87,16 +87,16 @@ export async function getSkill(skillId: string): Promise<SkillDetail> {
  * 提交 Skill 审核（.md 或 .zip 包），管理员通过后上架
  */
 export async function uploadSkill(formData: FormData): Promise<{ skill_id: string; name: string; status: string }> {
-  const res = await http.postForm<{ skill_id: string; name: string; status: string }>("/skills/upload", formData);
-  return res.data;
+  const res = (await http.postForm<{ skill_id: string; name: string; status: string }>("/skills/upload", formData)) as unknown as { skill_id: string; name: string; status: string };
+  return res;
 }
 
 /**
  * 我的 Skill 提交记录
  */
 export async function listMySubmissions(): Promise<SkillSubmissionItem[]> {
-  const res = await http.get<{ items: SkillSubmissionItem[] }>("/skills/submissions/mine");
-  return res.data.items;
+  const res = (await http.get<{ items: SkillSubmissionItem[] }>("/skills/submissions/mine")) as unknown as { items: SkillSubmissionItem[] };
+  return res.items ?? [];
 }
 
 /**
@@ -117,19 +117,19 @@ export async function createSession(
 }
 
 /**
- * 获取会话列表
+ * 获取会话列表（后端返回 {sessions, total}）
  */
 export async function listSessions(): Promise<AgentSessionItem[]> {
-  const res = await http.get<AgentSessionItem[]>("/skills/sessions");
-  return res.data;
+  const res = (await http.get<{ sessions: AgentSessionItem[] }>("/skills/sessions")) as unknown as { sessions: AgentSessionItem[] };
+  return res.sessions ?? [];
 }
 
 /**
- * 获取会话消息
+ * 获取会话消息（后端返回 {messages, total}）
  */
 export async function getSessionMessages(sessionId: string): Promise<AgentMessage[]> {
-  const res = await http.get<AgentMessage[]>(`/skills/sessions/${sessionId}/messages`);
-  return res.data;
+  const res = (await http.get<{ messages: AgentMessage[] }>(`/skills/sessions/${sessionId}/messages`)) as unknown as { messages: AgentMessage[] };
+  return res.messages ?? [];
 }
 
 /**
