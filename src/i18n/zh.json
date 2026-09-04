@@ -23,7 +23,8 @@
       "users": "用户列表",
       "userDetail": "用户详情",
       "payments": "支付记录",
-      "points": "积分与维护"
+      "points": "积分与维护",
+      "skillReviews": "Skill 审核"
     },
     "actions": {
       "refresh": "刷新",
@@ -94,7 +95,53 @@
       "model": "模型"
     },
     "payments": {
-      "stripeTitle": "Stripe 付款记录",
+      "stripeTitle": "Stripe 付款记录",    "skillReviews": {
+      "title": "Skill 提交审核",
+      "file": "文件",
+      "empty": "暂无提交记录",
+      "loadFailed": "加载提交列表失败",
+      "detailLoadFailed": "加载详情失败",
+      "actionFailed": "操作失败",
+      "approveConfirm": "确定通过并上架该 Skill 吗？上架后所有用户可见可用。",
+      "approveSuccess": "已通过并上架",
+      "rejectSuccess": "已驳回",
+      "rejectTitle": "驳回 Skill 提交",
+      "rejectReason": "驳回原因",
+      "rejectReasonRequired": "请填写驳回原因",
+      "contentTitle": "SKILL.md 内容",
+      "packageFiles": "包内文件",
+      "filter": {
+        "pending": "待审核",
+        "approved": "已通过",
+        "rejected": "已驳回",
+        "all": "全部"
+      },
+      "status": {
+        "pending": "待审核",
+        "approved": "已通过",
+        "rejected": "已驳回"
+      },
+      "mode": {
+        "inline": "进程内",
+        "subprocess": "子进程"
+      },
+      "columns": {
+        "skillId": "Skill ID",
+        "name": "名称",
+        "submitter": "提交人",
+        "version": "版本",
+        "mode": "模式",
+        "status": "状态",
+        "submittedAt": "提交时间",
+        "actions": "操作"
+      },
+      "actions": {
+        "view": "查看",
+        "approve": "通过",
+        "reject": "驳回"
+      }
+    },
+
       "wechatTitle": "微信支付记录",
       "columnsStripe": {
         "user": "用户",
@@ -505,6 +552,7 @@
     "imagePasted": "图片已粘贴",
     "imageGenerated": "图片生成完成！",
     "generateFailed": "生成失败",
+    "genErrorHint": "请调整后点击「重新生成」，或修改提示词再次尝试",
     "generating": "生成中...",
     "generatingHint": "AI 正在创作中，请稍候...",
     "generatingCost": "生成中... 预估消耗 {{cost}} pts",
@@ -1209,7 +1257,20 @@
     "free": "免费",
     "viewDetails": "查看详情",
     "upload": "上传",
-    "uploadTitle": "上传 Skill",
+    "uploadTitle": "上传 Skill",    "submit": "提交 Skill",
+    "submitTitle": "提交 Skill 审核",
+    "submitDesc": "上传 ZIP 包（须含 SKILL.md）或 .md 文件，管理员审核通过后上架到市场，所有用户可见可用。",
+    "clickOrDrop": "点击选择 .zip 或 .md 文件",
+    "submitSuccess": "Skill {{name}} 已提交，等待管理员审核",
+    "submitFailed": "提交失败",
+    "confirmSubmit": "提交审核",
+    "mySubmissions": "我的提交",
+    "submissionStatus": {
+      "pending": "待审核",
+      "approved": "已通过",
+      "rejected": "已驳回"
+    },
+
     "uploadDesc": "上传 ZIP 格式的 Skill 包（必须包含 SKILL.md）",
     "uploadFile": "选择文件",
     "removeFile": "移除",

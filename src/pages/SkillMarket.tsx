@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Search, Wrench, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -8,11 +8,13 @@ import { useTranslation } from "react-i18next";
 import skillsApi from "@/api/skills";
 import SkillMarketCard from "@/components/skills/SkillMarketCard";
 import UploadSkillButton from "@/components/skills/UploadSkillButton";
+import MySubmissions from "@/components/skills/MySubmissions";
 import type { SkillMeta } from "@/types/skills";
 
 const SkillMarket: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [filter, setFilter] = useState<"all" | "system" | "user">("all");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -54,7 +56,12 @@ const SkillMarket: React.FC = () => {
               </p>
             </div>
           </div>
-          <UploadSkillButton onUploaded={() => refetch()} />
+          <UploadSkillButton
+            onUploaded={() => {
+              void refetch();
+              void queryClient.invalidateQueries({ queryKey: ["mySkillSubmissions"] });
+            }}
+          />
         </div>
 
         <div className="flex items-center gap-3 mb-6">
@@ -102,6 +109,8 @@ const SkillMarket: React.FC = () => {
             ))}
           </div>
         )}
+
+        <MySubmissions />
       </div>
     </div>
   );

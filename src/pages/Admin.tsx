@@ -42,8 +42,9 @@ import type {
   AdminWechatPayment,
 } from "@/types/admin";
 import { Coins, RefreshCw, Search, Users } from "lucide-react";
+import SkillReviewPanel from "@/components/admin/SkillReviewPanel";
 
-type TabKey = "overview" | "users" | "userDetail" | "payments";
+type TabKey = "overview" | "users" | "userDetail" | "payments" | "skillReviews";
 
 const toStorageUrl = (url: string): string =>
   url.startsWith("http") ? url : `${STATIC_BASE_URL}${url}`;
@@ -62,10 +63,11 @@ const Admin: React.FC = () => {
       users: t("admin.tabs.users"),
       userDetail: t("admin.tabs.userDetail"),
       payments: t("admin.tabs.payments"),
+      skillReviews: t("admin.tabs.skillReviews"),
     }),
     [t]
   );
-  const tabKeys: TabKey[] = ["overview", "users", "userDetail", "payments"];
+  const tabKeys: TabKey[] = ["overview", "users", "userDetail", "payments", "skillReviews"];
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
 
   const [overview, setOverview] = useState<AdminOverview | null>(null);
@@ -1053,6 +1055,9 @@ const Admin: React.FC = () => {
               </BrutalCard>
             </section>
           ) : null}
+
+          {/* Skill 提交审核 */}
+          {activeTab === "skillReviews" ? <SkillReviewPanel /> : null}
         </div>
       </main>
 

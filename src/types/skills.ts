@@ -78,3 +78,20 @@ export interface StreamEvent {
     credit_cost?: number;
   };
 }
+
+/** Skill 提交状态 */
+export type SkillSubmissionStatus = "pending" | "approved" | "rejected";
+
+/** 我的 Skill 提交记录 */
+export interface SkillSubmissionItem {
+  id: number;
+  skill_id: string;
+  name: string;
+  description: string;
+  version: string;
+  execution_mode: string;
+  status: SkillSubmissionStatus;
+  reject_reason: string | null;
+  created_at: string;
+  reviewed_at: string | null;
+}

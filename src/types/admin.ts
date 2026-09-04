@@ -171,3 +171,33 @@ export type AdminPointsCheckExpiryResponse = {
   total_flagged_holds: number;
 };
 
+
+export type AdminSkillSubmissionItem = {
+  id: number;
+  skill_id: string;
+  name: string;
+  description: string;
+  version: string;
+  execution_mode: string;
+  status: "pending" | "approved" | "rejected";
+  reject_reason: string | null;
+  filename: string;
+  user_id: number;
+  user_email: string | null;
+  user_name: string | null;
+  created_at: string | null;
+  reviewed_at: string | null;
+};
+
+export type AdminSkillSubmissionDetail = AdminSkillSubmissionItem & {
+  content: string;
+  package_files: string[];
+};
+
+export type AdminSkillSubmissionReviewResult = {
+  success: boolean;
+  skill_id?: string;
+  name?: string;
+  version?: string;
+  id?: number;
+};

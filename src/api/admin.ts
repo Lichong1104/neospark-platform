@@ -14,6 +14,9 @@ import type {
   AdminPointsCheckExpiryResponse,
   AdminUpdateRestrictionsParams,
   AdminUpdateRestrictionsResponse,
+  AdminSkillSubmissionItem,
+  AdminSkillSubmissionDetail,
+  AdminSkillSubmissionReviewResult,
 } from "@/types/admin";
 
 export async function checkAdmin(): Promise<AdminCheckResponse> {
@@ -115,6 +118,59 @@ export async function updateRestrictions(
   return (res as unknown as AdminUpdateRestrictionsResponse) ?? res.data;
 }
 
+/**
+ * 查询 Skill 提交记录（审核列表）
+ */
+export async function getSkillSubmissions(params?: {
+  status?: string;
+  page?: number;
+  page_size?: number;
+}): Promise<AdminPagedResponse<AdminSkillSubmissionItem>> {
+  const res = await http.get<AdminPagedResponse<AdminSkillSubmissionItem>>(
+    "/admin/skill-submissions",
+    params as Record<string, unknown>
+  );
+  return res.data;
+}
+
+/**
+ * 查询 Skill 提交详情（含 SKILL.md 全文）
+ */
+export async function getSkillSubmission(
+  submissionId: number
+): Promise<AdminSkillSubmissionDetail> {
+  const res = await http.get<AdminSkillSubmissionDetail>(
+    `/admin/skill-submissions/${submissionId}`
+  );
+  return res.data;
+}
+
+/**
+ * 通过 Skill 提交（注册上架）
+ */
+export async function approveSkillSubmission(
+  submissionId: number
+): Promise<AdminSkillSubmissionReviewResult> {
+  const res = await http.post<AdminSkillSubmissionReviewResult>(
+    `/admin/skill-submissions/${submissionId}/approve`
+  );
+  return (res as unknown as AdminSkillSubmissionReviewResult) ?? res.data;
+}
+
+/**
+ * 驳回 Skill 提交
+ */
+export async function rejectSkillSubmission(
+  submissionId: number,
+  reason: string
+): Promise<AdminSkillSubmissionReviewResult> {
+  const res = await http.post<AdminSkillSubmissionReviewResult>(
+    `/admin/skill-submissions/${submissionId}/reject`,
+    { reason }
+  );
+  return (res as unknown as AdminSkillSubmissionReviewResult) ?? res.data;
+}
+
 const adminApi = {
   checkAdmin,
   getOverview,
@@ -127,6 +183,10 @@ const adminApi = {
   setPoints,
   checkPointsExpiry,
   updateRestrictions,
+  getSkillSubmissions,
+  getSkillSubmission,
+  approveSkillSubmission,
+  rejectSkillSubmission,
 };
 
 export default adminApi;

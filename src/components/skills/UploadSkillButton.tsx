@@ -29,8 +29,8 @@ const UploadSkillButton: React.FC<UploadSkillButtonProps> = ({ onUploaded }) => 
     if (file) {
       setSelectedFile(file);
       if (!skillId) {
-        const name = file.name.replace(/\.zip$/i, "").replace(/[^a-zA-Z0-9_-]/g, "_");
-        setSkillId(name.slice(0, 32));
+        const name = file.name.replace(/\.(zip|md)$/i, "").replace(/[^a-zA-Z0-9_-]/g, "_");
+        setSkillId(name.slice(0, 32).toLowerCase());
       }
     }
   };
@@ -48,13 +48,13 @@ const UploadSkillButton: React.FC<UploadSkillButtonProps> = ({ onUploaded }) => 
       formData.append("skill_id", skillId.trim());
 
       const result = await skillsApi.uploadSkill(formData);
-      toast.success(t("skill.uploadSuccess", { name: result.name }));
+      toast.success(t("skill.submitSuccess", { name: result.name }));
       setIsOpen(false);
       setSelectedFile(null);
       setSkillId("");
       onUploaded?.();
     } catch (err: unknown) {
-      toast.error(t("skill.uploadFailed"));
+      toast.error(t("skill.submitFailed"));
     } finally {
       setIsUploading(false);
     }
@@ -67,17 +67,17 @@ const UploadSkillButton: React.FC<UploadSkillButtonProps> = ({ onUploaded }) => 
         className="h-9 px-3 flex items-center gap-2 border-brutal border-foreground brutal-press bg-accent-pink text-foreground text-xs font-bold uppercase hover:brightness-110 transition-none"
       >
         <Upload className="w-4 h-4" />
-        {t("skill.upload")}
+        {t("skill.submit")}
       </button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-md border-brutal border-foreground">
           <DialogHeader>
             <DialogTitle className="text-base font-bold uppercase tracking-wider">
-              {t("skill.uploadTitle")}
+              {t("skill.submitTitle")}
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
-              {t("skill.uploadDesc")}
+              {t("skill.submitDesc")}
             </DialogDescription>
           </DialogHeader>
 
@@ -131,7 +131,7 @@ const UploadSkillButton: React.FC<UploadSkillButtonProps> = ({ onUploaded }) => 
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept=".zip"
+                  accept=".zip,.md"
                   className="hidden"
                   onChange={handleFileSelect}
                 />
@@ -157,7 +157,7 @@ const UploadSkillButton: React.FC<UploadSkillButtonProps> = ({ onUploaded }) => 
                 )}
               >
                 {isUploading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                {t("skill.confirmUpload")}
+                {t("skill.confirmSubmit")}
               </button>
             </div>
           </div>

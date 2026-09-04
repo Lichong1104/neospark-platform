@@ -6,6 +6,7 @@ import type {
   CreateAgentSessionResponse,
   AgentSessionItem,
   AgentMessage,
+  SkillSubmissionItem,
 } from "@/types/skills";
 import type { ApiResponse } from "@/types/common";
 
@@ -29,11 +30,19 @@ export async function getSkill(skillId: string): Promise<SkillDetail> {
 }
 
 /**
- * 上传自定义 Skill（ZIP 包）
+ * 提交 Skill 审核（.md 或 .zip 包），管理员通过后上架
  */
 export async function uploadSkill(formData: FormData): Promise<{ skill_id: string; name: string; status: string }> {
   const res = await http.postForm<{ skill_id: string; name: string; status: string }>("/skills/upload", formData);
   return res.data;
+}
+
+/**
+ * 我的 Skill 提交记录
+ */
+export async function listMySubmissions(): Promise<SkillSubmissionItem[]> {
+  const res = await http.get<{ items: SkillSubmissionItem[] }>("/skills/submissions/mine");
+  return res.data.items;
 }
 
 /**
@@ -134,6 +143,7 @@ const skillsApi = {
   listSkills,
   getSkill,
   uploadSkill,
+  listMySubmissions,
   deleteSkill,
   createSession,
   listSessions,

@@ -23,7 +23,8 @@
       "users": "Users",
       "userDetail": "User Detail",
       "payments": "Payments",
-      "points": "Points & Maintenance"
+      "points": "Points & Maintenance",
+      "skillReviews": "Skill Review"
     },
     "actions": {
       "refresh": "Refresh",
@@ -92,6 +93,52 @@
       "openVideo": "Open video",
       "status": "status",
       "model": "model"
+    },
+    "skillReviews": {
+      "title": "Skill Submission Review",
+      "file": "File",
+      "empty": "No submissions yet",
+      "loadFailed": "Failed to load submissions",
+      "detailLoadFailed": "Failed to load detail",
+      "actionFailed": "Action failed",
+      "approveConfirm": "Approve and publish this Skill? It will become visible and usable by all users.",
+      "approveSuccess": "Approved and published",
+      "rejectSuccess": "Rejected",
+      "rejectTitle": "Reject Skill Submission",
+      "rejectReason": "Reject reason",
+      "rejectReasonRequired": "Please enter a reject reason",
+      "contentTitle": "SKILL.md Content",
+      "packageFiles": "Package Files",
+      "filter": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "all": "All"
+      },
+      "status": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "mode": {
+        "inline": "In-process",
+        "subprocess": "Subprocess"
+      },
+      "columns": {
+        "skillId": "Skill ID",
+        "name": "Name",
+        "submitter": "Submitter",
+        "version": "Version",
+        "mode": "Mode",
+        "status": "Status",
+        "submittedAt": "Submitted At",
+        "actions": "Actions"
+      },
+      "actions": {
+        "view": "View",
+        "approve": "Approve",
+        "reject": "Reject"
+      }
     },
     "payments": {
       "stripeTitle": "Stripe payments",
@@ -505,6 +552,7 @@
     "imagePasted": "Image pasted",
     "imageGenerated": "Image generation completed!",
     "generateFailed": "Generation failed",
+    "genErrorHint": "Adjust the settings and click \"Regenerate\", or edit the prompt and try again",
     "generating": "GENERATING...",
     "generatingHint": "AI is creating, please wait...",
     "generatingCost": "Generating... estimated cost {{cost}} pts",
@@ -1208,6 +1256,19 @@
     "custom": "Custom",
     "free": "Free",
     "viewDetails": "Details",
+    "submit": "Submit Skill",
+    "submitTitle": "Submit Skill for Review",
+    "submitDesc": "Upload a ZIP package (must include SKILL.md) or a .md file. It will be listed in the market once approved by an admin.",
+    "clickOrDrop": "Click to select a .zip or .md file",
+    "submitSuccess": "Skill {{name}} submitted. Waiting for admin review.",
+    "submitFailed": "Submission failed",
+    "confirmSubmit": "Submit for Review",
+    "mySubmissions": "My Submissions",
+    "submissionStatus": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
     "upload": "Upload",
     "uploadTitle": "Upload Skill",
     "uploadDesc": "Upload a ZIP skill package (must include SKILL.md)",
