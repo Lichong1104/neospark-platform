@@ -19,22 +19,74 @@ interface UploadSkillButtonProps {
   trigger?: React.ReactNode;
 }
 
+const ALLOWED_EXTENSIONS = /\.(zip|md)$/i;
+
 const UploadSkillButton: React.FC<UploadSkillButtonProps> = ({ onUploaded, trigger }) => {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [skillId, setSkillId] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragDepth = useRef(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const acceptFile = (file: File) => {
+    if (!ALLOWED_EXTENSIONS.test(file.name)) {
+      toast.error(t("skill.fileTypeInvalid"));
+      return;
+    }
+    setSelectedFile(file);
+    if (!skillId) {
+      const name = file.name.replace(/\.(zip|md)$/i, "").replace(/[^a-zA-Z0-9_-]/g, "_");
+      setSkillId(name.slice(0, 32).toLowerCase());
+    }
+  };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setSelectedFile(file);
-      if (!skillId) {
-        const name = file.name.replace(/\.(zip|md)$/i, "").replace(/[^a-zA-Z0-9_-]/g, "_");
-        setSkillId(name.slice(0, 32).toLowerCase());
-      }
+      acceptFile(file);
+    }
+    // 允许再次选择同一文件
+    e.target.value = "";
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragDepth.current += 1;
+    if (e.dataTransfer.types.includes("Files")) {
+      setIsDragging(true);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer.types.includes("Files")) {
+      e.dataTransfer.dropEffect = "copy";
+      setIsDragging(true);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragDepth.current = Math.max(0, dragDepth.current - 1);
+    if (dragDepth.current === 0) {
+      setIsDragging(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragDepth.current = 0;
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      acceptFile(file);
     }
   };
 
@@ -108,15 +160,25 @@ const UploadSkillButton: React.FC<UploadSkillButtonProps> = ({ onUploaded, trigg
               </label>
               <div
                 onClick={() => fileInputRef.current?.click()}
+                onDragEnter={handleDragEnter}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
                 className={cn(
-                  "w-full p-4 border-2 border-dashed border-foreground/30 bg-background cursor-pointer hover:border-foreground/60 transition-none flex flex-col items-center gap-2",
-                  selectedFile && "border-accent-pink/40 bg-accent-pink/5"
+                  "w-full p-4 border-2 border-dashed bg-background flex flex-col items-center gap-2 transition-none",
+                  isDragging
+                    ? "border-accent-pink bg-accent-pink/10 cursor-copy"
+                    : "border-foreground/30 cursor-pointer hover:border-foreground/60",
+                  selectedFile && !isDragging && "border-accent-pink/40 bg-accent-pink/5"
                 )}
               >
-                {selectedFile ? (
+                {selectedFile && !isDragging ? (
                   <>
                     <FileArchive className="w-8 h-8 text-accent-pink" />
                     <span className="text-xs font-mono text-foreground">{selectedFile.name}</span>
+                    <span className="text-[10px] text-muted-foreground">
+                      {(selectedFile.size / 1024).toFixed(1)} KB
+                    </span>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -129,9 +191,9 @@ const UploadSkillButton: React.FC<UploadSkillButtonProps> = ({ onUploaded, trigg
                   </>
                 ) : (
                   <>
-                    <Upload className="w-8 h-8 text-muted-foreground" />
-                    <span className="text-xs text-muted-foreground">
-                      {t("skill.clickOrDrop")}
+                    <Upload className={cn("w-8 h-8", isDragging ? "text-accent-pink" : "text-muted-foreground")} />
+                    <span className={cn("text-xs", isDragging ? "text-accent-pink font-bold" : "text-muted-foreground")}>
+                      {isDragging ? t("skill.dropHere") : t("skill.clickOrDrop")}
                     </span>
                   </>
                 )}
