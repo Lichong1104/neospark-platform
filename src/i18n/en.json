@@ -1389,8 +1389,8 @@
                 [
                   "model",
                   "No",
-                  "openai:gpt-4o",
-                  "Agent chat model; deepseek:deepseek-v4-flash recommended"
+                  "gemini:gemini-2.5-flash",
+                  "Agent chat model; gemini:gemini-2.5-flash recommended"
                 ],
                 [
                   "execution_mode",
@@ -1515,7 +1515,7 @@
           "blocks": [
             {
               "type": "code",
-              "text": "---\nid: my-first-skill\nname: My First Skill\ndescription: Minimal subprocess skill demonstrating the script contract\nversion: 1.0.0\nmodel: deepseek:deepseek-v4-flash\nexecution_mode: subprocess\nscripts:\n  generate: scripts/generate.py\nfile_generating_scripts:\n  - generate\nenv_whitelist:\n  - NEOSPARK_API_KEY\n  - NEOSPARK_BASE_URL\ntools: []\ndependencies: []\n---\n\nYou are a demo assistant. When the user asks to generate content:\n\n1. Build the {\"prompt\": \"...\"} parameter from the user's request\n2. Call the tool my-first-skill_generate\n3. Relay the files and summary returned by the tool to the user"
+              "text": "---\nid: my-first-skill\nname: My First Skill\ndescription: Minimal subprocess skill demonstrating the script contract\nversion: 1.0.0\nmodel: gemini:gemini-2.5-flash\nexecution_mode: subprocess\nscripts:\n  generate: scripts/generate.py\nfile_generating_scripts:\n  - generate\nenv_whitelist:\n  - NEOSPARK_API_KEY\n  - NEOSPARK_BASE_URL\ntools: []\ndependencies: []\n---\n\nYou are a demo assistant. When the user asks to generate content:\n\n1. Build the {\"prompt\": \"...\"} parameter from the user's request\n2. Call the tool my-first-skill_generate\n3. Relay the files and summary returned by the tool to the user"
             }
           ]
         }

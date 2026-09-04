@@ -1389,8 +1389,8 @@
                 [
                   "model",
                   "否",
-                  "openai:gpt-4o",
-                  "Agent 对话模型，推荐 deepseek:deepseek-v4-flash"
+                  "gemini:gemini-2.5-flash",
+                  "Agent 对话模型，推荐 gemini:gemini-2.5-flash"
                 ],
                 [
                   "execution_mode",
@@ -1515,7 +1515,7 @@
           "blocks": [
             {
               "type": "code",
-              "text": "---\nid: my-first-skill\nname: 我的第一个 Skill\ndescription: 演示子进程脚本调用的最小可用 Skill\nversion: 1.0.0\nmodel: deepseek:deepseek-v4-flash\nexecution_mode: subprocess\nscripts:\n  generate: scripts/generate.py\nfile_generating_scripts:\n  - generate\nenv_whitelist:\n  - NEOSPARK_API_KEY\n  - NEOSPARK_BASE_URL\ntools: []\ndependencies: []\n---\n\n你是一位演示助手。当用户要求生成内容时：\n\n1. 整理用户的生成需求为 {\"prompt\": \"...\"} 参数\n2. 调用工具 my-first-skill_generate\n3. 把工具返回的文件与说明转达给用户"
+              "text": "---\nid: my-first-skill\nname: 我的第一个 Skill\ndescription: 演示子进程脚本调用的最小可用 Skill\nversion: 1.0.0\nmodel: gemini:gemini-2.5-flash\nexecution_mode: subprocess\nscripts:\n  generate: scripts/generate.py\nfile_generating_scripts:\n  - generate\nenv_whitelist:\n  - NEOSPARK_API_KEY\n  - NEOSPARK_BASE_URL\ntools: []\ndependencies: []\n---\n\n你是一位演示助手。当用户要求生成内容时：\n\n1. 整理用户的生成需求为 {\"prompt\": \"...\"} 参数\n2. 调用工具 my-first-skill_generate\n3. 把工具返回的文件与说明转达给用户"
             }
           ]
         }
