@@ -1,5 +1,5 @@
 import React from "react";
-import { ImageIcon, Video } from "lucide-react";
+import { ImageIcon, MessageSquare, Video } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
@@ -126,6 +126,24 @@ export const GenerationModeIconToggle: React.FC<{
           <span className="absolute -inset-1 rounded-full bg-gradient-to-br from-accent-pink/30 to-accent-cyan/30 blur-[6px] animate-pulse" />
           <BotGradientIcon />
         </span>
+      </button>
+      <button
+        type="button"
+        role="tab"
+        aria-selected={activeTab === "AGENT"}
+        title={t("intelligenceHub.agentChatTab")}
+        onClick={() => {
+          onTabChange("AGENT");
+          onModeToggle(false);
+        }}
+        className={cn(
+          "flex h-7 w-7 items-center justify-center rounded-[5px] transition-colors",
+          activeTab === "AGENT"
+            ? "bg-accent-pink text-foreground shadow-sm"
+            : "text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
+        )}
+      >
+        <MessageSquare className="h-3.5 w-3.5" strokeWidth={2} />
       </button>
     </div>
   );

@@ -10,23 +10,76 @@ import type {
 } from "@/types/skills";
 import type { ApiResponse } from "@/types/common";
 
+/** 后端 /agents/skills 返回的 Skill 原始结构（字段多于前端展示所需，按需取用） */
+interface BackendSkill {
+  id: string;
+  name: string;
+  description: string;
+  version: string;
+  metadata?: Record<string, unknown> | null;
+  is_public?: boolean;
+  owner_id?: number | null;
+  price_points?: number;
+  execution_mode?: string;
+  scripts?: Record<string, string>;
+  instructions?: string;
+  has_code?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+/** 后端 Skill → 市场卡片元数据 */
+function toSkillMeta(skill: BackendSkill): SkillMeta {
+  const meta = skill.metadata ?? {};
+  const author =
+    typeof meta.author === "string"
+      ? meta.author
+      : skill.owner_id
+        ? "Community"
+        : "NeoSpark";
+  const tags = Array.isArray(meta.tags)
+    ? meta.tags.filter((t): t is string => typeof t === "string")
+    : [];
+  return {
+    skill_id: skill.id,
+    name: skill.name,
+    description: skill.description ?? "",
+    version: skill.version ?? "0.0.0",
+    author,
+    tags,
+    skill_type: skill.owner_id ? "user" : "system",
+    is_active: true,
+    credit_cost_per_call: skill.price_points ?? 0,
+  };
+}
+
 /**
- * 获取 Skill 列表
+ * 获取 Skill 列表（市场）
  */
 export async function listSkills(params?: {
   type?: string;
   tag?: string;
 }): Promise<SkillMeta[]> {
-  const res = await http.get<SkillMeta[]>("/skills", params as Record<string, unknown>);
-  return res.data;
+  const res = await http.get<BackendSkill[]>("/agents/skills", params as Record<string, unknown>);
+  return (res.data ?? []).map(toSkillMeta);
 }
 
 /**
- * 获取 Skill 详情
+ * 获取 Skill 详情（市场详情页；instructions 仅管理员可见，普通用户为空）
  */
 export async function getSkill(skillId: string): Promise<SkillDetail> {
-  const res = await http.get<SkillDetail>(`/skills/${skillId}`);
-  return res.data;
+  const res = await http.get<BackendSkill>(`/agents/skills/${skillId}`);
+  const skill = res.data;
+  return {
+    ...toSkillMeta(skill),
+    instructions: skill.instructions ?? "",
+    frontmatter: skill.metadata ?? {},
+    scripts:
+      skill.execution_mode === "subprocess" && skill.scripts
+        ? Object.keys(skill.scripts)
+        : [],
+    references: [],
+  };
 }
 
 /**
@@ -46,10 +99,10 @@ export async function listMySubmissions(): Promise<SkillSubmissionItem[]> {
 }
 
 /**
- * 删除 Skill
+ * 删除 Skill（管理员）
  */
 export async function deleteSkill(skillId: string): Promise<ApiResponse<unknown>> {
-  return http.del(`/skills/${skillId}`);
+  return http.del(`/agents/admin/skills/${skillId}`);
 }
 
 /**
