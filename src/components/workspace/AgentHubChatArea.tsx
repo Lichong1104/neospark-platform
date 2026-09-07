@@ -41,7 +41,7 @@ interface AgentHubChatAreaProps {
   onInitialRequestConsumed?: () => void;
 }
 
-const DEFAULT_AGENT_MODEL = "gemini:gemini-2.5-flash";
+const DEFAULT_AGENT_MODEL = "gemini:gemini-3.5-flash";
 
 function looksLikeFileGeneration(content: string): boolean {
   const trimmed = content.trim();
