@@ -187,6 +187,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
     return <FileDownloadCard payload={filePayload} />;
   }
 
+  const images = "images" in message ? message.images : undefined;
+
   return (
     <div className={cn("flex gap-3", isUser && "flex-row-reverse")}>
       <div
@@ -213,6 +215,31 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
         )}
       >
         <div className="whitespace-pre-wrap">{message.content}</div>
+        {images && images.length > 0 && (
+          <div
+            className={cn(
+              "mt-2 grid gap-2",
+              images.length === 1 ? "grid-cols-1 max-w-sm" : "grid-cols-2"
+            )}
+          >
+            {images.map((img) => (
+              <a
+                key={img.url}
+                href={img.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block border-brutal border-foreground bg-muted overflow-hidden"
+              >
+                <img
+                  src={img.url}
+                  alt={img.local_path}
+                  className="w-full h-auto object-cover"
+                  loading="lazy"
+                />
+              </a>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

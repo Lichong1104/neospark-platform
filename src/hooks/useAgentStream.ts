@@ -23,6 +23,7 @@ export function useAgentStream(): UseAgentStreamReturn {
   const [messages, setMessages] = useState<AgentChatMessage[]>([]);
   const abortRef = useRef<AbortController | null>(null);
   const streamContentRef = useRef("");
+  const streamFilesRef = useRef<{ url: string; local_path: string }[]>([]);
 
   const stopStream = useCallback(() => {
     if (abortRef.current) {
@@ -42,6 +43,7 @@ export function useAgentStream(): UseAgentStreamReturn {
       setIsStreaming(true);
       setStreamContent("");
       streamContentRef.current = "";
+      streamFilesRef.current = [];
 
       const abortController = new AbortController();
       abortRef.current = abortController;
@@ -53,6 +55,20 @@ export function useAgentStream(): UseAgentStreamReturn {
               case "output": {
                 const content = data.content;
                 const delta = data.delta;
+
+                // 收集 Skill 生成的文件（图片等），随最终消息一起渲染
+                const files = data.files;
+                if (Array.isArray(files)) {
+                  for (const f of files) {
+                    const item = f as { url?: string; filename?: string };
+                    if (typeof item?.url === "string" && item.url) {
+                      streamFilesRef.current.push({
+                        url: item.url,
+                        local_path: item.filename || item.url,
+                      });
+                    }
+                  }
+                }
 
                 let text = "";
                 if (typeof delta === "string") {
@@ -146,6 +162,7 @@ export function useAgentStream(): UseAgentStreamReturn {
               id: `assistant_${Date.now()}`,
               role: "assistant",
               content: finalContent,
+              images: streamFilesRef.current.length > 0 ? [...streamFilesRef.current] : undefined,
               timestamp: new Date().toISOString(),
             },
           ]);
