@@ -89,10 +89,21 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
     clearMessages,
   } = useAgentStream();
 
-  // 加载可用 Skills
+  // 加载可用 Skills（打开选择器时也会重新拉取，保证新上架的 Skill 无需刷新页面即可见）
+  const loadSkills = useCallback(async () => {
+    setIsLoadingSkills(true);
+    try {
+      const skills = await agentsApi.listSkills();
+      setAvailableSkills(skills);
+    } catch (err) {
+      toast.error(getErrorMessage(err, t("agentHub.loadSkillsFailed")));
+    } finally {
+      setIsLoadingSkills(false);
+    }
+  }, [t]);
+
   useEffect(() => {
     let cancelled = false;
-    setIsLoadingSkills(true);
     agentsApi
       .listSkills()
       .then((skills) => {
@@ -373,7 +384,10 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
                 selected={selectedSkills}
                 onToggle={toggleSkill}
                 open={skillPopoverOpen}
-                onOpenChange={setSkillPopoverOpen}
+                onOpenChange={(open) => {
+                  setSkillPopoverOpen(open);
+                  if (open) void loadSkills();
+                }}
               />
             </>
           )}
