@@ -4,6 +4,8 @@ import { User, Bot, Wrench, CheckCircle, ChevronDown, ChevronRight, FileDown } f
 import { cn } from "@/lib/utils";
 import type { AgentMessage } from "@/types/skills";
 import type { AgentChatMessage } from "@/types/agents";
+import MarkdownContent from "./MarkdownContent";
+import { looksLikeMarkdown } from "@/lib/markdown";
 
 type MessageLike = AgentMessage | AgentChatMessage;
 
@@ -208,13 +210,23 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
         className={cn(
           "max-w-[85%] px-3 py-2 border-brutal border-foreground text-sm leading-relaxed",
           isUser
-            ? "bg-accent-cyan/10"
+            ? "break-words bg-accent-cyan/10 [overflow-wrap:anywhere]"
             : isStreaming
             ? "bg-accent-pink/5 border-dashed border-accent-pink/40"
-            : "bg-card"
+            : "bg-secondary/40"
         )}
       >
-        <div className="whitespace-pre-wrap">{message.content}</div>
+        {isUser ? (
+          <div className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
+            {message.content}
+          </div>
+        ) : looksLikeMarkdown(message.content) ? (
+          <MarkdownContent content={message.content} />
+        ) : (
+          <div className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
+            {message.content}
+          </div>
+        )}
         {images && images.length > 0 && (
           <div
             className={cn(
