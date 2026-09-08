@@ -1,4 +1,4 @@
-import type { VideoModelsData } from "@/types/video";
+import type { VideoDurationRange, VideoModelsData } from "@/types/video";
 
 /**
  * 视频模型配置相关的纯工具函数。
@@ -53,14 +53,25 @@ export const defaultDurationOptionsForModel = (model: string): string[] => {
   );
 };
 
+/** 解析 durations：兼容旧的全局单条格式与新的按模型 record 格式（含 default 兜底） */
+export const resolveDurationRange = (
+  d: VideoModelsData["durations"] | undefined,
+  model?: string
+): VideoDurationRange | undefined => {
+  if (!d) return undefined;
+  if ("min" in d) return d;
+  return (model ? d[model] : undefined) ?? d["default"];
+};
+
 export const mergeDurationOptionsFromApi = (
   d: VideoModelsData["durations"] | undefined,
   model?: string
 ): string[] => {
   const max = getModelMaxDuration(model);
-  if (!d) return defaultDurationOptionsForModel(model ?? "");
-  const min = Number.isFinite(d.min) ? d.min : VIDEO_DURATION_MIN;
-  const apiMax = Number.isFinite(d.max) ? d.max : max;
+  const range = resolveDurationRange(d, model);
+  if (!range) return defaultDurationOptionsForModel(model ?? "");
+  const min = Number.isFinite(range.min) ? range.min : VIDEO_DURATION_MIN;
+  const apiMax = Number.isFinite(range.max) ? range.max : max;
   const lo = Math.max(VIDEO_DURATION_MIN, Math.ceil(min));
   const hi = Math.min(max, Math.floor(apiMax));
   if (lo > hi) return defaultDurationOptionsForModel(model ?? "");

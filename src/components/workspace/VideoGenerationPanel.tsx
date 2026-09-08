@@ -48,6 +48,7 @@ import {
   mergeDurationOptionsFromApi,
   normalizeVideoRatio,
   pickDurationInOptions,
+  resolveDurationRange,
 } from "@/lib/videoModelUtils";
 
 interface VideoGenerationPanelProps {
@@ -135,7 +136,9 @@ const VIDEO_DURATION_MAX = 30;
 const VIDEO_DURATION_MAX_NON_25 = 15;
 
 const getModelMaxDuration = (model: string | undefined): number =>
-  model === "seedance-2.5" ? VIDEO_DURATION_MAX : VIDEO_DURATION_MAX_NON_25;
+  model === "seedance-2.5" || model === "wan3.0-video"
+    ? VIDEO_DURATION_MAX
+    : VIDEO_DURATION_MAX_NON_25;
 
 const defaultDurationOptions = (): string[] =>
   Array.from({ length: VIDEO_DURATION_MAX_NON_25 - VIDEO_DURATION_MIN + 1 }, (_, i) =>
@@ -147,9 +150,10 @@ const mergeDurationOptionsFromApiLocal = (
   model?: string
 ): string[] => {
   const max = getModelMaxDuration(model);
-  if (!d) return defaultDurationOptions();
-  const min = Number.isFinite(d.min) ? d.min : VIDEO_DURATION_MIN;
-  const apiMax = Number.isFinite(d.max) ? d.max : max;
+  const range = resolveDurationRange(d, model);
+  if (!range) return defaultDurationOptions();
+  const min = Number.isFinite(range.min) ? range.min : VIDEO_DURATION_MIN;
+  const apiMax = Number.isFinite(range.max) ? range.max : max;
   const lo = Math.max(VIDEO_DURATION_MIN, Math.ceil(min));
   const hi = Math.min(max, Math.floor(apiMax));
   if (lo > hi) return defaultDurationOptions();
@@ -315,7 +319,10 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
         setDuration((prev) =>
           initialRequest
             ? pickDurationInOptions(prev, durOpts)
-            : pickDurationInOptions(res.durations?.default, durOpts)
+            : pickDurationInOptions(
+                resolveDurationRange(res.durations, initialModel)?.default,
+                durOpts
+              )
         );
         setConfigReady(true);
       })

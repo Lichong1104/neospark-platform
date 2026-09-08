@@ -44,15 +44,18 @@ export interface VideoModelConfig {
   price_per_second: number;
 }
 
+/** 时长范围；兼容旧的全局单条格式与新的按模型 record 格式 */
+export interface VideoDurationRange {
+  min: number;
+  max: number;
+  default: number;
+}
+
 export interface VideoModelsData {
   models: VideoModelConfig[];
   ratios: string[];
   resolutions: string[] | Record<string, string[]>;
-  durations: {
-    min: number;
-    max: number;
-    default: number;
-  };
+  durations: VideoDurationRange | Record<string, VideoDurationRange>;
   capabilities?: string[];
 }
 
