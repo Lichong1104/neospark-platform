@@ -24,6 +24,8 @@ import type { AgentSkill, AgentChatMessage } from "@/types/agents";
 import type { CanvasImage } from "./CanvasArea";
 import MessageBubble from "./MessageBubble";
 import StreamingIndicator from "./StreamingIndicator";
+import MentionTextarea from "./MentionTextarea";
+import PlanStepsIndicator, { type PlanStep } from "./PlanStepsIndicator";
 
 interface AgentHubChatAreaProps {
   onImagesGenerated?: (images: { url: string; local_path: string }[]) => void;
@@ -75,6 +77,8 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
   const [isGeneratingFile, setIsGeneratingFile] = useState(false);
   const [expandedTools, setExpandedTools] = useState<Set<string>>(new Set());
   const [skillPopoverOpen, setSkillPopoverOpen] = useState(false);
+  /** @提及生成的任务清单（来自后端 plan 事件），随当前轮展示步骤进度 */
+  const [plan, setPlan] = useState<{ steps: PlanStep[]; continuation: boolean } | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -152,6 +156,7 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
   const handleClearChat = useCallback(() => {
     clearMessages();
     setSessionId(null);
+    setPlan(null);
     textareaRef.current?.focus();
   }, [clearMessages]);
 
@@ -167,6 +172,7 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
       timestamp: new Date().toISOString(),
     };
     appendMessage(userMsg);
+    setPlan(null);
 
     const isDocxOnly =
       selectedSkills.length === 1 && selectedSkills[0] === "docx-generator";
@@ -224,6 +230,14 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
             onEvent(event, data);
             if (data.session_id) {
               setSessionId(data.session_id);
+            }
+            if (event === "plan") {
+              const steps = Array.isArray(data.steps)
+                ? (data.steps as PlanStep[])
+                : [];
+              if (steps.length > 0) {
+                setPlan({ steps, continuation: Boolean(data.continuation) });
+              }
             }
             if (event === "error") {
               toast.error(
@@ -300,6 +314,11 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
   const selectedSkillDisplays = availableSkills
     .filter((s) => selectedSkills.includes(s.id))
     .map((s) => getSkillDisplay(s));
+  /** @补全候选：仅限当前已选中的 Skill，插入文本使用后端可识别的原始 name */
+  const mentionCandidates = availableSkills
+    .filter((s) => selectedSkills.includes(s.id))
+    .map((s) => ({ id: s.id, name: s.name, description: s.description }));
+  const mentionNames = availableSkills.map((s) => s.name);
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-card">
@@ -406,6 +425,7 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
               key={msg.id}
               message={msg}
               isExpanded={expandedTools.has(msg.id)}
+              mentionNames={mentionNames}
               onToggleExpand={() =>
                 setExpandedTools((prev) => {
                   const next = new Set(prev);
@@ -419,6 +439,14 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
               }
             />
           ))}
+
+          {plan && (
+            <PlanStepsIndicator
+              steps={plan.steps}
+              running={isStreaming}
+              continuation={plan.continuation}
+            />
+          )}
 
           {isStreaming && streamContent && (
             looksLikeFileGeneration(streamContent) ? (
@@ -447,20 +475,20 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
       {/* 输入区 */}
       <div className="shrink-0 border-t-brutal border-foreground bg-card p-3">
         <div className="relative">
-          <textarea
-            ref={textareaRef}
+          <MentionTextarea
             value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
+            onChange={setInputValue}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 handleSend();
               }
             }}
+            skills={mentionCandidates}
+            textareaRef={textareaRef}
             placeholder={t("agentHub.inputPlaceholder")}
-            className="w-full min-h-[72px] max-h-[120px] resize-none bg-background border-brutal border-foreground p-3 pr-12 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-inset focus:ring-accent-pink/30"
-            rows={2}
             disabled={isStreaming || isGeneratingFile}
+            className="w-full min-h-[72px] max-h-[120px] resize-none bg-background border-brutal border-foreground p-3 pr-12 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-inset focus:ring-accent-pink/30"
           />
           <button
             type="button"

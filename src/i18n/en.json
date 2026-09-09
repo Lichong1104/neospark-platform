@@ -647,7 +647,12 @@
     "generatingDocument": "Generating document...",
     "example1": "Generate a product photo with professional lighting",
     "example2": "Write social media copy for this product",
-    "example3": "Batch remove background from selected images"
+    "example3": "Batch remove background from selected images",
+    "mentionHint": "Type @ to mention a selected skill",
+    "planTitle": "Task Plan ({{count}} steps)",
+    "planContinuationTitle": "Continue remaining tasks",
+    "planRunning": "Running",
+    "planDone": "Done"
   },
   "skillNames": {
     "drawing-prompt": {

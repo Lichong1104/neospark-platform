@@ -119,13 +119,68 @@ interface MessageBubbleProps {
   isStreaming?: boolean;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
+  /** Skill 名称列表，用于把用户消息中的 @Skill名称 渲染为高亮 chip */
+  mentionNames?: string[];
 }
+
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** 按已知 Skill name 拆分用户消息，@提及部分渲染为高亮 chip */
+const MentionedUserContent: React.FC<{
+  content: string;
+  mentionNames?: string[];
+}> = ({ content, mentionNames }) => {
+  const pattern = React.useMemo(() => {
+    if (!mentionNames?.length) return null;
+    const escaped = [...mentionNames]
+      .filter(Boolean)
+      .sort((a, b) => b.length - a.length)
+      .map(escapeRegExp);
+    if (!escaped.length) return null;
+    try {
+      return new RegExp(`@(?:${escaped.join("|")})`, "g");
+    } catch {
+      return null;
+    }
+  }, [mentionNames]);
+
+  if (!pattern) {
+    return <>{content}</>;
+  }
+
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  pattern.lastIndex = 0;
+  let key = 0;
+  while ((match = pattern.exec(content)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(content.slice(lastIndex, match.index));
+    }
+    parts.push(
+      <span
+        key={key++}
+        className="inline-block border border-accent-pink bg-accent-pink/15 px-1 font-bold text-accent-pink"
+      >
+        {match[0]}
+      </span>
+    );
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < content.length) {
+    parts.push(content.slice(lastIndex));
+  }
+  return <>{parts}</>;
+};
 
 const MessageBubble: React.FC<MessageBubbleProps> = ({
   message,
   isStreaming,
   isExpanded,
   onToggleExpand,
+  mentionNames,
 }) => {
   const isUser = message.role === "user";
   const isToolCall = message.role === "skill_call";
@@ -218,7 +273,10 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
       >
         {isUser ? (
           <div className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
-            {message.content}
+            <MentionedUserContent
+              content={message.content}
+              mentionNames={mentionNames}
+            />
           </div>
         ) : looksLikeMarkdown(message.content) ? (
           <MarkdownContent content={message.content} />

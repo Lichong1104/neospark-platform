@@ -647,7 +647,12 @@
     "generatingDocument": "正在生成文档...",
     "example1": "生成一张专业灯光下的产品照片",
     "example2": "为这款产品撰写社交媒体文案",
-    "example3": "批量去除选中图片的背景"
+    "example3": "批量去除选中图片的背景",
+    "mentionHint": "输入 @ 提及已选中的技能",
+    "planTitle": "任务清单（{{count}} 步）",
+    "planContinuationTitle": "继续执行剩余任务",
+    "planRunning": "执行中",
+    "planDone": "已完成"
   },
   "skillNames": {
     "drawing-prompt": {
