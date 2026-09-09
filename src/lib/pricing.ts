@@ -261,8 +261,8 @@ export const calculateVideoEstimatedCost = (
  * 图像生成预估积分计算
  *
  * 优先从 modelsConfig 中读取当前模型/分辨率的价格。
- * gpt-image-2 的 medium/high 质量在前端 modelsConfig 中只返回 low 价格，
- * 这里按后端默认 quality 价格表补全。
+ * gpt-image 系列的 medium/high 质量在前端 modelsConfig 中只返回 low 价格，
+ * 这里按后端默认 quality 价格表补全（gpt-image-2 与 gpt-image-2.5 系列）。
  */
 
 const GPT_IMAGE_2_QUALITY_PRICING: Record<
@@ -273,6 +273,17 @@ const GPT_IMAGE_2_QUALITY_PRICING: Record<
   "1K": { low: 4, medium: 7, high: 12 },
   "2K": { low: 8, medium: 8, high: 8 },
   "4K": { low: 15, medium: 15, high: 15 },
+};
+
+// gpt-image-2.5 系列（flare / sunburst）：1K 与 gpt-image-2 同价，
+// 2K/4K 走后端 fallback 固定 10 积分，无 512 档位
+const GPT_IMAGE_25_QUALITY_PRICING: Record<
+  string,
+  Record<string, number>
+> = {
+  "1K": { low: 4, medium: 7, high: 12 },
+  "2K": { low: 10, medium: 10, high: 10 },
+  "4K": { low: 10, medium: 10, high: 10 },
 };
 
 export const calculateImageEstimatedCost = (
@@ -290,9 +301,14 @@ export const calculateImageEstimatedCost = (
     return null;
   }
 
-  // gpt-image-2  quality 加价
+  // gpt-image 系列 quality 加价
   if (model === "gpt-image-2") {
     const qualityPricing = GPT_IMAGE_2_QUALITY_PRICING[resolution];
+    if (qualityPricing && gptImageQuality in qualityPricing) {
+      return qualityPricing[gptImageQuality];
+    }
+  } else if (model.startsWith("gpt-image-2.5")) {
+    const qualityPricing = GPT_IMAGE_25_QUALITY_PRICING[resolution];
     if (qualityPricing && gptImageQuality in qualityPricing) {
       return qualityPricing[gptImageQuality];
     }

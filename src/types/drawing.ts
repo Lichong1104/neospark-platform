@@ -30,6 +30,10 @@ export type ModelsConfigMap = Record<string, ModelConfig>;
 /** 标准模式 / 智能体（含九宫格）默认绘画模型 */
 export const DEFAULT_DRAWING_MODEL = "gpt-image-2";
 
+/** 模型是否支持 gpt-image 系列画质档位（low/medium/high） */
+export const supportsGptImageQuality = (model: string): boolean =>
+  model.startsWith("gpt-image-");
+
 /** 创建会话请求 */
 export interface CreateSessionParams {
   title?: string;
@@ -115,7 +119,7 @@ export interface GenerateImageParams {
   /** 提供商：默认 gemini */
   provider?: "gemini" | "tengda";
   /**
-   * 画质档位：仅 `gpt-image-2` 支持
+   * 画质档位：gpt-image 系列（`gpt-image-2` / `gpt-image-2.5-flare` / `gpt-image-2.5-sunburst` 等）支持
    * - low: 低质量（默认）
    * - medium: 中等质量
    * - high: 高质量
@@ -140,7 +144,7 @@ export interface GenerateBatchParams {
   strength?: number;
   provider?: "gemini" | "tengda";
   /**
-   * 画质档位：仅 `gpt-image-2` 支持
+   * 画质档位：gpt-image 系列（`gpt-image-2` / `gpt-image-2.5-flare` / `gpt-image-2.5-sunburst` 等）支持
    * - low: 低质量（默认）
    * - medium: 中等质量
    * - high: 高质量

@@ -56,7 +56,11 @@ import agentsApi from "@/api/agents";
 import storageApi from "@/api/storage";
 import { STATIC_BASE_URL } from "@/api/request";
 import { listAiDesignTools, type AiDesignTool } from "@/api/prompts";
-import { DEFAULT_DRAWING_MODEL, type ModelsConfigMap } from "@/types/drawing";
+import {
+  DEFAULT_DRAWING_MODEL,
+  supportsGptImageQuality,
+  type ModelsConfigMap,
+} from "@/types/drawing";
 import type { VideoModelConfig, VideoModelsData, VideoResolution } from "@/types/video";
 import type { AgentSkill } from "@/types/agents";
 import {
@@ -400,7 +404,7 @@ export const LandingComposer: React.FC<{
     () => modelsConfig?.[model],
     [modelsConfig, model]
   );
-  const isGptImage2 = model === "gpt-image-2";
+  const isGptImage2 = supportsGptImageQuality(model);
 
   // 图片参数自愈（非法值回退到模型支持的首项）
   useEffect(() => {

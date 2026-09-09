@@ -42,6 +42,7 @@ import { fetchAssetBlob } from "@/lib/assetFetchUrl";
 import { useGenerationPolling } from "@/hooks/useGenerationPolling";
 import { getErrorMessage } from "@/lib/errorMessage";
 import {
+  supportsGptImageQuality,
   DEFAULT_DRAWING_MODEL,
   type GenerateImageParams,
   type MessageStatusResponse,
@@ -937,7 +938,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
             strength: 0.7,
             type: 1,
           };
-          if (model === "gpt-image-2") {
+          if (supportsGptImageQuality(model)) {
             phase1Params.quality = gptImageQuality;
           }
           const phase1Res = await drawingApi.generateImage(sid, phase1Params);
@@ -1017,7 +1018,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
         optimize_prompt: true,
       };
 
-      if (model === "gpt-image-2") {
+      if (supportsGptImageQuality(model)) {
         params.quality = gptImageQuality;
       }
 
@@ -1109,7 +1110,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
           strength: 0.7,
           type: 1,
         };
-        if (model === "gpt-image-2") {
+        if (supportsGptImageQuality(model)) {
           phase1Params.quality = gptImageQuality;
         }
         const phase1Res = await drawingApi.generateImage(sid, phase1Params);
@@ -1236,7 +1237,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
           currentModelConfig?.provider ??
           (model.startsWith("gemini") ? "gemini" : "tengda"),
       };
-      if (model === "gpt-image-2") {
+      if (supportsGptImageQuality(model)) {
         batchParams.quality = gptImageQuality;
       }
       const batchData = await drawingApi.generateBatch(sid, batchParams);
@@ -1439,7 +1440,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
     }));
   }, [modelsConfig, model]);
 
-  const isGptImage2 = model === "gpt-image-2";
+  const isGptImage2 = supportsGptImageQuality(model);
 
   const canSend = isEcommerce
     ? Boolean(

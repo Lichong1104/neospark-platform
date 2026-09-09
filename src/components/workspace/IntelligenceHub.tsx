@@ -69,6 +69,7 @@ import {
 import { drawingModelOptionIcon } from "@/components/icons/DrawingModelIcon";
 import {
   DEFAULT_DRAWING_MODEL,
+  supportsGptImageQuality,
   type ModelsConfigMap,
   type GenerateMultiRefParams,
 } from "@/types/drawing";
@@ -120,6 +121,24 @@ const DEFAULT_MODELS: DropdownOption[] = [
     value: "gpt-image-2",
     label: "GPT Image 2",
     icon: drawingModelOptionIcon("gpt-image-2", "GPT Image 2", "tengda"),
+  },
+  {
+    value: "gpt-image-2.5-flare",
+    label: "GPT Image 2.5 Flare",
+    icon: drawingModelOptionIcon(
+      "gpt-image-2.5-flare",
+      "GPT Image 2.5 Flare",
+      "tengda"
+    ),
+  },
+  {
+    value: "gpt-image-2.5-sunburst",
+    label: "GPT Image 2.5 Sunburst",
+    icon: drawingModelOptionIcon(
+      "gpt-image-2.5-sunburst",
+      "GPT Image 2.5 Sunburst",
+      "tengda"
+    ),
   },
   {
     value: "gemini-3.1-flash-image-preview",
@@ -455,7 +474,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
   }, [modelsConfig]);
 
   const currentModelConfig = modelsConfig?.[model];
-  const isGptImage2 = model === "gpt-image-2";
+  const isGptImage2 = supportsGptImageQuality(model);
   const gptImageQualityOptions: DropdownOption[] = useMemo(
     () => [
       { value: "low", label: `${t("agentChat.gptImageQualityLow")} (Fast)` },
@@ -1043,7 +1062,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
             aspectRatio={aspectRatio}
             resolution={resolution}
             model={model}
-            isGptImage2={model === "gpt-image-2"}
+            isGptImage2={isGptImage2}
             gptImageQuality={gptImageQuality}
             onGptImageQualityChange={setGptImageQuality}
             aspectRatioOptions={aspectRatioOptions}

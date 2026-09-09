@@ -10,6 +10,7 @@ import { resolveInputs } from "@/lib/workflow/executor";
 import { toFullUrl, toServerPath } from "@/lib/workflow/url";
 import {
   DEFAULT_DRAWING_MODEL,
+  supportsGptImageQuality,
   type GenerateImageParams,
   type ModelsConfigMap,
 } from "@/types/drawing";
@@ -126,7 +127,7 @@ function ImageGenNodeImpl({ id, data }: NodeProps<WorkflowNode>) {
         num_images: 1,
         provider: params.provider,
         optimize_prompt: true,
-        ...(params.model === "gpt-image-2" ? { quality: "low" as const } : {}),
+        ...(supportsGptImageQuality(params.model) ? { quality: "low" as const } : {}),
       };
       if (refPaths.length > 1) gParams.ref_image_paths = refPaths;
       else if (refPaths.length === 1) gParams.ref_image_path = refPaths[0];

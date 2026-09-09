@@ -9,6 +9,7 @@ import { getErrorMessage } from "@/lib/errorMessage";
 import { STATIC_BASE_URL } from "@/api/request";
 import {
   DEFAULT_DRAWING_MODEL,
+  supportsGptImageQuality,
   type ModelsConfigMap,
 } from "@/types/drawing";
 import type { CanvasImage } from "./CanvasArea";
@@ -214,7 +215,7 @@ export const CanvasImageGenCompose: React.FC<{
           currentModelConfig?.provider ??
           (model.startsWith("gemini") ? ("gemini" as const) : ("tengda" as const)),
         optimize_prompt: true,
-        ...(model === "gpt-image-2" ? { quality: gptImageQuality } : {}),
+        ...(supportsGptImageQuality(model) ? { quality: gptImageQuality } : {}),
       };
       if (refPaths.length > 1) {
         params.ref_image_paths = refPaths;
@@ -264,7 +265,7 @@ export const CanvasImageGenCompose: React.FC<{
               aspectRatio={aspectRatio}
               resolution={resolution}
               model={model}
-              isGptImage2={model === "gpt-image-2"}
+              isGptImage2={supportsGptImageQuality(model)}
               gptImageQuality={gptImageQuality}
               onGptImageQualityChange={setGptImageQuality}
               aspectRatioOptions={aspectRatioOptions}
