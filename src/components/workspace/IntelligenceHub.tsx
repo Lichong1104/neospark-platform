@@ -60,6 +60,7 @@ import {
   formatEstimatedCost,
 } from "@/lib/pricing";
 import { InlineCanvasMentionEditor } from "./InlineCanvasMentionEditor";
+import { GenerationErrorBanner } from "./GenerationErrorBanner";
 import { ImageGenerationParams } from "./ImageGenerationParams";
 import {
   GenerationModeIconToggle,
@@ -346,6 +347,11 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
     used: string;
     optimized?: string;
   } | null>(null);
+  // 生成失败的常驻内联报错（替代 toast 弹出）；retry 保存失败时的提示词用于一键重试
+  const [standardGenError, setStandardGenError] = useState<{
+    message: string;
+    retry?: { prompt: string; originalPrompt?: string; optimizedPrompt?: string };
+  } | null>(null);
   const [pastedImage, setPastedImage] = useState<{
     preview: string;
     path: string;
@@ -416,8 +422,17 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
       toast.success(t("intelligenceHub.imageGenerated"));
     } else if (polling.status === "failed") {
       setIsStandardGenerating(false);
+      setStandardGenError({
+        message: polling.error || t("intelligenceHub.generateFailed"),
+        retry: pendingStandardPrompt
+          ? {
+              prompt: pendingStandardPrompt.used,
+              originalPrompt: pendingStandardPrompt.original,
+              optimizedPrompt: pendingStandardPrompt.optimized,
+            }
+          : undefined,
+      });
       setPendingStandardPrompt(null);
-      toast.error(polling.error || t("intelligenceHub.generateFailed"));
       polling.reset();
     }
   }, [
@@ -577,6 +592,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
     setIsStandardGenerating(false);
     setPendingStandardPrompt(null);
     setBatchProgress(null);
+    setStandardGenError(null);
     toast.info(t("intelligenceHub.generationCancelled"));
   };
 
@@ -613,9 +629,11 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
     batchAbortRef.current = false;
     if (!override) setInputValue("");
     setIsStandardGenerating(true);
+    setStandardGenError(null);
 
+    // 提前声明，catch 中的一键重试也需要使用最终（可能优化后）的提示词
+    let finalPrompt = originalPrompt;
     try {
-      let finalPrompt = originalPrompt;
       if (override?.skipOptimize) {
         finalPrompt = override.prompt;
         setPendingStandardPrompt({
@@ -675,8 +693,8 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
           canvasImagesOnly.length
         );
         if (!check.ok) {
-          toast.error(
-            t("intelligenceHub.invalidCanvasSlot", {
+          setStandardGenError({
+            message: t("intelligenceHub.invalidCanvasSlot", {
               label: canvasImageSlotLabel(
                 check.invalidSlot,
                 t("intelligenceHub.canvasImageSlotPrefix")
@@ -690,8 +708,8 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
                 t("intelligenceHub.canvasImageSlotPrefix")
               ),
               max: canvasImagesOnly.length,
-            })
-          );
+            }),
+          });
           setIsStandardGenerating(false);
           setPendingStandardPrompt(null);
           return;
@@ -704,8 +722,8 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
           canvasVideosOnly.length
         );
         if (!check.ok) {
-          toast.error(
-            t("intelligenceHub.invalidCanvasSlot", {
+          setStandardGenError({
+            message: t("intelligenceHub.invalidCanvasSlot", {
               label: canvasVideoSlotLabel(
                 check.invalidSlot,
                 t("intelligenceHub.canvasVideoSlotPrefix")
@@ -719,8 +737,8 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
                 t("intelligenceHub.canvasVideoSlotPrefix")
               ),
               max: canvasVideosOnly.length,
-            })
-          );
+            }),
+          });
           setIsStandardGenerating(false);
           setPendingStandardPrompt(null);
           return;
@@ -822,12 +840,12 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
                 ]);
                 onImagesGenerated?.(result.images);
               } else if (result.status === "failed") {
-                toast.error(
-                  t("intelligenceHub.batchFailed", {
+                setStandardGenError({
+                  message: t("intelligenceHub.batchFailed", {
                     index: index + 1,
                     msg: result.error_msg || "",
-                  })
-                );
+                  }),
+                });
               }
 
               setBatchProgress((prev) =>
@@ -850,7 +868,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
               err,
               t("intelligenceHub.generateFailed")
             );
-            toast.error(msg);
+            setStandardGenError({ message: msg });
           }
 
           setBatchProgress(null);
@@ -865,7 +883,9 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
         selectedRefImages.length > 1 &&
         model === "gemini-2.5-flash-image"
       ) {
-        toast.error(t("intelligenceHub.multiRefModelUnsupported"));
+        setStandardGenError({
+          message: t("intelligenceHub.multiRefModelUnsupported"),
+        });
         setIsStandardGenerating(false);
         setPendingStandardPrompt(null);
         return;
@@ -949,7 +969,14 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
       polling.startPolling(res.message_id);
     } catch (err: any) {
       const msg = getErrorMessage(err, t("intelligenceHub.generateFailed"));
-      toast.error(msg);
+      setStandardGenError({
+        message: msg,
+        retry: {
+          prompt: finalPrompt,
+          originalPrompt,
+          optimizedPrompt: optimizeStandardPrompt ? finalPrompt : undefined,
+        },
+      });
       setIsStandardGenerating(false);
       setPendingStandardPrompt(null);
     }
@@ -963,6 +990,17 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
       skipOptimize: true,
       originalPrompt: entry.originalPrompt ?? usedPrompt,
       optimizedPrompt: entry.optimizedPrompt,
+    });
+  };
+
+  const handleRetryFromError = () => {
+    if (!standardGenError?.retry) return;
+    const { prompt, originalPrompt, optimizedPrompt } = standardGenError.retry;
+    void handleSend({
+      prompt,
+      skipOptimize: true,
+      originalPrompt: originalPrompt ?? prompt,
+      optimizedPrompt,
     });
   };
 
@@ -1033,6 +1071,9 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
             }}
             onReuseHistoryPrompt={setInputValue}
             onRegenerateFromHistory={handleRegenerateFromHistory}
+            genError={standardGenError}
+            onClearGenError={() => setStandardGenError(null)}
+            onRetryGenError={handleRetryFromError}
             onImagesGenerated={onImagesGenerated}
             pastedImage={pastedImage}
             onPasteImage={setPastedImage}
@@ -1105,6 +1146,9 @@ interface ChatViewProps {
   onSelectPreset: (prompt: string) => void;
   onReuseHistoryPrompt: (prompt: string) => void;
   onRegenerateFromHistory: (entry: StandardGenHistoryItem) => void;
+  genError: { message: string; retry?: { prompt: string; originalPrompt?: string; optimizedPrompt?: string } } | null;
+  onClearGenError: () => void;
+  onRetryGenError: () => void;
   onImagesGenerated?: (images: { url: string; local_path: string }[]) => void;
   pastedImage: { preview: string; path: string } | null;
   onPasteImage: (image: { preview: string; path: string } | null) => void;
@@ -1152,6 +1196,9 @@ const ChatView: React.FC<ChatViewProps> = ({
   onSelectPreset,
   onReuseHistoryPrompt,
   onRegenerateFromHistory,
+  genError,
+  onClearGenError,
+  onRetryGenError,
   onImagesGenerated,
   pastedImage,
   onPasteImage,
@@ -1449,6 +1496,14 @@ const ChatView: React.FC<ChatViewProps> = ({
         id="onboarding-hub-compose"
         className="shrink-0 flex flex-col p-4 border-t-brutal border-foreground bg-card"
       >
+        {genError && (
+          <GenerationErrorBanner
+            className="mb-3"
+            message={genError.message}
+            onRetry={genError.retry ? onRetryGenError : undefined}
+            onDismiss={onClearGenError}
+          />
+        )}
         <div className="mb-2 flex items-center justify-between gap-2">
           <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
             {t("intelligenceHub.composeLabel")}

@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
 import type { AxiosRequestConfig } from "axios";
 import { getVideoTask } from "@/api/video";
 import {
@@ -66,13 +65,10 @@ export function useVideoTaskPolling(
   }, [stop]);
 
   const terminal = useCallback(
-    (message: string, kind?: "auth") => {
+    (message: string) => {
       stop();
       setError(message);
       setStatus("failed");
-      if (kind === "auth") {
-        toast.error(message);
-      }
     },
     [stop]
   );
@@ -152,7 +148,7 @@ export function useVideoTaskPolling(
           const classified = classifyPollingError(err);
 
           if (classified.kind === "auth") {
-            terminal(t("video.sessionExpired"), "auth");
+            terminal(t("video.sessionExpired"));
             return;
           }
           if (classified.kind === "notFound") {

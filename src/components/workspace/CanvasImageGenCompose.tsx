@@ -23,6 +23,7 @@ import {
 } from "@/lib/canvasImageSlots";
 import { type DropdownOption } from "@/components/ui/brutal-dropdown";
 import { drawingModelOptionIcon } from "@/components/icons/DrawingModelIcon";
+import { GenerationErrorBanner } from "./GenerationErrorBanner";
 import {
   Square,
   RectangleHorizontal,
@@ -76,6 +77,8 @@ export const CanvasImageGenCompose: React.FC<{
   const [modelsConfig, setModelsConfig] = useState<ModelsConfigMap | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  // 生成失败的常驻内联报错（替代 toast 弹出）；prompt 在失败时保留，用户可直接重新生成
+  const [genError, setGenError] = useState<string | null>(null);
   const polling = useGenerationPolling();
 
   useEffect(() => {
@@ -134,7 +137,7 @@ export const CanvasImageGenCompose: React.FC<{
 
   useEffect(() => {
     if (polling.status === "failed") {
-      toast.error(polling.error || t("intelligenceHub.generateFailed"));
+      setGenError(polling.error || t("intelligenceHub.generateFailed"));
       setIsGenerating(false);
       polling.reset();
     }
@@ -185,6 +188,7 @@ export const CanvasImageGenCompose: React.FC<{
     }
 
     setIsGenerating(true);
+    setGenError(null);
     try {
       let sid = sessionId;
       if (!sid) {
@@ -224,69 +228,78 @@ export const CanvasImageGenCompose: React.FC<{
       );
       polling.startPolling(res.message_id);
     } catch (err: unknown) {
-      toast.error(getErrorMessage(err, t("intelligenceHub.generateFailed")));
+      setGenError(getErrorMessage(err, t("intelligenceHub.generateFailed")));
       setIsGenerating(false);
     }
   };
 
   return (
     <div
-      className="h-full w-full"
+      className="h-full w-full flex flex-col gap-2"
       onMouseDown={(e) => e.stopPropagation()}
       onPointerDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
     >
-      <InlineCanvasMentionEditor
-        embedded
-        value={prompt}
-        onChange={setPrompt}
-        canvasImages={canvasImages}
-        allowedTypes={["image", "video"]}
-        placeholder={t("intelligenceHub.inputPlaceholder")}
-        onSubmit={handleGenerate}
-        enableSubmitOnEnter
-        className="h-full"
-        footerLeft={
-          <ImageGenerationParams
-            embedded
-            aspectRatio={aspectRatio}
-            resolution={resolution}
-            model={model}
-            isGptImage2={model === "gpt-image-2"}
-            gptImageQuality={gptImageQuality}
-            onGptImageQualityChange={setGptImageQuality}
-            aspectRatioOptions={aspectRatioOptions}
-            resolutionOptions={resolutionOptions}
-            modelOptions={modelOptions}
-            onAspectRatioChange={setAspectRatio}
-            onResolutionChange={setResolution}
-            onModelChange={setModel}
-          />
-        }
-        submitAction={
-          <button
-            type="button"
-            onClick={handleGenerate}
-            disabled={isGenerating || !prompt.trim()}
-            className={cn(
-              "inline-flex h-6 items-center justify-center gap-1 rounded-md px-2 text-[9px] font-bold uppercase transition-colors",
-              isGenerating || !prompt.trim()
-                ? "bg-foreground/8 text-muted-foreground cursor-not-allowed"
-                : "bg-accent-cyan text-foreground hover:brightness-110"
-            )}
-            title={t("canvas.generate")}
-          >
-            {isGenerating ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              <>
-                <Send className="w-3.5 h-3.5" />
-                <span>{t("canvas.generate")}</span>
-              </>
-            )}
-          </button>
-        }
-      />
+      {genError && (
+        <GenerationErrorBanner
+          message={genError}
+          onRetry={handleGenerate}
+          onDismiss={() => setGenError(null)}
+        />
+      )}
+      <div className="flex-1 min-h-0">
+        <InlineCanvasMentionEditor
+          embedded
+          value={prompt}
+          onChange={setPrompt}
+          canvasImages={canvasImages}
+          allowedTypes={["image", "video"]}
+          placeholder={t("intelligenceHub.inputPlaceholder")}
+          onSubmit={handleGenerate}
+          enableSubmitOnEnter
+          className="h-full"
+          footerLeft={
+            <ImageGenerationParams
+              embedded
+              aspectRatio={aspectRatio}
+              resolution={resolution}
+              model={model}
+              isGptImage2={model === "gpt-image-2"}
+              gptImageQuality={gptImageQuality}
+              onGptImageQualityChange={setGptImageQuality}
+              aspectRatioOptions={aspectRatioOptions}
+              resolutionOptions={resolutionOptions}
+              modelOptions={modelOptions}
+              onAspectRatioChange={setAspectRatio}
+              onResolutionChange={setResolution}
+              onModelChange={setModel}
+            />
+          }
+          submitAction={
+            <button
+              type="button"
+              onClick={handleGenerate}
+              disabled={isGenerating || !prompt.trim()}
+              className={cn(
+                "inline-flex h-6 items-center justify-center gap-1 rounded-md px-2 text-[9px] font-bold uppercase transition-colors",
+                isGenerating || !prompt.trim()
+                  ? "bg-foreground/8 text-muted-foreground cursor-not-allowed"
+                  : "bg-accent-cyan text-foreground hover:brightness-110"
+              )}
+              title={t("canvas.generate")}
+            >
+              {isGenerating ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <>
+                  <Send className="w-3.5 h-3.5" />
+                  <span>{t("canvas.generate")}</span>
+                </>
+              )}
+            </button>
+          }
+        />
+      </div>
     </div>
   );
 };

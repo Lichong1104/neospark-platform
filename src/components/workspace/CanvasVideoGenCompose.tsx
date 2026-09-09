@@ -21,6 +21,7 @@ import {
 } from "@/lib/canvasImageSlots";
 import type { CanvasImage } from "./CanvasArea";
 import { InlineCanvasMentionEditor } from "./InlineCanvasMentionEditor";
+import { GenerationErrorBanner } from "./GenerationErrorBanner";
 import { VideoGenerationParams } from "./VideoGenerationParams";
 import {
   defaultDurationOptionsForModel,
@@ -71,6 +72,8 @@ export const CanvasVideoGenCompose: React.FC<{
     "1080p",
   ]);
   const [isGenerating, setIsGenerating] = useState(false);
+  // 生成失败的常驻内联报错（替代 toast 弹出）；prompt 在失败时保留，用户可直接重新生成
+  const [genError, setGenError] = useState<string | null>(null);
   const taskIdRef = useRef<string | null>(null);
   const deliveredRef = useRef(false);
 
@@ -145,7 +148,7 @@ export const CanvasVideoGenCompose: React.FC<{
           }
 
           if (detail.status === "failed" || detail.status === "cancelled") {
-            toast.error(detail.error_msg || t("video.failed"));
+            setGenError(detail.error_msg || t("video.failed"));
             setIsGenerating(false);
             taskIdRef.current = null;
             return;
@@ -153,14 +156,14 @@ export const CanvasVideoGenCompose: React.FC<{
 
           tries += 1;
           if (tries > 120) {
-            toast.error(t("video.fetchFailed"));
+            setGenError(t("video.fetchFailed"));
             setIsGenerating(false);
             taskIdRef.current = null;
             return;
           }
           window.setTimeout(() => void run(), 2000);
         } catch (err: unknown) {
-          toast.error(getErrorMessage(err, t("video.fetchFailed")));
+          setGenError(getErrorMessage(err, t("video.fetchFailed")));
           setIsGenerating(false);
           taskIdRef.current = null;
         }
@@ -186,7 +189,7 @@ export const CanvasVideoGenCompose: React.FC<{
       canvasImageCount
     );
     if (!imageSlotCheck.ok) {
-      toast.error(
+      setGenError(
         t("intelligenceHub.invalidCanvasSlot", {
           label: canvasImageSlotLabel(imageSlotCheck.invalidSlot, imageSlotPrefix),
           rangeStart: canvasImageSlotLabel(1, imageSlotPrefix),
@@ -202,7 +205,7 @@ export const CanvasVideoGenCompose: React.FC<{
       canvasVideoCount
     );
     if (!videoSlotCheck.ok) {
-      toast.error(
+      setGenError(
         t("intelligenceHub.invalidCanvasSlot", {
           label: canvasVideoSlotLabel(videoSlotCheck.invalidSlot, videoSlotPrefix),
           rangeStart: canvasVideoSlotLabel(1, videoSlotPrefix),
@@ -239,6 +242,7 @@ export const CanvasVideoGenCompose: React.FC<{
     };
 
     setIsGenerating(true);
+    setGenError(null);
     deliveredRef.current = false;
     try {
       const res = await createVideoTask(params);
@@ -246,69 +250,78 @@ export const CanvasVideoGenCompose: React.FC<{
       toast.info(t("video.taskCreated", { cost: res.pricing?.estimated_cost ?? "-" }));
       void pollTask(res.task_id);
     } catch (err: unknown) {
-      toast.error(getErrorMessage(err, t("video.createFailed")));
+      setGenError(getErrorMessage(err, t("video.createFailed")));
       setIsGenerating(false);
     }
   };
 
   return (
     <div
-      className="h-full w-full"
+      className="h-full w-full flex flex-col gap-2"
       onMouseDown={(e) => e.stopPropagation()}
       onPointerDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
     >
-      <InlineCanvasMentionEditor
-        embedded
-        value={prompt}
-        onChange={setPrompt}
-        canvasImages={canvasImages}
-        allowedTypes={["image", "video"]}
-        placeholder={t("video.promptPlaceholder")}
-        onSubmit={handleGenerate}
-        enableSubmitOnEnter
-        className="h-full"
-        footerLeft={
-          <VideoGenerationParams
-            embedded
-            ratio={ratio}
-            duration={duration}
-            resolution={resolution}
-            model={model}
-            ratioOptions={ratioOptions}
-            durationOptions={durationOptions}
-            resolutionOptions={resolutionOptions}
-            modelOptions={modelOptions}
-            onRatioChange={setRatio}
-            onDurationChange={setDuration}
-            onResolutionChange={setResolution}
-            onModelChange={setModel}
-          />
-        }
-        submitAction={
-          <button
-            type="button"
-            onClick={handleGenerate}
-            disabled={isGenerating || !prompt.trim()}
-            className={cn(
-              "inline-flex h-6 items-center justify-center gap-1 rounded-md px-2 text-[9px] font-bold uppercase transition-colors",
-              isGenerating || !prompt.trim()
-                ? "bg-foreground/8 text-muted-foreground cursor-not-allowed"
-                : "bg-accent-purple text-card hover:brightness-110"
-            )}
-            title={t("video.generate")}
-          >
-            {isGenerating ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              <>
-                <Send className="w-3.5 h-3.5" />
-                <span>{t("video.generate")}</span>
-              </>
-            )}
-          </button>
-        }
-      />
+      {genError && (
+        <GenerationErrorBanner
+          message={genError}
+          onRetry={handleGenerate}
+          onDismiss={() => setGenError(null)}
+        />
+      )}
+      <div className="flex-1 min-h-0">
+        <InlineCanvasMentionEditor
+          embedded
+          value={prompt}
+          onChange={setPrompt}
+          canvasImages={canvasImages}
+          allowedTypes={["image", "video"]}
+          placeholder={t("video.promptPlaceholder")}
+          onSubmit={handleGenerate}
+          enableSubmitOnEnter
+          className="h-full"
+          footerLeft={
+            <VideoGenerationParams
+              embedded
+              ratio={ratio}
+              duration={duration}
+              resolution={resolution}
+              model={model}
+              ratioOptions={ratioOptions}
+              durationOptions={durationOptions}
+              resolutionOptions={resolutionOptions}
+              modelOptions={modelOptions}
+              onRatioChange={setRatio}
+              onDurationChange={setDuration}
+              onResolutionChange={setResolution}
+              onModelChange={setModel}
+            />
+          }
+          submitAction={
+            <button
+              type="button"
+              onClick={handleGenerate}
+              disabled={isGenerating || !prompt.trim()}
+              className={cn(
+                "inline-flex h-6 items-center justify-center gap-1 rounded-md px-2 text-[9px] font-bold uppercase transition-colors",
+                isGenerating || !prompt.trim()
+                  ? "bg-foreground/8 text-muted-foreground cursor-not-allowed"
+                  : "bg-accent-purple text-card hover:brightness-110"
+              )}
+              title={t("video.generate")}
+            >
+              {isGenerating ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <>
+                  <Send className="w-3.5 h-3.5" />
+                  <span>{t("video.generate")}</span>
+                </>
+              )}
+            </button>
+          }
+        />
+      </div>
     </div>
   );
 };

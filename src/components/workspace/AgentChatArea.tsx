@@ -702,7 +702,6 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
         return updated;
       });
       setIsGenerating(false);
-      toast.error(polling.error || t("agentChat.generationFailed"));
       polling.reset();
     }
   }, [
@@ -995,7 +994,6 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
             )
           );
           setIsGenerating(false);
-          toast.error(msg);
         }
       })();
 
@@ -1068,7 +1066,6 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
       };
       setMessages((prev) => [...prev, errorMessage]);
       setIsGenerating(false);
-      toast.error(errorMsg);
     }
   };
 
@@ -1164,7 +1161,6 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
           )
         );
         setIsGenerating(false);
-        toast.error(msg);
       }
     })();
   };
@@ -1301,7 +1297,6 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
           m.id === agentMessageId ? { ...m, status: "failed", content: msg } : m
         )
       );
-      toast.error(msg);
     } finally {
       setIsGenerating(false);
     }

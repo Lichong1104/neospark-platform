@@ -241,6 +241,8 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
   ]);
   const [estimatedCost, setEstimatedCost] = useState<number | null>(null);
   const [taskId, setTaskId] = useState("");
+  // 创建/校验失败的常驻报错信息（替代 toast 弹出）；参数与提示词保留，用户可手动重新生成
+  const [createError, setCreateError] = useState("");
   // 视频配置加载完成标记：用于 initialRequest 的自动提交闸门。
   const [configReady, setConfigReady] = useState(false);
   const {
@@ -497,7 +499,7 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
       canvasImageCount
     );
     if (!imageSlotCheck.ok) {
-      toast.error(
+      setCreateError(
         t("intelligenceHub.invalidCanvasSlot", {
           label: canvasImageSlotLabel(imageSlotCheck.invalidSlot, imageSlotPrefix),
           rangeStart: canvasImageSlotLabel(1, imageSlotPrefix),
@@ -513,7 +515,7 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
       canvasVideoCount
     );
     if (!videoSlotCheck.ok) {
-      toast.error(
+      setCreateError(
         t("intelligenceHub.invalidCanvasSlot", {
           label: canvasVideoSlotLabel(videoSlotCheck.invalidSlot, videoSlotPrefix),
           rangeStart: canvasVideoSlotLabel(1, videoSlotPrefix),
@@ -554,7 +556,7 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     const hasFrame = Boolean(firstFrameUrl.trim() || lastFrameUrl.trim());
     // Omni / MiniMax-H3 / Wan 3.0 均支持 first_frame + reference_image 同时使用
     if (!isBaseParamsOnlyModel(model) && hasFrame && mergedRefImages.length > 0) {
-      toast.error(t("video.realPersonConflictFramesRefs"));
+      setCreateError(t("video.realPersonConflictFramesRefs"));
       return;
     }
 
@@ -564,13 +566,11 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
       mergedRefImages.length;
     const maxRefImages = getMaxRefImages(model);
     if (totalImages > maxRefImages) {
-      toast.error(
-        t("video.tooManyRefImages", { max: maxRefImages })
-      );
+      setCreateError(t("video.tooManyRefImages", { max: maxRefImages }));
       return;
     }
     if (mergedRefVideos.length > 3) {
-      toast.error(t("video.tooManyRefVideos"));
+      setCreateError(t("video.tooManyRefVideos"));
       return;
     }
 
@@ -600,6 +600,7 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     try {
       // Enter loading immediately when calling /video/generations
       setIsCreating(true);
+      setCreateError("");
       resetPolling();
 
       const res = await createVideoTask(params);
@@ -610,8 +611,7 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
       toast.info(t("video.taskCreated", { cost: cost ?? "-" }));
     } catch (err) {
       resetPolling();
-      const msg = getErrorMessage(err, t("video.createFailed"));
-      toast.error(msg);
+      setCreateError(getErrorMessage(err, t("video.createFailed")));
     } finally {
       setIsCreating(false);
     }
@@ -654,6 +654,7 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     resetPolling();
     setIsCreating(false);
     setTaskId("");
+    setCreateError("");
     setPrompt("");
     setFirstFrameUrl("");
     setLastFrameUrl("");
@@ -750,7 +751,7 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
               </button>
             </div>
           </div>
-        ) : status === "failed" ? (
+        ) : status === "failed" || createError ? (
           <div className="flex flex-col items-center justify-center pt-12 gap-4 px-4 animate-fade-in">
             <div className="w-20 h-20 border-brutal border-accent-red/30 flex items-center justify-center bg-accent-red/10">
               <Film className="w-10 h-10 text-accent-red" />
@@ -758,16 +759,30 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
             <p className="text-sm font-bold uppercase tracking-wider text-accent-red">
               {t("video.failed")}
             </p>
-            <p className="text-xs text-muted-foreground text-center max-w-[260px]">
-              {error}
+            <p className="text-xs text-muted-foreground text-center max-w-[260px] break-words">
+              {status === "failed" ? error : createError}
             </p>
-            <button
-              onClick={handleNewTask}
-              className="px-6 py-2.5 text-xs font-bold uppercase border-brutal border-foreground bg-card brutal-press hover:bg-secondary flex items-center gap-1.5"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              {t("video.retry")}
-            </button>
+            <p className="text-[10px] text-muted-foreground text-center max-w-[260px]">
+              {t("intelligenceHub.genErrorHint")}
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  setCreateError("");
+                  void handleGenerate();
+                }}
+                className="px-6 py-2.5 text-xs font-bold uppercase border-brutal border-foreground bg-accent-red text-card brutal-press hover:brightness-110 flex items-center gap-1.5"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                {t("video.retry")}
+              </button>
+              <button
+                onClick={handleNewTask}
+                className="px-6 py-2.5 text-xs font-bold uppercase border-brutal border-foreground bg-card brutal-press hover:bg-secondary flex items-center gap-1.5"
+              >
+                {t("video.newTask")}
+              </button>
+            </div>
           </div>
         ) : (
           <VideoConfigForm
