@@ -30,16 +30,21 @@ interface MentionQuery {
   query: string;
 }
 
-/** 光标前是否处于一个未闭合的 @ 查询中（@ 前必须是行首/空白/标点） */
+/** 光标前是否处于一个未闭合的 @ 查询中（取光标前最后一个 @，其后无空白/@） */
 function findMentionQuery(text: string, caret: number): MentionQuery | null {
   const before = text.slice(0, caret);
-  const match = /(?:^|[\s@，。、；：？!?,.("'`（])@([^\s@]{0,30})$/.exec(before);
+  const match = /@([^\s@]{0,30})$/.exec(before);
   if (!match) return null;
   return {
     start: caret - match[1].length - 1,
     caret,
     query: match[1],
   };
+}
+
+// 过滤时忽略查询末尾的标点（用户输入 "@助手，" 时仍能匹配到「助手」）
+function trimQuery(query: string): string {
+  return query.replace(/[，。、；：？！,.;:!?]+$/, "");
 }
 
 const MentionTextarea: React.FC<MentionTextareaProps> = ({
@@ -60,7 +65,7 @@ const MentionTextarea: React.FC<MentionTextareaProps> = ({
   const suppressNextRef = useRef(false);
 
   const candidates = useMemo(() => {
-    const query = (mention?.query ?? "").toLowerCase();
+    const query = trimQuery(mention?.query ?? "").toLowerCase();
     const filtered = query
       ? skills.filter((s) => s.name.toLowerCase().includes(query))
       : skills;
