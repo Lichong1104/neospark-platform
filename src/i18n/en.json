@@ -652,7 +652,10 @@
     "planTitle": "Task Plan ({{count}} steps)",
     "planContinuationTitle": "Continue remaining tasks",
     "planRunning": "Running",
-    "planDone": "Done"
+    "planDone": "Done",
+    "planPartial": "In progress",
+    "planAwaiting": "Awaiting",
+    "planPending": "Pending"
   },
   "skillNames": {
     "drawing-prompt": {

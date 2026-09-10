@@ -652,7 +652,10 @@
     "planTitle": "任务清单（{{count}} 步）",
     "planContinuationTitle": "继续执行剩余任务",
     "planRunning": "执行中",
-    "planDone": "已完成"
+    "planDone": "已完成",
+    "planPartial": "进行中",
+    "planAwaiting": "待确认",
+    "planPending": "待执行"
   },
   "skillNames": {
     "drawing-prompt": {

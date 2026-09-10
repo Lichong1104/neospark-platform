@@ -1,5 +1,5 @@
 import React from "react";
-import { Check, ListOrdered, Loader2, Play } from "lucide-react";
+import { Check, Clock, ListOrdered, Loader2, Play } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
@@ -15,15 +15,20 @@ interface PlanStepsIndicatorProps {
   running: boolean;
   /** 是否为续跑模式（从历史任务清单恢复） */
   continuation?: boolean;
+  /** 已完成步骤数（来自后端 step_done 事件），默认 0 */
+  completed?: number;
 }
 
 const PlanStepsIndicator: React.FC<PlanStepsIndicatorProps> = ({
   steps,
   running,
   continuation = false,
+  completed = 0,
 }) => {
   const { t } = useTranslation();
   if (!steps.length) return null;
+
+  const allDone = completed >= steps.length;
 
   return (
     <div className="border-brutal border-foreground/20 bg-background">
@@ -41,46 +46,76 @@ const PlanStepsIndicator: React.FC<PlanStepsIndicatorProps> = ({
         <span
           className={cn(
             "ml-auto text-[10px] font-bold uppercase",
-            running ? "text-accent-pink" : "text-green-600"
+            running
+              ? "text-accent-pink"
+              : allDone
+                ? "text-green-600"
+                : "text-muted-foreground"
           )}
         >
           {running
             ? t("agentHub.planRunning")
-            : t("agentHub.planDone")}
+            : allDone
+              ? t("agentHub.planDone")
+              : t("agentHub.planPartial")}
         </span>
       </div>
       <ol className="px-3 py-1.5">
-        {steps.map((step, idx) => (
-          <li
-            key={`${step.skill_id}-${idx}`}
-            className="flex items-center gap-2 py-1"
-          >
-            <span className="flex h-4 w-4 shrink-0 items-center justify-center border border-foreground/30 font-mono text-[9px] text-muted-foreground">
-              {idx + 1}
-            </span>
-            <span
-              className={cn(
-                "inline-flex shrink-0 items-center border px-1 py-px text-[10px] font-bold",
-                running && idx === 0
-                  ? "border-accent-pink bg-accent-pink/15 text-foreground"
-                  : "border-accent-pink/50 bg-accent-pink/5 text-foreground/80"
-              )}
+        {steps.map((step, idx) => {
+          const isDone = idx < completed;
+          const isCurrent = idx === completed;
+          return (
+            <li
+              key={`${step.skill_id}-${idx}`}
+              className="flex items-center gap-2 py-1"
             >
-              @{step.skill_name}
-            </span>
-            {step.task && (
-              <span className="min-w-0 truncate text-[10px] text-muted-foreground">
-                {step.task}
+              <span
+                className={cn(
+                  "flex h-4 w-4 shrink-0 items-center justify-center border font-mono text-[9px]",
+                  isDone
+                    ? "border-green-600/50 text-green-600"
+                    : "border-foreground/30 text-muted-foreground"
+                )}
+              >
+                {isDone ? <Check className="h-3 w-3" /> : idx + 1}
               </span>
-            )}
-            {!running && (
-              <Check className="ml-auto h-3 w-3 shrink-0 text-green-600" />
-            )}
-            {running && idx === 0 && (
-              <Play className="ml-auto h-3 w-3 shrink-0 text-accent-pink" />
-            )}
-          </li>
-        ))}
+              <span
+                className={cn(
+                  "inline-flex shrink-0 items-center border px-1 py-px text-[10px] font-bold",
+                  isCurrent && running
+                    ? "border-accent-pink bg-accent-pink/15 text-foreground"
+                    : isDone
+                      ? "border-green-600/50 bg-green-600/10 text-foreground/80"
+                      : "border-accent-pink/50 bg-accent-pink/5 text-foreground/80"
+                )}
+              >
+                @{step.skill_name}
+              </span>
+              {step.task && (
+                <span className="min-w-0 truncate text-[10px] text-muted-foreground">
+                  {step.task}
+                </span>
+              )}
+              {isDone && (
+                <Check className="ml-auto h-3 w-3 shrink-0 text-green-600" />
+              )}
+              {isCurrent && running && (
+                <Play className="ml-auto h-3 w-3 shrink-0 text-accent-pink" />
+              )}
+              {isCurrent && !running && !allDone && (
+                <span className="ml-auto inline-flex shrink-0 items-center gap-1 text-[9px] font-bold uppercase text-muted-foreground">
+                  <Clock className="h-3 w-3" />
+                  {t("agentHub.planAwaiting")}
+                </span>
+              )}
+              {idx > completed && (
+                <span className="ml-auto shrink-0 text-[9px] font-bold uppercase text-muted-foreground/70">
+                  {t("agentHub.planPending")}
+                </span>
+              )}
+            </li>
+          );
+        })}
       </ol>
     </div>
   );

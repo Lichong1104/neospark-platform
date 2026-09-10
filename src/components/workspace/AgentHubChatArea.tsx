@@ -26,6 +26,7 @@ import MessageBubble from "./MessageBubble";
 import StreamingIndicator from "./StreamingIndicator";
 import MentionTextarea from "./MentionTextarea";
 import PlanStepsIndicator, { type PlanStep } from "./PlanStepsIndicator";
+import ConfirmCard from "./ConfirmCard";
 
 interface AgentHubChatAreaProps {
   onImagesGenerated?: (images: { url: string; local_path: string }[]) => void;
@@ -79,6 +80,13 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
   const [skillPopoverOpen, setSkillPopoverOpen] = useState(false);
   /** @提及生成的任务清单（来自后端 plan 事件），随当前轮展示步骤进度 */
   const [plan, setPlan] = useState<{ steps: PlanStep[]; continuation: boolean } | null>(null);
+  /** 已完成步骤数（来自后端 step_done 事件） */
+  const [completedSteps, setCompletedSteps] = useState(0);
+  /** 后端确认提问（来自 confirm 事件），非空时渲染按钮卡片 */
+  const [pendingConfirm, setPendingConfirm] = useState<{
+    question: string;
+    options: string[];
+  } | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -157,47 +165,136 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
     clearMessages();
     setSessionId(null);
     setPlan(null);
+    setCompletedSteps(0);
+    setPendingConfirm(null);
     textareaRef.current?.focus();
   }, [clearMessages]);
 
-  const handleSend = useCallback(async () => {
-    if (!inputValue.trim() || isStreaming || isGeneratingFile) return;
-    const command = inputValue.trim();
-    setInputValue("");
+  const sendMessage = useCallback(
+    async (text: string) => {
+      if (isStreaming || isGeneratingFile) return;
+      const command = text.trim();
+      if (!command) return;
 
-    const userMsg: AgentChatMessage = {
-      id: `user_${Date.now()}`,
-      role: "user",
-      content: command,
-      timestamp: new Date().toISOString(),
-    };
-    appendMessage(userMsg);
-    setPlan(null);
+      const userMsg: AgentChatMessage = {
+        id: `user_${Date.now()}`,
+        role: "user",
+        content: command,
+        timestamp: new Date().toISOString(),
+      };
+      appendMessage(userMsg);
+      setPlan(null);
+      setPendingConfirm(null);
 
-    const isDocxOnly =
-      selectedSkills.length === 1 && selectedSkills[0] === "docx-generator";
+      const isDocxOnly =
+        selectedSkills.length === 1 && selectedSkills[0] === "docx-generator";
 
-    // docx-generator 走非流式，避免传输大 base64 片段
-    if (isDocxOnly) {
-      setIsGeneratingFile(true);
-      try {
-        const res = await agentsApi.chatMulti({
-          skill_ids: selectedSkills,
-          message: command,
-          stream: false,
-          session_id: sessionId || undefined,
-          model_override: DEFAULT_AGENT_MODEL,
-        });
+      // docx-generator 走非流式，避免传输大 base64 片段
+      if (isDocxOnly) {
+        setIsGeneratingFile(true);
+        try {
+          const res = await agentsApi.chatMulti({
+            skill_ids: selectedSkills,
+            message: command,
+            stream: false,
+            session_id: sessionId || undefined,
+            model_override: DEFAULT_AGENT_MODEL,
+          });
 
-        if (res.session_id) {
-          setSessionId(res.session_id);
+          if (res.session_id) {
+            setSessionId(res.session_id);
+          }
+
+          appendMessage({
+            id: `assistant_${Date.now()}`,
+            role: "assistant",
+            content: res.content,
+            timestamp: new Date().toISOString(),
+          });
+        } catch (err: unknown) {
+          toast.error(getErrorMessage(err, t("agentHub.chatFailed")));
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `error_${Date.now()}`,
+              role: "system",
+              content: t("agentHub.streamError"),
+              timestamp: new Date().toISOString(),
+            },
+          ]);
+        } finally {
+          setIsGeneratingFile(false);
         }
+        return;
+      }
 
-        appendMessage({
-          id: `assistant_${Date.now()}`,
-          role: "assistant",
-          content: res.content,
-          timestamp: new Date().toISOString(),
+      try {
+        await startStream((onEvent, signal) =>
+          agentsApi.chatMultiStream(
+            {
+              skill_ids: selectedSkills,
+              message: command,
+              stream: true,
+              session_id: sessionId || undefined,
+              model_override: DEFAULT_AGENT_MODEL,
+            },
+            (event, data) => {
+              onEvent(event, data);
+              if (data.session_id) {
+                setSessionId(data.session_id);
+              }
+              if (event === "plan") {
+                const steps = Array.isArray(data.steps)
+                  ? (data.steps as PlanStep[])
+                  : [];
+                if (steps.length > 0) {
+                  setPlan({ steps, continuation: Boolean(data.continuation) });
+                  if (!data.continuation) {
+                    setCompletedSteps(0);
+                  }
+                }
+              }
+              if (event === "step_done") {
+                const completed = Number(data.completed);
+                if (Number.isFinite(completed)) {
+                  setCompletedSteps(completed);
+                } else {
+                  setCompletedSteps((prev) => prev + 1);
+                }
+              }
+              if (event === "confirm") {
+                setPendingConfirm({
+                  question: String(data.question ?? ""),
+                  options: Array.isArray(data.options)
+                    ? (data.options as unknown[]).map(String)
+                    : [],
+                });
+              }
+              if (event === "error") {
+                toast.error(
+                  String(data.error || data.message || t("agentHub.streamError"))
+                );
+              }
+            },
+            signal
+          )
+        );
+
+        // 流正常结束但未收到任何 assistant/system 输出时给出提示
+        setMessages((prev) => {
+          const hasResponse = prev.some(
+            (m) => m.role === "assistant" || m.role === "system"
+          );
+          if (hasResponse) return prev;
+          return [
+            ...prev,
+            {
+              id: `no_output_${Date.now()}`,
+              role: "system",
+              content: t("agentHub.noOutput"),
+              timestamp: new Date().toISOString(),
+            },
+          ];
         });
       } catch (err: unknown) {
         toast.error(getErrorMessage(err, t("agentHub.chatFailed")));
@@ -210,84 +307,34 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
             timestamp: new Date().toISOString(),
           },
         ]);
-      } finally {
-        setIsGeneratingFile(false);
       }
-      return;
-    }
+    },
+    [
+      isStreaming,
+      isGeneratingFile,
+      selectedSkills,
+      sessionId,
+      appendMessage,
+      startStream,
+      setMessages,
+      t,
+    ]
+  );
 
-    try {
-      await startStream((onEvent, signal) =>
-        agentsApi.chatMultiStream(
-          {
-            skill_ids: selectedSkills,
-            message: command,
-            stream: true,
-            session_id: sessionId || undefined,
-            model_override: DEFAULT_AGENT_MODEL,
-          },
-          (event, data) => {
-            onEvent(event, data);
-            if (data.session_id) {
-              setSessionId(data.session_id);
-            }
-            if (event === "plan") {
-              const steps = Array.isArray(data.steps)
-                ? (data.steps as PlanStep[])
-                : [];
-              if (steps.length > 0) {
-                setPlan({ steps, continuation: Boolean(data.continuation) });
-              }
-            }
-            if (event === "error") {
-              toast.error(
-                String(data.error || data.message || t("agentHub.streamError"))
-              );
-            }
-          },
-          signal
-        )
-      );
+  const handleSend = useCallback(() => {
+    if (!inputValue.trim() || isStreaming || isGeneratingFile) return;
+    const command = inputValue.trim();
+    setInputValue("");
+    void sendMessage(command);
+  }, [inputValue, isStreaming, isGeneratingFile, sendMessage]);
 
-      // 流正常结束但未收到任何 assistant/system 输出时给出提示
-      setMessages((prev) => {
-        const hasResponse = prev.some(
-          (m) => m.role === "assistant" || m.role === "system"
-        );
-        if (hasResponse) return prev;
-        return [
-          ...prev,
-          {
-            id: `no_output_${Date.now()}`,
-            role: "system",
-            content: t("agentHub.noOutput"),
-            timestamp: new Date().toISOString(),
-          },
-        ];
-      });
-    } catch (err: unknown) {
-      toast.error(getErrorMessage(err, t("agentHub.chatFailed")));
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `error_${Date.now()}`,
-          role: "system",
-          content: t("agentHub.streamError"),
-          timestamp: new Date().toISOString(),
-        },
-      ]);
-    }
-  }, [
-    inputValue,
-    isStreaming,
-    isGeneratingFile,
-    selectedSkills,
-    sessionId,
-    appendMessage,
-    startStream,
-    setMessages,
-    t,
-  ]);
+  const handleConfirmOption = useCallback(
+    (option: string) => {
+      setPendingConfirm(null);
+      void sendMessage(option);
+    },
+    [sendMessage]
+  );
 
   // 过渡页 AGENT 请求：按 nonce 消费一次 —— 先填入 skills/prompt，再在状态更新后自动发送一次。
   const consumedNonceRef = useRef<number | null>(null);
@@ -445,6 +492,7 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
               steps={plan.steps}
               running={isStreaming}
               continuation={plan.continuation}
+              completed={completedSteps}
             />
           )}
 
@@ -467,6 +515,15 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
           {isStreaming && !streamContent && <StreamingIndicator />}
 
           {isGeneratingFile && <GeneratingDocumentIndicator />}
+
+          {pendingConfirm && (
+            <ConfirmCard
+              question={pendingConfirm.question}
+              options={pendingConfirm.options}
+              disabled={isStreaming}
+              onSelect={handleConfirmOption}
+            />
+          )}
 
           <div ref={messagesEndRef} className="h-px" />
         </div>
