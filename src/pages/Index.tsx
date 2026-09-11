@@ -679,7 +679,8 @@ const Index = () => {
                 <ChevronRight className="h-3.5 w-3.5" strokeWidth={2} />
               </button>
             )}
-            {hubPanelExpanded ? (
+            {/* 保持挂载，收起时仅隐藏，避免丢失输入内容、聊天记录与生成轮询状态 */}
+            <div className={cn("h-full min-h-0", !hubPanelExpanded && "hidden")}>
               <IntelligenceHub
                 className="h-full min-h-0 overflow-hidden"
                 onImagesGenerated={handleImagesGenerated}
@@ -694,7 +695,8 @@ const Index = () => {
                 videoRequest={videoRequest}
                 onVideoRequestConsumed={handleHubRequestConsumed}
               />
-            ) : (
+            </div>
+            {!hubPanelExpanded && (
               <button
                 type="button"
                 onClick={() => setHubPanelExpanded(true)}
