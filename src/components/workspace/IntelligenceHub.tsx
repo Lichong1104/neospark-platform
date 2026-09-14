@@ -43,7 +43,7 @@ import { AgentHubChatArea } from "./AgentHubChatArea";
 import { VideoGenerationPanel } from "./VideoGenerationPanel";
 import { useTranslation } from "react-i18next";
 import drawingApi from "@/api/drawing";
-import { optimizePrompt } from "@/api/prompts";
+import { optimizePrompt, saveUserPrompt } from "@/api/prompts";
 import type { CanvasImage } from "./CanvasArea";
 import {
   canvasImageSlotLabel,
@@ -350,6 +350,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
   );
   const [isStandardGenerating, setIsStandardGenerating] = useState(false);
   const [optimizeStandardPrompt, setOptimizeStandardPrompt] = useState(false);
+  const [saveToLibrary, setSaveToLibrary] = useState(false);
   const [batchMode, setBatchMode] = useState(false);
   const [batchProgress, setBatchProgress] = useState<{
     current: number;
@@ -434,6 +435,12 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
           createdAt: Date.now(),
         },
       ]);
+      if (saveToLibrary && pendingStandardPrompt?.original?.trim()) {
+        void saveUserPrompt({ prompt: pendingStandardPrompt.original.trim() })
+          .then(() => toast.success(t("intelligenceHub.savedToLibrary")))
+          .catch(() => toast.error(t("intelligenceHub.saveToLibraryFailed")));
+        setSaveToLibrary(false);
+      }
       setPendingStandardPrompt(null);
       setIsStandardGenerating(false);
       onImagesGenerated?.(polling.images);
@@ -462,6 +469,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
     pendingStandardPrompt,
     onImagesGenerated,
     t,
+    saveToLibrary,
   ]);
 
   const modelOptions: DropdownOption[] = useMemo(() => {
@@ -1078,6 +1086,8 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
             onModelChange={setModel}
             optimizeStandardPrompt={optimizeStandardPrompt}
             onOptimizeStandardPromptChange={setOptimizeStandardPrompt}
+            saveToLibrary={saveToLibrary}
+            onSaveToLibraryChange={setSaveToLibrary}
             batchMode={batchMode}
             onBatchModeChange={setBatchMode}
             batchProgress={batchProgress}
@@ -1156,6 +1166,8 @@ interface ChatViewProps {
   onModelChange: (value: string) => void;
   optimizeStandardPrompt: boolean;
   onOptimizeStandardPromptChange: (value: boolean) => void;
+  saveToLibrary: boolean;
+  onSaveToLibraryChange: (value: boolean) => void;
   batchMode: boolean;
   onBatchModeChange: (value: boolean) => void;
   batchProgress: { current: number; total: number } | null;
@@ -1206,6 +1218,8 @@ const ChatView: React.FC<ChatViewProps> = ({
   onModelChange,
   optimizeStandardPrompt,
   onOptimizeStandardPromptChange,
+  saveToLibrary,
+  onSaveToLibraryChange,
   batchMode,
   onBatchModeChange,
   batchProgress,
@@ -1546,6 +1560,21 @@ const ChatView: React.FC<ChatViewProps> = ({
             >
               <Library className="h-3.5 w-3.5" />
               {t("intelligenceHub.promptArsenalShort")}
+            </button>
+            <button
+              type="button"
+              onClick={() => onSaveToLibraryChange(!saveToLibrary)}
+              aria-pressed={saveToLibrary}
+              className={cn(
+                "inline-flex h-7 shrink-0 items-center gap-1.5 border px-2 text-[10px] font-bold uppercase tracking-wide transition-none brutal-press",
+                saveToLibrary
+                  ? "border-accent-yellow/60 bg-accent-yellow/20 text-foreground"
+                  : "border-foreground/25 bg-card text-muted-foreground hover:border-foreground/40 hover:bg-accent-yellow/10 hover:text-foreground"
+              )}
+              title={t("intelligenceHub.saveToLibrary")}
+            >
+              <Bookmark className="h-3.5 w-3.5" />
+              {t("intelligenceHub.saveToLibrary")}
             </button>
           </div>
         </div>

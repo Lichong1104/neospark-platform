@@ -11,6 +11,7 @@ import {
   CirclePlay,
   ChevronRight,
   Workflow,
+  Bookmark,
 } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -173,6 +174,14 @@ const UserMenuDock: React.FC<UserMenuDockProps> = ({ variant = "fixed" }) => {
                 onNavigate={() => setOpen(false)}
               >
                 {t("header.workflow", { defaultValue: "Workflow" })}
+              </MenuNavItem>
+              <MenuNavItem
+                to="/my-prompts"
+                active={isActive("/my-prompts")}
+                icon={<Bookmark className="h-4 w-4" />}
+                onNavigate={() => setOpen(false)}
+              >
+                {t("header.myPrompts", { defaultValue: "My Prompts" })}
               </MenuNavItem>
               <MenuNavItem
                 to="/pricing"

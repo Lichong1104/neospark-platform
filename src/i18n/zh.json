@@ -13,7 +13,8 @@
     "profile": "用户中心",
     "accountMenu": "账号菜单",
     "light": "浅色",
-    "dark": "深色"
+    "dark": "深色",
+    "myPrompts": "我的提示词"
   },
   "admin": {
     "title": "管理后台",
@@ -548,6 +549,9 @@
     "panelShort": "创作",
     "promptArsenal": "提示词库",
     "promptArsenalShort": "提示词库",
+    "saveToLibrary": "保存到提示词库",
+    "savedToLibrary": "已保存到提示词库",
+    "saveToLibraryFailed": "保存到提示词库失败",
     "inputPlaceholder": "描述你想要创建的效果...",
     "imagePasted": "图片已粘贴",
     "imageGenerated": "图片生成完成！",
@@ -819,6 +823,16 @@
     "deleteFailed": "删除失败",
     "uploaded": "已上传",
     "generated": "AI生成"
+  },
+  "myPrompts": {
+    "title": "我的提示词",
+    "count": "{{count}} 条已保存",
+    "empty": "还没有保存任何提示词",
+    "emptyHint": "在生图面板勾选「保存到提示词库」，生成成功后提示词会自动保存到这里。",
+    "delete": "删除",
+    "confirmDelete": "确认删除？",
+    "deleted": "已删除",
+    "deleteFailed": "删除失败"
   },
   "workflowCanvas": {
     "workflowMode": "工作流模式",

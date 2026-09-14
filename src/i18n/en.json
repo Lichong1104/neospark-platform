@@ -13,7 +13,8 @@
     "profile": "Profile",
     "accountMenu": "Account menu",
     "light": "Light",
-    "dark": "Dark"
+    "dark": "Dark",
+    "myPrompts": "My Prompts"
   },
   "admin": {
     "title": "Admin Console",
@@ -548,6 +549,9 @@
     "panelShort": "AI",
     "promptArsenal": "Prompt Library",
     "promptArsenalShort": "Presets",
+    "saveToLibrary": "Save to prompt library",
+    "savedToLibrary": "Saved to prompt library",
+    "saveToLibraryFailed": "Failed to save to prompt library",
     "inputPlaceholder": "Describe the effect you want to create...",
     "imagePasted": "Image pasted",
     "imageGenerated": "Image generation completed!",
@@ -819,6 +823,16 @@
     "deleteFailed": "Delete failed",
     "uploaded": "UPLOADED",
     "generated": "GENERATED"
+  },
+  "myPrompts": {
+    "title": "My Prompts",
+    "count": "{{count}} saved",
+    "empty": "No saved prompts yet",
+    "emptyHint": "Toggle \"Save to prompt library\" in the image panel and your prompt will be saved here after a successful generation.",
+    "delete": "Delete",
+    "confirmDelete": "CONFIRM?",
+    "deleted": "Deleted",
+    "deleteFailed": "Delete failed"
   },
   "workflowCanvas": {
     "workflowMode": "Workflow Mode",

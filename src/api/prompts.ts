@@ -174,3 +174,55 @@ export async function optimizePrompt(
   );
   return res.data!;
 }
+
+// ============== 用户个人提示词库 ==============
+
+export interface SavedUserPrompt {
+  id: number;
+  prompt: string;
+  model: string | null;
+  created_at: string | null;
+}
+
+export interface SavedUserPromptList {
+  items: SavedUserPrompt[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+/**
+ * 保存一条提示词到当前用户的个人提示词库
+ */
+export async function saveUserPrompt(data: {
+  prompt: string;
+  model?: string;
+}): Promise<SavedUserPrompt> {
+  const res = await http.post<SavedUserPrompt, { prompt: string; model?: string }>(
+    "/prompts/saved",
+    data
+  );
+  return res.data!;
+}
+
+/**
+ * 分页列出当前用户的个人提示词库
+ */
+export async function listUserPrompts(params?: {
+  page?: number;
+  page_size?: number;
+}): Promise<SavedUserPromptList> {
+  const res = await http.get<SavedUserPromptList>(
+    "/prompts/saved",
+    params as Record<string, unknown>
+  );
+  return res.data!;
+}
+
+/**
+ * 删除当前用户个人提示词库中的一条提示词
+ */
+export async function deleteUserPrompt(id: number): Promise<{ deleted: boolean }> {
+  const res = await http.del<{ deleted: boolean }>(`/prompts/saved/${id}`);
+  return res.data!;
+}
