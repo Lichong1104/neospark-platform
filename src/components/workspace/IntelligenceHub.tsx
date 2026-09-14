@@ -38,6 +38,7 @@ import {
 import { cn } from "@/lib/utils";
 import { type DropdownOption } from "@/components/ui/brutal-dropdown";
 import { PresetLibrary } from "./PresetLibrary";
+import { MyPromptsPanel } from "./MyPromptsPanel";
 import { AgentChatArea } from "./AgentChatArea";
 import { AgentHubChatArea } from "./AgentHubChatArea";
 import { VideoGenerationPanel } from "./VideoGenerationPanel";
@@ -330,6 +331,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
   const [isAgentMode, setIsAgentMode] = useState(false);
   const [agentStatus, setAgentStatus] = useState<StatusType>("offline");
   const [showPresets, setShowPresets] = useState(false);
+  const [showMyPrompts, setShowMyPrompts] = useState(false);
   const [inputValue, setInputValue] = useState(imageRequest?.prompt ?? "");
   const [modelsConfig, setModelsConfig] = useState<ModelsConfigMap | null>(
     null
@@ -1067,6 +1069,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
             agentStatus={agentStatus}
             inputValue={inputValue}
             showPresets={showPresets}
+            showMyPrompts={showMyPrompts}
             aspectRatio={aspectRatio}
             resolution={resolution}
             model={model}
@@ -1094,9 +1097,14 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
             onSend={handleSend}
             onCancelGeneration={handleCancelGeneration}
             onTogglePresets={() => setShowPresets(!showPresets)}
+            onToggleMyPrompts={() => setShowMyPrompts(!showMyPrompts)}
             onSelectPreset={(prompt) => {
               setInputValue(prompt);
               setShowPresets(false);
+            }}
+            onSelectMyPrompt={(prompt) => {
+              setInputValue(prompt);
+              setShowMyPrompts(false);
             }}
             onReuseHistoryPrompt={setInputValue}
             onRegenerateFromHistory={handleRegenerateFromHistory}
@@ -1141,6 +1149,7 @@ interface ChatViewProps {
   agentStatus: StatusType;
   inputValue: string;
   showPresets: boolean;
+  showMyPrompts: boolean;
   aspectRatio: string;
   resolution: string;
   model: string;
@@ -1174,7 +1183,9 @@ interface ChatViewProps {
   onSend: () => void;
   onCancelGeneration: () => void;
   onTogglePresets: () => void;
+  onToggleMyPrompts: () => void;
   onSelectPreset: (prompt: string) => void;
+  onSelectMyPrompt: (prompt: string) => void;
   onReuseHistoryPrompt: (prompt: string) => void;
   onRegenerateFromHistory: (entry: StandardGenHistoryItem) => void;
   genError: { message: string; retry?: { prompt: string; originalPrompt?: string; optimizedPrompt?: string } } | null;
@@ -1199,6 +1210,7 @@ const ChatView: React.FC<ChatViewProps> = ({
   agentStatus,
   inputValue,
   showPresets,
+  showMyPrompts,
   aspectRatio,
   resolution,
   model,
@@ -1226,7 +1238,9 @@ const ChatView: React.FC<ChatViewProps> = ({
   onSend,
   onCancelGeneration,
   onTogglePresets,
+  onToggleMyPrompts,
   onSelectPreset,
+  onSelectMyPrompt,
   onReuseHistoryPrompt,
   onRegenerateFromHistory,
   genError,
@@ -1525,6 +1539,12 @@ const ChatView: React.FC<ChatViewProps> = ({
         onSelectPreset={onSelectPreset}
       />
 
+      <MyPromptsPanel
+        isOpen={showMyPrompts}
+        onClose={onToggleMyPrompts}
+        onSelectPrompt={onSelectMyPrompt}
+      />
+
       <div
         id="onboarding-hub-compose"
         className="shrink-0 flex flex-col p-4 border-t-brutal border-foreground bg-card"
@@ -1560,6 +1580,16 @@ const ChatView: React.FC<ChatViewProps> = ({
             >
               <Library className="h-3.5 w-3.5" />
               {t("intelligenceHub.promptArsenalShort")}
+            </button>
+            <button
+              type="button"
+              onClick={onToggleMyPrompts}
+              className="inline-flex h-7 shrink-0 items-center gap-1.5 border border-foreground/25 bg-card px-2 text-[10px] font-bold uppercase tracking-wide text-muted-foreground transition-none brutal-press hover:border-foreground/40 hover:bg-accent-yellow/10 hover:text-foreground"
+              title={t("intelligenceHub.myPrompts")}
+              aria-expanded={showMyPrompts}
+            >
+              <Bookmark className="h-3.5 w-3.5" />
+              {t("intelligenceHub.myPrompts")}
             </button>
             <button
               type="button"

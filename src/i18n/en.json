@@ -13,8 +13,7 @@
     "profile": "Profile",
     "accountMenu": "Account menu",
     "light": "Light",
-    "dark": "Dark",
-    "myPrompts": "My Prompts"
+    "dark": "Dark"
   },
   "admin": {
     "title": "Admin Console",
@@ -549,6 +548,7 @@
     "panelShort": "AI",
     "promptArsenal": "Prompt Library",
     "promptArsenalShort": "Presets",
+    "myPrompts": "My Prompts",
     "saveToLibrary": "Save to prompt library",
     "savedToLibrary": "Saved to prompt library",
     "saveToLibraryFailed": "Failed to save to prompt library",
@@ -827,8 +827,10 @@
   "myPrompts": {
     "title": "My Prompts",
     "count": "{{count}} saved",
+    "loading": "Loading...",
     "empty": "No saved prompts yet",
     "emptyHint": "Toggle \"Save to prompt library\" in the image panel and your prompt will be saved here after a successful generation.",
+    "useHint": "Click to fill",
     "delete": "Delete",
     "confirmDelete": "CONFIRM?",
     "deleted": "Deleted",

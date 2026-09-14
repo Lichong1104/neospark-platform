@@ -9,7 +9,6 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
 import Landing from "./pages/Landing";
 import Assets from "./pages/Assets";
-import MyPrompts from "./pages/MyPrompts";
 import UserCenter from "./pages/UserCenter";
 import Pricing from "./pages/Pricing";
 import Login from "./pages/Login";
@@ -156,14 +155,6 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Workflow />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/my-prompts"
-              element={
-                <ProtectedRoute>
-                  <MyPrompts />
                 </ProtectedRoute>
               }
             />

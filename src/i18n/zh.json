@@ -13,8 +13,7 @@
     "profile": "用户中心",
     "accountMenu": "账号菜单",
     "light": "浅色",
-    "dark": "深色",
-    "myPrompts": "我的提示词"
+    "dark": "深色"
   },
   "admin": {
     "title": "管理后台",
@@ -549,6 +548,7 @@
     "panelShort": "创作",
     "promptArsenal": "提示词库",
     "promptArsenalShort": "提示词库",
+    "myPrompts": "我的提示词",
     "saveToLibrary": "保存到提示词库",
     "savedToLibrary": "已保存到提示词库",
     "saveToLibraryFailed": "保存到提示词库失败",
@@ -827,8 +827,10 @@
   "myPrompts": {
     "title": "我的提示词",
     "count": "{{count}} 条已保存",
+    "loading": "加载中...",
     "empty": "还没有保存任何提示词",
     "emptyHint": "在生图面板勾选「保存到提示词库」，生成成功后提示词会自动保存到这里。",
+    "useHint": "点击填入输入框",
     "delete": "删除",
     "confirmDelete": "确认删除？",
     "deleted": "已删除",
