@@ -42,9 +42,6 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
   const [activeTab, setActiveTab] = useState<AssetTab>("images");
 
   const [userImages, setUserImages] = useState<UserImageItem[]>([]);
-  const [imageSource, setImageSource] = useState<
-    "all" | "upload" | "generation"
-  >("all");
   const [assetGroupId, setAssetGroupId] = useState<string>("");
   const [isLoadingImages, setIsLoadingImages] = useState(false);
   const [isLoadingMoreImages, setIsLoadingMoreImages] = useState(false);
@@ -83,9 +80,6 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
     setIsLoadingImages(true);
     try {
       const params = {
-        ...(imageSource === "all" || assetGroupId
-          ? {}
-          : { source: imageSource }),
         ...(assetGroupId ? { group_id: assetGroupId } : {}),
         limit: IMAGE_PAGE_SIZE,
         offset: 0,
@@ -100,7 +94,7 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
     } finally {
       setIsLoadingImages(false);
     }
-  }, [imageSource, assetGroupId, IMAGE_PAGE_SIZE]);
+  }, [assetGroupId, IMAGE_PAGE_SIZE]);
 
   const loadMoreImages = useCallback(async () => {
     if (isLoadingImages || isLoadingMoreImages) return;
@@ -109,9 +103,6 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
     setIsLoadingMoreImages(true);
     try {
       const params = {
-        ...(imageSource === "all" || assetGroupId
-          ? {}
-          : { source: imageSource }),
         ...(assetGroupId ? { group_id: assetGroupId } : {}),
         limit: IMAGE_PAGE_SIZE,
         offset: userImages.length,
@@ -131,7 +122,6 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
     isLoadingMoreImages,
     userImages.length,
     imageTotal,
-    imageSource,
     assetGroupId,
     IMAGE_PAGE_SIZE,
   ]);
@@ -278,23 +268,6 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
                 {previewItem.filename}
               </span>
             </div>
-            <div className="flex justify-between py-1 border-b border-foreground/10">
-              <span className="text-muted-foreground uppercase">
-                {t("assetSidebar.source")}
-              </span>
-              <span
-                className={cn(
-                  "font-bold",
-                  previewItem.type === "generation"
-                    ? "text-accent-purple"
-                    : "text-accent-cyan"
-                )}
-              >
-                {previewItem.type === "generation"
-                  ? `🎨 ${t("assetSidebar.generated")}`
-                  : `📤 ${t("assetSidebar.upload")}`}
-              </span>
-            </div>
             {previewItem.size && (
               <div className="flex justify-between py-1 border-b border-foreground/10">
                 <span className="text-muted-foreground uppercase">
@@ -383,23 +356,6 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
               </span>
               <span className="font-bold truncate ml-2 max-w-[150px]">
                 {previewVideoItem.filename}
-              </span>
-            </div>
-            <div className="flex justify-between py-1 border-b border-foreground/10">
-              <span className="text-muted-foreground uppercase">
-                {t("assetSidebar.source")}
-              </span>
-              <span
-                className={cn(
-                  "font-bold",
-                  previewVideoItem.type === "generation"
-                    ? "text-accent-purple"
-                    : "text-accent-cyan"
-                )}
-              >
-                {previewVideoItem.type === "generation"
-                  ? `🎬 ${t("assetSidebar.generated")}`
-                  : `📤 ${t("assetSidebar.upload")}`}
               </span>
             </div>
             <div className="flex justify-between py-1 border-b border-foreground/10">
@@ -506,29 +462,6 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
             </button>
           </div>
 
-          {activeTab === "images" && (
-            <div className="flex border-brutal border-foreground overflow-hidden">
-              {(["all", "upload", "generation"] as const).map((src) => (
-                <button
-                  key={src}
-                  onClick={() => setImageSource(src)}
-                  className={cn(
-                    "flex-1 py-1.5 text-[10px] font-bold uppercase border-r border-foreground/20 last:border-r-0 transition-none",
-                    imageSource === src
-                      ? "bg-foreground text-card"
-                      : "bg-card hover:bg-secondary"
-                  )}
-                >
-                  {src === "all"
-                    ? t("assetSidebar.filterAll")
-                    : src === "upload"
-                    ? t("assetSidebar.upload")
-                    : t("assetSidebar.generated")}
-                </button>
-              ))}
-            </div>
-          )}
-
           {/* 资产组筛选（图片/视频两个 Tab 共用） */}
           <AssetGroupSelect
             mode="filter"
@@ -584,17 +517,6 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
                       loading="lazy"
                       onClick={() => handleClickImage(img)}
                     />
-                    {/* Source badge */}
-                    <div
-                      className={cn(
-                        "absolute top-0 left-0 px-1 py-px text-[7px] font-bold uppercase leading-tight",
-                        img.type === "generation"
-                          ? "bg-accent-purple text-card"
-                          : "bg-accent-cyan/80 text-foreground"
-                      )}
-                    >
-                      {img.type === "generation" ? "AI" : "UP"}
-                    </div>
 
                     {/* Bottom action bar — always visible on hover */}
                     <div className="absolute bottom-0 left-0 right-0 flex opacity-0 group-hover:opacity-100 bg-foreground/80 backdrop-blur-sm">
@@ -718,7 +640,6 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
                       </div>
                       <div className="text-[9px] text-muted-foreground">
                         {(file.size / 1024 / 1024).toFixed(1)} MB
-                        {file.type === "generation" ? " · AI" : " · UP"}
                       </div>
                     </div>
                     <div

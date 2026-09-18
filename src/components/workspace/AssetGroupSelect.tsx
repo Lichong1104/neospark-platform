@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { FolderOpen, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -33,6 +33,8 @@ const AssetGroupSelect: React.FC<AssetGroupSelectProps> = ({
   const [loaded, setLoaded] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [newName, setNewName] = useState("");
+  // filter 模式下首次加载后自动选中默认分组（仅一次，用户可手动切回「全部资产」）
+  const autoSelectedDefault = useRef(false);
 
   const loadGroups = useCallback(async () => {
     try {
@@ -49,6 +51,16 @@ const AssetGroupSelect: React.FC<AssetGroupSelectProps> = ({
   useEffect(() => {
     loadGroups();
   }, [loadGroups]);
+
+  useEffect(() => {
+    if (mode !== "filter" || !loaded || autoSelectedDefault.current) return;
+    if (value !== "") return;
+    const defaultGroup = groups.find((g) => g.is_default);
+    if (defaultGroup) {
+      autoSelectedDefault.current = true;
+      onChange(defaultGroup.group_id);
+    }
+  }, [mode, loaded, value, groups, onChange]);
 
   const handleCreate = async () => {
     const name = newName.trim();
