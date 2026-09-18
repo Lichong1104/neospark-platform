@@ -58,6 +58,8 @@ export interface FileListData {
 /** 用户图片查询参数 */
 export interface ListUserImagesParams {
   source?: "upload" | "generation";
+  /** 按资产组过滤（仅生成来源的图片，上传素材不属于任何组） */
+  group_id?: string;
   limit?: number;
   offset?: number;
 }
@@ -90,8 +92,20 @@ export interface ListUserVideosParams {
   source?: "upload" | "generation";
   /** 生成视频状态筛选（仅对 type=generation 有意义） */
   status?: VideoTaskStatus;
+  /** 按资产组过滤（仅生成来源的视频，上传素材不属于任何组） */
+  group_id?: string;
   limit?: number;
   offset?: number;
+}
+
+/** 资产组 */
+export interface AssetGroup {
+  group_id: string;
+  name: string;
+  item_count: number;
+  /** 是否为默认分组（不传 asset_group_id 时资产自动归入） */
+  is_default?: boolean;
+  created_at: string;
 }
 
 /** 用户视频列表项 — 生成视频 */

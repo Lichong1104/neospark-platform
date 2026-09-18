@@ -812,6 +812,16 @@
     "footerHint": "Click an asset to add to canvas",
     "status": "Status"
   },
+  "assetGroup": {
+    "allAssets": "All Assets",
+    "noGroup": "No Group",
+    "defaultGroup": "Default Group",
+    "selectGroup": "Select asset group",
+    "createGroup": "New Asset Group",
+    "groupNamePlaceholder": "Group name",
+    "create": "Create",
+    "createFailed": "Failed to create asset group"
+  },
   "assetsPage": {
     "directory": "DIRECTORY",
     "allAssets": "ALL ASSETS",

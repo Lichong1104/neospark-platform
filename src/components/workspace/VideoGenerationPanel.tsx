@@ -26,6 +26,7 @@ import type {
 } from "@/types/video";
 import type { UploadedRef } from "@/lib/landingRequest";
 import { VideoConfigForm } from "./VideoConfigForm";
+import AssetGroupSelect from "./AssetGroupSelect";
 import {
   canvasImageSlotLabel,
   canvasVideoSlotLabel,
@@ -213,6 +214,8 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
   );
   const [generateAudio, setGenerateAudio] = useState(false);
   const [watermark, setWatermark] = useState(false);
+  // 生成时指定的资产组（"" 表示不入组）
+  const [assetGroupId, setAssetGroupId] = useState("");
   const [firstFrameUrl, setFirstFrameUrl] = useState("");
   const [lastFrameUrl, setLastFrameUrl] = useState("");
   const [referenceImageUrls, setReferenceImageUrls] = useState(() =>
@@ -586,6 +589,7 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
         mergedRefImages.length > 0 ? mergedRefImages : undefined,
       reference_video_urls:
         mergedRefVideos.length > 0 ? mergedRefVideos : undefined,
+      asset_group_id: assetGroupId || undefined,
     };
 
     // Omni / MiniMax-H3 / Wan 3.0 只发送基本参数，不发送 Seedance 特有参数
@@ -628,6 +632,7 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     lastFrameUrl,
     referenceImageUrls,
     referenceVideoUrls,
+    assetGroupId,
     durationOptions,
     canvasImages,
     imageSlotPrefix,
@@ -876,6 +881,12 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
                   <span className="text-[10px] text-muted-foreground">
                     {t("video.shiftEnterHint")}
                   </span>
+                  <AssetGroupSelect
+                    mode="assign"
+                    value={assetGroupId}
+                    onChange={setAssetGroupId}
+                    className="w-36 ml-1"
+                  />
                 </div>
 
                 <button

@@ -70,6 +70,10 @@ function put<T, D = unknown>(url: string, data?: D): Promise<ApiResponse<T>> {
   return instance.put(url, data);
 }
 
+function patch<T, D = unknown>(url: string, data?: D): Promise<ApiResponse<T>> {
+  return instance.patch(url, data);
+}
+
 function del<T>(
   url: string,
   params?: Record<string, unknown>
@@ -77,7 +81,7 @@ function del<T>(
   return instance.delete(url, { params });
 }
 
-const http = { get, post, postForm, put, del };
+const http = { get, post, postForm, put, patch, del };
 
 export { http, BASE_URL, STATIC_BASE_URL };
 export type { ApiResponse };

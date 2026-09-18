@@ -25,6 +25,7 @@ import {
 import { type DropdownOption } from "@/components/ui/brutal-dropdown";
 import { drawingModelOptionIcon } from "@/components/icons/DrawingModelIcon";
 import { GenerationErrorBanner } from "./GenerationErrorBanner";
+import AssetGroupSelect from "./AssetGroupSelect";
 import {
   Square,
   RectangleHorizontal,
@@ -75,6 +76,8 @@ export const CanvasImageGenCompose: React.FC<{
   const [resolution, setResolution] = useState("1K");
   const [model, setModel] = useState(DEFAULT_DRAWING_MODEL);
   const [gptImageQuality, setGptImageQuality] = useState<GptImageQuality>("low");
+  // 生成时指定的资产组（"" 表示不入组）
+  const [assetGroupId, setAssetGroupId] = useState("");
   const [modelsConfig, setModelsConfig] = useState<ModelsConfigMap | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -216,6 +219,7 @@ export const CanvasImageGenCompose: React.FC<{
           (model.startsWith("gemini") ? ("gemini" as const) : ("tengda" as const)),
         optimize_prompt: true,
         ...(supportsGptImageQuality(model) ? { quality: gptImageQuality } : {}),
+        ...(assetGroupId ? { asset_group_id: assetGroupId } : {}),
       };
       if (refPaths.length > 1) {
         params.ref_image_paths = refPaths;
@@ -260,21 +264,29 @@ export const CanvasImageGenCompose: React.FC<{
           enableSubmitOnEnter
           className="h-full"
           footerLeft={
-            <ImageGenerationParams
-              embedded
-              aspectRatio={aspectRatio}
-              resolution={resolution}
-              model={model}
-              isGptImage2={supportsGptImageQuality(model)}
-              gptImageQuality={gptImageQuality}
-              onGptImageQualityChange={setGptImageQuality}
-              aspectRatioOptions={aspectRatioOptions}
-              resolutionOptions={resolutionOptions}
-              modelOptions={modelOptions}
-              onAspectRatioChange={setAspectRatio}
-              onResolutionChange={setResolution}
-              onModelChange={setModel}
-            />
+            <div className="flex min-w-0 items-center gap-0.5">
+              <ImageGenerationParams
+                embedded
+                aspectRatio={aspectRatio}
+                resolution={resolution}
+                model={model}
+                isGptImage2={supportsGptImageQuality(model)}
+                gptImageQuality={gptImageQuality}
+                onGptImageQualityChange={setGptImageQuality}
+                aspectRatioOptions={aspectRatioOptions}
+                resolutionOptions={resolutionOptions}
+                modelOptions={modelOptions}
+                onAspectRatioChange={setAspectRatio}
+                onResolutionChange={setResolution}
+                onModelChange={setModel}
+              />
+              <AssetGroupSelect
+                mode="assign"
+                value={assetGroupId}
+                onChange={setAssetGroupId}
+                className="w-28 shrink-0"
+              />
+            </div>
           }
           submitAction={
             <button

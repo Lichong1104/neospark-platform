@@ -128,6 +128,8 @@ export interface GenerateImageParams {
   optimize_prompt?: boolean;
   /** `1` = 电商详情页九宫格第一阶段 */
   type?: number;
+  /** 资产组ID，生成成功后图片自动加入该组 */
+  asset_group_id?: string;
 }
 
 /** 电商批量出图（第二阶段） */

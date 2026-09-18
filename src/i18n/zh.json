@@ -812,6 +812,16 @@
     "footerHint": "点击素材添加到画布",
     "status": "状态"
   },
+  "assetGroup": {
+    "allAssets": "全部资产",
+    "noGroup": "不入组",
+    "defaultGroup": "默认分组",
+    "selectGroup": "选择资产组",
+    "createGroup": "新建资产组",
+    "groupNamePlaceholder": "资产组名称",
+    "create": "创建",
+    "createFailed": "创建资产组失败"
+  },
   "assetsPage": {
     "directory": "目录",
     "allAssets": "所有素材",

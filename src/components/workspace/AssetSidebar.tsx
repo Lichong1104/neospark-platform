@@ -17,6 +17,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import storageApi from "@/api/storage";
 import { STATIC_BASE_URL } from "@/api/request";
+import AssetGroupSelect from "@/components/workspace/AssetGroupSelect";
 import type { UserImageItem, UserVideoItem } from "@/types/storage";
 
 interface AssetSidebarProps {
@@ -44,6 +45,7 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
   const [imageSource, setImageSource] = useState<
     "all" | "upload" | "generation"
   >("all");
+  const [assetGroupId, setAssetGroupId] = useState<string>("");
   const [isLoadingImages, setIsLoadingImages] = useState(false);
   const [isLoadingMoreImages, setIsLoadingMoreImages] = useState(false);
   const [imageTotal, setImageTotal] = useState(0);
@@ -81,7 +83,10 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
     setIsLoadingImages(true);
     try {
       const params = {
-        ...(imageSource === "all" ? {} : { source: imageSource }),
+        ...(imageSource === "all" || assetGroupId
+          ? {}
+          : { source: imageSource }),
+        ...(assetGroupId ? { group_id: assetGroupId } : {}),
         limit: IMAGE_PAGE_SIZE,
         offset: 0,
       };
@@ -95,7 +100,7 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
     } finally {
       setIsLoadingImages(false);
     }
-  }, [imageSource, IMAGE_PAGE_SIZE]);
+  }, [imageSource, assetGroupId, IMAGE_PAGE_SIZE]);
 
   const loadMoreImages = useCallback(async () => {
     if (isLoadingImages || isLoadingMoreImages) return;
@@ -104,7 +109,10 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
     setIsLoadingMoreImages(true);
     try {
       const params = {
-        ...(imageSource === "all" ? {} : { source: imageSource }),
+        ...(imageSource === "all" || assetGroupId
+          ? {}
+          : { source: imageSource }),
+        ...(assetGroupId ? { group_id: assetGroupId } : {}),
         limit: IMAGE_PAGE_SIZE,
         offset: userImages.length,
       };
@@ -124,20 +132,23 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
     userImages.length,
     imageTotal,
     imageSource,
+    assetGroupId,
     IMAGE_PAGE_SIZE,
   ]);
 
   const loadVideos = useCallback(async () => {
     setIsLoadingVideos(true);
     try {
-      const data = await storageApi.listAllUserVideos();
+      const data = await storageApi.listAllUserVideos(
+        assetGroupId ? { group_id: assetGroupId } : undefined
+      );
       setVideoFiles(data.items || []);
     } catch {
       setVideoFiles([]);
     } finally {
       setIsLoadingVideos(false);
     }
-  }, []);
+  }, [assetGroupId]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -517,6 +528,13 @@ const AssetSidebar: React.FC<AssetSidebarProps> = ({
               ))}
             </div>
           )}
+
+          {/* 资产组筛选（图片/视频两个 Tab 共用） */}
+          <AssetGroupSelect
+            mode="filter"
+            value={assetGroupId}
+            onChange={setAssetGroupId}
+          />
         </div>
 
         {/* Scrollable list */}
