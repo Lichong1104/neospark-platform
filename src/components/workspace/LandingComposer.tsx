@@ -17,6 +17,7 @@ import {
   Contact,
   CreditCard,
   Facebook,
+  FileText,
   Film,
   Image as ImageIcon,
   Images,
@@ -37,6 +38,7 @@ import {
   Smile,
   Sparkles,
   Square,
+  Volume2,
   Wrench,
   X,
   Youtube,
@@ -261,8 +263,16 @@ const toStorageUrl = (u: string) =>
 /** 过渡页已上传的素材（缩略展示用）。 */
 interface UploadedMedia extends UploadedRef {
   id: string;
-  type: "image" | "video";
+  type: "image" | "video" | "audio" | "file";
 }
+
+/** 根据文件 MIME/扩展名判定上传素材类型（视频模式额外支持音频与文档）。 */
+const detectMediaType = (file: File): UploadedMedia["type"] => {
+  if (file.type.startsWith("video")) return "video";
+  if (file.type.startsWith("image")) return "image";
+  if (file.type.startsWith("audio")) return "audio";
+  return "file";
+};
 
 /** 各模式强调色（激活 chip / 生成按钮 / 图标） */
 const MODE_META: Record<
@@ -305,18 +315,31 @@ export const LandingComposer: React.FC<{
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // 上传文件（可多选,图片/视频）
+  // 上传文件（可多选；VIDEO 模式支持图片/视频/音频/文档，IMAGE 模式仅图片/视频）
   const handleUploadFiles = useCallback(
     async (files: FileList | null) => {
       if (!files?.length) return;
       setIsUploading(true);
       try {
         for (const file of Array.from(files)) {
-          const type: "image" | "video" = file.type.startsWith("video")
-            ? "video"
-            : "image";
+          const type = detectMediaType(file);
+          // IMAGE 模式下不接收音频/文档
+          if (mode === "IMAGE" && (type === "audio" || type === "file")) {
+            toast.error(
+              t("workspace.uploadFailedWithName", { name: file.name })
+            );
+            continue;
+          }
           try {
-            const res = await storageApi.uploadFile(file, type);
+            const storageType =
+              type === "image"
+                ? "image"
+                : type === "video"
+                ? "video"
+                : type === "audio"
+                ? "audio"
+                : "other";
+            const res = await storageApi.uploadFile(file, storageType);
             const path = res.path || res.url || "";
             const url = toStorageUrl(res.url || res.path || "");
             setUploadedMedia((prev) => [
@@ -340,7 +363,7 @@ export const LandingComposer: React.FC<{
         if (fileInputRef.current) fileInputRef.current.value = "";
       }
     },
-    [t]
+    [t, mode]
   );
 
   const removeUploadedMedia = useCallback((id: string) => {
@@ -616,6 +639,11 @@ export const LandingComposer: React.FC<{
     const videoRefs = uploadedMedia
       .filter((m) => m.type === "video")
       .map((m) => ({ url: m.url, path: m.path, name: m.name }));
+    const audioRefs = uploadedMedia
+      .filter((m) => m.type === "audio")
+      .map((m) => ({ url: m.url, path: m.path, name: m.name }));
+    // 参考文件最多 1 个，取第一个
+    const fileRef = uploadedMedia.find((m) => m.type === "file");
     if (mode === "IMAGE") {
       onSubmit({
         mode: "IMAGE",
@@ -641,6 +669,10 @@ export const LandingComposer: React.FC<{
           resolution: videoResolution,
           ...(imageRefs.length ? { refImages: imageRefs } : {}),
           ...(videoRefs.length ? { refVideos: videoRefs } : {}),
+          ...(audioRefs.length ? { refAudios: audioRefs } : {}),
+          ...(fileRef
+            ? { refFile: { url: fileRef.url, path: fileRef.path, name: fileRef.name } }
+            : {}),
         },
       });
     } else {
@@ -761,6 +793,10 @@ export const LandingComposer: React.FC<{
                     >
                       {m.type === "video" ? (
                         <Film className="h-5 w-5 text-accent-purple" />
+                      ) : m.type === "audio" ? (
+                        <Volume2 className="h-5 w-5 text-accent-cyan" />
+                      ) : m.type === "file" ? (
+                        <FileText className="h-5 w-5 text-accent-orange" />
                       ) : (
                         <img
                           src={m.url}
@@ -815,8 +851,8 @@ export const LandingComposer: React.FC<{
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploading}
-                    title={t("landing.upload", { defaultValue: "上传参考图/视频" })}
-                    aria-label={t("landing.upload", { defaultValue: "上传参考图/视频" })}
+                    title={t("landing.upload", { defaultValue: "上传参考素材" })}
+                    aria-label={t("landing.upload", { defaultValue: "上传参考素材" })}
                     className="inline-flex h-7 w-7 shrink-0 items-center justify-center border border-foreground/20 bg-transparent text-foreground/70 transition-colors hover:border-foreground/50 hover:text-foreground disabled:opacity-50"
                   >
                     {isUploading ? (
@@ -919,11 +955,15 @@ export const LandingComposer: React.FC<{
                 </button>
               </div>
 
-              {/* 隐藏的文件选择器（上传按钮触发） */}
+              {/* 隐藏的文件选择器（上传按钮触发）；VIDEO 模式额外支持音频与文档 */}
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*,video/*"
+                accept={
+                  mode === "VIDEO"
+                    ? "image/*,video/*,audio/*,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.pdf,.txt,.md,.key,.pages,.numbers"
+                    : "image/*,video/*"
+                }
                 multiple
                 className="hidden"
                 onChange={(e) => void handleUploadFiles(e.target.files)}

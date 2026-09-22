@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Loader2, Send } from "lucide-react";
+import { Loader2, Mic, Send, FileUp } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { createVideoTask, getVideoModels, getVideoTask } from "@/api/video";
+import storageApi from "@/api/storage";
 import { STATIC_BASE_URL } from "@/api/request";
 import { getErrorMessage } from "@/lib/errorMessage";
 import type {
@@ -11,6 +12,10 @@ import type {
   VideoModelsData,
   VideoResolution,
 } from "@/types/video";
+import {
+  supportsDocumentInput,
+  supportsReferenceAudio,
+} from "@/lib/videoModelUtils";
 import {
   canvasImageSlotLabel,
   canvasVideoSlotLabel,
@@ -72,10 +77,54 @@ export const CanvasVideoGenCompose: React.FC<{
     "1080p",
   ]);
   const [isGenerating, setIsGenerating] = useState(false);
+  // 参考语音 / 参考文件（仅部分模型支持，见 videoModelUtils 能力矩阵）
+  const [refAudioPaths, setRefAudioPaths] = useState<string[]>([]);
+  const [refFilePath, setRefFilePath] = useState("");
+  const audioInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   // 生成失败的常驻内联报错（替代 toast 弹出）；prompt 在失败时保留，用户可直接重新生成
   const [genError, setGenError] = useState<string | null>(null);
   const taskIdRef = useRef<string | null>(null);
   const deliveredRef = useRef(false);
+
+  const showRefAudio = supportsReferenceAudio(model);
+  const showRefFile = supportsDocumentInput(model);
+
+  const normalizeUploadPath = (p: string) =>
+    p ? (p.startsWith("/") ? p : `/${p}`) : "";
+
+  const handleUploadAudio = useCallback(
+    async (file: File) => {
+      try {
+        const uploaded = await storageApi.uploadFile(file, "audio");
+        const path = normalizeUploadPath(uploaded.url || uploaded.path || "");
+        if (!path) return;
+        setRefAudioPaths((prev) =>
+          prev.includes(path) ? prev : [...prev, path]
+        );
+        toast.success(t("video.refUploaded"));
+      } catch {
+        toast.error(getErrorMessage(null, t("video.uploadFailed")));
+      }
+    },
+    [t]
+  );
+
+  const handleUploadFile = useCallback(
+    async (file: File) => {
+      try {
+        const uploaded = await storageApi.uploadFile(file, "other");
+        const path = normalizeUploadPath(uploaded.url || uploaded.path || "");
+        if (!path) return;
+        // 参考文件最多 1 个，直接替换
+        setRefFilePath(path);
+        toast.success(t("video.refUploaded"));
+      } catch {
+        toast.error(getErrorMessage(null, t("video.uploadFailed")));
+      }
+    },
+    [t]
+  );
 
   useEffect(() => {
     getVideoModels()
@@ -239,6 +288,9 @@ export const CanvasVideoGenCompose: React.FC<{
               .map((v) => toServerPath(v.src))
               .filter(Boolean)
           : undefined,
+      reference_audio_urls:
+        showRefAudio && refAudioPaths.length > 0 ? refAudioPaths : undefined,
+      reference_file_url: showRefFile && refFilePath ? refFilePath : undefined,
     };
 
     setIsGenerating(true);
@@ -281,21 +333,75 @@ export const CanvasVideoGenCompose: React.FC<{
           enableSubmitOnEnter
           className="h-full"
           footerLeft={
-            <VideoGenerationParams
-              embedded
-              ratio={ratio}
-              duration={duration}
-              resolution={resolution}
-              model={model}
-              ratioOptions={ratioOptions}
-              durationOptions={durationOptions}
-              resolutionOptions={resolutionOptions}
-              modelOptions={modelOptions}
-              onRatioChange={setRatio}
-              onDurationChange={setDuration}
-              onResolutionChange={setResolution}
-              onModelChange={setModel}
-            />
+            <div className="flex items-center gap-1.5">
+              <VideoGenerationParams
+                embedded
+                ratio={ratio}
+                duration={duration}
+                resolution={resolution}
+                model={model}
+                ratioOptions={ratioOptions}
+                durationOptions={durationOptions}
+                resolutionOptions={resolutionOptions}
+                modelOptions={modelOptions}
+                onRatioChange={setRatio}
+                onDurationChange={setDuration}
+                onResolutionChange={setResolution}
+                onModelChange={setModel}
+              />
+              {showRefAudio && (
+                <button
+                  type="button"
+                  onClick={() => audioInputRef.current?.click()}
+                  title={t("video.uploadRefAudio")}
+                  className={cn(
+                    "inline-flex h-6 w-6 items-center justify-center rounded-md border transition-colors",
+                    refAudioPaths.length > 0
+                      ? "border-accent-cyan/50 bg-accent-cyan/15 text-foreground"
+                      : "border-foreground/20 text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <Mic className="w-3.5 h-3.5" />
+                </button>
+              )}
+              {showRefFile && (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  title={t("video.uploadRefFile")}
+                  className={cn(
+                    "inline-flex h-6 w-6 items-center justify-center rounded-md border transition-colors",
+                    refFilePath
+                      ? "border-accent-orange/50 bg-accent-orange/15 text-foreground"
+                      : "border-foreground/20 text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <FileUp className="w-3.5 h-3.5" />
+                </button>
+              )}
+              <input
+                ref={audioInputRef}
+                type="file"
+                accept="audio/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) void handleUploadAudio(file);
+                  e.currentTarget.value = "";
+                }}
+              />
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".doc,.docx,.xls,.xlsx,.ppt,.pptx,.pdf,.txt,.md,.key,.pages,.numbers"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) void handleUploadFile(file);
+                  e.currentTarget.value = "";
+                }}
+              />
+            </div>
           }
           submitAction={
             <button

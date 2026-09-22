@@ -19,7 +19,12 @@ import {
   isMinimaxH3Model,
   isOmniModel,
   isWan3Model,
+  supportsReferenceAudio,
 } from "@/lib/videoModelUtils";
+
+/** 参考文件（文档输入）可接受的扩展名：与 Wan3.0 上游支持格式一致 */
+export const REFERENCE_FILE_ACCEPT =
+  ".doc,.docx,.xls,.xlsx,.ppt,.pptx,.pdf,.txt,.md,.key,.pages,.numbers";
 
 interface VideoConfigFormProps {
   model: string;
@@ -42,6 +47,10 @@ interface VideoConfigFormProps {
   setReferenceImageUrls: (v: string) => void;
   referenceVideoUrls: string;
   setReferenceVideoUrls: (v: string) => void;
+  referenceAudioUrls: string;
+  setReferenceAudioUrls: (v: string) => void;
+  referenceFileUrl: string;
+  setReferenceFileUrl: (v: string) => void;
   selectedCanvasImage?: {
     src: string;
     name: string;
@@ -61,7 +70,10 @@ interface VideoConfigFormProps {
   ratioOptions: string[];
   durationOptions: string[];
   resolutionOptions: string[];
-  onUploadReference: (kind: "image" | "video", file: File) => void;
+  onUploadReference: (
+    kind: "image" | "video" | "audio" | "file",
+    file: File
+  ) => void;
   onUseSelectedCanvasRefs: () => void;
   onUseCanvasAsFirstFrame: () => void;
   onUseCanvasAsLastFrame: () => void;
@@ -117,6 +129,10 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
   setReferenceImageUrls,
   referenceVideoUrls,
   setReferenceVideoUrls,
+  referenceAudioUrls,
+  setReferenceAudioUrls,
+  referenceFileUrl,
+  setReferenceFileUrl,
   selectedCanvasImage,
   selectedCanvasImages = [],
   canvasImages = [],
@@ -134,10 +150,13 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
   const videoSlotPrefix = t("video.canvasVideoSlotPrefix");
   const imageUploadRef = React.useRef<HTMLInputElement>(null);
   const videoUploadRef = React.useRef<HTMLInputElement>(null);
+  const audioUploadRef = React.useRef<HTMLInputElement>(null);
+  const fileUploadRef = React.useRef<HTMLInputElement>(null);
   const selectedCanvasCount = selectedCanvasImages.length;
   const isOmni = isOmniModel(model);
   const isMinimax = isMinimaxH3Model(model);
   const isWan3 = isWan3Model(model);
+  const showRefAudio = supportsReferenceAudio(model);
 
   const refImageLines = React.useMemo(
     () =>
@@ -756,6 +775,88 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
             </div>
           </div>
 
+          {showRefAudio && (
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-[10px] font-bold uppercase text-muted-foreground">
+                  {t("video.referenceAudioUrls")}
+                </label>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => audioUploadRef.current?.click()}
+                    title={t("video.uploadRefAudio")}
+                    className="p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none"
+                  >
+                    <Upload className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+              <div className="relative group">
+                <textarea
+                  value={referenceAudioUrls}
+                  onChange={(e) => setReferenceAudioUrls(e.target.value)}
+                  placeholder={t("video.multiUrlHint")}
+                  className="w-full min-h-[56px] px-2.5 py-2 pr-8 text-[11px] font-mono border border-foreground/20 bg-background focus:outline-none focus:border-accent-purple resize-y"
+                />
+                {referenceAudioUrls.trim() && (
+                  <button
+                    type="button"
+                    onClick={() => setReferenceAudioUrls("")}
+                    className="absolute right-1 top-1 p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none opacity-0 group-hover:opacity-100"
+                    title={t("video.clearInput")}
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+              <p className="mt-1 text-[9px] text-muted-foreground border-l-2 border-foreground/20 pl-2">
+                {t("video.refAudioHint")}
+              </p>
+            </div>
+          )}
+
+          {isWan3 && (
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-[10px] font-bold uppercase text-muted-foreground">
+                  {t("video.referenceFileUrl")}
+                </label>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => fileUploadRef.current?.click()}
+                    title={t("video.uploadRefFile")}
+                    className="p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none"
+                  >
+                    <Upload className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+              <div className="relative group">
+                <input
+                  value={referenceFileUrl}
+                  onChange={(e) => setReferenceFileUrl(e.target.value)}
+                  placeholder={t("video.referenceFileUrlPlaceholder")}
+                  className="w-full px-2.5 py-2 pr-8 text-[11px] font-mono border border-foreground/20 bg-background focus:outline-none focus:border-accent-purple"
+                />
+                {referenceFileUrl.trim() && (
+                  <button
+                    type="button"
+                    onClick={() => setReferenceFileUrl("")}
+                    className="absolute right-1 top-1/2 -translate-y-1/2 p-1 border border-foreground/20 bg-background hover:bg-secondary transition-none opacity-0 group-hover:opacity-100"
+                    title={t("video.clearInput")}
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+              <p className="mt-1 text-[9px] text-muted-foreground border-l-2 border-foreground/20 pl-2">
+                {t("video.refFileHint")}
+              </p>
+            </div>
+          )}
+
           <input
             ref={imageUploadRef}
             type="file"
@@ -775,6 +876,28 @@ const VideoConfigForm: React.FC<VideoConfigFormProps> = ({
             onChange={(e) => {
               const file = e.target.files?.[0];
               if (file) onUploadReference("video", file);
+              e.currentTarget.value = "";
+            }}
+          />
+          <input
+            ref={audioUploadRef}
+            type="file"
+            accept="audio/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) onUploadReference("audio", file);
+              e.currentTarget.value = "";
+            }}
+          />
+          <input
+            ref={fileUploadRef}
+            type="file"
+            accept={REFERENCE_FILE_ACCEPT}
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) onUploadReference("file", file);
               e.currentTarget.value = "";
             }}
           />

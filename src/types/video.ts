@@ -83,6 +83,9 @@ export interface CreateVideoParams {
   reference_image_urls?: string[];
   reference_video_urls?: string[];
   reference_audio_urls?: string[];
+  /** 参考文件（仅 wan3.0-video，doc/xls/ppt/pdf/md 等，最多 1 个，≤100MB） */
+  reference_file_url?: string;
+  reference_file_path?: string;
   /** 资产组ID，任务创建后视频自动加入该组 */
   asset_group_id?: string;
 }

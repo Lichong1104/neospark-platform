@@ -36,6 +36,10 @@ export interface VideoGenSeed {
   /** 上传的参考图 / 参考视频（可选）。 */
   refImages?: UploadedRef[];
   refVideos?: UploadedRef[];
+  /** 参考语音（可选，仅 seedance 系 / minimax-h3 / wan3.0-video 生效）。 */
+  refAudios?: UploadedRef[];
+  /** 参考文件（可选，仅 wan3.0-video，最多 1 个）。 */
+  refFile?: UploadedRef;
 }
 
 /** Agent 请求：自动发送给 AgentHubChatArea。 */

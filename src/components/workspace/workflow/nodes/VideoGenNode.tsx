@@ -1,8 +1,10 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { type NodeProps, useReactFlow } from "@xyflow/react";
-import { Film, Loader2, Play } from "lucide-react";
+import { Film, Loader2, Mic, FileUp, Play } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { createVideoTask, getVideoModels } from "@/api/video";
+import storageApi from "@/api/storage";
 import { useVideoTaskPolling } from "@/hooks/useVideoTaskPolling";
 import { getErrorMessage } from "@/lib/errorMessage";
 import { resolveInputs } from "@/lib/workflow/executor";
@@ -12,6 +14,8 @@ import {
   normalizeVideoRatio,
   pickDurationInOptions,
   resolveResolutionList,
+  supportsDocumentInput,
+  supportsReferenceAudio,
 } from "@/lib/videoModelUtils";
 import type {
   CreateVideoParams,
@@ -35,11 +39,52 @@ function VideoGenNodeImpl({ id, data }: NodeProps<WorkflowNode>) {
   const [duration, setDuration] = useState("5");
   const [resolution, setResolution] = useState("720p");
   const [inlinePrompt, setInlinePrompt] = useState("");
+  // 参考语音 / 参考文件上传（按模型能力显示）
+  const [refAudioPaths, setRefAudioPaths] = useState<string[]>([]);
+  const [refFilePath, setRefFilePath] = useState("");
+  const audioInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const polling = useVideoTaskPolling();
 
   const paramsRef = useRef({ model, ratio, duration, resolution, inlinePrompt });
   paramsRef.current = { model, ratio, duration, resolution, inlinePrompt };
+  const showRefAudio = supportsReferenceAudio(model);
+  const showRefFile = supportsDocumentInput(model);
+
+  const handleUploadAudio = useCallback(
+    async (file: File) => {
+      try {
+        const uploaded = await storageApi.uploadFile(file, "audio");
+        const p = uploaded.url || uploaded.path || "";
+        const path = p ? (p.startsWith("/") ? p : `/${p}`) : "";
+        if (!path) return;
+        setRefAudioPaths((prev) =>
+          prev.includes(path) ? prev : [...prev, path]
+        );
+        toast.success(t("video.refUploaded"));
+      } catch (err) {
+        toast.error(getErrorMessage(err, t("video.uploadFailed")));
+      }
+    },
+    [t]
+  );
+
+  const handleUploadFile = useCallback(
+    async (file: File) => {
+      try {
+        const uploaded = await storageApi.uploadFile(file, "other");
+        const p = uploaded.url || uploaded.path || "";
+        const path = p ? (p.startsWith("/") ? p : `/${p}`) : "";
+        if (!path) return;
+        setRefFilePath(path);
+        toast.success(t("video.refUploaded"));
+      } catch (err) {
+        toast.error(getErrorMessage(err, t("video.uploadFailed")));
+      }
+    },
+    [t]
+  );
 
   useEffect(() => {
     getVideoModels()
@@ -135,6 +180,12 @@ function VideoGenNodeImpl({ id, data }: NodeProps<WorkflowNode>) {
         ...(firstFrame ? { first_frame_url: firstFrame } : {}),
         ...(refImages.length ? { reference_image_urls: refImages } : {}),
         ...(refVideos.length ? { reference_video_urls: refVideos } : {}),
+        ...(showRefAudio && refAudioPaths.length
+          ? { reference_audio_urls: refAudioPaths }
+          : {}),
+        ...(showRefFile && refFilePath
+          ? { reference_file_url: refFilePath }
+          : {}),
       };
 
       const res = await createVideoTask(vParams);
@@ -230,6 +281,55 @@ function VideoGenNodeImpl({ id, data }: NodeProps<WorkflowNode>) {
             options={resolutionOptions}
           />
         </div>
+
+        {(showRefAudio || showRefFile) && (
+          <div className="flex items-center gap-1.5">
+            {showRefAudio && (
+              <button
+                type="button"
+                onClick={() => audioInputRef.current?.click()}
+                title={t("video.uploadRefAudio")}
+                className="nodrag inline-flex h-6 items-center gap-1 rounded border border-foreground/30 px-2 text-[10px] font-bold text-muted-foreground transition-colors hover:border-accent-cyan hover:text-foreground"
+              >
+                <Mic className="h-3 w-3" />
+                {refAudioPaths.length > 0 ? `${refAudioPaths.length}` : t("video.referenceAudioUrls")}
+              </button>
+            )}
+            {showRefFile && (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                title={t("video.uploadRefFile")}
+                className="nodrag inline-flex h-6 items-center gap-1 rounded border border-foreground/30 px-2 text-[10px] font-bold text-muted-foreground transition-colors hover:border-accent-orange hover:text-foreground"
+              >
+                <FileUp className="h-3 w-3" />
+                {refFilePath ? "✓" : t("video.referenceFileUrl")}
+              </button>
+            )}
+            <input
+              ref={audioInputRef}
+              type="file"
+              accept="audio/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) void handleUploadAudio(file);
+                e.currentTarget.value = "";
+              }}
+            />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".doc,.docx,.xls,.xlsx,.ppt,.pptx,.pdf,.txt,.md,.key,.pages,.numbers"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) void handleUploadFile(file);
+                e.currentTarget.value = "";
+              }}
+            />
+          </div>
+        )}
 
         {output ? (
           <video

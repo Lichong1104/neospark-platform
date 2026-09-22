@@ -306,6 +306,8 @@ interface IntelligenceHubProps {
     resolution: VideoResolution;
     refImages?: UploadedRef[];
     refVideos?: UploadedRef[];
+    refAudios?: UploadedRef[];
+    refFile?: UploadedRef;
     nonce: number;
   } | null;
   onVideoRequestConsumed?: () => void;

@@ -20,6 +20,8 @@ export interface UploadProgress {
 
 export type UploadProgressCallback = (progress: UploadProgress) => void;
 
+export type UploadFileType = "image" | "video" | "audio" | "other";
+
 const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB
 const CHUNK_UPLOAD_THRESHOLD = 5 * 1024 * 1024; // 5MB
 const MAX_CHUNK_RETRIES = 3;
@@ -32,7 +34,7 @@ const MAX_CHUNK_RETRIES = 3;
  */
 export async function uploadFile(
   file: File,
-  fileType: "image" | "video" | "other" = "image",
+  fileType: UploadFileType = "image",
   onProgress?: UploadProgressCallback
 ): Promise<UploadFileResponse> {
   if (file.size <= CHUNK_UPLOAD_THRESHOLD) {
@@ -43,7 +45,7 @@ export async function uploadFile(
 
 async function uploadSingleFile(
   file: File,
-  fileType: "image" | "video" | "other",
+  fileType: UploadFileType,
   onProgress?: UploadProgressCallback
 ): Promise<UploadFileResponse> {
   const formData = new FormData();
@@ -64,7 +66,7 @@ async function uploadSingleFile(
 
 async function uploadChunkedFile(
   file: File,
-  fileType: "image" | "video" | "other",
+  fileType: UploadFileType,
   onProgress?: UploadProgressCallback
 ): Promise<UploadFileResponse> {
   const chunkSize = CHUNK_SIZE;

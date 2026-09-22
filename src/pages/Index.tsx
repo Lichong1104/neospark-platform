@@ -167,6 +167,8 @@ const Index = () => {
           resolution: pendingRequest.seed.resolution,
           refImages: pendingRequest.seed.refImages,
           refVideos: pendingRequest.seed.refVideos,
+          refAudios: pendingRequest.seed.refAudios,
+          refFile: pendingRequest.seed.refFile,
           nonce: pendingRequest.nonce,
         }
       : null;

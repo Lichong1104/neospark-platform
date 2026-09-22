@@ -28,6 +28,25 @@ export const isMinimaxH3Model = (model: string) => MINIMAX_H3_MODELS.has(model);
 export const WAN3_MODELS = new Set(["wan3.0-video"]);
 export const isWan3Model = (model: string) => WAN3_MODELS.has(model);
 
+/**
+ * 支持参考语音输入的模型（与后端真实消费能力保持一致）：
+ * - Moyu 系（seedance）→ metadata.content 中 audio_url 项
+ * - MiniMax-H3 / Wan3.0-video → 上游原生支持
+ * 其余模型（gemini-omni-flash、omni-fast 系、kling 系、grok-imagine）后端会忽略音频参数。
+ */
+const REFERENCE_AUDIO_MODELS = new Set([
+  "seedance-2.5",
+  "seedance-2.0",
+  "seedance-2.0-fast",
+  "minimax-h3",
+  "wan3.0-video",
+]);
+export const supportsReferenceAudio = (model: string) =>
+  REFERENCE_AUDIO_MODELS.has(model);
+
+/** 支持文档输入（doc/xls/ppt/pdf/md 等，最多 1 个，≤100MB）：仅 Wan3.0 */
+export const supportsDocumentInput = (model: string) => isWan3Model(model);
+
 /** 判断模型是否只发送基础参数（不携带 generate_audio / watermark） */
 export const isBaseParamsOnlyModel = (model: string) =>
   isOmniModel(model) || isMinimaxH3Model(model) || isWan3Model(model);

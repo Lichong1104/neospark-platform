@@ -4,6 +4,8 @@ import {
   getModelMaxDuration,
   mergeDurationOptionsFromApi,
   resolveDurationRange,
+  supportsDocumentInput,
+  supportsReferenceAudio,
 } from "./videoModelUtils";
 import type { VideoDurationRange, VideoModelsData } from "@/types/video";
 
@@ -77,5 +79,33 @@ describe("mergeDurationOptionsFromApi", () => {
     expect(mergeDurationOptionsFromApi(durations, "kling-3.0")).toEqual(
       opts(12)
     );
+  });
+});
+
+describe("supportsReferenceAudio", () => {
+  it("Seedance 系 / MiniMax-H3 / Wan3.0 支持参考语音", () => {
+    expect(supportsReferenceAudio("seedance-2.5")).toBe(true);
+    expect(supportsReferenceAudio("seedance-2.0")).toBe(true);
+    expect(supportsReferenceAudio("seedance-2.0-fast")).toBe(true);
+    expect(supportsReferenceAudio("minimax-h3")).toBe(true);
+    expect(supportsReferenceAudio("wan3.0-video")).toBe(true);
+  });
+
+  it("其他模型不支持参考语音", () => {
+    expect(supportsReferenceAudio("gemini-omni-flash-preview")).toBe(false);
+    expect(supportsReferenceAudio("omni-fast")).toBe(false);
+    expect(supportsReferenceAudio("omni-fast-v2v")).toBe(false);
+    expect(supportsReferenceAudio("kling-3.0")).toBe(false);
+    expect(supportsReferenceAudio("kling-3.0-omni")).toBe(false);
+    expect(supportsReferenceAudio("grok-imagine-video")).toBe(false);
+  });
+});
+
+describe("supportsDocumentInput", () => {
+  it("仅 Wan3.0 支持文档输入", () => {
+    expect(supportsDocumentInput("wan3.0-video")).toBe(true);
+    expect(supportsDocumentInput("seedance-2.5")).toBe(false);
+    expect(supportsDocumentInput("minimax-h3")).toBe(false);
+    expect(supportsDocumentInput("kling-3.0")).toBe(false);
   });
 });

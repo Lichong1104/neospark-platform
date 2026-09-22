@@ -50,6 +50,7 @@ import {
   normalizeVideoRatio,
   pickDurationInOptions,
   resolveDurationRange,
+  supportsReferenceAudio,
 } from "@/lib/videoModelUtils";
 
 interface VideoGenerationPanelProps {
@@ -79,6 +80,8 @@ interface VideoGenerationPanelProps {
     resolution: VideoResolution;
     refImages?: UploadedRef[];
     refVideos?: UploadedRef[];
+    refAudios?: UploadedRef[];
+    refFile?: UploadedRef;
     nonce: number;
   } | null;
   onInitialRequestConsumed?: () => void;
@@ -229,6 +232,17 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
       .map((r) => r.path)
       .filter(Boolean)
       .join("\n")
+  );
+  // 参考语音（仅 seedance 系 / minimax-h3 / wan3.0-video 支持，后端忽略其他模型的该参数）
+  const [referenceAudioUrls, setReferenceAudioUrls] = useState(() =>
+    (initialRequest?.refAudios ?? [])
+      .map((r) => r.path)
+      .filter(Boolean)
+      .join("\n")
+  );
+  // 参考文件（仅 wan3.0-video 支持，doc/xls/ppt/pdf/md 等，最多 1 个）
+  const [referenceFileUrl, setReferenceFileUrl] = useState(
+    () => initialRequest?.refFile?.path ?? ""
   );
   const [modelOptions, setModelOptions] = useState<VideoModelConfig[]>([]);
   const [ratioOptions, setRatioOptions] = useState<string[]>([
@@ -397,8 +411,15 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
   };
 
   const handleUploadReference = useCallback(
-    async (kind: "image" | "video", file: File) => {
-      const fileType = kind === "image" ? "image" : "video";
+    async (kind: "image" | "video" | "audio" | "file", file: File) => {
+      const fileType =
+        kind === "image"
+          ? "image"
+          : kind === "video"
+          ? "video"
+          : kind === "audio"
+          ? "audio"
+          : "other";
       const uploaded = await storageApi.uploadFile(file, fileType);
       const uploadedPath = uploaded.url || uploaded.path || "";
       const normalizedPath = uploadedPath.startsWith("/")
@@ -410,10 +431,17 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
         setReferenceImageUrls((prev) =>
           appendMultiLineValue(prev, normalizedPath)
         );
-      } else {
+      } else if (kind === "video") {
         setReferenceVideoUrls((prev) =>
           appendMultiLineValue(prev, normalizedPath)
         );
+      } else if (kind === "audio") {
+        setReferenceAudioUrls((prev) =>
+          appendMultiLineValue(prev, normalizedPath)
+        );
+      } else {
+        // 参考文件最多 1 个，直接替换
+        setReferenceFileUrl(normalizedPath);
       }
       toast.success(t("video.refUploaded"));
     },
@@ -552,6 +580,13 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     for (const p of slotRefVideoPaths) {
       if (p && !mergedRefVideos.includes(p)) mergedRefVideos.push(p);
     }
+
+    // 参考语音：仅后端支持的模型才发送（seedance 系 / minimax-h3 / wan3.0-video）
+    const parsedRefAudios = supportsReferenceAudio(model)
+      ? parseMultiLineUrls(referenceAudioUrls)
+      : [];
+    // 参考文件：仅 wan3.0-video 支持，最多 1 个
+    const refFile = isWan3Model(model) ? referenceFileUrl.trim() : "";
     const safeDuration = Number(
       pickDurationInOptions(duration, durationOptions)
     );
@@ -589,6 +624,9 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
         mergedRefImages.length > 0 ? mergedRefImages : undefined,
       reference_video_urls:
         mergedRefVideos.length > 0 ? mergedRefVideos : undefined,
+      reference_audio_urls:
+        parsedRefAudios.length > 0 ? parsedRefAudios : undefined,
+      reference_file_url: refFile || undefined,
       asset_group_id: assetGroupId || undefined,
     };
 
@@ -632,6 +670,8 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     lastFrameUrl,
     referenceImageUrls,
     referenceVideoUrls,
+    referenceAudioUrls,
+    referenceFileUrl,
     assetGroupId,
     durationOptions,
     canvasImages,
@@ -665,6 +705,8 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
     setLastFrameUrl("");
     setReferenceImageUrls("");
     setReferenceVideoUrls("");
+    setReferenceAudioUrls("");
+    setReferenceFileUrl("");
     setResolution("720p");
     setWatermark(false);
     setEstimatedCost(null);
@@ -811,6 +853,10 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
             setReferenceImageUrls={setReferenceImageUrls}
             referenceVideoUrls={referenceVideoUrls}
             setReferenceVideoUrls={setReferenceVideoUrls}
+            referenceAudioUrls={referenceAudioUrls}
+            setReferenceAudioUrls={setReferenceAudioUrls}
+            referenceFileUrl={referenceFileUrl}
+            setReferenceFileUrl={setReferenceFileUrl}
             selectedCanvasImage={selectedCanvasImage ?? null}
             selectedCanvasImages={selectedCanvasImages}
             canvasImages={canvasImages}
