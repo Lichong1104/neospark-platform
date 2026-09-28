@@ -820,7 +820,20 @@
     "createGroup": "新建资产组",
     "groupNamePlaceholder": "资产组名称",
     "create": "创建",
-    "createFailed": "创建资产组失败"
+    "createFailed": "创建资产组失败",
+    "rename": "重命名",
+    "renameFailed": "重命名分组失败",
+    "delete": "删除",
+    "deleteConfirm": "删除「{{name}}」？{{count}} 条成员引用将一并移除",
+    "deleteFailed": "删除分组失败",
+    "deleted": "已删除",
+    "duplicateName": "已存在同名分组",
+    "emptyName": "请输入分组名称",
+    "save": "保存",
+    "cancel": "取消",
+    "manageHint": "默认分组不可修改",
+    "created": "分组已创建",
+    "renamed": "已重命名"
   },
   "assetsPage": {
     "directory": "目录",

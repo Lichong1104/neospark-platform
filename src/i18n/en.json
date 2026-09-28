@@ -820,7 +820,20 @@
     "createGroup": "New Asset Group",
     "groupNamePlaceholder": "Group name",
     "create": "Create",
-    "createFailed": "Failed to create asset group"
+    "createFailed": "Failed to create asset group",
+    "rename": "Rename",
+    "renameFailed": "Failed to rename group",
+    "delete": "Delete",
+    "deleteConfirm": "Delete \"{{name}}\"? {{count}} member refs will be removed",
+    "deleteFailed": "Failed to delete group",
+    "deleted": "Deleted",
+    "duplicateName": "A group with this name already exists",
+    "emptyName": "Please enter a group name",
+    "save": "Save",
+    "cancel": "Cancel",
+    "manageHint": "Default group cannot be changed",
+    "created": "Group created",
+    "renamed": "Renamed"
   },
   "assetsPage": {
     "directory": "DIRECTORY",

@@ -264,28 +264,32 @@ export const CanvasImageGenCompose: React.FC<{
           enableSubmitOnEnter
           className="h-full"
           footerLeft={
-            <div className="flex min-w-0 items-center gap-0.5">
-              <ImageGenerationParams
-                embedded
-                aspectRatio={aspectRatio}
-                resolution={resolution}
-                model={model}
-                isGptImage2={supportsGptImageQuality(model)}
-                gptImageQuality={gptImageQuality}
-                onGptImageQualityChange={setGptImageQuality}
-                aspectRatioOptions={aspectRatioOptions}
-                resolutionOptions={resolutionOptions}
-                modelOptions={modelOptions}
-                onAspectRatioChange={setAspectRatio}
-                onResolutionChange={setResolution}
-                onModelChange={setModel}
-              />
-              <AssetGroupSelect
-                mode="assign"
-                value={assetGroupId}
-                onChange={setAssetGroupId}
-                className="w-28 shrink-0"
-              />
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
+              <div className="flex min-w-0 items-center gap-0.5">
+                <ImageGenerationParams
+                  embedded
+                  aspectRatio={aspectRatio}
+                  resolution={resolution}
+                  model={model}
+                  isGptImage2={supportsGptImageQuality(model)}
+                  gptImageQuality={gptImageQuality}
+                  onGptImageQualityChange={setGptImageQuality}
+                  aspectRatioOptions={aspectRatioOptions}
+                  resolutionOptions={resolutionOptions}
+                  modelOptions={modelOptions}
+                  onAspectRatioChange={setAspectRatio}
+                  onResolutionChange={setResolution}
+                  onModelChange={setModel}
+                />
+              </div>
+              <div className="flex items-center gap-1">
+                <AssetGroupSelect
+                  mode="assign"
+                  value={assetGroupId}
+                  onChange={setAssetGroupId}
+                  className="w-40 shrink-0"
+                />
+              </div>
             </div>
           }
           submitAction={

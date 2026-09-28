@@ -891,6 +891,12 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
                     )
                   )}
                 </span>
+                <AssetGroupSelect
+                  mode="assign"
+                  value={assetGroupId}
+                  onChange={setAssetGroupId}
+                  className="w-40"
+                />
                 <a
                   href={VIDEO_TUTORIAL_URL}
                   target="_blank"
@@ -927,12 +933,6 @@ const VideoGenerationPanel: React.FC<VideoGenerationPanelProps> = ({
                   <span className="text-[10px] text-muted-foreground">
                     {t("video.shiftEnterHint")}
                   </span>
-                  <AssetGroupSelect
-                    mode="assign"
-                    value={assetGroupId}
-                    onChange={setAssetGroupId}
-                    className="w-36 ml-1"
-                  />
                 </div>
 
                 <button
