@@ -24,6 +24,9 @@ import {
   Image as ImageIcon,
   Images,
   Bookmark,
+  BookmarkPlus,
+  Coins,
+  NotebookText,
   Plus,
   RectangleHorizontal,
   Square,
@@ -1569,11 +1572,15 @@ const ChatView: React.FC<ChatViewProps> = ({
           />
         )}
         <div className="mb-2 flex items-center justify-between gap-2">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+          <span className="shrink-0 whitespace-nowrap text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
             {t("intelligenceHub.composeLabel")}
           </span>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold uppercase text-accent-purple">
+          <div className="flex min-w-0 items-center gap-1.5">
+            <span
+              className="inline-flex h-7 shrink-0 items-center gap-1 whitespace-nowrap border border-accent-purple/40 bg-accent-purple/10 px-2 text-[10px] font-bold text-accent-purple"
+              title={t("intelligenceHub.estimatedCost")}
+            >
+              <Coins className="h-3 w-3" />
               {formatEstimatedCost(estimatedImageCost)}
             </span>
             <button
@@ -1581,7 +1588,7 @@ const ChatView: React.FC<ChatViewProps> = ({
               id="onboarding-hub-presets"
               onClick={onTogglePresets}
               className={cn(
-                "inline-flex h-7 shrink-0 items-center gap-1.5 border px-2 text-[10px] font-bold uppercase tracking-wide transition-none brutal-press",
+                "inline-flex h-7 shrink-0 items-center gap-1 whitespace-nowrap border px-2 text-[10px] font-bold uppercase tracking-wide transition-none brutal-press",
                 showPresets
                   ? "border-accent-pink/50 bg-accent-pink/15 text-foreground"
                   : "border-foreground/25 bg-card text-muted-foreground hover:border-foreground/40 hover:bg-accent-pink/10 hover:text-foreground"
@@ -1595,11 +1602,11 @@ const ChatView: React.FC<ChatViewProps> = ({
             <button
               type="button"
               onClick={onToggleMyPrompts}
-              className="inline-flex h-7 shrink-0 items-center gap-1.5 border border-foreground/25 bg-card px-2 text-[10px] font-bold uppercase tracking-wide text-muted-foreground transition-none brutal-press hover:border-foreground/40 hover:bg-accent-yellow/10 hover:text-foreground"
+              className="inline-flex h-7 shrink-0 items-center gap-1 whitespace-nowrap border border-foreground/25 bg-card px-2 text-[10px] font-bold uppercase tracking-wide text-muted-foreground transition-none brutal-press hover:border-foreground/40 hover:bg-accent-yellow/10 hover:text-foreground"
               title={t("intelligenceHub.myPrompts")}
               aria-expanded={showMyPrompts}
             >
-              <Bookmark className="h-3.5 w-3.5" />
+              <NotebookText className="h-3.5 w-3.5" />
               {t("intelligenceHub.myPrompts")}
             </button>
             <button
@@ -1607,14 +1614,14 @@ const ChatView: React.FC<ChatViewProps> = ({
               onClick={() => onSaveToLibraryChange(!saveToLibrary)}
               aria-pressed={saveToLibrary}
               className={cn(
-                "inline-flex h-7 shrink-0 items-center gap-1.5 border px-2 text-[10px] font-bold uppercase tracking-wide transition-none brutal-press",
+                "inline-flex h-7 shrink-0 items-center gap-1 whitespace-nowrap border px-2 text-[10px] font-bold uppercase tracking-wide transition-none brutal-press",
                 saveToLibrary
                   ? "border-accent-yellow/60 bg-accent-yellow/20 text-foreground"
                   : "border-foreground/25 bg-card text-muted-foreground hover:border-foreground/40 hover:bg-accent-yellow/10 hover:text-foreground"
               )}
               title={t("intelligenceHub.saveToLibrary")}
             >
-              <Bookmark className="h-3.5 w-3.5" />
+              <BookmarkPlus className="h-3.5 w-3.5" />
               {t("intelligenceHub.saveToLibrary")}
             </button>
           </div>
@@ -1660,7 +1667,7 @@ const ChatView: React.FC<ChatViewProps> = ({
             onSubmit={isGenerating ? onCancelGeneration : onSend}
             enableSubmitOnEnter={!isGenerating}
             footerLeft={
-              <div className="flex min-w-0 flex-1 flex-col gap-1">
+              <div className="flex min-w-0 flex-1 items-center gap-1">
                 <div className="flex min-w-0 items-center gap-0.5">
                   <ImageGenerationParams
                     aspectRatio={aspectRatio}
@@ -1687,14 +1694,13 @@ const ChatView: React.FC<ChatViewProps> = ({
                     settingsTriggerId="onboarding-hub-settings"
                   />
                 </div>
-                <div className="flex items-center gap-1">
-                  <AssetGroupSelect
-                    mode="assign"
-                    value={assetGroupId}
-                    onChange={onAssetGroupChange}
-                    className="w-40 shrink-0"
-                  />
-                </div>
+                <div className="min-w-4 flex-1" />
+                <AssetGroupSelect
+                  mode="assign"
+                  value={assetGroupId}
+                  onChange={onAssetGroupChange}
+                  className="w-40 shrink-0"
+                />
               </div>
             }
             submitAction={

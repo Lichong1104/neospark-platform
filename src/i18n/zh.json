@@ -621,7 +621,8 @@
     "canvasMentionNoImages": "画布上还没有图片。",
     "canvasMentionNoVideos": "画布上还没有视频。",
     "canvasMentionNoMatch": "没有匹配的画布资源。",
-    "videoSlotIgnoredInImageGen": "图片生成不支持视频参考，已忽略提示词中的 @视频 引用。"
+    "videoSlotIgnoredInImageGen": "图片生成不支持视频参考，已忽略提示词中的 @视频 引用。",
+    "estimatedCost": "预估消耗"
   },
   "agentHub": {
     "tab": "智能体",

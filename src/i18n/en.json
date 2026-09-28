@@ -621,7 +621,8 @@
     "canvasMentionNoImages": "No images on the canvas yet.",
     "canvasMentionNoVideos": "No videos on the canvas yet.",
     "canvasMentionNoMatch": "No canvas resource matches this query.",
-    "videoSlotIgnoredInImageGen": "Image generation does not support video references; @video mentions have been ignored."
+    "videoSlotIgnoredInImageGen": "Image generation does not support video references; @video mentions have been ignored.",
+    "estimatedCost": "Estimated cost"
   },
   "agentHub": {
     "tab": "Agent",
