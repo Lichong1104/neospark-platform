@@ -29,6 +29,11 @@ interface AssetGroupSelectProps {
   value: string;
   onChange: (value: string) => void;
   className?: string;
+  /**
+   * boxed: 带边框的下拉框（侧栏筛选等场景）
+   * quiet: 无边框 chip 样式，与参数 chips 视觉一致（生成面板等场景）
+   */
+  variant?: "boxed" | "quiet";
 }
 
 /** 分组名称长度上限（后端允许 128，前端收窄） */
@@ -47,6 +52,7 @@ const AssetGroupSelect: React.FC<AssetGroupSelectProps> = ({
   value,
   onChange,
   className,
+  variant = "boxed",
 }) => {
   const { t } = useTranslation();
   const [groups, setGroups] = useState<AssetGroup[]>([]);
@@ -188,12 +194,28 @@ const AssetGroupSelect: React.FC<AssetGroupSelectProps> = ({
           <button
             type="button"
             title={t("assetGroup.selectGroup")}
-            className="flex w-full items-center gap-1 border border-foreground/20 bg-card px-1.5 py-1 text-[11px] font-mono transition-none hover:bg-secondary"
+            className={cn(
+              "flex items-center gap-1 font-mono transition-none",
+              variant === "boxed"
+                ? "w-full border border-foreground/20 bg-card px-1.5 py-1 text-[11px] hover:bg-secondary"
+                : "h-7 shrink-0 rounded-md px-2 text-[10px] text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground",
+              open && variant === "quiet" && "bg-foreground/[0.06] text-foreground"
+            )}
           >
             {loaded ? (
-              <FolderOpen className="h-3 w-3 flex-shrink-0 text-foreground/70" />
+              <FolderOpen
+                className={cn(
+                  "flex-shrink-0 text-foreground/70",
+                  variant === "boxed" ? "h-3 w-3" : "h-3 w-3 opacity-70"
+                )}
+              />
             ) : (
-              <Loader2 className="h-3 w-3 flex-shrink-0 animate-spin text-foreground/70" />
+              <Loader2
+                className={cn(
+                  "flex-shrink-0 animate-spin text-foreground/70",
+                  variant === "boxed" ? "h-3 w-3" : "h-3 w-3 opacity-70"
+                )}
+              />
             )}
             <span className="min-w-0 flex-1 truncate text-left">
               {selectedGroup
@@ -209,7 +231,8 @@ const AssetGroupSelect: React.FC<AssetGroupSelectProps> = ({
             )}
             <ChevronDown
               className={cn(
-                "h-2.5 w-2.5 flex-shrink-0 transition-transform",
+                "flex-shrink-0 transition-transform",
+                variant === "boxed" ? "h-2.5 w-2.5" : "h-2.5 w-2.5 opacity-70",
                 open && "rotate-180"
               )}
             />

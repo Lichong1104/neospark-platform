@@ -28,6 +28,7 @@ import {
   Coins,
   NotebookText,
   Plus,
+  Wand2,
   RectangleHorizontal,
   Square,
   RectangleVertical,
@@ -1699,10 +1700,30 @@ const ChatView: React.FC<ChatViewProps> = ({
                 <div className="flex items-center gap-1.5">
                   <AssetGroupSelect
                     mode="assign"
+                    variant="quiet"
                     value={assetGroupId}
                     onChange={onAssetGroupChange}
-                    className="w-44 shrink-0"
+                    className="shrink-0"
                   />
+                  {onOptimizeStandardPromptChange != null ? (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onOptimizeStandardPromptChange(!optimizeStandardPrompt)
+                      }
+                      aria-pressed={optimizeStandardPrompt}
+                      className={cn(
+                        "inline-flex h-7 shrink-0 items-center gap-1 whitespace-nowrap rounded-md px-2 font-mono text-[10px] transition-colors",
+                        optimizeStandardPrompt
+                          ? "bg-foreground/[0.06] text-foreground"
+                          : "text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground"
+                      )}
+                      title={t("intelligenceHub.optimizePromptShort")}
+                    >
+                      <Wand2 className="h-3 w-3 shrink-0 opacity-70" />
+                      <span>{t("intelligenceHub.optimizePromptShort")}</span>
+                    </button>
+                  ) : null}
                   <div className="min-w-4 flex-1" />
                   <button
                     type="button"
