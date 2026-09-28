@@ -1571,24 +1571,26 @@ const ChatView: React.FC<ChatViewProps> = ({
             onDismiss={onClearGenError}
           />
         )}
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <span className="shrink-0 whitespace-nowrap text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-            {t("intelligenceHub.composeLabel")}
-          </span>
-          <div className="flex min-w-0 items-center gap-1.5">
+        <div className="mb-2 flex flex-col gap-1.5">
+          <div className="flex items-center justify-between gap-2">
+            <span className="shrink-0 whitespace-nowrap text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+              {t("intelligenceHub.composeLabel")}
+            </span>
             <span
-              className="inline-flex h-7 shrink-0 items-center gap-1 whitespace-nowrap border border-accent-purple/40 bg-accent-purple/10 px-2 text-[10px] font-bold text-accent-purple"
+              className="inline-flex h-6 shrink-0 items-center gap-1 whitespace-nowrap border border-accent-purple/40 bg-accent-purple/10 px-2 text-[10px] font-bold text-accent-purple"
               title={t("intelligenceHub.estimatedCost")}
             >
               <Coins className="h-3 w-3" />
               {formatEstimatedCost(estimatedImageCost)}
             </span>
+          </div>
+          <div className="flex items-stretch gap-1.5">
             <button
               type="button"
               id="onboarding-hub-presets"
               onClick={onTogglePresets}
               className={cn(
-                "inline-flex h-7 shrink-0 items-center gap-1 whitespace-nowrap border px-2 text-[10px] font-bold uppercase tracking-wide transition-none brutal-press",
+                "inline-flex h-7 min-w-0 flex-1 items-center justify-center gap-1 whitespace-nowrap border px-1 text-[10px] font-bold uppercase tracking-wide transition-none brutal-press",
                 showPresets
                   ? "border-accent-pink/50 bg-accent-pink/15 text-foreground"
                   : "border-foreground/25 bg-card text-muted-foreground hover:border-foreground/40 hover:bg-accent-pink/10 hover:text-foreground"
@@ -1596,33 +1598,33 @@ const ChatView: React.FC<ChatViewProps> = ({
               title={t("intelligenceHub.promptArsenal")}
               aria-expanded={showPresets}
             >
-              <Library className="h-3.5 w-3.5" />
-              {t("intelligenceHub.promptArsenalShort")}
+              <Library className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">{t("intelligenceHub.promptArsenalShort")}</span>
             </button>
             <button
               type="button"
               onClick={onToggleMyPrompts}
-              className="inline-flex h-7 shrink-0 items-center gap-1 whitespace-nowrap border border-foreground/25 bg-card px-2 text-[10px] font-bold uppercase tracking-wide text-muted-foreground transition-none brutal-press hover:border-foreground/40 hover:bg-accent-yellow/10 hover:text-foreground"
+              className="inline-flex h-7 min-w-0 flex-1 items-center justify-center gap-1 whitespace-nowrap border border-foreground/25 bg-card px-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground transition-none brutal-press hover:border-foreground/40 hover:bg-accent-yellow/10 hover:text-foreground"
               title={t("intelligenceHub.myPrompts")}
               aria-expanded={showMyPrompts}
             >
-              <NotebookText className="h-3.5 w-3.5" />
-              {t("intelligenceHub.myPrompts")}
+              <NotebookText className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">{t("intelligenceHub.myPrompts")}</span>
             </button>
             <button
               type="button"
               onClick={() => onSaveToLibraryChange(!saveToLibrary)}
               aria-pressed={saveToLibrary}
               className={cn(
-                "inline-flex h-7 shrink-0 items-center gap-1 whitespace-nowrap border px-2 text-[10px] font-bold uppercase tracking-wide transition-none brutal-press",
+                "inline-flex h-7 min-w-0 flex-1 items-center justify-center gap-1 whitespace-nowrap border px-1 text-[10px] font-bold uppercase tracking-wide transition-none brutal-press",
                 saveToLibrary
                   ? "border-accent-yellow/60 bg-accent-yellow/20 text-foreground"
                   : "border-foreground/25 bg-card text-muted-foreground hover:border-foreground/40 hover:bg-accent-yellow/10 hover:text-foreground"
               )}
               title={t("intelligenceHub.saveToLibrary")}
             >
-              <BookmarkPlus className="h-3.5 w-3.5" />
-              {t("intelligenceHub.saveToLibrary")}
+              <BookmarkPlus className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">{t("intelligenceHub.saveToLibrary")}</span>
             </button>
           </div>
         </div>
@@ -1667,7 +1669,7 @@ const ChatView: React.FC<ChatViewProps> = ({
             onSubmit={isGenerating ? onCancelGeneration : onSend}
             enableSubmitOnEnter={!isGenerating}
             footerLeft={
-              <div className="flex min-w-0 flex-1 items-center gap-1">
+              <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <div className="flex min-w-0 items-center gap-0.5">
                   <ImageGenerationParams
                     aspectRatio={aspectRatio}
@@ -1694,44 +1696,44 @@ const ChatView: React.FC<ChatViewProps> = ({
                     settingsTriggerId="onboarding-hub-settings"
                   />
                 </div>
-                <div className="min-w-4 flex-1" />
-                <AssetGroupSelect
-                  mode="assign"
-                  value={assetGroupId}
-                  onChange={onAssetGroupChange}
-                  className="w-40 shrink-0"
-                />
+                <div className="flex items-center gap-1.5">
+                  <AssetGroupSelect
+                    mode="assign"
+                    value={assetGroupId}
+                    onChange={onAssetGroupChange}
+                    className="w-44 shrink-0"
+                  />
+                  <div className="min-w-4 flex-1" />
+                  <button
+                    type="button"
+                    onClick={isGenerating ? onCancelGeneration : onSend}
+                    disabled={!isGenerating && !inputValue.trim()}
+                    className={cn(
+                      "inline-flex h-7 shrink-0 items-center justify-center gap-1 whitespace-nowrap border border-foreground px-2.5 text-[10px] font-bold uppercase transition-none",
+                      isGenerating
+                        ? "bg-accent-red text-card brutal-press hover:brightness-110"
+                        : !inputValue.trim()
+                          ? "border-foreground/20 bg-foreground/10 text-muted-foreground cursor-not-allowed"
+                          : "bg-accent-cyan text-card brutal-press hover:brightness-110"
+                    )}
+                    title={
+                      isGenerating ? t("common.cancel") : t("canvas.generate")
+                    }
+                  >
+                    {isGenerating ? (
+                      <>
+                        <X className="w-3.5 h-3.5" />
+                        <span>{t("common.cancel")}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-3.5 h-3.5" />
+                        <span>{t("canvas.generate")}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
-            }
-            submitAction={
-              <button
-                type="button"
-                onClick={isGenerating ? onCancelGeneration : onSend}
-                disabled={!isGenerating && !inputValue.trim()}
-                className={cn(
-                  "inline-flex h-7 items-center justify-center gap-1 rounded-md px-2.5 text-[10px] font-bold uppercase transition-colors",
-                  isGenerating
-                    ? "bg-accent-red text-foreground hover:brightness-110 brutal-press"
-                    : !inputValue.trim()
-                      ? "bg-foreground/10 text-muted-foreground cursor-not-allowed"
-                      : "bg-accent-cyan text-foreground hover:brightness-110 brutal-press"
-                )}
-                title={
-                  isGenerating ? t("common.cancel") : t("canvas.generate")
-                }
-              >
-                {isGenerating ? (
-                  <>
-                    <X className="w-3.5 h-3.5" />
-                    <span>{t("common.cancel")}</span>
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-3.5 h-3.5" />
-                    <span>{t("canvas.generate")}</span>
-                  </>
-                )}
-              </button>
             }
             onPasteImageFile={(file) => {
               // Trigger upload via parent

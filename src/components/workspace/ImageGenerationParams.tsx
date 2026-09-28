@@ -50,7 +50,7 @@ export interface ImageGenerationParamsProps {
 }
 
 const composeChipClass =
-  "inline-flex shrink-0 items-center gap-1 rounded-md font-mono text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground";
+  "inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-md font-mono text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground";
 
 const composeChipEmbeddedClass = "h-6 px-1.5 text-[9px]";
 const composeChipDefaultClass = "h-7 px-2 text-[10px]";
