@@ -1671,8 +1671,10 @@ const ChatView: React.FC<ChatViewProps> = ({
               enableSubmitOnEnter={!isGenerating}
             footerLeft={
               <div className="flex min-w-0 flex-1 flex-col gap-1">
-                <div className="flex min-w-0 items-center gap-0.5">
+                <div className="flex min-w-0 items-center gap-1">
                   <ImageGenerationParams
+                    className="flex-1"
+                    settingsSpacer
                     aspectRatio={aspectRatio}
                     resolution={resolution}
                     model={model}
@@ -1697,7 +1699,7 @@ const ChatView: React.FC<ChatViewProps> = ({
                     settingsTriggerId="onboarding-hub-settings"
                   />
                 </div>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1">
                   <AssetGroupSelect
                     mode="assign"
                     variant="quiet"
@@ -1730,7 +1732,7 @@ const ChatView: React.FC<ChatViewProps> = ({
                     onClick={isGenerating ? onCancelGeneration : onSend}
                     disabled={!isGenerating && !inputValue.trim()}
                     className={cn(
-                      "inline-flex h-8 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap border-brutal border-foreground px-4 text-[11px] font-bold uppercase transition-none",
+                      "inline-flex h-7 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap border-brutal border-foreground px-4 text-[11px] font-bold uppercase transition-none",
                       isGenerating
                         ? "bg-accent-red text-card brutal-shadow brutal-press hover:brightness-110"
                         : !inputValue.trim()

@@ -47,6 +47,8 @@ export interface ImageGenerationParamsProps {
   settingsTriggerId?: string;
   /** 画布节点内嵌：更紧凑的 chip */
   embedded?: boolean;
+  /** 为 true 时设置按钮靠最右对齐（外层需给组件 flex-1 宽度） */
+  settingsSpacer?: boolean;
 }
 
 const composeChipClass =
@@ -229,6 +231,7 @@ export const ImageGenerationParams: React.FC<ImageGenerationParamsProps> = ({
   className,
   settingsTriggerId,
   embedded = false,
+  settingsSpacer = false,
 }) => {
   const { t } = useTranslation();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -427,7 +430,8 @@ export const ImageGenerationParams: React.FC<ImageGenerationParamsProps> = ({
             onClick={toggleSettings}
             className={cn(
               settingsBtnClass,
-              settingsOpen && composeChipActiveClass
+              settingsOpen && composeChipActiveClass,
+              settingsSpacer && "ml-auto"
             )}
             title={summaryTitle}
             aria-label={t("intelligenceHub.generationSettings")}
