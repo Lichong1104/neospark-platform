@@ -62,6 +62,7 @@ import {
 } from "@/lib/pricing";
 import { InlineCanvasMentionEditor } from "./InlineCanvasMentionEditor";
 import { GenerationErrorBanner } from "./GenerationErrorBanner";
+import AssetGroupSelect from "./AssetGroupSelect";
 import { ImageGenerationParams } from "./ImageGenerationParams";
 import {
   GenerationModeIconToggle,
@@ -355,6 +356,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
   const [isStandardGenerating, setIsStandardGenerating] = useState(false);
   const [optimizeStandardPrompt, setOptimizeStandardPrompt] = useState(false);
   const [saveToLibrary, setSaveToLibrary] = useState(false);
+  const [assetGroupId, setAssetGroupId] = useState("");
   const [batchMode, setBatchMode] = useState(false);
   const [batchProgress, setBatchProgress] = useState<{
     current: number;
@@ -941,6 +943,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
           currentModelConfig?.provider ??
           (model.startsWith("gemini") ? "gemini" : "tengda"),
         optimize_prompt: true,
+        ...(assetGroupId ? { asset_group_id: assetGroupId } : {}),
       };
       if (isGptImage2) {
         params.quality = gptImageQuality;
@@ -1093,6 +1096,8 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
             onOptimizeStandardPromptChange={setOptimizeStandardPrompt}
             saveToLibrary={saveToLibrary}
             onSaveToLibraryChange={setSaveToLibrary}
+            assetGroupId={assetGroupId}
+            onAssetGroupChange={setAssetGroupId}
             batchMode={batchMode}
             onBatchModeChange={setBatchMode}
             batchProgress={batchProgress}
@@ -1179,6 +1184,8 @@ interface ChatViewProps {
   onOptimizeStandardPromptChange: (value: boolean) => void;
   saveToLibrary: boolean;
   onSaveToLibraryChange: (value: boolean) => void;
+  assetGroupId: string;
+  onAssetGroupChange: (value: string) => void;
   batchMode: boolean;
   onBatchModeChange: (value: boolean) => void;
   batchProgress: { current: number; total: number } | null;
@@ -1234,6 +1241,8 @@ const ChatView: React.FC<ChatViewProps> = ({
   onOptimizeStandardPromptChange,
   saveToLibrary,
   onSaveToLibraryChange,
+  assetGroupId,
+  onAssetGroupChange,
   batchMode,
   onBatchModeChange,
   batchProgress,
@@ -1651,30 +1660,42 @@ const ChatView: React.FC<ChatViewProps> = ({
             onSubmit={isGenerating ? onCancelGeneration : onSend}
             enableSubmitOnEnter={!isGenerating}
             footerLeft={
-              <ImageGenerationParams
-                aspectRatio={aspectRatio}
-                resolution={resolution}
-                model={model}
-                isGptImage2={isGptImage2}
-                gptImageQuality={gptImageQuality}
-                onGptImageQualityChange={onGptImageQualityChange}
-                aspectRatioOptions={aspectRatioOptions}
-                resolutionOptions={resolutionOptions}
-                modelOptions={modelOptions}
-                onAspectRatioChange={onAspectRatioChange}
-                onResolutionChange={onResolutionChange}
-                onModelChange={onModelChange}
-                leadingSlot={modeToggle}
-                optimizeStandardPrompt={optimizeStandardPrompt}
-                onOptimizeStandardPromptChange={onOptimizeStandardPromptChange}
-                batchMode={batchMode}
-                onBatchModeChange={onBatchModeChange}
-                batchSelectedCount={
-                  selectedCanvasImages.filter((img) => img.type !== "video")
-                    .length
-                }
-                settingsTriggerId="onboarding-hub-settings"
-              />
+              <div className="flex min-w-0 flex-1 flex-col gap-1">
+                <div className="flex min-w-0 items-center gap-0.5">
+                  <ImageGenerationParams
+                    aspectRatio={aspectRatio}
+                    resolution={resolution}
+                    model={model}
+                    isGptImage2={isGptImage2}
+                    gptImageQuality={gptImageQuality}
+                    onGptImageQualityChange={onGptImageQualityChange}
+                    aspectRatioOptions={aspectRatioOptions}
+                    resolutionOptions={resolutionOptions}
+                    modelOptions={modelOptions}
+                    onAspectRatioChange={onAspectRatioChange}
+                    onResolutionChange={onResolutionChange}
+                    onModelChange={onModelChange}
+                    leadingSlot={modeToggle}
+                    optimizeStandardPrompt={optimizeStandardPrompt}
+                    onOptimizeStandardPromptChange={onOptimizeStandardPromptChange}
+                    batchMode={batchMode}
+                    onBatchModeChange={onBatchModeChange}
+                    batchSelectedCount={
+                      selectedCanvasImages.filter((img) => img.type !== "video")
+                        .length
+                    }
+                    settingsTriggerId="onboarding-hub-settings"
+                  />
+                </div>
+                <div className="flex items-center gap-1">
+                  <AssetGroupSelect
+                    mode="assign"
+                    value={assetGroupId}
+                    onChange={onAssetGroupChange}
+                    className="w-40 shrink-0"
+                  />
+                </div>
+              </div>
             }
             submitAction={
               <button
