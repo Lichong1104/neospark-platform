@@ -25,6 +25,7 @@ import {
   Images,
   Bookmark,
   BookmarkPlus,
+  Check,
   Coins,
   NotebookText,
   Plus,
@@ -82,7 +83,9 @@ import {
 import type { VideoResolution } from "@/types/video";
 import type { GptImageQuality } from "./ImageGenerationParams";
 import type { UploadedRef } from "@/lib/landingRequest";
-import MessageVideoTaskList from "./MessageVideoTaskList";
+import MessageVideoTaskList, {
+  GenerateVideoButton,
+} from "./MessageVideoTaskList";
 
 type StatusType =
   | "ecommerce"
@@ -359,7 +362,6 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
   );
   const [isStandardGenerating, setIsStandardGenerating] = useState(false);
   const [optimizeStandardPrompt, setOptimizeStandardPrompt] = useState(false);
-  const [saveToLibrary, setSaveToLibrary] = useState(false);
   const [assetGroupId, setAssetGroupId] = useState("");
   const [batchMode, setBatchMode] = useState(false);
   const [batchProgress, setBatchProgress] = useState<{
@@ -445,12 +447,6 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
           createdAt: Date.now(),
         },
       ]);
-      if (saveToLibrary && pendingStandardPrompt?.original?.trim()) {
-        void saveUserPrompt({ prompt: pendingStandardPrompt.original.trim() })
-          .then(() => toast.success(t("intelligenceHub.savedToLibrary")))
-          .catch(() => toast.error(t("intelligenceHub.saveToLibraryFailed")));
-        setSaveToLibrary(false);
-      }
       setPendingStandardPrompt(null);
       setIsStandardGenerating(false);
       onImagesGenerated?.(polling.images);
@@ -479,7 +475,6 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
     pendingStandardPrompt,
     onImagesGenerated,
     t,
-    saveToLibrary,
   ]);
 
   const modelOptions: DropdownOption[] = useMemo(() => {
@@ -1098,8 +1093,6 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
             onModelChange={setModel}
             optimizeStandardPrompt={optimizeStandardPrompt}
             onOptimizeStandardPromptChange={setOptimizeStandardPrompt}
-            saveToLibrary={saveToLibrary}
-            onSaveToLibraryChange={setSaveToLibrary}
             assetGroupId={assetGroupId}
             onAssetGroupChange={setAssetGroupId}
             batchMode={batchMode}
@@ -1186,8 +1179,6 @@ interface ChatViewProps {
   onModelChange: (value: string) => void;
   optimizeStandardPrompt: boolean;
   onOptimizeStandardPromptChange: (value: boolean) => void;
-  saveToLibrary: boolean;
-  onSaveToLibraryChange: (value: boolean) => void;
   assetGroupId: string;
   onAssetGroupChange: (value: string) => void;
   batchMode: boolean;
@@ -1243,8 +1234,6 @@ const ChatView: React.FC<ChatViewProps> = ({
   onModelChange,
   optimizeStandardPrompt,
   onOptimizeStandardPromptChange,
-  saveToLibrary,
-  onSaveToLibraryChange,
   assetGroupId,
   onAssetGroupChange,
   batchMode,
@@ -1276,11 +1265,58 @@ const ChatView: React.FC<ChatViewProps> = ({
   const [historyPromptView, setHistoryPromptView] = useState<
     Record<string, "used" | "original">
   >({});
+  // 保存提示词选择模式：选中历史条目后可多选保存（含配图）
+  const [promptSelectMode, setPromptSelectMode] = useState(false);
+  const [selectedPromptIds, setSelectedPromptIds] = useState<string[]>([]);
+  const [isSavingPrompts, setIsSavingPrompts] = useState(false);
 
   const estimatedImageCost = useMemo(
     () => calculateImageEstimatedCost(modelsConfig, model, resolution, gptImageQuality),
     [modelsConfig, model, resolution, gptImageQuality]
   );
+
+  const enterPromptSelectMode = useCallback(() => {
+    setPromptSelectMode(true);
+    setSelectedPromptIds([]);
+  }, []);
+
+  const exitPromptSelectMode = useCallback(() => {
+    setPromptSelectMode(false);
+    setSelectedPromptIds([]);
+  }, []);
+
+  const togglePromptSelected = useCallback((id: string) => {
+    setSelectedPromptIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  }, []);
+
+  const handleConfirmSavePrompts = useCallback(async () => {
+    const entries = standardGenHistory.filter((e) =>
+      selectedPromptIds.includes(e.id)
+    );
+    if (entries.length === 0) return;
+    setIsSavingPrompts(true);
+    try {
+      await Promise.all(
+        entries.map((e) =>
+          saveUserPrompt({
+            prompt: (e.originalPrompt || e.prompt).trim(),
+            model,
+            image_path: e.images[0]?.local_path || undefined,
+          })
+        )
+      );
+      toast.success(
+        t("intelligenceHub.savedToLibraryWithCount", { count: entries.length })
+      );
+      exitPromptSelectMode();
+    } catch {
+      toast.error(t("intelligenceHub.saveToLibraryFailed"));
+    } finally {
+      setIsSavingPrompts(false);
+    }
+  }, [standardGenHistory, selectedPromptIds, model, t, exitPromptSelectMode]);
 
   const fillPromptFromHistory = useCallback(
     (prompt: string) => {
@@ -1348,10 +1384,37 @@ const ChatView: React.FC<ChatViewProps> = ({
         )}
 
         <div className="space-y-6">
-          {standardGenHistory.map((entry) => (
-            <div key={entry.id} className="space-y-2">
+          {standardGenHistory.map((entry) => {
+            const promptSelected = selectedPromptIds.includes(entry.id);
+            return (
+            <div
+              key={entry.id}
+              className={cn(
+                "space-y-2",
+                promptSelectMode &&
+                  promptSelected &&
+                  "border border-accent-yellow bg-accent-yellow/10 p-2 -m-2"
+              )}
+            >
               <div className="flex items-center justify-between gap-2">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  {promptSelectMode && (
+                    <button
+                      type="button"
+                      onClick={() => togglePromptSelected(entry.id)}
+                      className={cn(
+                        "flex h-4 w-4 shrink-0 items-center justify-center border transition-none",
+                        promptSelected
+                          ? "border-foreground bg-accent-yellow text-foreground"
+                          : "border-foreground/40 bg-card hover:border-foreground"
+                      )}
+                      title={t("intelligenceHub.toggleSelect")}
+                    >
+                      {promptSelected && (
+                        <Check className="h-3 w-3" strokeWidth={3} />
+                      )}
+                    </button>
+                  )}
                   {t("intelligenceHub.standardPrompt")}
                 </div>
                 {!!entry.optimizedPrompt?.trim() && (
@@ -1378,10 +1441,23 @@ const ChatView: React.FC<ChatViewProps> = ({
                 <button
                   type="button"
                   onClick={() =>
-                    fillPromptFromHistory(resolveEntryPrompt(entry))
+                    promptSelectMode
+                      ? togglePromptSelected(entry.id)
+                      : fillPromptFromHistory(resolveEntryPrompt(entry))
                   }
-                  title={t("intelligenceHub.reuseHistoryPrompt")}
-                  className="w-full text-left p-3 border-brutal border-foreground bg-secondary/20 font-mono text-sm whitespace-pre-wrap break-words leading-relaxed transition-none hover:bg-secondary/40 hover:border-accent-cyan/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan cursor-pointer"
+                  title={
+                    promptSelectMode
+                      ? t("intelligenceHub.toggleSelect")
+                      : t("intelligenceHub.reuseHistoryPrompt")
+                  }
+                  className={cn(
+                    "w-full text-left p-3 font-mono text-[13px] leading-relaxed whitespace-pre-wrap break-words transition-none focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan cursor-pointer",
+                    promptSelectMode
+                      ? promptSelected
+                        ? "border border-foreground/30 bg-card hover:border-foreground/50"
+                        : "border border-foreground/15 bg-secondary/10 hover:bg-secondary/30"
+                      : "border-brutal border-foreground bg-secondary/20 hover:bg-secondary/40 hover:border-accent-cyan/60"
+                  )}
                 >
                   {resolveEntryPrompt(entry)}
                 </button>
@@ -1390,14 +1466,18 @@ const ChatView: React.FC<ChatViewProps> = ({
                   —
                 </div>
               )}
-              <div className="flex items-center gap-2 text-xs font-bold uppercase text-muted-foreground">
-                <Image className="w-4 h-4 text-accent-green" />
-                {t("intelligenceHub.generationResult")}
-                {entry.cost != null && entry.cost > 0 && (
-                  <span className="text-accent-green">-{entry.cost} pts</span>
-                )}
-              </div>
-              <div className="grid grid-cols-2 gap-2">
+              {entry.images.length > 0 && (
+                <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-muted-foreground">
+                  <Image className="h-3.5 w-3.5 text-accent-green" />
+                  {t("intelligenceHub.generationResult")}
+                  {entry.cost != null && entry.cost > 0 && (
+                    <span className="text-accent-green">
+                      -{entry.cost} pts
+                    </span>
+                  )}
+                </div>
+              )}
+              <div className="flex flex-wrap gap-2">
                 {entry.images.map((img, idx) => {
                   const imgUrl = img.url.startsWith("http")
                     ? img.url
@@ -1408,32 +1488,32 @@ const ChatView: React.FC<ChatViewProps> = ({
                       href={imgUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="block border-brutal border-foreground overflow-hidden hover:brightness-110"
+                      className="block h-36 w-36 shrink-0 border-brutal border-foreground overflow-hidden bg-secondary/20 hover:brightness-110"
                     >
                       <img
                         src={imgUrl}
                         alt=""
-                        className="w-full h-auto object-cover"
+                        className="h-full w-full object-cover"
                         loading="lazy"
                       />
                     </a>
                   );
                 })}
               </div>
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => onRegenerateFromHistory(entry)}
                   disabled={isGenerating}
                   className={cn(
-                    "flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase border-brutal border-foreground bg-accent-cyan text-foreground brutal-press",
+                    "inline-flex h-7 w-7 items-center justify-center border-brutal border-foreground bg-accent-cyan text-foreground brutal-press",
                     isGenerating
                       ? "opacity-50 cursor-not-allowed"
                       : "hover:brightness-110"
                   )}
+                  title={t("agentResponse.regenerate")}
                 >
-                  <RefreshCw className="w-3 h-3" />
-                  {t("agentResponse.regenerate")}
+                  <RefreshCw className="h-3.5 w-3.5" />
                 </button>
                 <button
                   type="button"
@@ -1444,15 +1524,34 @@ const ChatView: React.FC<ChatViewProps> = ({
                   }
                   disabled={isGenerating}
                   className={cn(
-                    "flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase border-brutal border-foreground bg-accent-yellow text-foreground brutal-press",
+                    "inline-flex h-7 w-7 items-center justify-center border-brutal border-foreground bg-accent-yellow text-foreground brutal-press",
                     isGenerating
                       ? "opacity-50 cursor-not-allowed"
                       : "hover:brightness-110"
                   )}
+                  title={t("agentResponse.modify")}
                 >
-                  <Pencil className="w-3 h-3" />
-                  {t("agentResponse.modify")}
+                  <Pencil className="h-3.5 w-3.5" />
                 </button>
+                {entry.messageId && (
+                  <GenerateVideoButton
+                    messageId={entry.messageId}
+                    role="agent"
+                    status="completed"
+                    images={entry.images}
+                    iconOnly
+                    className="inline-flex h-7 w-7 items-center justify-center border-brutal border-foreground bg-accent-purple text-foreground hover:brightness-110"
+                    onCreated={(task) =>
+                      setStandardGenHistory((prev) =>
+                        prev.map((e) =>
+                          e.id === entry.id
+                            ? { ...e, video_tasks: [...(e.video_tasks ?? []), task] }
+                            : e
+                        )
+                      )
+                    }
+                  />
+                )}
               </div>
               {entry.messageId && (
                 <MessageVideoTaskList
@@ -1461,6 +1560,7 @@ const ChatView: React.FC<ChatViewProps> = ({
                   status="completed"
                   images={entry.images}
                   videoTasks={entry.video_tasks}
+                  hideGenerateButton
                   onChange={(tasks) =>
                     setStandardGenHistory((prev) =>
                       prev.map((e) =>
@@ -1471,8 +1571,8 @@ const ChatView: React.FC<ChatViewProps> = ({
                 />
               )}
             </div>
-          ))}
-
+            );
+          })}
           {isGenerating && (
             <div className="space-y-3 pb-2">
               {pendingStandardPrompt && (
@@ -1611,20 +1711,48 @@ const ChatView: React.FC<ChatViewProps> = ({
             >
               <NotebookText className="h-3.5 w-3.5" />
             </button>
-            <button
-              type="button"
-              onClick={() => onSaveToLibraryChange(!saveToLibrary)}
-              aria-pressed={saveToLibrary}
-              className={cn(
-                "inline-flex h-7 w-7 shrink-0 items-center justify-center border transition-none brutal-press",
-                saveToLibrary
-                  ? "border-accent-yellow/60 bg-accent-yellow/20 text-foreground"
-                  : "border-foreground/25 bg-card text-muted-foreground hover:border-foreground/40 hover:bg-accent-yellow/10 hover:text-foreground"
-              )}
-              title={t("intelligenceHub.saveToLibrary")}
-            >
-              <BookmarkPlus className="h-3.5 w-3.5" />
-            </button>
+            {promptSelectMode ? (
+              <>
+                <span className="shrink-0 font-mono text-[10px] font-bold text-accent-cyan">
+                  {selectedPromptIds.length}
+                </span>
+                <button
+                  type="button"
+                  onClick={exitPromptSelectMode}
+                  className="inline-flex h-7 w-7 shrink-0 items-center justify-center border border-foreground/25 bg-card text-muted-foreground transition-none brutal-press hover:border-foreground/40 hover:bg-accent-red/10 hover:text-accent-red"
+                  title={t("common.cancel")}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmSavePrompts}
+                  disabled={selectedPromptIds.length === 0 || isSavingPrompts}
+                  className={cn(
+                    "inline-flex h-7 w-7 shrink-0 items-center justify-center border border-foreground transition-none brutal-press",
+                    selectedPromptIds.length === 0 || isSavingPrompts
+                      ? "border-foreground/20 bg-foreground/10 text-muted-foreground cursor-not-allowed"
+                      : "bg-accent-cyan text-card hover:brightness-110"
+                  )}
+                  title={t("intelligenceHub.saveSelected")}
+                >
+                  {isSavingPrompts ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Check className="h-3.5 w-3.5" />
+                  )}
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={enterPromptSelectMode}
+                className="inline-flex h-7 w-7 shrink-0 items-center justify-center border border-foreground/25 bg-card text-muted-foreground transition-none brutal-press hover:border-foreground/40 hover:bg-accent-yellow/10 hover:text-foreground"
+                title={t("intelligenceHub.saveToLibrary")}
+              >
+                <BookmarkPlus className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
         </div>
 

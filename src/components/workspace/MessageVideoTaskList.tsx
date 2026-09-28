@@ -97,6 +97,8 @@ interface GenerateVideoButtonProps {
   images?: { url: string; local_path: string }[];
   onCreated: (task: VideoTaskSummary) => void;
   className?: string;
+  /** 纯图标方块按钮（tooltip 展示文案） */
+  iconOnly?: boolean;
 }
 
 const GenerateVideoButton: React.FC<GenerateVideoButtonProps> = ({
@@ -106,6 +108,7 @@ const GenerateVideoButton: React.FC<GenerateVideoButtonProps> = ({
   images,
   onCreated,
   className,
+  iconOnly = false,
 }) => {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
@@ -273,11 +276,11 @@ const GenerateVideoButton: React.FC<GenerateVideoButtonProps> = ({
         )}
       >
         {isCreating ? (
-          <Loader2 className="h-3 w-3 animate-spin" />
+          <Loader2 className={iconOnly ? "h-3.5 w-3.5 animate-spin" : "h-3 w-3 animate-spin"} />
         ) : (
-          <Video className="h-3 w-3" />
+          <Video className={iconOnly ? "h-3.5 w-3.5" : "h-3 w-3"} />
         )}
-        {t("video.generate", { defaultValue: "生成视频" })}
+        {!iconOnly && t("video.generate", { defaultValue: "生成视频" })}
       </button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>

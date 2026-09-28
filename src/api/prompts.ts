@@ -181,6 +181,8 @@ export interface SavedUserPrompt {
   id: number;
   prompt: string;
   model: string | null;
+  /** 关联的生成图片路径（保存时附带，可为空） */
+  image_path: string | null;
   created_at: string | null;
 }
 
@@ -197,11 +199,12 @@ export interface SavedUserPromptList {
 export async function saveUserPrompt(data: {
   prompt: string;
   model?: string;
+  image_path?: string;
 }): Promise<SavedUserPrompt> {
-  const res = await http.post<SavedUserPrompt, { prompt: string; model?: string }>(
-    "/prompts/saved",
-    data
-  );
+  const res = await http.post<
+    SavedUserPrompt,
+    { prompt: string; model?: string; image_path?: string }
+  >("/prompts/saved", data);
   return res.data!;
 }
 

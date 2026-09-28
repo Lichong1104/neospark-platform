@@ -3,6 +3,7 @@ import { X, Bookmark, Loader2, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { STATIC_BASE_URL } from "@/api/request";
 import { BrutalButton } from "@/components/ui/brutal-button";
 import {
   listUserPrompts,
@@ -17,6 +18,13 @@ interface MyPromptsPanelProps {
 }
 
 const PAGE_SIZE = 50;
+
+const resolveImageUrl = (path: string | null): string | null => {
+  if (!path) return null;
+  const trimmed = path.trim();
+  if (!trimmed) return null;
+  return trimmed.startsWith("http") ? trimmed : `${STATIC_BASE_URL}${trimmed}`;
+};
 
 const formatDate = (iso: string | null): string => {
   if (!iso) return "";
@@ -126,58 +134,78 @@ const MyPromptsPanel: React.FC<MyPromptsPanelProps> = ({
           </div>
         ) : (
           <div className="space-y-2">
-            {prompts.map((p) => (
-              <div
-                key={p.id}
-                className={cn(
-                  "border-brutal border-foreground bg-card",
-                  confirmDelete === p.id && "bg-accent-red/10"
-                )}
-              >
-                <button
-                  type="button"
-                  onClick={() => {
-                    onSelectPrompt(p.prompt);
-                    onClose();
-                  }}
-                  className="block w-full p-3 text-left transition-none hover:bg-accent-yellow/5"
+            {prompts.map((p) => {
+              const imageUrl = resolveImageUrl(p.image_path);
+              return (
+                <div
+                  key={p.id}
+                  className={cn(
+                    "border-brutal border-foreground bg-card",
+                    confirmDelete === p.id && "bg-accent-red/10"
+                  )}
                 >
-                  <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-foreground line-clamp-4">
-                    {p.prompt}
-                  </p>
-                  <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px] font-mono text-muted-foreground">
-                    <span>{formatDate(p.created_at)}</span>
-                    {p.model ? (
-                      <span className="border border-foreground/20 bg-background px-1.5 py-0.5">
-                        {p.model}
-                      </span>
-                    ) : null}
-                  </div>
-                </button>
-                <div className="flex items-center justify-between border-t border-foreground/10 px-3 py-1.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-accent-cyan">
-                    {t("myPrompts.useHint")}
-                  </span>
                   <button
                     type="button"
-                    onClick={() => handleDelete(p.id)}
-                    className={cn(
-                      "transition-none",
-                      confirmDelete === p.id
-                        ? "text-[10px] font-bold uppercase text-accent-red"
-                        : "text-muted-foreground hover:text-accent-red"
-                    )}
-                    aria-label={t("myPrompts.delete")}
+                    onClick={() => {
+                      onSelectPrompt(p.prompt);
+                      onClose();
+                    }}
+                    className="block w-full p-3 text-left transition-none hover:bg-accent-yellow/5"
                   >
-                    {confirmDelete === p.id ? (
-                      t("myPrompts.confirmDelete")
-                    ) : (
-                      <Trash2 className="h-3.5 w-3.5" />
-                    )}
+                    <div
+                      className={cn(
+                        "flex gap-3",
+                        imageUrl ? "items-start" : "items-center"
+                      )}
+                    >
+                      {imageUrl ? (
+                        <img
+                          src={imageUrl}
+                          alt=""
+                          className="h-20 w-20 shrink-0 border border-foreground/20 object-cover"
+                          loading="lazy"
+                        />
+                      ) : null}
+                      <div className="min-w-0 flex-1">
+                        <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-foreground line-clamp-4">
+                          {p.prompt}
+                        </p>
+                        <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px] font-mono text-muted-foreground">
+                          <span>{formatDate(p.created_at)}</span>
+                          {p.model ? (
+                            <span className="border border-foreground/20 bg-background px-1.5 py-0.5">
+                              {p.model}
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
                   </button>
+                  <div className="flex items-center justify-between border-t border-foreground/10 px-3 py-1.5">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-accent-cyan">
+                      {t("myPrompts.useHint")}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(p.id)}
+                      className={cn(
+                        "transition-none",
+                        confirmDelete === p.id
+                          ? "text-[10px] font-bold uppercase text-accent-red"
+                          : "text-muted-foreground hover:text-accent-red"
+                      )}
+                      aria-label={t("myPrompts.delete")}
+                    >
+                      {confirmDelete === p.id ? (
+                        t("myPrompts.confirmDelete")
+                      ) : (
+                        <Trash2 className="h-3.5 w-3.5" />
+                      )}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
