@@ -23,7 +23,10 @@ const resolveImageUrl = (path: string | null): string | null => {
   if (!path) return null;
   const trimmed = path.trim();
   if (!trimmed) return null;
-  return trimmed.startsWith("http") ? trimmed : `${STATIC_BASE_URL}${trimmed}`;
+  if (trimmed.startsWith("http")) return trimmed;
+  // 已带 / 前缀的路径（如 /uploads/xxx）直接拼域名；裸存储 key（如 2/images/xxx）补 /uploads/ 前缀
+  if (trimmed.startsWith("/")) return `${STATIC_BASE_URL}${trimmed}`;
+  return `${STATIC_BASE_URL}/uploads/${trimmed}`;
 };
 
 const formatDate = (iso: string | null): string => {
