@@ -638,6 +638,7 @@
     "send": "发送",
     "selectSkills": "选择技能",
     "noSkillsSelected": "未选择技能，Agent 将以通用模式运行",
+    "noSkillSelected": "请先选择至少一个技能",
     "skillsActive": "已激活 {{count}} 个技能",
     "inputPlaceholder": "向智能体提问...",
     "newLine": "换行",

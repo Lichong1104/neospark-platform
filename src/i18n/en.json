@@ -638,6 +638,7 @@
     "send": "Send",
     "selectSkills": "Select Skills",
     "noSkillsSelected": "No skills selected. Agent will run in general mode.",
+    "noSkillSelected": "Please select at least one skill first",
     "skillsActive": "{{count}} skills active",
     "inputPlaceholder": "Ask the agent anything...",
     "newLine": "newline",

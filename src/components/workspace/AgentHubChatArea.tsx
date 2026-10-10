@@ -176,6 +176,11 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
       const command = text.trim();
       if (!command) return;
 
+      if (selectedSkills.length === 0) {
+        toast.error(t("agentHub.noSkillSelected"));
+        return;
+      }
+
       const userMsg: AgentChatMessage = {
         id: `user_${Date.now()}`,
         role: "user",
