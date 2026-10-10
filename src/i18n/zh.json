@@ -1363,6 +1363,9 @@
       "button": "编写规范",
       "title": "Skill 编写规范",
       "updated": "适用于 NeoSpark Agent 平台",
+      "download": "下载 .md",
+      "copy": "复制",
+      "copied": "已复制",
       "sections": [
         {
           "title": "什么是 Skill",

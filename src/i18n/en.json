@@ -1363,6 +1363,9 @@
       "button": "Authoring Guide",
       "title": "Skill Authoring Guide",
       "updated": "For the NeoSpark Agent platform",
+      "download": "Download .md",
+      "copy": "Copy",
+      "copied": "Copied",
       "sections": [
         {
           "title": "What is a Skill",

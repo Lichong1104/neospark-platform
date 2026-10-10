@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { BookOpen, X } from "lucide-react";
+import { BookOpen, Check, Copy, Download, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
   Dialog,
@@ -18,6 +18,38 @@ type GuideBlock =
 interface GuideSection {
   title: string;
   blocks: GuideBlock[];
+}
+
+function escapeMarkdownCell(text: string): string {
+  return text.replace(/\|/g, "\\|").replace(/\n/g, " ");
+}
+
+/** 把结构化编写规范渲染为 Markdown 文本，用于下载或复制。 */
+function sectionsToMarkdown(sections: GuideSection[], title: string, subtitle: string): string {
+  const lines: string[] = [`# ${title}`, "", `> ${subtitle}`, ""];
+
+  for (const section of sections) {
+    lines.push(`## ${section.title}`, "");
+    for (const block of section.blocks) {
+      if (block.type === "p") {
+        lines.push(block.text, "");
+      } else if (block.type === "code") {
+        lines.push("```", block.text, "```", "");
+      } else if (block.type === "list") {
+        block.items.forEach((item, idx) => lines.push(`${idx + 1}. ${item}`));
+        lines.push("");
+      } else {
+        lines.push(`| ${block.columns.map(escapeMarkdownCell).join(" | ")} |`);
+        lines.push(`| ${block.columns.map(() => "---").join(" | ")} |`);
+        for (const row of block.rows) {
+          lines.push(`| ${row.map(escapeMarkdownCell).join(" | ")} |`);
+        }
+        lines.push("");
+      }
+    }
+  }
+
+  return lines.join("\n").trimEnd() + "\n";
 }
 
 const CodeBlock: React.FC<{ text: string }> = ({ text }) => (
@@ -89,8 +121,35 @@ interface SkillAuthoringGuideProps {
 const SkillAuthoringGuide: React.FC<SkillAuthoringGuideProps> = ({ trigger }) => {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const sections = t("skill.guide.sections", { returnObjects: true }) as unknown as GuideSection[];
+
+  const buildMarkdown = () =>
+    sectionsToMarkdown(sections, t("skill.guide.title"), t("skill.guide.updated"));
+
+  const handleDownload = () => {
+    const markdown = buildMarkdown();
+    const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "neospark-skill-guide.md";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(buildMarkdown());
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // 剪贴板不可用时静默降级，下载按钮仍是可用路径
+    }
+  };
 
   return (
     <>
@@ -125,6 +184,22 @@ const SkillAuthoringGuide: React.FC<SkillAuthoringGuideProps> = ({ trigger }) =>
             <p className="text-[10px] font-mono text-muted-foreground normal-case tracking-normal">
               {t("skill.guide.updated")}
             </p>
+            <div className="mt-3 flex items-center gap-2">
+              <button
+                onClick={handleDownload}
+                className="h-8 px-3 inline-flex items-center gap-1.5 border-brutal border-foreground bg-card text-foreground text-[11px] font-bold uppercase hover:bg-secondary transition-none"
+              >
+                <Download className="w-3.5 h-3.5" />
+                {t("skill.guide.download")}
+              </button>
+              <button
+                onClick={handleCopy}
+                className="h-8 px-3 inline-flex items-center gap-1.5 border-brutal border-foreground bg-card text-foreground text-[11px] font-bold uppercase hover:bg-secondary transition-none"
+              >
+                {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                {copied ? t("skill.guide.copied") : t("skill.guide.copy")}
+              </button>
+            </div>
           </DialogHeader>
 
           <div className="overflow-y-auto px-5 py-4 space-y-6">
