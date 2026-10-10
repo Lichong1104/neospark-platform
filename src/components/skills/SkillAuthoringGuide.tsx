@@ -184,25 +184,9 @@ const SkillAuthoringGuide: React.FC<SkillAuthoringGuideProps> = ({ trigger }) =>
             <p className="text-[10px] font-mono text-muted-foreground normal-case tracking-normal">
               {t("skill.guide.updated")}
             </p>
-            <div className="mt-3 flex items-center gap-2">
-              <button
-                onClick={handleDownload}
-                className="h-8 px-3 inline-flex items-center gap-1.5 border-brutal border-foreground bg-card text-foreground text-[11px] font-bold uppercase hover:bg-secondary transition-none"
-              >
-                <Download className="w-3.5 h-3.5" />
-                {t("skill.guide.download")}
-              </button>
-              <button
-                onClick={handleCopy}
-                className="h-8 px-3 inline-flex items-center gap-1.5 border-brutal border-foreground bg-card text-foreground text-[11px] font-bold uppercase hover:bg-secondary transition-none"
-              >
-                {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                {copied ? t("skill.guide.copied") : t("skill.guide.copy")}
-              </button>
-            </div>
           </DialogHeader>
 
-          <div className="overflow-y-auto px-5 py-4 space-y-6">
+          <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-6">
             {sections.map((section, i) => (
               <section key={i}>
                 <h4 className="text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
@@ -218,6 +202,23 @@ const SkillAuthoringGuide: React.FC<SkillAuthoringGuideProps> = ({ trigger }) =>
                 </div>
               </section>
             ))}
+          </div>
+
+          <div className="shrink-0 border-t-brutal border-foreground px-5 py-3 flex items-center justify-end gap-2">
+            <button
+              onClick={handleDownload}
+              className="h-8 px-3 inline-flex items-center gap-1.5 border-brutal border-foreground bg-card text-foreground text-[11px] font-bold uppercase hover:bg-secondary transition-none"
+            >
+              <Download className="w-3.5 h-3.5" />
+              {t("skill.guide.download")}
+            </button>
+            <button
+              onClick={handleCopy}
+              className="h-8 px-3 inline-flex items-center gap-1.5 border-brutal border-foreground bg-card text-foreground text-[11px] font-bold uppercase hover:bg-secondary transition-none"
+            >
+              {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+              {copied ? t("skill.guide.copied") : t("skill.guide.copy")}
+            </button>
           </div>
         </DialogContent>
       </Dialog>
