@@ -2,6 +2,7 @@ import React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
+import { STATIC_BASE_URL } from "@/api/request";
 
 const MdCode: React.FC<React.HTMLAttributes<HTMLElement>> = (props) => {
   const { className, children } = props;
@@ -43,16 +44,20 @@ const MdA: React.FC<React.AnchorHTMLAttributes<HTMLAnchorElement>> = (props) => 
   />
 );
 
+const resolveImgSrc = (src: string | undefined): string | undefined => {
+  if (!src || /^(https?:|data:|blob:)/i.test(src)) return src;
+  const base = STATIC_BASE_URL.replace(/\/$/, "");
+  return `${base}${src.startsWith("/") ? src : `/${src}`}`;
+};
+
 const MdImg: React.FC<React.ImgHTMLAttributes<HTMLImageElement>> = (props) => (
-  // 图片交给上层 images 附件网格渲染；正文里出现裸图片时兜底显示为可点击链接样式
-  <a
-    href={props.src}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="break-all font-medium text-accent-cyan underline underline-offset-2"
-  >
-    🖼 {props.alt || props.src}
-  </a>
+  <img
+    {...props}
+    src={resolveImgSrc(props.src)}
+    alt={props.alt || ""}
+    className="my-2 max-w-full h-auto"
+    loading="lazy"
+  />
 );
 
 interface MarkdownContentProps {

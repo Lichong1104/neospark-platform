@@ -46,12 +46,20 @@ export interface AgentMultiChatRequest {
   session_id?: string | null;
 }
 
+/** 结构化输出内容块：文本 / 图片 / 视频 / 文件，按序渲染 */
+export type ContentBlock =
+  | { type: "text"; text: string }
+  | { type: "image"; url: string; filename?: string; mime?: string }
+  | { type: "video"; url: string; filename?: string; mime?: string }
+  | { type: "file"; url: string; filename?: string; mime?: string };
+
 /** 非流式对话响应 */
 export interface AgentChatResponse {
   content: string;
   skill_id: string;
   model: string;
   session_id: string;
+  blocks?: ContentBlock[];
 }
 
 /** 前端消息模型 */
@@ -66,6 +74,7 @@ export interface AgentChatMessage {
   credit_cost?: number;
   timestamp: string;
   images?: { url: string; local_path: string }[];
+  blocks?: ContentBlock[];
 }
 
 /** SSE 流事件 */
@@ -73,6 +82,12 @@ export interface AgentStreamEvent {
   event: "start" | "output" | "tool_call" | "tool_result" | "error" | "end";
   data: {
     content?: string;
+    type?: string;
+    text?: string;
+    url?: string;
+    filename?: string;
+    mime?: string;
+    blocks?: ContentBlock[];
     session_id?: string;
     skill_id?: string;
     skill_name?: string;

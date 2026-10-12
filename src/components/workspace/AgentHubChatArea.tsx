@@ -94,6 +94,7 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
   const {
     isStreaming,
     streamContent,
+    streamBlocks,
     messages,
     startStream,
     appendMessage,
@@ -501,7 +502,7 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
             />
           )}
 
-          {isStreaming && streamContent && (
+          {isStreaming && (streamBlocks.length > 0 || streamContent) && (
             looksLikeFileGeneration(streamContent) ? (
               <GeneratingDocumentIndicator />
             ) : (
@@ -510,6 +511,7 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
                   id: "streaming",
                   role: "assistant",
                   content: streamContent,
+                  blocks: streamBlocks.length > 0 ? streamBlocks : undefined,
                   timestamp: new Date().toISOString(),
                 }}
                 isStreaming
@@ -517,7 +519,7 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
             )
           )}
 
-          {isStreaming && !streamContent && <StreamingIndicator />}
+          {isStreaming && streamBlocks.length === 0 && !streamContent && <StreamingIndicator />}
 
           {isGeneratingFile && <GeneratingDocumentIndicator />}
 

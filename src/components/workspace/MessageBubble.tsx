@@ -2,8 +2,9 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { User, Bot, Wrench, CheckCircle, ChevronDown, ChevronRight, FileDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { STATIC_BASE_URL } from "@/api/request";
 import type { AgentMessage } from "@/types/skills";
-import type { AgentChatMessage } from "@/types/agents";
+import type { AgentChatMessage, ContentBlock } from "@/types/agents";
 import MarkdownContent from "./MarkdownContent";
 import { looksLikeMarkdown } from "@/lib/markdown";
 
@@ -113,6 +114,82 @@ const FileDownloadCard: React.FC<{ payload: AgentFilePayload }> = ({
     </div>
   );
 };
+
+/** 归一化媒体/文件 URL：相对 /uploads 路径补全 API 源，绝对 / data / blob 原样返回 */
+function resolveMediaSrc(url: string): string {
+  if (/^(https?:|data:|blob:)/i.test(url)) return url;
+  const base = STATIC_BASE_URL.replace(/\/$/, "");
+  return `${base}${url.startsWith("/") ? url : `/${url}`}`;
+}
+
+const ImageBlock: React.FC<{ url: string; filename?: string }> = ({
+  url,
+  filename,
+}) => (
+  <a
+    href={resolveMediaSrc(url)}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="block border-brutal border-foreground bg-muted overflow-hidden"
+  >
+    <img
+      src={resolveMediaSrc(url)}
+      alt={filename || "image"}
+      className="w-full h-auto object-cover"
+      loading="lazy"
+    />
+  </a>
+);
+
+const VideoBlock: React.FC<{ url: string; filename?: string }> = ({
+  url,
+  filename,
+}) => (
+  <video
+    src={resolveMediaSrc(url)}
+    controls
+    preload="metadata"
+    className="w-full max-w-sm border-brutal border-foreground bg-black"
+  >
+    {filename ? `视频：${filename}` : "视频"}
+  </video>
+);
+
+const FileBlock: React.FC<{ url: string; filename?: string }> = ({
+  url,
+  filename,
+}) => (
+  <FileDownloadCard
+    payload={{ filename: filename || "file", url: resolveMediaSrc(url) }}
+  />
+);
+
+/** 有序内容块渲染：text→Markdown，image→图片，video→视频，file→下载卡 */
+const ContentBlocks: React.FC<{ blocks: ContentBlock[] }> = ({ blocks }) => (
+  <div className="space-y-2">
+    {blocks.map((block, idx) => {
+      if (block.type === "text") {
+        return looksLikeMarkdown(block.text) ? (
+          <MarkdownContent key={idx} content={block.text} />
+        ) : (
+          <div
+            key={idx}
+            className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]"
+          >
+            {block.text}
+          </div>
+        );
+      }
+      if (block.type === "image") {
+        return <ImageBlock key={idx} url={block.url} filename={block.filename} />;
+      }
+      if (block.type === "video") {
+        return <VideoBlock key={idx} url={block.url} filename={block.filename} />;
+      }
+      return <FileBlock key={idx} url={block.url} filename={block.filename} />;
+    })}
+  </div>
+);
 
 interface MessageBubbleProps {
   message: MessageLike;
@@ -238,13 +315,19 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
     );
   }
 
+  const images = "images" in message ? message.images : undefined;
+  const blocks =
+    "blocks" in message ? (message as AgentChatMessage).blocks : undefined;
+  const hasBlocks = !isUser && !!blocks && blocks.length > 0;
+
+  // 结构化块优先（新后端）；无块时回退旧的 JSON 文件载荷
   const filePayload =
-    !isUser && !isStreaming ? parseAgentFilePayload(message.content) : null;
+    !isUser && !isStreaming && !hasBlocks
+      ? parseAgentFilePayload(message.content)
+      : null;
   if (filePayload) {
     return <FileDownloadCard payload={filePayload} />;
   }
-
-  const images = "images" in message ? message.images : undefined;
 
   return (
     <div className={cn("flex gap-3", isUser && "flex-row-reverse")}>
@@ -278,6 +361,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
               mentionNames={mentionNames}
             />
           </div>
+        ) : hasBlocks ? (
+          <ContentBlocks blocks={blocks!} />
         ) : looksLikeMarkdown(message.content) ? (
           <MarkdownContent content={message.content} />
         ) : (
@@ -285,7 +370,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             {message.content}
           </div>
         )}
-        {images && images.length > 0 && (
+        {!hasBlocks && images && images.length > 0 && (
           <div
             className={cn(
               "mt-2 grid gap-2",
@@ -295,13 +380,13 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             {images.map((img) => (
               <a
                 key={img.url}
-                href={img.url}
+                href={resolveMediaSrc(img.url)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block border-brutal border-foreground bg-muted overflow-hidden"
               >
                 <img
-                  src={img.url}
+                  src={resolveMediaSrc(img.url)}
                   alt={img.local_path}
                   className="w-full h-auto object-cover"
                   loading="lazy"
