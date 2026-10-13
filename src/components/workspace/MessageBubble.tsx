@@ -217,7 +217,7 @@ const MentionedUserContent: React.FC<{
       .map(escapeRegExp);
     if (!escaped.length) return null;
     try {
-      return new RegExp(`@(?:${escaped.join("|")})`, "g");
+      return new RegExp(`/(?:${escaped.join("|")})`, "g");
     } catch {
       return null;
     }

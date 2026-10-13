@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from "react";
-import { AtSign } from "lucide-react";
+import { Slash } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
@@ -14,7 +14,7 @@ interface MentionTextareaProps {
   onChange: (value: string) => void;
   /** 下拉关闭时按下 Enter 的原始行为（由父组件处理发送） */
   onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
-  /** 候选 Skill（通常为当前已选中的 Skill），@ 补全只在此列表内匹配 */
+  /** 候选 Skill（通常为当前已选中的 Skill），/ 补全只在此列表内匹配 */
   skills: MentionCandidate[];
   placeholder?: string;
   disabled?: boolean;
@@ -23,17 +23,17 @@ interface MentionTextareaProps {
 }
 
 interface MentionQuery {
-  /** '@' 在文本中的下标 */
+  /** '/' 在文本中的下标 */
   start: number;
   /** 光标位置 */
   caret: number;
   query: string;
 }
 
-/** 光标前是否处于一个未闭合的 @ 查询中（取光标前最后一个 @，其后无空白/@） */
+/** 光标前是否处于一个未闭合的 / 查询中（取光标前最后一个 /，其后无空白/斜杠） */
 function findMentionQuery(text: string, caret: number): MentionQuery | null {
   const before = text.slice(0, caret);
-  const match = /@([^\s@]{0,30})$/.exec(before);
+  const match = /\/([^\s/]{0,30})$/.exec(before);
   if (!match) return null;
   return {
     start: caret - match[1].length - 1,
@@ -42,9 +42,45 @@ function findMentionQuery(text: string, caret: number): MentionQuery | null {
   };
 }
 
-// 过滤时忽略查询末尾的标点（用户输入 "@助手，" 时仍能匹配到「助手」）
+// 过滤时忽略查询末尾的标点（用户输入 "/助手，" 时仍能匹配到「助手」）
 function trimQuery(query: string): string {
   return query.replace(/[，。、；：？！,.;:!?]+$/, "");
+}
+
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** 文本层共享样式：overlay 与 textarea 必须完全一致，高亮才能对位 */
+const TEXT_LAYER = "p-3 pr-12 font-mono text-sm leading-normal";
+
+/** 把 value 里已激活的 /Skill名称 渲染成高亮 chip，其余文字原样 */
+function renderHighlighted(text: string, skills: MentionCandidate[]): React.ReactNode {
+  if (!text) return null;
+  const names = [...new Set(skills.map((s) => s.name))]
+    .filter(Boolean)
+    .sort((a, b) => b.length - a.length);
+  if (!names.length) return text;
+
+  const re = new RegExp(`/(?:${names.map(escapeRegExp).join("|")})`, "g");
+  const parts: React.ReactNode[] = [];
+  let last = 0;
+  let match: RegExpExecArray | null;
+  let key = 0;
+  while ((match = re.exec(text)) !== null) {
+    if (match.index > last) parts.push(text.slice(last, match.index));
+    parts.push(
+      <span
+        key={key++}
+        className="rounded-sm border border-accent-pink bg-accent-pink/15 px-0.5 font-bold text-accent-pink"
+      >
+        {match[0]}
+      </span>
+    );
+    last = match.index + match[0].length;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+  return parts;
 }
 
 const MentionTextarea: React.FC<MentionTextareaProps> = ({
@@ -62,6 +98,7 @@ const MentionTextarea: React.FC<MentionTextareaProps> = ({
   const [activeIndex, setActiveIndex] = useState(0);
   const [caret, setCaret] = useState(value.length);
   const [composing, setComposing] = useState(false);
+  const [scrollTop, setScrollTop] = useState(0);
   const suppressNextRef = useRef(false);
 
   const candidates = useMemo(() => {
@@ -90,7 +127,7 @@ const MentionTextarea: React.FC<MentionTextareaProps> = ({
     onChange(e.target.value);
     const pos = e.target.selectionStart ?? e.target.value.length;
     setCaret(pos);
-    // 中文输入法组字期间不更新 @ 查询，避免候选词干扰下拉
+    // 中文输入法组字期间不更新 / 查询，避免候选词干扰下拉
     if (!composing) {
       updateMention(e.target.value, pos);
     }
@@ -100,7 +137,7 @@ const MentionTextarea: React.FC<MentionTextareaProps> = ({
     (candidate: MentionCandidate) => {
       const el = textareaRef.current;
       if (!el || !mention) return;
-      const insert = `@${candidate.name} `;
+      const insert = `/${candidate.name} `;
       const next = value.slice(0, mention.start) + insert + value.slice(mention.caret);
       onChange(next);
       suppressNextRef.current = true;
@@ -149,11 +186,16 @@ const MentionTextarea: React.FC<MentionTextareaProps> = ({
   const dropdownOpen = mention !== null && candidates.length > 0 && !disabled;
 
   return (
-    <div className="relative">
+    <div
+      className={cn(
+        "relative w-full min-h-[72px] max-h-[120px] overflow-hidden border-brutal border-foreground bg-background focus-within:ring-2 focus-within:ring-inset focus-within:ring-accent-pink/30",
+        className
+      )}
+    >
       {dropdownOpen && (
         <div className="absolute bottom-full left-0 right-0 z-20 mb-1 border-brutal border-foreground bg-card shadow-brutal">
           <div className="flex items-center gap-1.5 border-b border-foreground/10 bg-secondary/30 px-3 py-1.5">
-            <AtSign className="h-3 w-3 text-accent-pink" />
+            <Slash className="h-3 w-3 text-accent-pink" />
             <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
               {t("agentHub.mentionHint")}
             </span>
@@ -176,7 +218,7 @@ const MentionTextarea: React.FC<MentionTextareaProps> = ({
                 )}
               >
                 <span className="mt-0.5 inline-flex shrink-0 items-center border border-accent-pink bg-accent-pink/10 px-1 text-[10px] font-bold text-foreground">
-                  @{skill.name}
+                  /{skill.name}
                 </span>
                 {skill.description && (
                   <span className="min-w-0 flex-1 truncate text-[10px] leading-snug text-muted-foreground">
@@ -188,6 +230,20 @@ const MentionTextarea: React.FC<MentionTextareaProps> = ({
           </div>
         </div>
       )}
+
+      {/* 高亮层：渲染 /Skill名称 的彩色 chip，文字与 textarea 完全对位 */}
+      <div
+        aria-hidden
+        className={cn(
+          "pointer-events-none whitespace-pre-wrap break-words text-foreground",
+          TEXT_LAYER
+        )}
+        style={{ transform: `translateY(-${scrollTop}px)` }}
+      >
+        {renderHighlighted(value, skills)}
+        {"\n"}
+      </div>
+
       <textarea
         ref={textareaRef}
         value={value}
@@ -196,7 +252,7 @@ const MentionTextarea: React.FC<MentionTextareaProps> = ({
         onCompositionStart={() => setComposing(true)}
         onCompositionEnd={(e) => {
           setComposing(false);
-          // 组字结束后按最终文本重算 @ 查询
+          // 组字结束后按最终文本重算 / 查询
           const el = e.currentTarget;
           const pos = el.selectionStart ?? el.value.length;
           setCaret(pos);
@@ -205,12 +261,16 @@ const MentionTextarea: React.FC<MentionTextareaProps> = ({
         onSelect={syncCaret}
         onClick={syncCaret}
         onKeyUp={syncCaret}
+        onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}
         onBlur={() => {
           // 延迟关闭，保证 onMouseDown 先触发
           setTimeout(() => setMention(null), 150);
         }}
         placeholder={placeholder}
-        className={className}
+        className={cn(
+          "absolute inset-0 h-full w-full resize-none bg-transparent text-transparent caret-foreground outline-none placeholder:text-muted-foreground",
+          TEXT_LAYER
+        )}
         rows={2}
         disabled={disabled}
       />

@@ -552,7 +552,7 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
             textareaRef={textareaRef}
             placeholder={t("agentHub.inputPlaceholder")}
             disabled={isStreaming || isGeneratingFile}
-            className="w-full min-h-[72px] max-h-[120px] resize-none bg-background border-brutal border-foreground p-3 pr-12 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-inset focus:ring-accent-pink/30"
+            className="w-full"
           />
           <button
             type="button"
