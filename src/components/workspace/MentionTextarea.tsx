@@ -188,7 +188,7 @@ const MentionTextarea: React.FC<MentionTextareaProps> = ({
   return (
     <div
       className={cn(
-        "relative w-full min-h-[72px] max-h-[120px] overflow-hidden border-brutal border-foreground bg-background focus-within:ring-2 focus-within:ring-inset focus-within:ring-accent-pink/30",
+        "relative w-full border-brutal border-foreground bg-background focus-within:ring-2 focus-within:ring-inset focus-within:ring-accent-pink/30",
         className
       )}
     >
@@ -231,20 +231,22 @@ const MentionTextarea: React.FC<MentionTextareaProps> = ({
         </div>
       )}
 
-      {/* 高亮层：渲染 /Skill名称 的彩色 chip，文字与 textarea 完全对位 */}
-      <div
-        aria-hidden
-        className={cn(
-          "pointer-events-none whitespace-pre-wrap break-words text-foreground",
-          TEXT_LAYER
-        )}
-        style={{ transform: `translateY(-${scrollTop}px)` }}
-      >
-        {renderHighlighted(value, skills)}
-        {"\n"}
-      </div>
+      {/* 内容区：overflow-hidden 只裁剪高亮层/输入框，不裁剪上方的下拉 */}
+      <div className="relative min-h-[72px] max-h-[120px] overflow-hidden">
+        {/* 高亮层：渲染 /Skill名称 的彩色 chip，文字与 textarea 完全对位 */}
+        <div
+          aria-hidden
+          className={cn(
+            "pointer-events-none whitespace-pre-wrap break-words text-foreground",
+            TEXT_LAYER
+          )}
+          style={{ transform: `translateY(-${scrollTop}px)` }}
+        >
+          {renderHighlighted(value, skills)}
+          {"\n"}
+        </div>
 
-      <textarea
+        <textarea
         ref={textareaRef}
         value={value}
         onChange={handleChange}
@@ -274,6 +276,7 @@ const MentionTextarea: React.FC<MentionTextareaProps> = ({
         rows={2}
         disabled={disabled}
       />
+      </div>
     </div>
   );
 };
