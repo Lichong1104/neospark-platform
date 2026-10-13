@@ -69,11 +69,10 @@ function renderHighlighted(text: string, skills: MentionCandidate[]): React.Reac
   let key = 0;
   while ((match = re.exec(text)) !== null) {
     if (match.index > last) parts.push(text.slice(last, match.index));
+    // 只改背景色/文字色，不改变文字宽度（不加 border/padding/bold），否则
+    // 高亮层与 textarea 的文字度量不一致，光标会对不上
     parts.push(
-      <span
-        key={key++}
-        className="rounded-sm border border-accent-pink bg-accent-pink/15 px-0.5 font-bold text-accent-pink"
-      >
+      <span key={key++} className="bg-accent-pink/20 text-accent-pink">
         {match[0]}
       </span>
     );
