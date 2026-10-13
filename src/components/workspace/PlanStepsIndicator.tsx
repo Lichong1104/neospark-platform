@@ -89,7 +89,7 @@ const PlanStepsIndicator: React.FC<PlanStepsIndicatorProps> = ({
                       : "border-accent-pink/50 bg-accent-pink/5 text-foreground/80"
                 )}
               >
-                @{step.skill_name}
+                /{step.skill_name}
               </span>
               {step.task && (
                 <span className="min-w-0 truncate text-[10px] text-muted-foreground">
