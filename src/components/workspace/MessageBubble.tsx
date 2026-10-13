@@ -196,7 +196,7 @@ interface MessageBubbleProps {
   isStreaming?: boolean;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
-  /** Skill 名称列表，用于把用户消息中的 @Skill名称 渲染为高亮 chip */
+  /** Skill 名称列表，用于把用户消息中的 /Skill名称 渲染为高亮 chip */
   mentionNames?: string[];
 }
 
@@ -204,7 +204,7 @@ function escapeRegExp(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-/** 按已知 Skill name 拆分用户消息，@提及部分渲染为高亮 chip */
+/** 按已知 Skill name 拆分用户消息，/提及部分渲染为高亮 chip */
 const MentionedUserContent: React.FC<{
   content: string;
   mentionNames?: string[];

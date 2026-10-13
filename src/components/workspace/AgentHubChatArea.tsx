@@ -78,7 +78,7 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
   const [isGeneratingFile, setIsGeneratingFile] = useState(false);
   const [expandedTools, setExpandedTools] = useState<Set<string>>(new Set());
   const [skillPopoverOpen, setSkillPopoverOpen] = useState(false);
-  /** @提及生成的任务清单（来自后端 plan 事件），随当前轮展示步骤进度 */
+  /** /提及生成的任务清单（来自后端 plan 事件），随当前轮展示步骤进度 */
   const [plan, setPlan] = useState<{ steps: PlanStep[]; continuation: boolean } | null>(null);
   /** 已完成步骤数（来自后端 step_done 事件） */
   const [completedSteps, setCompletedSteps] = useState(0);
