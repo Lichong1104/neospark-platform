@@ -90,6 +90,7 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const planTotalRef = useRef(0);
 
   const {
     isStreaming,
@@ -255,6 +256,7 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
                   : [];
                 if (steps.length > 0) {
                   setPlan({ steps, continuation: Boolean(data.continuation) });
+                  planTotalRef.current = steps.length;
                   if (!data.continuation) {
                     setCompletedSteps(0);
                   }
@@ -285,6 +287,11 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
             signal
           )
         );
+
+        // 流结束时，把任务清单标记为全部完成（模型可能漏掉最后一步的 step_done）
+        if (planTotalRef.current > 0) {
+          setCompletedSteps(planTotalRef.current);
+        }
 
         // 流正常结束但未收到任何 assistant/system 输出时给出提示
         setMessages((prev) => {
