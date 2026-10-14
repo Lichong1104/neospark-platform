@@ -3,6 +3,7 @@ import { Upload, Loader2, FileArchive } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import { getErrorMessage } from "@/lib/errorMessage";
 import skillsApi from "@/api/skills";
 import SkillAuthoringGuide from "@/components/skills/SkillAuthoringGuide";
 import {
@@ -109,7 +110,7 @@ const UploadSkillButton: React.FC<UploadSkillButtonProps> = ({ onUploaded, trigg
       setSkillId("");
       onUploaded?.();
     } catch (err: unknown) {
-      toast.error(t("skill.submitFailed"));
+      toast.error(getErrorMessage(err, t("skill.submitFailed")));
     } finally {
       setIsUploading(false);
     }
