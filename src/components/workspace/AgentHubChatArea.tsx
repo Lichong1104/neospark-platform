@@ -8,6 +8,7 @@ import {
   ExternalLink,
   ChevronDown,
   Check,
+  Bot,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -571,14 +572,21 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
           )}
 
           {videoTasks.length > 0 && (
-            <MessageVideoTaskList
-              messageId="agent-video"
-              role="agent"
-              videoTasks={videoTasks}
-              onChange={setVideoTasks}
-              hideGenerateButton
-              disableTerminalRefresh
-            />
+            <div className="flex gap-3">
+              <div className="w-7 h-7 flex-shrink-0 flex items-center justify-center border-brutal border-foreground bg-accent-pink/10">
+                <Bot className="w-3.5 h-3.5 text-accent-pink" />
+              </div>
+              <div className="max-w-[85%] min-w-0 flex-1">
+                <MessageVideoTaskList
+                  messageId="agent-video"
+                  role="agent"
+                  videoTasks={videoTasks}
+                  onChange={setVideoTasks}
+                  hideGenerateButton
+                  disableTerminalRefresh
+                />
+              </div>
+            </div>
           )}
 
           <div ref={messagesEndRef} className="h-px" />
