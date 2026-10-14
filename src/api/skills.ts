@@ -19,6 +19,7 @@ interface BackendSkill {
   metadata?: Record<string, unknown> | null;
   is_public?: boolean;
   owner_id?: number | null;
+  is_active?: boolean;
   price_points?: number;
   execution_mode?: string;
   scripts?: Record<string, string>;
@@ -48,7 +49,8 @@ function toSkillMeta(skill: BackendSkill): SkillMeta {
     author,
     tags,
     skill_type: skill.owner_id ? "user" : "system",
-    is_active: true,
+    is_active: skill.is_active ?? true,
+    owner_id: skill.owner_id ?? null,
     credit_cost_per_call: skill.price_points ?? 0,
     execution_mode: skill.execution_mode,
   };
@@ -100,10 +102,30 @@ export async function listMySubmissions(): Promise<SkillSubmissionItem[]> {
 }
 
 /**
- * 删除 Skill（管理员）
+ * 更新 Skill 名称 / 简介（管理员或所有者）
+ */
+export async function updateSkill(
+  skillId: string,
+  body: { name?: string; description?: string }
+): Promise<ApiResponse<unknown>> {
+  return http.patch(`/agents/skills/${skillId}`, body);
+}
+
+/**
+ * 停用 / 启用 Skill（管理员或所有者）
+ */
+export async function toggleSkillStatus(
+  skillId: string,
+  isActive: boolean
+): Promise<ApiResponse<unknown>> {
+  return http.patch(`/agents/skills/${skillId}/status`, { is_active: isActive });
+}
+
+/**
+ * 删除 Skill（管理员或所有者）
  */
 export async function deleteSkill(skillId: string): Promise<ApiResponse<unknown>> {
-  return http.del(`/agents/admin/skills/${skillId}`);
+  return http.del(`/agents/skills/${skillId}`);
 }
 
 /**
@@ -198,6 +220,8 @@ const skillsApi = {
   getSkill,
   uploadSkill,
   listMySubmissions,
+  updateSkill,
+  toggleSkillStatus,
   deleteSkill,
   createSession,
   listSessions,

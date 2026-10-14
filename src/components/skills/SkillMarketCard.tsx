@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Wrench, Shield, User, ArrowRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { SkillMeta } from "@/types/skills";
+import SkillManageMenu from "@/components/skills/SkillManageMenu";
 
 interface SkillMarketCardProps {
   skill: SkillMeta;
@@ -54,17 +55,25 @@ const SkillMarketCard: React.FC<SkillMarketCardProps> = ({ skill }) => {
               </div>
             </div>
           </div>
-          {skill.skill_type === "system" ? (
-            <div className="flex items-center gap-1 text-[10px] text-accent-cyan shrink-0">
-              <Shield className="w-3 h-3" />
-              {t("skill.system")}
-            </div>
-          ) : (
-            <div className="flex items-center gap-1 text-[10px] text-accent-yellow shrink-0">
-              <User className="w-3 h-3" />
-              {t("skill.custom")}
-            </div>
-          )}
+          <div className="flex items-center gap-2 shrink-0">
+            {!skill.is_active && (
+              <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase border border-accent-red/60 text-accent-red">
+                {t("skill.inactive")}
+              </span>
+            )}
+            {skill.skill_type === "system" ? (
+              <div className="flex items-center gap-1 text-[10px] text-accent-cyan shrink-0">
+                <Shield className="w-3 h-3" />
+                {t("skill.system")}
+              </div>
+            ) : (
+              <div className="flex items-center gap-1 text-[10px] text-accent-yellow shrink-0">
+                <User className="w-3 h-3" />
+                {t("skill.custom")}
+              </div>
+            )}
+            <SkillManageMenu skill={skill} />
+          </div>
         </div>
 
         <p className="text-xs text-muted-foreground leading-relaxed mb-3 line-clamp-3 flex-1">

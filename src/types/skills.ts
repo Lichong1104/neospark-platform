@@ -8,6 +8,8 @@ export interface SkillMeta {
   tags: string[];
   skill_type: "system" | "user";
   is_active: boolean;
+  /** 上传者用户 ID（系统内置 Skill 为 null），用于「自己上传」判断 */
+  owner_id?: number | null;
   credit_cost_per_call: number;
   icon?: string;
   /** 执行模式：inline（进程内代码块）/ subprocess（子进程脚本） */
