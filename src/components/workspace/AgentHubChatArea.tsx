@@ -577,6 +577,7 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
               videoTasks={videoTasks}
               onChange={setVideoTasks}
               hideGenerateButton
+              disableTerminalRefresh
             />
           )}
 

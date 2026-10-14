@@ -432,6 +432,8 @@ interface MessageVideoTaskListProps {
   videoTasks?: VideoTaskSummary[];
   onChange?: (tasks: VideoTaskSummary[]) => void;
   hideGenerateButton?: boolean;
+  /** Agent 流程没有对应的绘画消息，任务终止时不要调 drawing 接口刷新 */
+  disableTerminalRefresh?: boolean;
   className?: string;
 }
 
@@ -443,6 +445,7 @@ const MessageVideoTaskList: React.FC<MessageVideoTaskListProps> = ({
   videoTasks = [],
   onChange,
   hideGenerateButton = false,
+  disableTerminalRefresh = false,
   className,
 }) => {
   const handleTaskUpdate = (updated: VideoTaskSummary) => {
@@ -450,6 +453,7 @@ const MessageVideoTaskList: React.FC<MessageVideoTaskListProps> = ({
   };
 
   const handleTaskTerminal = async () => {
+    if (disableTerminalRefresh) return;
     try {
       const detail = await drawingApi.getMessageStatus(messageId);
       onChange?.(detail.video_tasks ?? []);
