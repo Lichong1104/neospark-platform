@@ -27,6 +27,8 @@ import StreamingIndicator from "./StreamingIndicator";
 import MentionTextarea from "./MentionTextarea";
 import PlanStepsIndicator, { type PlanStep } from "./PlanStepsIndicator";
 import ConfirmCard from "./ConfirmCard";
+import MessageVideoTaskList from "./MessageVideoTaskList";
+import type { VideoTaskSummary, VideoTaskStatus, VideoResolution } from "@/types/video";
 
 interface AgentHubChatAreaProps {
   onImagesGenerated?: (images: { url: string; local_path: string }[]) => void;
@@ -87,6 +89,8 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
     question: string;
     options: string[];
   } | null>(null);
+  /** 本轮视频生成任务（来自 video_task 事件），渲染进度卡片 */
+  const [videoTasks, setVideoTasks] = useState<VideoTaskSummary[]>([]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -192,6 +196,7 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
       appendMessage(userMsg);
       setPlan(null);
       setPendingConfirm(null);
+      setVideoTasks([]);
 
       const isDocxOnly =
         selectedSkills.length === 1 && selectedSkills[0] === "docx-generator";
@@ -277,6 +282,32 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
                     ? (data.options as unknown[]).map(String)
                     : [],
                 });
+              }
+              if (event === "video_task") {
+                const taskId = String(data.task_id ?? "");
+                if (taskId) {
+                  setVideoTasks((prev) => {
+                    if (prev.some((t) => t.task_id === taskId)) return prev;
+                    return [
+                      ...prev,
+                      {
+                        task_id: taskId,
+                        status: (data.status as VideoTaskStatus) || "pending",
+                        progress: 0,
+                        model:
+                          typeof data.model === "string" ? data.model : undefined,
+                        duration:
+                          typeof data.duration === "number"
+                            ? data.duration
+                            : undefined,
+                        ratio:
+                          typeof data.ratio === "string" ? data.ratio : undefined,
+                        resolution: (data.resolution as VideoResolution) || undefined,
+                        created_at: new Date().toISOString(),
+                      },
+                    ];
+                  });
+                }
               }
               if (event === "error") {
                 toast.error(
@@ -536,6 +567,16 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
               options={pendingConfirm.options}
               disabled={isStreaming}
               onSelect={handleConfirmOption}
+            />
+          )}
+
+          {videoTasks.length > 0 && (
+            <MessageVideoTaskList
+              messageId="agent-video"
+              role="agent"
+              videoTasks={videoTasks}
+              onChange={setVideoTasks}
+              hideGenerateButton
             />
           )}
 
