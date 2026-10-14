@@ -1322,7 +1322,7 @@
     "clickOrDrop": "点击选择，或将 .zip / .md 文件拖入此处",
     "dropHere": "松开鼠标以上传",
     "fileTypeInvalid": "仅支持 .zip 或 .md 文件",
-    "submitSuccess": "Skill {{name}} 已提交，等待管理员审核",
+    "submitSuccess": "Skill {{name}}（{{skillId}}）已提交，等待管理员审核",
     "submitFailed": "提交失败",
     "confirmSubmit": "提交审核",
     "mySubmissions": "我的提交",
@@ -1427,7 +1427,7 @@
                   "id",
                   "是*",
                   "文件名",
-                  "全局唯一标识：小写字母/数字/中划线/下划线；单 .md 提交可省略，以文件名代替"
+                  "全局唯一标识：小写字母/数字/中划线/下划线；不要在 id 里加版本号（版本用 version 字段）；单 .md 提交可省略，以文件名代替"
                 ],
                 [
                   "name",

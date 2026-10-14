@@ -1320,7 +1320,7 @@
     "clickOrDrop": "Click to select, or drag a .zip / .md file here",
     "dropHere": "Release to upload",
     "fileTypeInvalid": "Only .zip or .md files are supported",
-    "submitSuccess": "Skill {{name}} submitted. Waiting for admin review.",
+    "submitSuccess": "Skill {{name}} ({{skillId}}) submitted. Waiting for admin review.",
     "submitFailed": "Submission failed",
     "confirmSubmit": "Submit for Review",
     "mySubmissions": "My Submissions",
@@ -1427,7 +1427,7 @@
                   "id",
                   "Yes*",
                   "file name",
-                  "Globally unique ID: lowercase letters/digits/dashes/underscores; *optional for a single .md submission (file name is used)"
+                  "Globally unique ID: lowercase letters/digits/dashes/underscores; do not put a version number in the id (use the version field instead); *optional for a single .md submission (file name is used)"
                 ],
                 [
                   "name",

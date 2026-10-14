@@ -104,7 +104,7 @@ const UploadSkillButton: React.FC<UploadSkillButtonProps> = ({ onUploaded, trigg
       formData.append("skill_id", skillId.trim());
 
       const result = await skillsApi.uploadSkill(formData);
-      toast.success(t("skill.submitSuccess", { name: result.name }));
+      toast.success(t("skill.submitSuccess", { name: result.name, skillId: result.skill_id }));
       setIsOpen(false);
       setSelectedFile(null);
       setSkillId("");
