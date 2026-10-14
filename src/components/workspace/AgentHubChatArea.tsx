@@ -44,7 +44,7 @@ interface AgentHubChatAreaProps {
   onInitialRequestConsumed?: () => void;
 }
 
-const DEFAULT_AGENT_MODEL = "gemini:gemini-2.5-pro";
+const DEFAULT_AGENT_MODEL = "deepseek:deepseek-chat";
 
 function looksLikeFileGeneration(content: string): boolean {
   const trimmed = content.trim();
