@@ -215,6 +215,30 @@ export async function executeStream(
   }
 }
 
+/**
+ * 下载 Skill 的 MCP 使用包（zip blob，需自行触发下载）
+ *
+ * 包里自带当前用户对该 Skill 的调用密钥与客户端配置，解压后可直接在
+ * Claude Code / Codex 里接入，且只暴露这一个技能。
+ *
+ * 注意：每次下载都会轮换密钥，之前下载的包会随之失效。
+ */
+export async function downloadMcpBundle(skillId: string): Promise<Blob> {
+  const { default: axios } = await import("axios");
+  const { BASE_URL } = await import("./request");
+  const { getToken } = await import("./token");
+  const token = getToken();
+  const response = await axios.get(
+    `${BASE_URL}/agents/skills/${encodeURIComponent(skillId)}/mcp-bundle`,
+    {
+      responseType: "blob",
+      withCredentials: true,
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    }
+  );
+  return response.data;
+}
+
 const skillsApi = {
   listSkills,
   getSkill,
@@ -223,6 +247,7 @@ const skillsApi = {
   updateSkill,
   toggleSkillStatus,
   deleteSkill,
+  downloadMcpBundle,
   createSession,
   listSessions,
   getSessionMessages,

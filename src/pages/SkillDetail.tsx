@@ -9,6 +9,7 @@ import {
   Tag,
   Trash2,
   Loader2,
+  Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -19,6 +20,7 @@ const SkillDetail: React.FC = () => {
   const navigate = useNavigate();
   const { skillId } = useParams<{ skillId: string }>();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const { data: skill, isLoading } = useQuery({
     queryKey: ["skill", skillId],
@@ -39,6 +41,28 @@ const SkillDetail: React.FC = () => {
       toast.error(t("skill.deleteFailed"));
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleDownloadBundle = async () => {
+    if (!skillId) return;
+
+    setIsDownloading(true);
+    try {
+      const blob = await skillsApi.downloadMcpBundle(skillId);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `neospark-${skillId}-mcp.zip`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      toast.success(t("skill.downloadMcpBundleSuccess"));
+    } catch {
+      toast.error(t("skill.downloadMcpBundleFailed"));
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -110,25 +134,46 @@ const SkillDetail: React.FC = () => {
                   </div>
                 </div>
               </div>
-              {skill.skill_type === "user" && (
+              <div className="flex items-center gap-2 shrink-0">
                 <button
-                  onClick={handleDelete}
-                  disabled={isDeleting}
+                  onClick={handleDownloadBundle}
+                  disabled={isDownloading}
+                  title={t("skill.downloadMcpBundleHint")}
                   className={cn(
                     "h-8 px-3 flex items-center gap-1.5 border-brutal border-foreground text-xs font-bold uppercase transition-none",
-                    isDeleting
+                    isDownloading
                       ? "bg-muted text-muted-foreground cursor-not-allowed"
-                      : "bg-accent-red/10 text-accent-red hover:bg-accent-red/20"
+                      : "bg-card text-foreground hover:bg-secondary"
                   )}
                 >
-                  {isDeleting ? (
+                  {isDownloading ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   ) : (
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Download className="w-3.5 h-3.5" />
                   )}
-                  {t("skill.delete")}
+                  {t("skill.downloadMcpBundle")}
                 </button>
-              )}
+
+                {skill.skill_type === "user" && (
+                  <button
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                    className={cn(
+                      "h-8 px-3 flex items-center gap-1.5 border-brutal border-foreground text-xs font-bold uppercase transition-none",
+                      isDeleting
+                        ? "bg-muted text-muted-foreground cursor-not-allowed"
+                        : "bg-accent-red/10 text-accent-red hover:bg-accent-red/20"
+                    )}
+                  >
+                    {isDeleting ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-3.5 h-3.5" />
+                    )}
+                    {t("skill.delete")}
+                  </button>
+                )}
+              </div>
             </div>
 
             <p className="text-sm text-muted-foreground leading-relaxed mb-4"
