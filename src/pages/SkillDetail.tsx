@@ -18,6 +18,7 @@ import skillsApi from "@/api/skills";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMcpBundleDownload } from "@/hooks/useMcpBundleDownload";
 import ConfirmDialog from "@/components/ui/confirm-dialog";
+import McpBundleDialog from "@/components/skills/McpBundleDialog";
 const SkillDetail: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -25,7 +26,7 @@ const SkillDetail: React.FC = () => {
   const { skillId } = useParams<{ skillId: string }>();
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const { downloading, download } = useMcpBundleDownload();
+  const { downloading, download, bundle, closeBundle } = useMcpBundleDownload();
 
   const { data: skill, isLoading } = useQuery({
     queryKey: ["skill", skillId],
@@ -322,6 +323,14 @@ const SkillDetail: React.FC = () => {
         destructive
         loading={isDeleting}
         onConfirm={() => void handleDelete()}
+      />
+
+      <McpBundleDialog
+        bundle={bundle}
+        skillName={skill.name}
+        onOpenChange={(open) => {
+          if (!open) closeBundle();
+        }}
       />
     </div>
   );

@@ -4,6 +4,7 @@ import { Wrench, Shield, User, ArrowRight, Download, Loader2 } from "lucide-reac
 import { useTranslation } from "react-i18next";
 import type { SkillMeta } from "@/types/skills";
 import SkillManageMenu from "@/components/skills/SkillManageMenu";
+import McpBundleDialog from "@/components/skills/McpBundleDialog";
 import { useMcpBundleDownload } from "@/hooks/useMcpBundleDownload";
 
 interface SkillMarketCardProps {
@@ -24,7 +25,7 @@ function bandColorOf(skillId: string): string {
 const SkillMarketCard: React.FC<SkillMarketCardProps> = ({ skill }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { downloading, download } = useMcpBundleDownload();
+  const { downloading, download, bundle, closeBundle } = useMcpBundleDownload();
   const isSubprocess = skill.execution_mode === "subprocess";
 
   // 停用的技能用灰底标题栏，一眼能从一屏卡片里挑出来
@@ -122,6 +123,14 @@ const SkillMarketCard: React.FC<SkillMarketCardProps> = ({ skill }) => {
           </div>
         </div>
       </div>
+
+      <McpBundleDialog
+        bundle={bundle}
+        skillName={skill.name}
+        onOpenChange={(open) => {
+          if (!open) closeBundle();
+        }}
+      />
     </div>
   );
 };
