@@ -10,7 +10,8 @@ export interface SkillMeta {
   is_active: boolean;
   /** 上传者用户 ID（系统内置 Skill 为 null），用于「自己上传」判断 */
   owner_id?: number | null;
-  credit_cost_per_call: number;
+  /** 每次调用的固定扣费积分；0 表示按 token 用量实扣（见 docs/PRICING.md 第七节） */
+  price_points?: number;
   icon?: string;
   /** 执行模式：inline（进程内代码块）/ subprocess（子进程脚本） */
   execution_mode?: string;

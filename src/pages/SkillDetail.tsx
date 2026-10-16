@@ -34,6 +34,8 @@ const SkillDetail: React.FC = () => {
     enabled: !!skillId,
   });
 
+  const pricePoints = skill?.price_points ?? 0;
+
   // 删除由后端做管理员/所有者校验，前端也只对能管理的人露出入口，
   // 避免非所有者点出一个必然失败的按钮
   const canManage = !!(
@@ -197,9 +199,9 @@ const SkillDetail: React.FC = () => {
                 </div>
                 <div className="text-sm font-mono"
                 >
-                  {skill.credit_cost_per_call > 0
-                    ? `${skill.credit_cost_per_call} pts`
-                    : t("skill.free")}
+                  {pricePoints > 0
+                    ? t("skill.costPoints", { count: pricePoints })
+                    : t("skill.metered")}
                 </div>
               </div>
               <div

@@ -51,7 +51,7 @@ function toSkillMeta(skill: BackendSkill): SkillMeta {
     skill_type: skill.owner_id ? "user" : "system",
     is_active: skill.is_active ?? true,
     owner_id: skill.owner_id ?? null,
-    credit_cost_per_call: skill.price_points ?? 0,
+    price_points: skill.price_points ?? 0,
     execution_mode: skill.execution_mode,
   };
 }

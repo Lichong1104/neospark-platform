@@ -1315,6 +1315,7 @@
     "system": "System",
     "custom": "Custom",
     "free": "Free",
+    "metered": "Usage-based",
     "viewDetails": "Details",
     "submit": "Submit Skill",
     "submitTitle": "Submit Skill for Review",

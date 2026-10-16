@@ -26,6 +26,7 @@ const SkillMarketCard: React.FC<SkillMarketCardProps> = ({ skill }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { downloading, download, bundle, closeBundle } = useMcpBundleDownload();
+  const pricePoints = skill.price_points ?? 0;
   const isSubprocess = skill.execution_mode === "subprocess";
 
   // 停用的技能用灰底标题栏，一眼能从一屏卡片里挑出来
@@ -95,9 +96,7 @@ const SkillMarketCard: React.FC<SkillMarketCardProps> = ({ skill }) => {
 
         <div className="mt-4 pt-3.5 border-t border-foreground/15 flex items-center justify-between gap-3">
           <span className="text-[11px] font-mono font-bold truncate">
-            {skill.credit_cost_per_call > 0
-              ? t("skill.costPoints", { count: skill.credit_cost_per_call })
-              : t("skill.free")}
+            {pricePoints > 0 ? t("skill.costPoints", { count: pricePoints }) : t("skill.metered")}
           </span>
           <div className="flex items-center gap-1.5 shrink-0">
             <button

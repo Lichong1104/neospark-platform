@@ -1315,6 +1315,7 @@
     "system": "系统",
     "custom": "自定义",
     "free": "免费",
+    "metered": "按用量计费",
     "viewDetails": "查看详情",
     "upload": "上传",
     "uploadTitle": "上传 Skill",
