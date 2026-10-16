@@ -10,133 +10,111 @@ interface SkillMarketCardProps {
   skill: SkillMeta;
 }
 
-/** 由 skill_id 哈希得出稳定的强调色，保证同一卡片颜色不变 */
-const ACCENTS = [
-  { bg: "bg-accent-pink", text: "text-accent-pink" },
-  { bg: "bg-accent-cyan", text: "text-accent-cyan" },
-  { bg: "bg-accent-yellow", text: "text-accent-yellow" },
-  { bg: "bg-green-500", text: "text-green-600" },
-] as const;
+/** 由 skill_id 哈希得出稳定的标题栏配色，保证同一卡片颜色不变 */
+const BAND_COLORS = ["bg-accent-pink", "bg-accent-cyan", "bg-accent-yellow", "bg-green-500"] as const;
 
-function accentOf(skillId: string) {
+function bandColorOf(skillId: string): string {
   let hash = 0;
   for (let i = 0; i < skillId.length; i += 1) {
     hash = (hash * 31 + skillId.charCodeAt(i)) >>> 0;
   }
-  return ACCENTS[hash % ACCENTS.length];
+  return BAND_COLORS[hash % BAND_COLORS.length];
 }
 
 const SkillMarketCard: React.FC<SkillMarketCardProps> = ({ skill }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { downloading, download } = useMcpBundleDownload();
-  const accent = accentOf(skill.skill_id);
   const isSubprocess = skill.execution_mode === "subprocess";
 
+  // 停用的技能用灰底标题栏，一眼能从一屏卡片里挑出来
+  const bandClass = skill.is_active ? bandColorOf(skill.skill_id) : "bg-muted";
+
   return (
-    <div className="group bg-card border-brutal border-foreground brutal-shadow flex flex-col hover:brightness-105">
-      <div className="p-4 flex flex-col flex-1">
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div
-              className={`w-10 h-10 shrink-0 ${accent.bg} flex items-center justify-center border-brutal border-foreground`}
-            >
-              <Wrench className="w-5 h-5 text-foreground" />
-            </div>
-            <div className="min-w-0">
-              <h3 className="font-bold text-sm uppercase tracking-wide truncate">
-                {skill.name}
-              </h3>
-              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                <span className="font-mono">v{skill.version}</span>
-                <span>·</span>
-                <span className="truncate">{skill.author}</span>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            {!skill.is_active && (
-              <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase border border-accent-red/60 text-accent-red">
-                {t("skill.inactive")}
-              </span>
-            )}
-            {skill.skill_type === "system" ? (
-              <div className="flex items-center gap-1 text-[10px] text-accent-cyan shrink-0">
-                <Shield className="w-3 h-3" />
-                {t("skill.system")}
-              </div>
-            ) : (
-              <div className="flex items-center gap-1 text-[10px] text-accent-yellow shrink-0">
-                <User className="w-3 h-3" />
-                {t("skill.custom")}
-              </div>
-            )}
-            <SkillManageMenu skill={skill} />
+    <div className="bg-card border-brutal border-foreground brutal-shadow flex flex-col">
+      {/* 标题栏：技能名是这张卡片的主角 */}
+      <div className={`flex items-center gap-3 px-5 py-3.5 ${bandClass} border-b-brutal border-foreground`}>
+        <div className="w-10 h-10 shrink-0 bg-card flex items-center justify-center border-brutal border-foreground">
+          <Wrench className="w-5 h-5 text-foreground" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="font-bold text-[15px] leading-snug truncate">{skill.name}</h3>
+          <div className="mt-0.5 text-[10px] font-mono text-foreground/70 truncate">
+            v{skill.version} · {skill.author}
           </div>
         </div>
+        <SkillManageMenu skill={skill} />
+      </div>
 
-        <p className="text-xs text-muted-foreground leading-relaxed mb-3 line-clamp-3 flex-1">
+      <div className="px-5 py-4 flex flex-col flex-1">
+        <div className="flex flex-wrap items-center gap-1.5">
+          {!skill.is_active && (
+            <span className="px-1.5 py-0.5 text-[10px] font-bold border border-accent-red/60 text-accent-red">
+              {t("skill.inactive")}
+            </span>
+          )}
+          <span
+            className={`flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-bold border shrink-0 ${
+              skill.skill_type === "system"
+                ? "border-accent-cyan/50 text-accent-cyan"
+                : "border-accent-yellow/60 text-accent-yellow"
+            }`}
+          >
+            {skill.skill_type === "system" ? <Shield className="w-3 h-3" /> : <User className="w-3 h-3" />}
+            {skill.skill_type === "system" ? t("skill.system") : t("skill.custom")}
+          </span>
+          {skill.execution_mode && (
+            <span className="px-1.5 py-0.5 text-[10px] font-mono border border-foreground/25 text-muted-foreground shrink-0">
+              {isSubprocess ? t("skill.mode.subprocess") : t("skill.mode.inline")}
+            </span>
+          )}
+        </div>
+
+        <p className="mt-2.5 text-xs text-muted-foreground leading-relaxed line-clamp-3 flex-1">
           {skill.description}
         </p>
 
         {skill.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-3">
+          <div className="mt-3.5 flex flex-wrap gap-1.5">
             {skill.tags.slice(0, 4).map((tag) => (
               <span
                 key={tag}
-                className="px-1.5 py-0.5 text-[10px] font-bold uppercase border border-foreground/30 bg-background"
+                className="px-1.5 py-0.5 text-[10px] font-bold tracking-wide border border-foreground/25 bg-secondary/60 text-muted-foreground"
               >
                 {tag}
               </span>
             ))}
             {skill.tags.length > 4 && (
-              <span className="px-1.5 py-0.5 text-[10px] text-muted-foreground">
+              <span className="px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground">
                 +{skill.tags.length - 4}
               </span>
             )}
           </div>
         )}
 
-        <div className="flex items-center justify-between gap-2 pt-2 border-t border-foreground/10">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-[10px] font-mono text-muted-foreground truncate">
-              {skill.credit_cost_per_call > 0
-                ? t("skill.costPoints", { count: skill.credit_cost_per_call })
-                : t("skill.free")}
-            </span>
-            {skill.execution_mode && (
-              <span
-                className={`px-1 py-0.5 text-[9px] font-mono font-bold uppercase border ${
-                  isSubprocess
-                    ? "border-accent-cyan/60 text-accent-cyan"
-                    : "border-foreground/30 text-muted-foreground"
-                }`}
-              >
-                {isSubprocess ? t("skill.mode.subprocess") : t("skill.mode.inline")}
-              </span>
-            )}
-          </div>
+        <div className="mt-4 pt-3.5 border-t border-foreground/15 flex items-center justify-between gap-3">
+          <span className="text-[11px] font-mono font-bold truncate">
+            {skill.credit_cost_per_call > 0
+              ? t("skill.costPoints", { count: skill.credit_cost_per_call })
+              : t("skill.free")}
+          </span>
           <div className="flex items-center gap-1.5 shrink-0">
             <button
               onClick={() => void download(skill.skill_id)}
               disabled={downloading}
               title={t("skill.downloadMcpBundleHint")}
               aria-label={t("skill.downloadMcpBundle")}
-              className={`h-7 w-7 flex items-center justify-center border-brutal border-foreground transition-none ${
+              className={`h-8 w-8 flex items-center justify-center border-brutal border-foreground transition-none ${
                 downloading
                   ? "bg-muted text-muted-foreground cursor-not-allowed"
-                  : "bg-card text-foreground brutal-press hover:bg-secondary"
+                  : "bg-card brutal-press hover:bg-secondary"
               }`}
             >
-              {downloading ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <Download className="w-3.5 h-3.5" />
-              )}
+              {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
             </button>
             <button
               onClick={() => navigate(`/skills/${skill.skill_id}`)}
-              className="h-7 px-2.5 flex items-center gap-1 border-brutal border-foreground brutal-press bg-card text-xs font-bold uppercase tracking-wider transition-none hover:bg-secondary"
+              className="h-8 px-3 flex items-center gap-1.5 border-brutal border-foreground brutal-press bg-foreground text-background text-[11px] font-bold uppercase tracking-wider transition-none hover:bg-foreground/90"
             >
               {t("skill.viewDetails")}
               <ArrowRight className="w-3.5 h-3.5" />

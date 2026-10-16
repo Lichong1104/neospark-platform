@@ -128,9 +128,8 @@ const SkillManageMenu: React.FC<SkillManageMenuProps> = ({ skill }) => {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
-            onClick={(e) => e.stopPropagation()}
             aria-label={t("skill.manage")}
-            className="w-6 h-6 flex items-center justify-center border border-foreground/20 bg-card hover:bg-secondary transition-none shrink-0"
+            className="w-7 h-7 shrink-0 flex items-center justify-center border-brutal border-foreground bg-card hover:bg-secondary transition-none"
           >
             <MoreVertical className="w-3.5 h-3.5" />
           </button>
