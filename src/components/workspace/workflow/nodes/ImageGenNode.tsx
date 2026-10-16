@@ -15,14 +15,16 @@ import {
   type ModelsConfigMap,
 } from "@/types/drawing";
 import type { WorkflowNode } from "@/lib/workflow/types";
+import { WORKFLOW_NODE_MIN } from "@/lib/workflow/types";
 import { NodeCard, NodeSelect } from "./common";
 
 const DEFAULT_RESOLUTIONS = ["1K", "2K", "4K"];
 const DEFAULT_RATIOS = ["1:1", "16:9", "9:16"];
 
-function ImageGenNodeImpl({ id, data }: NodeProps<WorkflowNode>) {
+function ImageGenNodeImpl({ id, data, selected }: NodeProps<WorkflowNode>) {
   const { t } = useTranslation();
   const { updateNodeData, getNodes, getEdges } = useReactFlow();
+  const { minW, minH } = WORKFLOW_NODE_MIN.imageGen;
 
   const [modelsConfig, setModelsConfig] = useState<ModelsConfigMap | null>(null);
   const [model, setModel] = useState(DEFAULT_DRAWING_MODEL);
@@ -171,6 +173,7 @@ function ImageGenNodeImpl({ id, data }: NodeProps<WorkflowNode>) {
       status={status}
       icon={<ImageIcon className="h-3.5 w-3.5" />}
       accent="bg-accent-cyan"
+      resize={{ isVisible: selected, minWidth: minW, minHeight: minH }}
       hasTarget
       hasSource
       action={
@@ -189,20 +192,20 @@ function ImageGenNodeImpl({ id, data }: NodeProps<WorkflowNode>) {
         </button>
       }
     >
-      <div className="space-y-2.5">
-        <div className="flex flex-col gap-1">
-          <span className="text-[9px] font-bold uppercase text-muted-foreground">
+      <div className="flex min-h-0 flex-1 flex-col gap-2.5">
+        <div className="flex min-h-0 flex-1 flex-col gap-1">
+          <span className="shrink-0 text-[9px] font-bold uppercase text-muted-foreground">
             {t("workflow.prompt")}
           </span>
           <textarea
             value={inlinePrompt}
             onChange={(e) => setInlinePrompt(e.target.value)}
             placeholder={t("workflow.promptPlaceholder")}
-            className="nodrag min-h-14 w-full resize-y rounded border border-foreground/20 bg-background p-2 text-xs leading-relaxed text-foreground outline-none transition-colors focus:border-foreground/50"
+            className="nodrag min-h-14 w-full flex-1 resize-none rounded border border-foreground/20 bg-background p-2 text-xs leading-relaxed text-foreground outline-none transition-colors focus:border-foreground/50"
           />
         </div>
 
-        <div className="grid grid-cols-3 gap-1.5">
+        <div className="grid shrink-0 grid-cols-3 gap-1.5">
           <NodeSelect
             label={t("workflow.model")}
             value={model}
@@ -227,17 +230,17 @@ function ImageGenNodeImpl({ id, data }: NodeProps<WorkflowNode>) {
           <img
             src={preview}
             alt=""
-            className="h-28 w-full rounded border border-foreground/20 object-cover"
+            className="min-h-28 w-full flex-1 rounded border border-foreground/20 object-cover"
           />
         ) : status === "running" ? (
-          <div className="flex h-14 items-center justify-center gap-2 rounded border border-dashed border-foreground/20 text-[10px] text-muted-foreground">
+          <div className="flex min-h-14 flex-1 items-center justify-center gap-2 rounded border border-dashed border-foreground/20 text-[10px] text-muted-foreground">
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
             {t("workflow.generating")}
           </div>
         ) : null}
 
         {data.error ? (
-          <p className="text-[10px] leading-snug text-accent-pink">{data.error}</p>
+          <p className="shrink-0 text-[10px] leading-snug text-accent-pink">{data.error}</p>
         ) : null}
       </div>
     </NodeCard>

@@ -7,13 +7,15 @@ import { uploadFile } from "@/api/storage";
 import { getErrorMessage } from "@/lib/errorMessage";
 import { toFullUrl } from "@/lib/workflow/url";
 import { NodeCard } from "./common";
+import { WORKFLOW_NODE_MIN } from "@/lib/workflow/types";
 import type { WorkflowNode } from "@/lib/workflow/types";
 
-function ImageInputNodeImpl({ id, data }: NodeProps<WorkflowNode>) {
+function ImageInputNodeImpl({ id, data, selected }: NodeProps<WorkflowNode>) {
   const { t } = useTranslation();
   const { updateNodeData } = useReactFlow();
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const { minW, minH } = WORKFLOW_NODE_MIN.imageInput;
 
   const onUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -38,26 +40,27 @@ function ImageInputNodeImpl({ id, data }: NodeProps<WorkflowNode>) {
       showStatus={false}
       icon={<ImageIcon className="h-3.5 w-3.5" />}
       accent="bg-accent-orange"
+      resize={{ isVisible: selected, minWidth: minW, minHeight: minH }}
       hasSource
     >
-      <div className="space-y-2">
+      <div className="flex min-h-0 flex-1 flex-col gap-2">
         {data.imageUrl ? (
           <img
             src={data.imageUrl}
             alt=""
-            className="h-24 w-full rounded border border-foreground/20 object-cover"
+            className="min-h-24 w-full flex-1 rounded border border-foreground/20 object-cover"
           />
         ) : (
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            className="nodrag flex h-24 w-full flex-col items-center justify-center gap-1.5 rounded border border-dashed border-foreground/30 text-muted-foreground transition-colors hover:border-foreground/50 hover:bg-secondary"
+            className="nodrag flex min-h-24 w-full flex-1 flex-col items-center justify-center gap-1.5 rounded border border-dashed border-foreground/30 text-muted-foreground transition-colors hover:border-foreground/50 hover:bg-secondary"
           >
             <ImageIcon className="h-6 w-6 opacity-40" />
             <span className="text-[10px] font-bold uppercase">{t("workflow.noImage")}</span>
           </button>
         )}
-        <div className="flex gap-1.5">
+        <div className="flex shrink-0 gap-1.5">
           <input
             value={data.imageUrl ?? ""}
             onChange={(e) => updateNodeData(id, { imageUrl: e.target.value })}

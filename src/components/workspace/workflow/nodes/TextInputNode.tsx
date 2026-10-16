@@ -1,15 +1,15 @@
 import { memo } from "react";
-import { type NodeProps, NodeResizer, useReactFlow } from "@xyflow/react";
+import { type NodeProps, useReactFlow } from "@xyflow/react";
 import { MessageSquare } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { NodeCard } from "./common";
-import { TEXT_INPUT_NODE_MIN } from "@/lib/workflow/types";
+import { WORKFLOW_NODE_MIN } from "@/lib/workflow/types";
 import type { WorkflowNode } from "@/lib/workflow/types";
 
 function TextInputNodeImpl({ id, data, selected }: NodeProps<WorkflowNode>) {
   const { t } = useTranslation();
   const { updateNodeData } = useReactFlow();
-  const { minW, minH } = TEXT_INPUT_NODE_MIN;
+  const { minW, minH } = WORKFLOW_NODE_MIN.textInput;
 
   return (
     <NodeCard
@@ -19,16 +19,9 @@ function TextInputNodeImpl({ id, data, selected }: NodeProps<WorkflowNode>) {
       showStatus={false}
       icon={<MessageSquare className="h-3.5 w-3.5" />}
       accent="bg-accent-green"
+      resize={{ isVisible: selected, minWidth: minW, minHeight: minH }}
       hasSource
     >
-      {/* 提示词长短差异极大，这个节点整体可以自由拖拽缩放 */}
-      <NodeResizer
-        isVisible={selected}
-        minWidth={minW}
-        minHeight={minH}
-        lineClassName="!border-accent-cyan"
-        handleClassName="!h-2.5 !w-2.5 !rounded-none !border !border-foreground !bg-accent-cyan"
-      />
       <div className="flex min-h-0 flex-1 flex-col gap-1">
         <span className="shrink-0 text-[9px] font-bold uppercase text-muted-foreground">
           {t("workflow.prompt")}

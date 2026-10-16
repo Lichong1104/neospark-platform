@@ -1,5 +1,5 @@
 import { useCallback, type ReactNode } from "react";
-import { Handle, Position, useReactFlow } from "@xyflow/react";
+import { Handle, NodeResizer, Position, useReactFlow } from "@xyflow/react";
 import { X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
@@ -30,6 +30,7 @@ export function NodeCard({
   hasSource = false,
   showStatus = true,
   action,
+  resize,
 }: {
   id: string;
   label: string;
@@ -41,6 +42,8 @@ export function NodeCard({
   hasSource?: boolean;
   showStatus?: boolean;
   action?: ReactNode;
+  /** 传了就给这个节点装缩放手柄 */
+  resize?: { isVisible: boolean; minWidth: number; minHeight: number };
 }) {
   const { t } = useTranslation();
   const { setNodes, setEdges } = useReactFlow();
@@ -61,6 +64,16 @@ export function NodeCard({
         status === "error" && "border-accent-pink"
       )}
     >
+      {/* 手柄必须挂在根元素下：内容区是 overflow 容器，放里面会被裁掉 */}
+      {resize ? (
+        <NodeResizer
+          isVisible={resize.isVisible}
+          minWidth={resize.minWidth}
+          minHeight={resize.minHeight}
+          lineClassName="!border-accent-cyan"
+          handleClassName="!h-2.5 !w-2.5 !rounded-none !border !border-foreground !bg-accent-cyan"
+        />
+      ) : null}
       <div className={cn("h-1.5 w-full shrink-0", accent)} />
       <header className="flex shrink-0 items-center gap-2 border-b-brutal border-foreground px-2.5 py-2">
         <span
@@ -100,7 +113,8 @@ export function NodeCard({
           <X className="h-3 w-3" />
         </button>
       </header>
-      <div className="flex min-h-0 flex-1 flex-col p-2.5">{children}</div>
+      {/* nowheel：内容超出节点高度时让这里自己滚，别触发画布缩放 */}
+      <div className="nowheel flex min-h-0 flex-1 flex-col overflow-y-auto p-2.5">{children}</div>
       {hasTarget && <Handle type="target" position={Position.Left} id="in" />}
       {hasSource && <Handle type="source" position={Position.Right} id="out" />}
     </div>

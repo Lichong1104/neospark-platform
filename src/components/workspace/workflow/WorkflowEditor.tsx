@@ -65,8 +65,8 @@ export function WorkflowEditor() {
         type,
         position: position ?? { x: 120 + stagger, y: 100 + stagger },
         data: { status: "idle" },
-        // 文本输入节点整体可缩放，得有个显式高度当起点；其余节点高度随内容撑开
-        style: type === "textInput" ? { width: size.w, height: size.h } : { width: size.w },
+        // 所有节点都可缩放，建出来就带显式宽高，好让缩放手柄有个起点
+        style: { width: size.w, height: size.h },
       };
       setNodes((nds) => nds.concat(node));
     },
@@ -95,7 +95,7 @@ export function WorkflowEditor() {
           status: "idle",
           [type === "image" ? "imageUrl" : "videoUrl"]: src,
         },
-        style: { width: size.w },
+        style: { width: size.w, height: size.h },
       };
       setNodes((nds) => nds.concat(node));
     },
