@@ -1,13 +1,15 @@
 import { memo } from "react";
-import { type NodeProps, useReactFlow } from "@xyflow/react";
+import { type NodeProps, NodeResizer, useReactFlow } from "@xyflow/react";
 import { MessageSquare } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { NodeCard } from "./common";
+import { TEXT_INPUT_NODE_MIN } from "@/lib/workflow/types";
 import type { WorkflowNode } from "@/lib/workflow/types";
 
-function TextInputNodeImpl({ id, data }: NodeProps<WorkflowNode>) {
+function TextInputNodeImpl({ id, data, selected }: NodeProps<WorkflowNode>) {
   const { t } = useTranslation();
   const { updateNodeData } = useReactFlow();
+  const { minW, minH } = TEXT_INPUT_NODE_MIN;
 
   return (
     <NodeCard
@@ -19,15 +21,23 @@ function TextInputNodeImpl({ id, data }: NodeProps<WorkflowNode>) {
       accent="bg-accent-green"
       hasSource
     >
-      <div className="flex flex-col gap-1">
-        <span className="text-[9px] font-bold uppercase text-muted-foreground">
+      {/* 提示词长短差异极大，这个节点整体可以自由拖拽缩放 */}
+      <NodeResizer
+        isVisible={selected}
+        minWidth={minW}
+        minHeight={minH}
+        lineClassName="!border-accent-cyan"
+        handleClassName="!h-2.5 !w-2.5 !rounded-none !border !border-foreground !bg-accent-cyan"
+      />
+      <div className="flex min-h-0 flex-1 flex-col gap-1">
+        <span className="shrink-0 text-[9px] font-bold uppercase text-muted-foreground">
           {t("workflow.prompt")}
         </span>
         <textarea
           value={data.text ?? ""}
           onChange={(e) => updateNodeData(id, { text: e.target.value })}
           placeholder={t("workflow.textPlaceholder")}
-          className="nodrag h-24 w-full resize-none rounded border border-foreground/20 bg-background p-2 text-xs leading-relaxed text-foreground outline-none transition-colors focus:border-foreground/50"
+          className="nodrag min-h-0 w-full flex-1 resize-none rounded border border-foreground/20 bg-background p-2 text-xs leading-relaxed text-foreground outline-none transition-colors focus:border-foreground/50"
         />
       </div>
     </NodeCard>

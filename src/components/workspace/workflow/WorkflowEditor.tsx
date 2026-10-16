@@ -65,7 +65,8 @@ export function WorkflowEditor() {
         type,
         position: position ?? { x: 120 + stagger, y: 100 + stagger },
         data: { status: "idle" },
-        style: { width: size.w },
+        // 文本输入节点整体可缩放，得有个显式高度当起点；其余节点高度随内容撑开
+        style: type === "textInput" ? { width: size.w, height: size.h } : { width: size.w },
       };
       setNodes((nds) => nds.concat(node));
     },

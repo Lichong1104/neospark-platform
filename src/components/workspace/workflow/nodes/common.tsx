@@ -57,12 +57,12 @@ export function NodeCard({
   return (
     <div
       className={cn(
-        "neo-node-card w-full border-brutal border-foreground bg-card brutal-shadow",
+        "neo-node-card flex h-full w-full flex-col border-brutal border-foreground bg-card brutal-shadow",
         status === "error" && "border-accent-pink"
       )}
     >
-      <div className={cn("h-1.5 w-full", accent)} />
-      <header className="flex items-center gap-2 border-b-brutal border-foreground px-2.5 py-2">
+      <div className={cn("h-1.5 w-full shrink-0", accent)} />
+      <header className="flex shrink-0 items-center gap-2 border-b-brutal border-foreground px-2.5 py-2">
         <span
           className={cn(
             "flex h-6 w-6 shrink-0 items-center justify-center border border-foreground",
@@ -100,7 +100,7 @@ export function NodeCard({
           <X className="h-3 w-3" />
         </button>
       </header>
-      <div className="p-2.5">{children}</div>
+      <div className="flex min-h-0 flex-1 flex-col p-2.5">{children}</div>
       {hasTarget && <Handle type="target" position={Position.Left} id="in" />}
       {hasSource && <Handle type="source" position={Position.Right} id="out" />}
     </div>

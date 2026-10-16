@@ -38,12 +38,15 @@ export type WorkflowEdge = Edge;
 
 /** 默认节点尺寸 */
 export const WORKFLOW_NODE_SIZE: Record<WorkflowNodeType, { w: number; h: number }> = {
-  textInput: { w: 260, h: 140 },
+  textInput: { w: 260, h: 200 },
   imageInput: { w: 240, h: 170 },
   videoInput: { w: 240, h: 170 },
   imageGen: { w: 320, h: 260 },
   videoGen: { w: 320, h: 260 },
 };
+
+/** 文本输入节点整体可缩放，这是拖拽下限，免得被拖到看不见 */
+export const TEXT_INPUT_NODE_MIN = { minW: 200, minH: 120 } as const;
 
 export function isGeneratorNodeType(type?: string | null): boolean {
   return type === "imageGen" || type === "videoGen";

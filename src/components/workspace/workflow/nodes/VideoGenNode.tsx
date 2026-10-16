@@ -251,7 +251,7 @@ function VideoGenNodeImpl({ id, data }: NodeProps<WorkflowNode>) {
             value={inlinePrompt}
             onChange={(e) => setInlinePrompt(e.target.value)}
             placeholder={t("workflow.promptPlaceholder")}
-            className="nodrag h-14 w-full resize-none rounded border border-foreground/20 bg-background p-2 text-xs leading-relaxed text-foreground outline-none transition-colors focus:border-foreground/50"
+            className="nodrag min-h-14 w-full resize-y rounded border border-foreground/20 bg-background p-2 text-xs leading-relaxed text-foreground outline-none transition-colors focus:border-foreground/50"
           />
         </div>
 
