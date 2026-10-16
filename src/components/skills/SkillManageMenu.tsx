@@ -21,12 +21,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import ConfirmDialog from "@/components/ui/confirm-dialog";
 
 interface SkillManageMenuProps {
   skill: SkillMeta;
 }
 
 type EditMode = "rename" | "description" | null;
+/** 需要二次确认的破坏性操作 */
+type ConfirmAction = "delete" | "toggle";
 
 /** 单卡管理菜单：改名 / 改简介 / 停用·启用 / 删除。管理员或所有者可见。 */
 const SkillManageMenu: React.FC<SkillManageMenuProps> = ({ skill }) => {
@@ -37,6 +40,8 @@ const SkillManageMenu: React.FC<SkillManageMenuProps> = ({ skill }) => {
   const [editMode, setEditMode] = useState<EditMode>(null);
   const [value, setValue] = useState("");
   const [saving, setSaving] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
+  const [acting, setActing] = useState(false);
 
   const canManage = !!(
     userInfo?.is_admin ||
@@ -78,25 +83,45 @@ const SkillManageMenu: React.FC<SkillManageMenuProps> = ({ skill }) => {
   };
 
   const handleToggle = async () => {
+    setActing(true);
     try {
       await skillsApi.toggleSkillStatus(skill.skill_id, !skill.is_active);
-      toast.success(t("skill.updateSuccess"));
+      toast.success(t("skill.toggleSuccess"));
+      setConfirmAction(null);
       invalidate();
     } catch (err: unknown) {
       toast.error(getErrorMessage(err, t("skill.updateFailed")));
+    } finally {
+      setActing(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!window.confirm(t("skill.deleteConfirm"))) return;
+    setActing(true);
     try {
       await skillsApi.deleteSkill(skill.skill_id);
       toast.success(t("skill.deleteSuccess"));
+      setConfirmAction(null);
       invalidate();
     } catch (err: unknown) {
       toast.error(getErrorMessage(err, t("skill.deleteFailed")));
+    } finally {
+      setActing(false);
     }
   };
+
+  const isDeleting = confirmAction === "delete";
+  const isDisabling = confirmAction === "toggle" && skill.is_active;
+  const confirmTitle = isDeleting
+    ? t("skill.deleteTitle")
+    : skill.is_active
+      ? t("skill.disableTitle")
+      : t("skill.enableTitle");
+  const confirmBody = isDeleting
+    ? t("skill.deleteConfirm")
+    : skill.is_active
+      ? t("skill.disableConfirm")
+      : t("skill.enableConfirm");
 
   return (
     <>
@@ -119,13 +144,13 @@ const SkillManageMenu: React.FC<SkillManageMenuProps> = ({ skill }) => {
             <FileText className="w-3.5 h-3.5 mr-2" />
             {t("skill.editDescription")}
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => void handleToggle()}>
+          <DropdownMenuItem onSelect={() => setConfirmAction("toggle")}>
             <Power className="w-3.5 h-3.5 mr-2" />
             {skill.is_active ? t("skill.disable") : t("skill.enable")}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            onSelect={() => void handleDelete()}
+            onSelect={() => setConfirmAction("delete")}
             className="text-accent-red focus:text-accent-red"
           >
             <Trash2 className="w-3.5 h-3.5 mr-2" />
@@ -193,6 +218,30 @@ const SkillManageMenu: React.FC<SkillManageMenuProps> = ({ skill }) => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={confirmAction !== null}
+        onOpenChange={(open) => {
+          if (!open) setConfirmAction(null);
+        }}
+        title={confirmTitle}
+        description={
+          <>
+            <span className="font-mono">
+              {skill.skill_id} · {skill.name}
+            </span>
+            <br />
+            {confirmBody}
+          </>
+        }
+        confirmLabel={
+          isDeleting ? t("skill.confirmDelete") : skill.is_active ? t("skill.confirmDisable") : t("skill.confirmEnable")
+        }
+        cancelLabel={t("skill.cancel")}
+        destructive={isDeleting || isDisabling}
+        loading={acting}
+        onConfirm={() => void (isDeleting ? handleDelete() : handleToggle())}
+      />
     </>
   );
 };

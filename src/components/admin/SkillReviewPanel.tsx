@@ -24,6 +24,7 @@ import {
   BrutalCardTitle,
 } from "@/components/ui/brutal-card";
 import { BrutalButton } from "@/components/ui/brutal-button";
+import ConfirmDialog from "@/components/ui/confirm-dialog";
 import adminApi from "@/api/admin";
 import type {
   AdminPagedResponse,
@@ -72,6 +73,7 @@ const SkillReviewPanel: React.FC = () => {
 
   const [rejectOpen, setRejectOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
+  const [approveTarget, setApproveTarget] = useState<number | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
 
   const load = useCallback(async () => {
@@ -109,12 +111,13 @@ const SkillReviewPanel: React.FC = () => {
     }
   };
 
-  const approve = async (submissionId: number) => {
-    if (!window.confirm(t("admin.skillReviews.approveConfirm"))) return;
+  const approve = async () => {
+    if (approveTarget === null) return;
     setActionLoading(true);
     try {
-      await adminApi.approveSkillSubmission(submissionId);
+      await adminApi.approveSkillSubmission(approveTarget);
       toast.success(t("admin.skillReviews.approveSuccess"));
+      setApproveTarget(null);
       setDetailOpen(false);
       setRejectOpen(false);
       await load();
@@ -235,7 +238,7 @@ const SkillReviewPanel: React.FC = () => {
                             size="sm"
                             variant="primary"
                             disabled={actionLoading}
-                            onClick={() => void approve(item.id)}
+                            onClick={() => setApproveTarget(item.id)}
                           >
                             <Check className="h-3.5 w-3.5" />
                             {t("admin.skillReviews.actions.approve")}
@@ -378,7 +381,7 @@ const SkillReviewPanel: React.FC = () => {
                 size="sm"
                 variant="primary"
                 disabled={actionLoading}
-                onClick={() => void approve(detail.id)}
+                onClick={() => setApproveTarget(detail.id)}
               >
                 <Check className="h-3.5 w-3.5" />
                 {t("admin.skillReviews.actions.approve")}
@@ -416,6 +419,26 @@ const SkillReviewPanel: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* 通过确认弹窗 */}
+      <ConfirmDialog
+        open={approveTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setApproveTarget(null);
+        }}
+        title={t("admin.skillReviews.approveConfirmTitle")}
+        description={
+          <>
+            <span className="font-mono">{detail?.skill_id ?? approveTarget}</span>
+            <br />
+            {t("admin.skillReviews.approveConfirm")}
+          </>
+        }
+        confirmLabel={t("admin.skillReviews.confirmApprove")}
+        cancelLabel={t("skill.cancel")}
+        loading={actionLoading}
+        onConfirm={() => void approve()}
+      />
     </section>
   );
 };

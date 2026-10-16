@@ -15,12 +15,17 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import skillsApi from "@/api/skills";
+import { useAuth } from "@/contexts/AuthContext";
+import { useMcpBundleDownload } from "@/hooks/useMcpBundleDownload";
+import ConfirmDialog from "@/components/ui/confirm-dialog";
 const SkillDetail: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { userInfo } = useAuth();
   const { skillId } = useParams<{ skillId: string }>();
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const { downloading, download } = useMcpBundleDownload();
 
   const { data: skill, isLoading } = useQuery({
     queryKey: ["skill", skillId],
@@ -28,41 +33,26 @@ const SkillDetail: React.FC = () => {
     enabled: !!skillId,
   });
 
+  // 删除由后端做管理员/所有者校验，前端也只对能管理的人露出入口，
+  // 避免非所有者点出一个必然失败的按钮
+  const canManage = !!(
+    userInfo?.is_admin ||
+    (userInfo?.id != null && skill?.owner_id != null && skill.owner_id === userInfo.id)
+  );
+
   const handleDelete = async () => {
     if (!skillId) return;
-    if (!window.confirm(t("skill.deleteConfirm"))) return;
 
     setIsDeleting(true);
     try {
       await skillsApi.deleteSkill(skillId);
       toast.success(t("skill.deleteSuccess"));
+      setDeleteOpen(false);
       navigate("/skills");
     } catch {
       toast.error(t("skill.deleteFailed"));
     } finally {
       setIsDeleting(false);
-    }
-  };
-
-  const handleDownloadBundle = async () => {
-    if (!skillId) return;
-
-    setIsDownloading(true);
-    try {
-      const blob = await skillsApi.downloadMcpBundle(skillId);
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `neospark-${skillId}-mcp.zip`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
-      toast.success(t("skill.downloadMcpBundleSuccess"));
-    } catch {
-      toast.error(t("skill.downloadMcpBundleFailed"));
-    } finally {
-      setIsDownloading(false);
     }
   };
 
@@ -136,17 +126,17 @@ const SkillDetail: React.FC = () => {
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <button
-                  onClick={handleDownloadBundle}
-                  disabled={isDownloading}
+                  onClick={() => void download(skill.skill_id)}
+                  disabled={downloading}
                   title={t("skill.downloadMcpBundleHint")}
                   className={cn(
                     "h-8 px-3 flex items-center gap-1.5 border-brutal border-foreground text-xs font-bold uppercase transition-none",
-                    isDownloading
+                    downloading
                       ? "bg-muted text-muted-foreground cursor-not-allowed"
                       : "bg-card text-foreground hover:bg-secondary"
                   )}
                 >
-                  {isDownloading ? (
+                  {downloading ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   ) : (
                     <Download className="w-3.5 h-3.5" />
@@ -154,9 +144,9 @@ const SkillDetail: React.FC = () => {
                   {t("skill.downloadMcpBundle")}
                 </button>
 
-                {skill.skill_type === "user" && (
+                {canManage && (
                   <button
-                    onClick={handleDelete}
+                    onClick={() => setDeleteOpen(true)}
                     disabled={isDeleting}
                     className={cn(
                       "h-8 px-3 flex items-center gap-1.5 border-brutal border-foreground text-xs font-bold uppercase transition-none",
@@ -313,6 +303,26 @@ const SkillDetail: React.FC = () => {
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title={t("skill.deleteTitle")}
+        description={
+          <>
+            <span className="font-mono">
+              {skill.skill_id} · {skill.name}
+            </span>
+            <br />
+            {t("skill.deleteConfirm")}
+          </>
+        }
+        confirmLabel={t("skill.confirmDelete")}
+        cancelLabel={t("skill.cancel")}
+        destructive
+        loading={isDeleting}
+        onConfirm={() => void handleDelete()}
+      />
     </div>
   );
 };

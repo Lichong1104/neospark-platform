@@ -1,9 +1,10 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Wrench, Shield, User, ArrowRight } from "lucide-react";
+import { Wrench, Shield, User, ArrowRight, Download, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { SkillMeta } from "@/types/skills";
 import SkillManageMenu from "@/components/skills/SkillManageMenu";
+import { useMcpBundleDownload } from "@/hooks/useMcpBundleDownload";
 
 interface SkillMarketCardProps {
   skill: SkillMeta;
@@ -28,14 +29,12 @@ function accentOf(skillId: string) {
 const SkillMarketCard: React.FC<SkillMarketCardProps> = ({ skill }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { downloading, download } = useMcpBundleDownload();
   const accent = accentOf(skill.skill_id);
   const isSubprocess = skill.execution_mode === "subprocess";
 
   return (
-    <div
-      className="group bg-card border-brutal border-foreground brutal-shadow brutal-press hover:brightness-105 cursor-pointer flex flex-col"
-      onClick={() => navigate(`/skills/${skill.skill_id}`)}
-    >
+    <div className="group bg-card border-brutal border-foreground brutal-shadow flex flex-col hover:brightness-105">
       <div className="p-4 flex flex-col flex-1">
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-3 min-w-0">
@@ -117,12 +116,32 @@ const SkillMarketCard: React.FC<SkillMarketCardProps> = ({ skill }) => {
               </span>
             )}
           </div>
-          <span
-            className={`flex items-center gap-1 text-[10px] font-bold shrink-0 ${accent.text} group-hover:gap-2 transition-all`}
-          >
-            {t("skill.viewDetails")}
-            <ArrowRight className="w-3 h-3" />
-          </span>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              onClick={() => void download(skill.skill_id)}
+              disabled={downloading}
+              title={t("skill.downloadMcpBundleHint")}
+              aria-label={t("skill.downloadMcpBundle")}
+              className={`h-7 w-7 flex items-center justify-center border-brutal border-foreground transition-none ${
+                downloading
+                  ? "bg-muted text-muted-foreground cursor-not-allowed"
+                  : "bg-card text-foreground brutal-press hover:bg-secondary"
+              }`}
+            >
+              {downloading ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Download className="w-3.5 h-3.5" />
+              )}
+            </button>
+            <button
+              onClick={() => navigate(`/skills/${skill.skill_id}`)}
+              className="h-7 px-2.5 flex items-center gap-1 border-brutal border-foreground brutal-press bg-card text-xs font-bold uppercase tracking-wider transition-none hover:bg-secondary"
+            >
+              {t("skill.viewDetails")}
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
