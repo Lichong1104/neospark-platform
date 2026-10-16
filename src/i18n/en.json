@@ -1371,7 +1371,7 @@
     "mcpGuideClaude": "Claude Code (recommended)",
     "mcpGuideClaudeHint": "Paste into your terminal. Start a new Claude Code session for it to take effect, then run /mcp — you should see this one skill only.",
     "mcpGuideCodex": "Codex",
-    "mcpGuideCodexHint": "Append to ~/.codex/config.toml, then restart codex. To keep the key out of the file, switch to bearer_token_env_var as described in the package README.",
+    "mcpGuideCodexHint": "Append to ~/.codex/config.toml, then restart codex — run codex mcp list to confirm it is connected. To keep the key out of the file, switch to bearer_token_env_var as described in the package README.",
     "mcpGuideCopy": "Copy",
     "mcpGuideCopied": "Copied",
     "mcpGuideClose": "Got it",

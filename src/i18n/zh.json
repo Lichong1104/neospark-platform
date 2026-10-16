@@ -1371,7 +1371,7 @@
     "mcpGuideClaude": "Claude Code（推荐）",
     "mcpGuideClaudeHint": "粘贴到终端执行。完成后要新开一个 Claude Code 会话才生效，输入 /mcp 应该只看到这一个技能。",
     "mcpGuideCodex": "Codex",
-    "mcpGuideCodexHint": "追加到 ~/.codex/config.toml 后重启 codex。不想让密钥明文躺在配置里，可按包内 README 改用 bearer_token_env_var。",
+    "mcpGuideCodexHint": "追加到 ~/.codex/config.toml 后重启 codex，用 codex mcp list 可确认已接入。不想让密钥明文躺在配置里，可按包内 README 改用 bearer_token_env_var。",
     "mcpGuideCopy": "复制",
     "mcpGuideCopied": "已复制",
     "mcpGuideClose": "知道了",
