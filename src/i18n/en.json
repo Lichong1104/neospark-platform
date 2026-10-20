@@ -666,7 +666,8 @@
     "planDone": "Done",
     "planPartial": "In progress",
     "planAwaiting": "Awaiting",
-    "planPending": "Pending"
+    "planPending": "Pending",
+    "selectModel": "Select model"
   },
   "skillNames": {
     "drawing-prompt": {

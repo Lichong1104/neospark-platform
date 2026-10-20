@@ -666,7 +666,8 @@
     "planDone": "已完成",
     "planPartial": "进行中",
     "planAwaiting": "待确认",
-    "planPending": "待执行"
+    "planPending": "待执行",
+    "selectModel": "选择模型"
   },
   "skillNames": {
     "drawing-prompt": {

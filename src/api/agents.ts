@@ -55,6 +55,14 @@ export async function listSkills(): Promise<AgentSkill[]> {
 }
 
 /**
+ * 列出 Agent 对话可选的大模型
+ */
+export async function listModels(): Promise<{ id: string; label: string; default?: boolean }[]> {
+  const res = await http.get<{ id: string; label: string; default?: boolean }[]>("/agents/models");
+  return unwrap(res);
+}
+
+/**
  * 获取单个 Skill 详情
  */
 export async function getSkill(skillId: string): Promise<AgentSkill> {
@@ -243,6 +251,7 @@ export async function deleteSkill(
 const agentsApi = {
   healthCheck,
   listSkills,
+  listModels,
   getSkill,
   getSkillFunctions,
   chatSingle,

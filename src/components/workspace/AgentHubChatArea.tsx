@@ -18,6 +18,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { BrutalDropdown } from "@/components/ui/brutal-dropdown";
 import agentsApi from "@/api/agents";
 import { useAgentStream } from "@/hooks/useAgentStream";
 import { getErrorMessage } from "@/lib/errorMessage";
@@ -47,7 +48,7 @@ interface AgentHubChatAreaProps {
   onInitialRequestConsumed?: () => void;
 }
 
-const DEFAULT_AGENT_MODEL = "gemini:gemini-2.5-pro";
+const DEFAULT_AGENT_MODEL = "gemini:gemini-4-argon";
 
 function looksLikeFileGeneration(content: string): boolean {
   const trimmed = content.trim();
@@ -81,6 +82,8 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
   const [isGeneratingFile, setIsGeneratingFile] = useState(false);
   const [expandedTools, setExpandedTools] = useState<Set<string>>(new Set());
   const [skillPopoverOpen, setSkillPopoverOpen] = useState(false);
+  const [modelOverride, setModelOverride] = useState(DEFAULT_AGENT_MODEL);
+  const [agentModels, setAgentModels] = useState<{ id: string; label: string }[]>([]);
   /** /提及生成的任务清单（来自后端 plan 事件），随当前轮展示步骤进度 */
   const [plan, setPlan] = useState<{ steps: PlanStep[]; continuation: boolean } | null>(null);
   /** 已完成步骤数（来自后端 step_done 事件） */
@@ -135,6 +138,17 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
       })
       .finally(() => {
         if (!cancelled) setIsLoadingSkills(false);
+      });
+    // 可选模型清单：失败就退回默认模型一项，别让整个面板挂掉
+    agentsApi
+      .listModels()
+      .then((models) => {
+        if (cancelled) return;
+        setAgentModels(models);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setAgentModels([{ id: DEFAULT_AGENT_MODEL, label: "Gemini 4 Argon" }]);
       });
     return () => {
       cancelled = true;
@@ -211,7 +225,7 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
             message: command,
             stream: false,
             session_id: sessionId || undefined,
-            model_override: DEFAULT_AGENT_MODEL,
+            model_override: modelOverride,
           });
 
           if (res.session_id) {
@@ -249,7 +263,7 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
               message: command,
               stream: true,
               session_id: sessionId || undefined,
-              model_override: DEFAULT_AGENT_MODEL,
+              model_override: modelOverride,
             },
             (event, data) => {
               onEvent(event, data);
@@ -359,6 +373,7 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
       isGeneratingFile,
       selectedSkills,
       sessionId,
+      modelOverride,
       appendMessage,
       startStream,
       setMessages,
@@ -634,6 +649,13 @@ const AgentHubChatArea: React.FC<AgentHubChatAreaProps> = ({
         <div className="mt-2 flex items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-1.5">
             {modeToggle && <div className="shrink-0">{modeToggle}</div>}
+            <BrutalDropdown
+              options={agentModels.map((m) => ({ value: m.id, label: m.label }))}
+              value={modelOverride}
+              onChange={setModelOverride}
+              placeholder={t("agentHub.selectModel")}
+              className="shrink-0"
+            />
             <span className="truncate text-[10px] text-muted-foreground font-mono">
               {selectedSkills.length > 0
                 ? t("agentHub.skillsActive", { count: selectedSkills.length })
