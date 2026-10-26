@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { MoreVertical, Pencil, FileText, Power, Trash2 } from "lucide-react";
+import React, { useRef, useState } from "react";
+import { MoreVertical, Pencil, FileText, Power, Trash2, ImagePlus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
@@ -42,6 +42,10 @@ const SkillManageMenu: React.FC<SkillManageMenuProps> = ({ skill }) => {
   const [saving, setSaving] = useState(false);
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
   const [acting, setActing] = useState(false);
+  const [imageOpen, setImageOpen] = useState(false);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const canManage = !!(
     userInfo?.is_admin ||
@@ -52,6 +56,28 @@ const SkillManageMenu: React.FC<SkillManageMenuProps> = ({ skill }) => {
 
   const invalidate = () => {
     void queryClient.invalidateQueries({ queryKey: ["skills"] });
+    void queryClient.invalidateQueries({ queryKey: ["skill", skill.skill_id] });
+  };
+
+  const openImages = () => {
+    setImageFiles([]);
+    setImageOpen(true);
+  };
+
+  const handleSaveImages = async () => {
+    if (imageFiles.length === 0) return;
+    setUploadingImages(true);
+    try {
+      await skillsApi.updateSkillImages(skill.skill_id, imageFiles);
+      toast.success(t("skill.imagesUpdated"));
+      setImageOpen(false);
+      setImageFiles([]);
+      invalidate();
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, t("skill.imagesUpdateFailed")));
+    } finally {
+      setUploadingImages(false);
+    }
   };
 
   const openEdit = (mode: Exclude<EditMode, null>) => {
@@ -143,6 +169,10 @@ const SkillManageMenu: React.FC<SkillManageMenuProps> = ({ skill }) => {
             <FileText className="w-3.5 h-3.5 mr-2" />
             {t("skill.editDescription")}
           </DropdownMenuItem>
+          <DropdownMenuItem onSelect={openImages}>
+            <ImagePlus className="w-3.5 h-3.5 mr-2" />
+            {t("skill.editImages")}
+          </DropdownMenuItem>
           <DropdownMenuItem onSelect={() => setConfirmAction("toggle")}>
             <Power className="w-3.5 h-3.5 mr-2" />
             {skill.is_active ? t("skill.disable") : t("skill.enable")}
@@ -211,6 +241,90 @@ const SkillManageMenu: React.FC<SkillManageMenuProps> = ({ skill }) => {
                 disabled={saving || !value.trim()}
                 className="px-3 py-2 text-xs font-bold uppercase border-brutal border-foreground brutal-press bg-accent-pink text-foreground hover:brightness-110 transition-none disabled:bg-muted disabled:text-muted-foreground"
               >
+                {t("skill.save")}
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={imageOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setImageOpen(false);
+            setImageFiles([]);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md border-brutal border-foreground">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold uppercase tracking-wider">
+              {t("skill.editImages")}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              {t("skill.editImagesHint")}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 pt-2">
+            <div className="flex flex-wrap items-center gap-2">
+              {imageFiles.map((file, i) => (
+                <div
+                  key={`${file.name}-${i}`}
+                  className="relative w-16 h-16 border-brutal border-foreground overflow-hidden bg-secondary/40"
+                >
+                  <img src={URL.createObjectURL(file)} alt={file.name} className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setImageFiles((prev) => prev.filter((_, idx) => idx !== i))}
+                    aria-label="Remove"
+                    className="absolute top-0 right-0 h-5 w-5 flex items-center justify-center bg-foreground text-background text-[11px] leading-none"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+              {imageFiles.length < 10 && (
+                <button
+                  type="button"
+                  onClick={() => imageInputRef.current?.click()}
+                  className="w-16 h-16 border-2 border-dashed border-foreground/30 text-muted-foreground hover:border-foreground/60 flex items-center justify-center text-xl leading-none"
+                >
+                  +
+                </button>
+              )}
+              <input
+                ref={imageInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  const files = Array.from(e.target.files ?? []).filter((f) => f.type.startsWith("image/"));
+                  setImageFiles((prev) => [...prev, ...files].slice(0, 10));
+                  e.target.value = "";
+                }}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setImageOpen(false);
+                  setImageFiles([]);
+                }}
+                disabled={uploadingImages}
+                className="px-3 py-2 text-xs font-bold uppercase border-brutal border-foreground bg-card hover:bg-secondary transition-none"
+              >
+                {t("skill.cancel")}
+              </button>
+              <button
+                onClick={() => void handleSaveImages()}
+                disabled={uploadingImages || imageFiles.length === 0}
+                className="px-3 py-2 text-xs font-bold uppercase border-brutal border-foreground brutal-press bg-accent-pink text-foreground hover:brightness-110 transition-none disabled:bg-muted disabled:text-muted-foreground flex items-center gap-1.5"
+              >
+                {uploadingImages && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 {t("skill.save")}
               </button>
             </div>

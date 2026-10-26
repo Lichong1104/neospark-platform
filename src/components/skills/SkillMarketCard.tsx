@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Wrench, Shield, User, ArrowRight, Download, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -6,6 +6,7 @@ import type { SkillMeta } from "@/types/skills";
 import SkillManageMenu from "@/components/skills/SkillManageMenu";
 import McpBundleDialog from "@/components/skills/McpBundleDialog";
 import { useMcpBundleDownload } from "@/hooks/useMcpBundleDownload";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 interface SkillMarketCardProps {
   skill: SkillMeta;
@@ -26,6 +27,7 @@ const SkillMarketCard: React.FC<SkillMarketCardProps> = ({ skill }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { downloading, download, bundle, closeBundle } = useMcpBundleDownload();
+  const [zoomOpen, setZoomOpen] = useState(false);
   const pricePoints = skill.price_points ?? 0;
   const isSubprocess = skill.execution_mode === "subprocess";
 
@@ -34,21 +36,26 @@ const SkillMarketCard: React.FC<SkillMarketCardProps> = ({ skill }) => {
 
   return (
     <div className="bg-card border-brutal border-foreground brutal-shadow flex flex-col">
-      {skill.preview && (
-        <div className="border-b-brutal border-foreground bg-secondary/40 overflow-hidden">
-          <img
-            src={skill.preview}
-            alt={skill.name}
-            loading="lazy"
-            className="w-full aspect-[4/3] object-cover object-top"
-          />
-        </div>
-      )}
-      {/* 标题栏：技能名是这张卡片的主角 */}
+      {/* 标题栏：左上角图标位改成预览图，点击可放大 */}
       <div className={`flex items-center gap-3 px-5 py-3.5 ${bandClass} border-b-brutal border-foreground`}>
-        <div className="w-10 h-10 shrink-0 bg-card flex items-center justify-center border-brutal border-foreground">
-          <Wrench className="w-5 h-5 text-foreground" />
-        </div>
+        {skill.preview ? (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              setZoomOpen(true);
+            }}
+            title={skill.name}
+            aria-label={`${t("skill.viewDetails")}: ${skill.name}`}
+            className="w-10 h-10 shrink-0 bg-card border-brutal border-foreground overflow-hidden cursor-zoom-in"
+          >
+            <img src={skill.preview} alt={skill.name} loading="lazy" className="w-full h-full object-cover" />
+          </button>
+        ) : (
+          <div className="w-10 h-10 shrink-0 bg-card flex items-center justify-center border-brutal border-foreground">
+            <Wrench className="w-5 h-5 text-foreground" />
+          </div>
+        )}
         <div className="min-w-0 flex-1">
           <h3 className="font-bold text-[15px] leading-snug truncate">{skill.name}</h3>
           <div className="mt-0.5 text-[10px] font-mono text-foreground/70 truncate">
@@ -140,6 +147,14 @@ const SkillMarketCard: React.FC<SkillMarketCardProps> = ({ skill }) => {
           if (!open) closeBundle();
         }}
       />
+
+      <Dialog open={zoomOpen} onOpenChange={setZoomOpen}>
+        <DialogContent className="sm:max-w-3xl border-brutal border-foreground bg-background p-1">
+          {skill.preview && (
+            <img src={skill.preview} alt={skill.name} className="w-full h-auto" />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
