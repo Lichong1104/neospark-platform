@@ -34,6 +34,16 @@ const SkillMarketCard: React.FC<SkillMarketCardProps> = ({ skill }) => {
 
   return (
     <div className="bg-card border-brutal border-foreground brutal-shadow flex flex-col">
+      {skill.preview && (
+        <div className="border-b-brutal border-foreground bg-secondary/40 overflow-hidden">
+          <img
+            src={skill.preview}
+            alt={skill.name}
+            loading="lazy"
+            className="w-full aspect-[4/3] object-cover object-top"
+          />
+        </div>
+      )}
       {/* 标题栏：技能名是这张卡片的主角 */}
       <div className={`flex items-center gap-3 px-5 py-3.5 ${bandClass} border-b-brutal border-foreground`}>
         <div className="w-10 h-10 shrink-0 bg-card flex items-center justify-center border-brutal border-foreground">

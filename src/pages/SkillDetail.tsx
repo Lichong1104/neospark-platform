@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Wrench,
   ArrowLeft,
@@ -10,6 +10,7 @@ import {
   Trash2,
   Loader2,
   Download,
+  ImagePlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -26,6 +27,10 @@ const SkillDetail: React.FC = () => {
   const { skillId } = useParams<{ skillId: string }>();
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [imageIndex, setImageIndex] = useState(0);
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
   const { downloading, download, bundle, closeBundle } = useMcpBundleDownload();
 
   const { data: skill, isLoading } = useQuery({
@@ -35,6 +40,24 @@ const SkillDetail: React.FC = () => {
   });
 
   const pricePoints = skill?.price_points ?? 0;
+  const previews = skill?.previews?.length ? skill.previews : skill?.preview ? [skill.preview] : [];
+
+  const handleImageUpload = async (files: FileList | null) => {
+    if (!skillId || !files || files.length === 0) return;
+    setUploadingImages(true);
+    try {
+      await skillsApi.updateSkillImages(skillId, Array.from(files));
+      toast.success(t("skill.imagesUpdated"));
+      setImageIndex(0);
+      await queryClient.invalidateQueries({ queryKey: ["skill", skillId] });
+      await queryClient.invalidateQueries({ queryKey: ["skills"] });
+    } catch {
+      toast.error(t("skill.imagesUpdateFailed"));
+    } finally {
+      setUploadingImages(false);
+      if (imageInputRef.current) imageInputRef.current.value = "";
+    }
+  };
 
   // 删除由后端做管理员/所有者校验，前端也只对能管理的人露出入口，
   // 避免非所有者点出一个必然失败的按钮
@@ -93,6 +116,49 @@ const SkillDetail: React.FC = () => {
 
         <div className="border-brutal border-foreground bg-card brutal-shadow"
         >
+          {previews.length > 0 && (
+            <div className="relative border-b-brutal border-foreground bg-secondary/40 overflow-hidden">
+              <img
+                src={previews[imageIndex]}
+                alt={`${skill.name} — ${imageIndex + 1}/${previews.length}`}
+                className="w-full aspect-[4/3] object-cover object-top"
+              />
+              {previews.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setImageIndex((i) => (i - 1 + previews.length) % previews.length)}
+                    aria-label="Previous image"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 h-9 w-9 flex items-center justify-center border-brutal border-foreground bg-card/90 text-lg font-bold leading-none hover:bg-card"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setImageIndex((i) => (i + 1) % previews.length)}
+                    aria-label="Next image"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 h-9 w-9 flex items-center justify-center border-brutal border-foreground bg-card/90 text-lg font-bold leading-none hover:bg-card"
+                  >
+                    ›
+                  </button>
+                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 px-2 py-1 bg-foreground/40">
+                    {previews.map((_, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setImageIndex(i)}
+                        aria-label={`Show image ${i + 1}`}
+                        className={cn(
+                          "h-2 w-2 rounded-full",
+                          i === imageIndex ? "bg-card" : "bg-card/50 hover:bg-card/80"
+                        )}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
           <div className="p-6">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-4">
@@ -146,6 +212,27 @@ const SkillDetail: React.FC = () => {
                   )}
                   {t("skill.downloadMcpBundle")}
                 </button>
+
+                {canManage && (
+                  <button
+                    onClick={() => imageInputRef.current?.click()}
+                    disabled={uploadingImages}
+                    title={t("skill.editImagesHint")}
+                    className={cn(
+                      "h-8 px-3 flex items-center gap-1.5 border-brutal border-foreground text-xs font-bold uppercase transition-none",
+                      uploadingImages
+                        ? "bg-muted text-muted-foreground cursor-not-allowed"
+                        : "bg-card text-foreground hover:bg-secondary"
+                    )}
+                  >
+                    {uploadingImages ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <ImagePlus className="w-3.5 h-3.5" />
+                    )}
+                    {t("skill.editImages")}
+                  </button>
+                )}
 
                 {canManage && (
                   <button
@@ -306,6 +393,15 @@ const SkillDetail: React.FC = () => {
           )}
         </div>
       </div>
+
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={(e) => void handleImageUpload(e.target.files)}
+      />
 
       <ConfirmDialog
         open={deleteOpen}

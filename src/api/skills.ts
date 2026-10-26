@@ -22,6 +22,8 @@ interface BackendSkill {
   is_active?: boolean;
   price_points?: number;
   execution_mode?: string;
+  preview?: string | null;
+  previews?: string[] | null;
   scripts?: Record<string, string>;
   instructions?: string;
   has_code?: boolean;
@@ -53,6 +55,8 @@ function toSkillMeta(skill: BackendSkill): SkillMeta {
     owner_id: skill.owner_id ?? null,
     price_points: skill.price_points ?? 0,
     execution_mode: skill.execution_mode,
+    preview: skill.preview ?? skill.previews?.[0] ?? null,
+    previews: skill.previews ?? (skill.preview ? [skill.preview] : []),
   };
 }
 
@@ -126,6 +130,22 @@ export async function toggleSkillStatus(
  */
 export async function deleteSkill(skillId: string): Promise<ApiResponse<unknown>> {
   return http.del(`/agents/skills/${skillId}`);
+}
+
+/**
+ * 替换 Skill 的预览图（可多张，第一张为封面）。管理员或所有者可操作。
+ */
+export async function updateSkillImages(
+  skillId: string,
+  files: File[]
+): Promise<{ preview_image: string; preview_images: string[] }> {
+  const formData = new FormData();
+  for (const file of files) formData.append("preview_image", file, file.name);
+  const res = (await http.patch(`/agents/skills/${encodeURIComponent(skillId)}/images`, formData)) as unknown as {
+    preview_image: string;
+    preview_images: string[];
+  };
+  return res;
 }
 
 /**
@@ -245,6 +265,7 @@ const skillsApi = {
   uploadSkill,
   listMySubmissions,
   updateSkill,
+  updateSkillImages,
   toggleSkillStatus,
   deleteSkill,
   downloadMcpBundle,
