@@ -1355,6 +1355,8 @@
     "editImagesHint": "可一次上传多张预览图，第一张作为卡片封面",
     "imagesUpdated": "预览图已更新",
     "imagesUpdateFailed": "预览图更新失败",
+    "previewImages": "预览图（可选，最多 10 张）",
+    "previewImagesHint": "第一张作为卡片封面，其余在详情页轮播",
     "confirmDelete": "确认删除",
     "manage": "管理",
     "rename": "重命名",

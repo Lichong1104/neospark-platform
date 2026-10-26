@@ -1355,6 +1355,8 @@
     "editImagesHint": "Upload several preview images at once; the first is the card cover",
     "imagesUpdated": "Preview images updated",
     "imagesUpdateFailed": "Failed to update preview images",
+    "previewImages": "Preview images (optional, up to 10)",
+    "previewImagesHint": "The first image is the card cover; the rest appear as a carousel on the detail page",
     "confirmDelete": "Delete",
     "manage": "Manage",
     "rename": "Rename",

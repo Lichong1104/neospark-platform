@@ -28,9 +28,11 @@ const UploadSkillButton: React.FC<UploadSkillButtonProps> = ({ onUploaded, trigg
   const [isUploading, setIsUploading] = useState(false);
   const [skillId, setSkillId] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewFiles, setPreviewFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const dragDepth = useRef(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const previewInputRef = useRef<HTMLInputElement>(null);
 
   const acceptFile = (file: File) => {
     if (!ALLOWED_EXTENSIONS.test(file.name)) {
@@ -102,11 +104,13 @@ const UploadSkillButton: React.FC<UploadSkillButtonProps> = ({ onUploaded, trigg
       const formData = new FormData();
       formData.append("file", selectedFile);
       formData.append("skill_id", skillId.trim());
+      previewFiles.forEach((file) => formData.append("preview_image", file));
 
       const result = await skillsApi.uploadSkill(formData);
       toast.success(t("skill.submitSuccess", { name: result.name, skillId: result.skill_id }));
       setIsOpen(false);
       setSelectedFile(null);
+      setPreviewFiles([]);
       setSkillId("");
       onUploaded?.();
     } catch (err: unknown) {
@@ -206,6 +210,52 @@ const UploadSkillButton: React.FC<UploadSkillButtonProps> = ({ onUploaded, trigg
                   onChange={handleFileSelect}
                 />
               </div>
+            </div>
+
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5 block">
+                {t("skill.previewImages")}
+              </label>
+              <div className="flex flex-wrap items-center gap-2">
+                {previewFiles.map((file, i) => (
+                  <div
+                    key={`${file.name}-${i}`}
+                    className="relative w-16 h-16 border-brutal border-foreground bg-secondary/40 overflow-hidden"
+                  >
+                    <img src={URL.createObjectURL(file)} alt={file.name} className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setPreviewFiles((prev) => prev.filter((_, idx) => idx !== i))}
+                      aria-label="Remove"
+                      className="absolute top-0 right-0 h-5 w-5 flex items-center justify-center bg-foreground text-background text-[11px] leading-none"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+                {previewFiles.length < 10 && (
+                  <button
+                    type="button"
+                    onClick={() => previewInputRef.current?.click()}
+                    className="w-16 h-16 border-2 border-dashed border-foreground/30 text-muted-foreground hover:border-foreground/60 flex items-center justify-center text-xl leading-none"
+                  >
+                    +
+                  </button>
+                )}
+                <input
+                  ref={previewInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files ?? []).filter((f) => f.type.startsWith("image/"));
+                    setPreviewFiles((prev) => [...prev, ...files].slice(0, 10));
+                    e.target.value = "";
+                  }}
+                />
+              </div>
+              <p className="mt-1 text-[10px] text-muted-foreground">{t("skill.previewImagesHint")}</p>
             </div>
 
             <div className="flex items-center justify-between gap-2 pt-2">
