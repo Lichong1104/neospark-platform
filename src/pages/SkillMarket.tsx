@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from "react";
+import React, { useCallback, useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Search, Wrench, Loader2, PackageOpen, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/contexts/AuthContext";
 import skillsApi from "@/api/skills";
 import SkillMarketCard from "@/components/skills/SkillMarketCard";
 import UploadSkillButton from "@/components/skills/UploadSkillButton";
@@ -16,6 +17,7 @@ type TabKey = "market" | "mine";
 const SkillMarket: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const { userInfo } = useAuth();
   const [tab, setTab] = useState<TabKey>("market");
   const [filter, setFilter] = useState<TypeFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -30,16 +32,26 @@ const SkillMarket: React.FC = () => {
     queryFn: () => skillsApi.listMySubmissions(),
   });
 
+  // 「我的」= 当前账号上传的 Skill。owner_id 只代表「有人上传」，别的用户上传的
+  // Skill 同样带 owner_id，之前把它当成「我的」导致每个账号都能看到别人的 Skill。
+  const myId = userInfo?.id ?? null;
+  const isMine = useCallback(
+    (skill: SkillMeta) => myId != null && skill.owner_id != null && skill.owner_id === myId,
+    [myId],
+  );
+
   const counts = useMemo(() => {
     const all = skills?.length ?? 0;
     const system = skills?.filter((s: SkillMeta) => s.skill_type === "system").length ?? 0;
-    return { all, system, user: all - system };
-  }, [skills]);
+    const user = skills?.filter(isMine).length ?? 0;
+    return { all, system, user };
+  }, [skills, isMine]);
 
   const filteredSkills = useMemo(() => {
     if (!skills) return [];
     return skills.filter((skill: SkillMeta) => {
-      if (filter !== "all" && skill.skill_type !== filter) return false;
+      if (filter === "system" && skill.skill_type !== "system") return false;
+      if (filter === "user" && !isMine(skill)) return false;
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
         return (
@@ -50,7 +62,7 @@ const SkillMarket: React.FC = () => {
       }
       return true;
     });
-  }, [skills, filter, searchQuery]);
+  }, [skills, filter, searchQuery, isMine]);
 
   const onUploaded = () => {
     void refetch();
