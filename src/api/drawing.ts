@@ -1,4 +1,5 @@
 import http from "./request";
+import { DRAWING_MODEL_FALLBACKS } from "@/types/drawing";
 import type {
   ModelsConfigMap,
   CreateSessionParams,
@@ -27,7 +28,8 @@ import type { ApiResponse } from "@/types/common";
  */
 export async function getModelsConfig(): Promise<ModelsConfigMap> {
   const res = await http.get<ModelsConfigMap>("/drawing/models/config");
-  return res.data;
+  // 后端一旦返回同名模型则以服务端配置为准
+  return { ...DRAWING_MODEL_FALLBACKS, ...(res.data ?? {}) };
 }
 
 /**

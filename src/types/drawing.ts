@@ -46,6 +46,37 @@ export const supportsGifOutput = (
 ): boolean =>
   modelConfig?.supports_gif ?? model.startsWith("gpt-image-2.6");
 
+const GPT_IMAGE_26_ASPECT_RATIOS = ["1:1", "3:2", "2:3", "16:9", "9:16"];
+
+const buildGptImage26Config = (
+  name: string,
+  description: string
+): ModelConfig => ({
+  name,
+  provider: "tengda",
+  description,
+  supported_resolutions: [{ value: "1K", label: "1K", price: 4 }],
+  supported_aspect_ratios: GPT_IMAGE_26_ASPECT_RATIOS.map((value) => ({
+    value,
+    label: value,
+  })),
+  image_to_image_extra: 0,
+  supports_image_to_image: true,
+  supports_gif: true,
+});
+
+/** 后端配置尚未包含 gpt-image-2.6 时的前端兜底，保证模型可被选择 */
+export const DRAWING_MODEL_FALLBACKS: ModelsConfigMap = {
+  "gpt-image-2.6-flare": buildGptImage26Config(
+    "GPT Image 2.6 Flare",
+    "GPT Image 2.6 Flare，支持 GIF 动图与参考图生成"
+  ),
+  "gpt-image-2.6-sunburst": buildGptImage26Config(
+    "GPT Image 2.6 Sunburst",
+    "GPT Image 2.6 Sunburst，太阳光芒构图，支持 GIF 动图与参考图生成"
+  ),
+};
+
 /** 创建会话请求 */
 export interface CreateSessionParams {
   title?: string;
