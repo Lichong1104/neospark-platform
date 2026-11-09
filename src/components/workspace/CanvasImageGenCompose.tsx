@@ -9,7 +9,9 @@ import { getErrorMessage } from "@/lib/errorMessage";
 import { STATIC_BASE_URL } from "@/api/request";
 import {
   DEFAULT_DRAWING_MODEL,
+  supportsGifOutput,
   supportsGptImageQuality,
+  type ImageOutputFormat,
   type ModelsConfigMap,
 } from "@/types/drawing";
 import type { CanvasImage } from "./CanvasArea";
@@ -76,6 +78,7 @@ export const CanvasImageGenCompose: React.FC<{
   const [resolution, setResolution] = useState("1K");
   const [model, setModel] = useState(DEFAULT_DRAWING_MODEL);
   const [gptImageQuality, setGptImageQuality] = useState<GptImageQuality>("low");
+  const [outputFormat, setOutputFormat] = useState<ImageOutputFormat>("png");
   // 生成时指定的资产组（"" 表示不入组）
   const [assetGroupId, setAssetGroupId] = useState("");
   const [modelsConfig, setModelsConfig] = useState<ModelsConfigMap | null>(null);
@@ -93,6 +96,12 @@ export const CanvasImageGenCompose: React.FC<{
     () => modelsConfig?.[model],
     [modelsConfig, model]
   );
+
+  const supportsGif = supportsGifOutput(model, currentModelConfig);
+
+  useEffect(() => {
+    if (!supportsGif) setOutputFormat("png");
+  }, [supportsGif]);
 
   useEffect(() => {
     if (!modelsConfig) return;
@@ -219,6 +228,9 @@ export const CanvasImageGenCompose: React.FC<{
           (model.startsWith("gemini") ? ("gemini" as const) : ("tengda" as const)),
         optimize_prompt: true,
         ...(supportsGptImageQuality(model) ? { quality: gptImageQuality } : {}),
+        ...(supportsGif && outputFormat === "gif"
+          ? { output_format: "gif" as const }
+          : {}),
         ...(assetGroupId ? { asset_group_id: assetGroupId } : {}),
       };
       if (refPaths.length > 1) {
@@ -274,6 +286,9 @@ export const CanvasImageGenCompose: React.FC<{
                   isGptImage2={supportsGptImageQuality(model)}
                   gptImageQuality={gptImageQuality}
                   onGptImageQualityChange={setGptImageQuality}
+                  supportsGif={supportsGif}
+                  outputFormat={outputFormat}
+                  onOutputFormatChange={setOutputFormat}
                   aspectRatioOptions={aspectRatioOptions}
                   resolutionOptions={resolutionOptions}
                   modelOptions={modelOptions}

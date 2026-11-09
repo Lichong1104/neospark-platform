@@ -22,6 +22,8 @@ export interface ModelConfig {
   supported_aspect_ratios: AspectRatioOption[];
   image_to_image_extra: number;
   supports_image_to_image?: boolean;
+  /** 是否支持 GIF 动图输出（gpt-image-2.6 系列） */
+  supports_gif?: boolean;
 }
 
 /** 所有模型配置（key 为模型 ID） */
@@ -33,6 +35,16 @@ export const DEFAULT_DRAWING_MODEL = "gpt-image-2";
 /** 模型是否支持 gpt-image 系列画质档位（low/medium/high） */
 export const supportsGptImageQuality = (model: string): boolean =>
   model.startsWith("gpt-image-");
+
+/** 输出格式：静态图或 GIF 动图 */
+export type ImageOutputFormat = "png" | "gif";
+
+/** 模型是否支持 GIF 动图输出（优先读后端配置，旧配置按模型 ID 兜底） */
+export const supportsGifOutput = (
+  model: string,
+  modelConfig?: Pick<ModelConfig, "supports_gif"> | null
+): boolean =>
+  modelConfig?.supports_gif ?? model.startsWith("gpt-image-2.6");
 
 /** 创建会话请求 */
 export interface CreateSessionParams {
@@ -125,6 +137,8 @@ export interface GenerateImageParams {
    * - high: 高质量
    */
   quality?: "low" | "medium" | "high";
+  /** 输出格式：gif 仅 gpt-image-2.6 系列支持，默认 png */
+  output_format?: ImageOutputFormat;
   optimize_prompt?: boolean;
   /** `1` = 电商详情页九宫格第一阶段 */
   type?: number;

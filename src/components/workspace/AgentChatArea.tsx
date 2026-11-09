@@ -42,9 +42,11 @@ import { fetchAssetBlob } from "@/lib/assetFetchUrl";
 import { useGenerationPolling } from "@/hooks/useGenerationPolling";
 import { getErrorMessage } from "@/lib/errorMessage";
 import {
+  supportsGifOutput,
   supportsGptImageQuality,
   DEFAULT_DRAWING_MODEL,
   type GenerateImageParams,
+  type ImageOutputFormat,
   type MessageStatusResponse,
   type ModelsConfigMap,
 } from "@/types/drawing";
@@ -530,6 +532,7 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
   const [resolution, setResolution] = useState("1K");
   const [model, setModel] = useState(DEFAULT_DRAWING_MODEL);
   const [gptImageQuality, setGptImageQuality] = useState<GptImageQuality>("low");
+  const [outputFormat, setOutputFormat] = useState<ImageOutputFormat>("png");
   const [modelsConfig, setModelsConfig] = useState<ModelsConfigMap | null>(
     null
   );
@@ -564,6 +567,13 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
     () => modelsConfig?.[model],
     [modelsConfig, model]
   );
+
+  const supportsGif = supportsGifOutput(model, currentModelConfig);
+
+  useEffect(() => {
+    if (!supportsGif) setOutputFormat("png");
+  }, [supportsGif]);
+
   useEffect(() => {
     drawingApi
       .getModelsConfig()
@@ -1020,6 +1030,10 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
 
       if (supportsGptImageQuality(model)) {
         params.quality = gptImageQuality;
+      }
+
+      if (supportsGif && outputFormat === "gif") {
+        params.output_format = "gif";
       }
 
       if (
@@ -1962,6 +1976,9 @@ const AgentChatArea: React.FC<AgentChatAreaProps> = ({
                 isGptImage2={isGptImage2}
                 gptImageQuality={gptImageQuality}
                 onGptImageQualityChange={setGptImageQuality}
+                supportsGif={supportsGif}
+                outputFormat={outputFormat}
+                onOutputFormatChange={setOutputFormat}
                 aspectRatioOptions={aspectRatioOptions}
                 resolutionOptions={resolutionOptions}
                 modelOptions={modelOptions}

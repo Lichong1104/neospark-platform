@@ -276,7 +276,8 @@ const GPT_IMAGE_2_QUALITY_PRICING: Record<
 };
 
 // gpt-image-2.5 系列（flare / sunburst）：1K 与 gpt-image-2 同价，
-// 2K/4K 走后端 fallback 固定 10 积分，无 512 档位
+// 2K/4K 走后端 fallback 固定 10 积分，无 512 档位。
+// gpt-image-2.6 系列仅支持 1K，价格与 2.5 的 1K 一致（按次计费，与帧数无关）。
 const GPT_IMAGE_25_QUALITY_PRICING: Record<
   string,
   Record<string, number>
@@ -307,7 +308,10 @@ export const calculateImageEstimatedCost = (
     if (qualityPricing && gptImageQuality in qualityPricing) {
       return qualityPricing[gptImageQuality];
     }
-  } else if (model.startsWith("gpt-image-2.5")) {
+  } else if (
+    model.startsWith("gpt-image-2.5") ||
+    model.startsWith("gpt-image-2.6")
+  ) {
     const qualityPricing = GPT_IMAGE_25_QUALITY_PRICING[resolution];
     if (qualityPricing && gptImageQuality in qualityPricing) {
       return qualityPricing[gptImageQuality];

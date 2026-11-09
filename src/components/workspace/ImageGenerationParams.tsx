@@ -19,6 +19,7 @@ import {
   type DropdownOption,
 } from "@/components/ui/brutal-dropdown";
 import { DrawingModelIcon } from "@/components/icons/DrawingModelIcon";
+import type { ImageOutputFormat } from "@/types/drawing";
 
 export type GptImageQuality = "low" | "medium" | "high";
 
@@ -31,6 +32,10 @@ export interface ImageGenerationParamsProps {
   isGptImage2: boolean;
   gptImageQuality?: GptImageQuality;
   onGptImageQualityChange?: (value: GptImageQuality) => void;
+  /** 当前模型是否支持 GIF 动图输出 */
+  supportsGif?: boolean;
+  outputFormat?: ImageOutputFormat;
+  onOutputFormatChange?: (value: ImageOutputFormat) => void;
   aspectRatioOptions: DropdownOption[];
   resolutionOptions: DropdownOption[];
   modelOptions: DropdownOption[];
@@ -136,6 +141,37 @@ const QualitySegment: React.FC<{
   );
 };
 
+const OutputFormatSegment: React.FC<{
+  value: ImageOutputFormat;
+  onChange: (value: ImageOutputFormat) => void;
+}> = ({ value, onChange }) => {
+  const { t } = useTranslation();
+  const options: { value: ImageOutputFormat; label: string }[] = [
+    { value: "png", label: t("intelligenceHub.outputFormatImage") },
+    { value: "gif", label: t("intelligenceHub.outputFormatGif") },
+  ];
+
+  return (
+    <div className="inline-flex w-full border border-foreground/20 bg-secondary/20 p-0.5">
+      {options.map((opt) => (
+        <button
+          key={opt.value}
+          type="button"
+          onClick={() => onChange(opt.value)}
+          className={cn(
+            "flex-1 px-2 py-1.5 text-[10px] font-bold uppercase tracking-wide transition-none",
+            value === opt.value
+              ? "bg-card text-foreground border border-foreground/25 shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+};
+
 function parseAspectRatio(value: string): { w: number; h: number } | null {
   const match = value.match(/^(\d+(?:\.\d+)?):(\d+(?:\.\d+)?)$/);
   if (!match) return null;
@@ -216,6 +252,9 @@ export const ImageGenerationParams: React.FC<ImageGenerationParamsProps> = ({
   isGptImage2,
   gptImageQuality = "low",
   onGptImageQualityChange,
+  supportsGif = false,
+  outputFormat = "png",
+  onOutputFormatChange,
   aspectRatioOptions,
   resolutionOptions,
   modelOptions,
@@ -271,9 +310,10 @@ export const ImageGenerationParams: React.FC<ImageGenerationParamsProps> = ({
   const summaryTitle = useMemo(() => {
     const parts: string[] = [];
     if (qualityShort) parts.push(qualityShort);
+    if (supportsGif && outputFormat === "gif") parts.push("GIF");
     parts.push(resolution, aspectRatio, modelLabel);
     return parts.join(" · ");
-  }, [qualityShort, resolution, aspectRatio, modelLabel]);
+  }, [qualityShort, supportsGif, outputFormat, resolution, aspectRatio, modelLabel]);
 
   const showStandardExtras =
     onOptimizeStandardPromptChange != null || onBatchModeChange != null;
@@ -462,6 +502,18 @@ export const ImageGenerationParams: React.FC<ImageGenerationParamsProps> = ({
                 <QualitySegment
                   value={gptImageQuality}
                   onChange={onGptImageQualityChange}
+                />
+              </section>
+            ) : null}
+
+            {supportsGif && onOutputFormatChange ? (
+              <section className="space-y-1.5">
+                <span className="text-[10px] font-bold uppercase text-muted-foreground">
+                  {t("intelligenceHub.paramsOutputFormat")}
+                </span>
+                <OutputFormatSegment
+                  value={outputFormat}
+                  onChange={onOutputFormatChange}
                 />
               </section>
             ) : null}

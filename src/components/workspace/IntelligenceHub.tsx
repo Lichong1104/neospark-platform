@@ -76,7 +76,9 @@ import {
 import { drawingModelOptionIcon } from "@/components/icons/DrawingModelIcon";
 import {
   DEFAULT_DRAWING_MODEL,
+  supportsGifOutput,
   supportsGptImageQuality,
+  type ImageOutputFormat,
   type ModelsConfigMap,
   type GenerateMultiRefParams,
 } from "@/types/drawing";
@@ -146,6 +148,24 @@ const DEFAULT_MODELS: DropdownOption[] = [
     icon: drawingModelOptionIcon(
       "gpt-image-2.5-sunburst",
       "GPT Image 2.5 Sunburst",
+      "tengda"
+    ),
+  },
+  {
+    value: "gpt-image-2.6-flare",
+    label: "GPT Image 2.6 Flare",
+    icon: drawingModelOptionIcon(
+      "gpt-image-2.6-flare",
+      "GPT Image 2.6 Flare",
+      "tengda"
+    ),
+  },
+  {
+    value: "gpt-image-2.6-sunburst",
+    label: "GPT Image 2.6 Sunburst",
+    icon: drawingModelOptionIcon(
+      "gpt-image-2.6-sunburst",
+      "GPT Image 2.6 Sunburst",
       "tengda"
     ),
   },
@@ -357,6 +377,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
   const [gptImageQuality, setGptImageQuality] = useState<"low" | "medium" | "high">(
     imageRequest?.gptImageQuality ?? "low"
   );
+  const [outputFormat, setOutputFormat] = useState<ImageOutputFormat>("png");
   const [standardSessionId, setStandardSessionId] = useState<string | null>(
     null
   );
@@ -488,6 +509,7 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
 
   const currentModelConfig = modelsConfig?.[model];
   const isGptImage2 = supportsGptImageQuality(model);
+  const supportsGif = supportsGifOutput(model, currentModelConfig);
   const gptImageQualityOptions: DropdownOption[] = useMemo(
     () => [
       { value: "low", label: `${t("agentChat.gptImageQualityLow")} (Fast)` },
@@ -525,6 +547,10 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
   useEffect(() => {
     if (!isGptImage2) setGptImageQuality("low");
   }, [isGptImage2]);
+
+  useEffect(() => {
+    if (!supportsGif) setOutputFormat("png");
+  }, [supportsGif]);
 
   useEffect(() => {
     if (!currentModelConfig) return;
@@ -947,6 +973,9 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
       if (isGptImage2) {
         params.quality = gptImageQuality;
       }
+      if (supportsGif && outputFormat === "gif") {
+        params.output_format = "gif";
+      }
       if (
         hasSelectedRefs &&
         currentModelConfig?.supports_image_to_image !== false
@@ -1080,6 +1109,9 @@ const IntelligenceHub: React.FC<IntelligenceHubProps> = ({
             isGptImage2={isGptImage2}
             gptImageQuality={gptImageQuality}
             onGptImageQualityChange={setGptImageQuality}
+            supportsGif={supportsGif}
+            outputFormat={outputFormat}
+            onOutputFormatChange={setOutputFormat}
             aspectRatioOptions={aspectRatioOptions}
             resolutionOptions={resolutionOptions}
             modelOptions={modelOptions}
@@ -1160,6 +1192,9 @@ interface ChatViewProps {
   isGptImage2: boolean;
   gptImageQuality: "low" | "medium" | "high";
   onGptImageQualityChange: (value: "low" | "medium" | "high") => void;
+  supportsGif: boolean;
+  outputFormat: ImageOutputFormat;
+  onOutputFormatChange: (value: ImageOutputFormat) => void;
   aspectRatioOptions: DropdownOption[];
   resolutionOptions: DropdownOption[];
   modelOptions: DropdownOption[];
@@ -1221,6 +1256,9 @@ const ChatView: React.FC<ChatViewProps> = ({
   isGptImage2,
   gptImageQuality,
   onGptImageQualityChange,
+  supportsGif,
+  outputFormat,
+  onOutputFormatChange,
   aspectRatioOptions,
   resolutionOptions,
   modelOptions,
@@ -1809,6 +1847,9 @@ const ChatView: React.FC<ChatViewProps> = ({
                     isGptImage2={isGptImage2}
                     gptImageQuality={gptImageQuality}
                     onGptImageQualityChange={onGptImageQualityChange}
+                    supportsGif={supportsGif}
+                    outputFormat={outputFormat}
+                    onOutputFormatChange={onOutputFormatChange}
                     aspectRatioOptions={aspectRatioOptions}
                     resolutionOptions={resolutionOptions}
                     modelOptions={modelOptions}
