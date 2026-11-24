@@ -201,3 +201,295 @@ export type AdminSkillSubmissionReviewResult = {
   version?: string;
   id?: number;
 };
+
+/* ------------------------------------------------------------ pricing -- */
+
+export type AdminConfigValue = number | boolean | string;
+
+export type AdminPricingConfigItem = {
+  id: number | null;
+  scope: string;
+  scope_key: string;
+  config_key: string;
+  config_value: string;
+  value: AdminConfigValue;
+  value_type: string;
+  description: string | null;
+  updated_by: number | null;
+  updated_at: string | null;
+};
+
+export type AdminPricingConfigDefault = {
+  value: AdminConfigValue;
+  value_type: string;
+  description: string;
+};
+
+export type AdminPricingConfigView = {
+  items: AdminPricingConfigItem[];
+  defaults: Record<string, AdminPricingConfigDefault>;
+  config_version: number;
+};
+
+export type AdminPricingConfigUpdatePayload = {
+  scope: string;
+  scope_key: string;
+  items: { config_key: string; value: AdminConfigValue }[];
+  reason?: string;
+};
+
+export type AdminPricingAuditItem = {
+  id: number;
+  config_id: number | null;
+  scope: string;
+  scope_key: string;
+  config_key: string;
+  old_value: string | null;
+  new_value: string | null;
+  operator_id: number | null;
+  reason: string | null;
+  created_at: string | null;
+};
+
+export type AdminTokenRate = {
+  input: number;
+  output: number;
+  cost_per_million?: { input: number; output: number };
+};
+
+export type AdminTokenMarginSide = {
+  retail_credits: number;
+  revenue_fen: number;
+  cost_fen: number | null;
+  margin_fen: number | null;
+  margin_rate: number | null;
+};
+
+export type AdminTokenMarginPreview = {
+  model: string;
+  input: AdminTokenMarginSide;
+  output: AdminTokenMarginSide;
+};
+
+export type AdminTokenPricingView = {
+  pricing: Record<string, AdminTokenRate>;
+  config_version: number;
+  margin_preview: Record<string, AdminTokenMarginPreview>;
+};
+
+export type AdminAssetMargin = {
+  revenue_cny: number;
+  cost_cny: number | null;
+  margin_cny: number | null;
+  margin_rate: number | null;
+};
+
+export type AdminAssetPricingItem = {
+  id: number;
+  asset_type: string;
+  provider: string;
+  model: string;
+  resolution: string;
+  duration: number;
+  unit_credits: number;
+  cost_fen: number | null;
+  is_active: boolean;
+  effective_from: string | null;
+  updated_by: number | null;
+  created_at: string | null;
+  updated_at: string | null;
+  margin?: AdminAssetMargin;
+};
+
+export type AdminAssetPricingCreatePayload = {
+  asset_type: string;
+  model: string;
+  unit_credits: number;
+  provider?: string;
+  resolution?: string;
+  duration?: number;
+  cost_fen?: number | null;
+  is_active?: boolean;
+  reason?: string;
+};
+
+/* --------------------------------------------------- creator operations -- */
+
+export type AdminCreatorPayout = {
+  id: number;
+  creator_user_id: number;
+  credits: number;
+  amount_cny: number;
+  settlement_rate: number;
+  rate_detail: {
+    ledger_id: number;
+    credits: number;
+    credit_face_value_cny: number;
+    settlement_coefficient: number;
+    settlement_rate: number;
+    amount_cny: number;
+  }[];
+  method: string | null;
+  status: string;
+  requested_at: string | null;
+  reviewed_by: number | null;
+  reviewed_at: string | null;
+  paid_at: string | null;
+  external_ref: string | null;
+  note: string | null;
+};
+
+export type AdminPayoutReviewPayload = {
+  note?: string;
+  external_ref?: string;
+};
+
+export type AdminSkillRefund = {
+  id: number;
+  invocation_id: number;
+  user_id: number;
+  refund_credits: number;
+  refund_type: string;
+  refund_scope: string;
+  reason: string | null;
+  status: string;
+  over_window: boolean;
+  operator_id: number | null;
+  creator_reversal_credits: number;
+  external_ref: string | null;
+  note: string | null;
+  created_at: string | null;
+  executed_at: string | null;
+};
+
+export type AdminRefundPayload = {
+  refund_credits?: number;
+  refund_scope: string;
+  reason: string;
+  confirm_over_window?: boolean;
+  note?: string;
+};
+
+export type AdminPriceChangeRequest = {
+  id: number;
+  skill_id: string;
+  creator_user_id: number;
+  current_price_credits: number;
+  requested_price_credits: number;
+  requested_mode: string | null;
+  reason: string | null;
+  status: string;
+  reviewer_id: number | null;
+  reviewed_at: string | null;
+  review_note: string | null;
+  created_at: string | null;
+};
+
+/* -------------------------------------------------- invocation ledger -- */
+
+export type AdminInvocation = {
+  invocation_id: number;
+  user_id: number;
+  skill_id: string | null;
+  channel: string;
+  status: string;
+  skill_count: number;
+  skill_fee_credits: number;
+  token_credits: number;
+  asset_credits: number;
+  asset_item_count: number;
+  total_credits: number;
+  refunded_credits: number;
+  creator_credits: number;
+  platform_credits: number;
+  charged_credits: number | null;
+  free_quota_applied: boolean;
+  partial_success: boolean;
+};
+
+export type AdminInvocationSkillSplit = {
+  skill_id: string;
+  owner_id: number | null;
+  skill_fee_credits: number;
+  creator_credits: number;
+  platform_credits: number;
+  refunded_credits: number;
+  free_quota_applied: boolean;
+};
+
+export type AdminInvocationAsset = {
+  id: number;
+  skill_id: string | null;
+  asset_type: string;
+  task_table: string | null;
+  task_id: string | null;
+  provider: string | null;
+  model: string | null;
+  quantity: number;
+  unit_credits: number;
+  credits: number;
+  upstream_cost_fen: number;
+  status: string;
+  error_code: string | null;
+  created_at: string | null;
+  completed_at: string | null;
+};
+
+export type AdminInvocationDetail = AdminInvocation & {
+  model: string | null;
+  input_tokens: number;
+  output_tokens: number;
+  error_code: string | null;
+  created_at: string | null;
+  settled_at: string | null;
+  pricing_snapshot: Record<string, unknown>;
+  skills: AdminInvocationSkillSplit[];
+  assets: AdminInvocationAsset[];
+};
+
+export type AdminReconciliationViolationRow = {
+  invocation_id: number;
+  expected: number;
+  actual: number;
+};
+
+export type AdminReconciliationAccountRow = {
+  user_id: number;
+  ledger_sum: number;
+  account_sum: number;
+};
+
+export type AdminReconciliation = {
+  totals: {
+    invocations: number;
+    total_credits: number;
+    refunded_credits: number;
+    net_credits: number;
+    creator_credits: number;
+    platform_credits: number;
+    token_credits: number;
+    asset_credits: number;
+    platform_retention_credits: number;
+  };
+  violations: {
+    skill_fee_mismatch: AdminReconciliationViolationRow[];
+    creator_credits_mismatch: AdminReconciliationViolationRow[];
+    asset_credits_mismatch: AdminReconciliationViolationRow[];
+    creator_account_mismatch: AdminReconciliationAccountRow[];
+  };
+  ok: boolean;
+};
+
+export type AdminMarketplaceAbuse = {
+  self_dealing: {
+    user_id: number;
+    skill_id: string;
+    calls: number;
+    skill_fee_credits: number;
+    blocked_creator_credits: number;
+  }[];
+  shared_payout_profiles: {
+    user_ids: number[];
+    account_count: number;
+  }[];
+};

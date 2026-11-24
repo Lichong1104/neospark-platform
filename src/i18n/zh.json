@@ -24,7 +24,12 @@
       "userDetail": "用户详情",
       "payments": "支付记录",
       "points": "积分与维护",
-      "skillReviews": "Skill 审核"
+      "skillReviews": "Skill 审核",
+      "pricing": "定价配置",
+      "payouts": "提现结算",
+      "refunds": "退款",
+      "priceChanges": "改价审核",
+      "marketplace": "市场账本"
     },
     "actions": {
       "refresh": "刷新",
@@ -193,6 +198,366 @@
       "expiryDryDone": "dry-run 已完成",
       "expiryDone": "处理已完成",
       "expiryFailed": "执行失败"
+    },
+    "pricing": {
+      "tabs": {
+        "config": "配置定价",
+        "token": "Token 单价",
+        "asset": "算力单价"
+      },
+      "reasonPlaceholder": "修改原因（可选，会写入审计）",
+      "config": {
+        "title": "定价配置（生效值）",
+        "scope": {
+          "global": "全局",
+          "plan": "套餐",
+          "category": "分类",
+          "creator": "创作者"
+        },
+        "scopeKey": "scope key（如 * / pro / image / 用户 id）",
+        "version": "配置版本",
+        "pending": "{{count}} 项待保存",
+        "columns": {
+          "key": "键",
+          "value": "生效值",
+          "default": "默认值",
+          "type": "类型",
+          "updatedAt": "更新时间"
+        },
+        "save": "保存修改",
+        "saveSuccess": "定价配置已保存",
+        "saveFailed": "定价配置保存失败",
+        "loadFailed": "加载定价配置失败",
+        "noChanges": "没有需要保存的修改",
+        "confirmTitle": "保存定价配置",
+        "confirmBody": "将 {{count}} 项修改应用到 {{scope}}？对新的计费立即生效。",
+        "confirmSave": "保存"
+      },
+      "audit": {
+        "title": "定价变更审计",
+        "columns": {
+          "time": "时间",
+          "key": "键",
+          "old": "旧值",
+          "new": "新值",
+          "operator": "操作人",
+          "reason": "原因"
+        }
+      },
+      "token": {
+        "title": "Token 单价（积分 / 百万 token）",
+        "hint": "输入/输出为每百万 token 的零售积分；成本字段为每百万 token 的上游成本（分），仅用于毛利预览。default 行是未列模型的价格兜底，不能删除。",
+        "modelPlaceholder": "provider:model，如 gemini:gemini-2.5-flash",
+        "addModel": "新增模型",
+        "modelRequired": "请输入模型名",
+        "modelExists": "该模型已存在",
+        "defaultRequired": "default 行必须保留",
+        "invalidNumber": "价格必须是非负整数",
+        "fallback": "未列模型的兜底价格",
+        "loadFailed": "加载 token 单价失败",
+        "saveSuccess": "Token 单价已保存",
+        "saveFailed": "Token 单价保存失败",
+        "confirmTitle": "保存 Token 单价",
+        "confirmBody": "以 {{count}} 个变动模型覆盖单价表？新的模型调用立即按新价计费。",
+        "columns": {
+          "model": "模型",
+          "input": "输入（积分/百万）",
+          "output": "输出（积分/百万）",
+          "costInput": "输入成本（分/百万）",
+          "costOutput": "输出成本（分/百万）",
+          "marginInput": "输入毛利",
+          "marginOutput": "输出毛利",
+          "actions": "操作"
+        }
+      },
+      "asset": {
+        "title": "算力单价",
+        "create": "新增单价",
+        "createTitle": "新增算力单价",
+        "editTitle": "编辑算力单价",
+        "loadFailed": "加载算力单价失败",
+        "modelRequired": "请输入模型名",
+        "invalidNumber": "积分、时长、成本必须是非负整数",
+        "createSuccess": "算力单价已创建",
+        "saveSuccess": "算力单价已更新",
+        "saveFailed": "算力单价保存失败",
+        "statusSuccess": "状态已更新",
+        "statusFailed": "状态更新失败",
+        "enable": "启用",
+        "disable": "停用",
+        "enableConfirmTitle": "启用算力单价",
+        "disableConfirmTitle": "停用算力单价",
+        "toggleConfirmBody": "{{asset}} 将被{{state}}。{{effect}}",
+        "effectDisable": "新任务不再使用这条价格。",
+        "effectEnable": "新任务可以重新选中这条价格。",
+        "confirmTitle": "保存算力单价",
+        "confirmBody": "将 {{asset}} 的单价保存为每次 {{credits}} 积分？新价格只作用于之后的新任务。",
+        "confirmToggle": "确认",
+        "marginPreview": "毛利预览",
+        "reviewSave": "确认并保存",
+        "filter": {
+          "allTypes": "全部类型",
+          "allStatus": "全部状态",
+          "active": "启用",
+          "inactive": "停用"
+        },
+        "columns": {
+          "type": "类型",
+          "model": "模型",
+          "variant": "分辨率 / 时长",
+          "unitCredits": "积分",
+          "cost": "成本",
+          "margin": "收入 / 毛利",
+          "status": "状态",
+          "updatedAt": "更新时间",
+          "actions": "操作"
+        },
+        "form": {
+          "model": "模型",
+          "provider": "提供方",
+          "resolution": "分辨率",
+          "duration": "时长（秒）",
+          "unitCredits": "每次积分",
+          "costFen": "成本（分）",
+          "costOptional": "可选",
+          "active": "启用",
+          "reason": "原因"
+        }
+      }
+    },
+    "payouts": {
+      "title": "创作者提现结算",
+      "loadFailed": "加载提现申请失败",
+      "actionFailed": "提现操作失败",
+      "filter": {
+        "all": "全部状态"
+      },
+      "status": {
+        "requested": "待审核",
+        "approved": "已通过",
+        "paid": "已打款",
+        "rejected": "已驳回"
+      },
+      "columns": {
+        "id": "编号",
+        "creator": "创作者",
+        "credits": "积分",
+        "amount": "金额",
+        "method": "方式",
+        "status": "状态",
+        "time": "申请 / 打款",
+        "actions": "操作"
+      },
+      "actions": {
+        "approve": "通过",
+        "reject": "驳回",
+        "markPaid": "标记打款"
+      },
+      "actionLabel": {
+        "approve": "通过",
+        "reject": "驳回",
+        "mark-paid": "标记已打款"
+      },
+      "actionSuccess": {
+        "approve": "提现已通过",
+        "reject": "提现已驳回",
+        "mark-paid": "提现已标记打款"
+      },
+      "confirmTitle": {
+        "approve": "通过提现",
+        "reject": "驳回提现",
+        "mark-paid": "标记已打款"
+      },
+      "confirmBody": "创作者 {{creator}} 的提现 #{{id}}，{{credits}} 积分（{{amount}}），确认{{action}}？",
+      "externalRef": "打款凭证（银行 / 钱包流水号）",
+      "note": "备注（可选）"
+    },
+    "refunds": {
+      "title": "调用退款",
+      "history": "退款记录",
+      "hint": "只有已结算的调用可退款。超出退款窗口需要二次确认。作者收益会按比例冲正。",
+      "loadFailed": "加载退款记录失败",
+      "success": "退款已完成",
+      "failed": "退款失败",
+      "invocationId": "invocation_id",
+      "userId": "user_id",
+      "invocationRequired": "请输入有效的调用 ID",
+      "reasonRequired": "请填写退款原因",
+      "invalidCredits": "退款积分必须是正整数",
+      "creditsOptional": "积分（留空 = 全退）",
+      "reason": "退款原因",
+      "note": "备注（可选）",
+      "submit": "退款",
+      "scope": {
+        "all": "全部",
+        "skill_fee": "技能费",
+        "token": "Token",
+        "compute": "算力"
+      },
+      "columns": {
+        "id": "编号",
+        "invocation": "调用",
+        "credits": "积分",
+        "scope": "范围",
+        "reversal": "作者冲正",
+        "status": "状态",
+        "reason": "原因",
+        "time": "时间"
+      },
+      "overWindowBadge": "超窗",
+      "overWindowTitle": "超出退款窗口",
+      "overWindowBody": "该调用已超出退款窗口。继续将按超窗退款记录。确认继续？",
+      "overWindowConfirm": "仍然退款",
+      "confirmTitle": "确认退款",
+      "confirmBody": "为调用 {{invocation}} 的用户退款 {{credits}} 积分（范围：{{scope}}）？",
+      "confirmRefund": "确认退款",
+      "allRemaining": "全部剩余",
+      "noteLabel": "备注"
+    },
+    "priceChanges": {
+      "title": "技能改价申请",
+      "hint": "审核通过后对新调用生效；待审核期间旧价继续有效。",
+      "loadFailed": "加载改价申请失败",
+      "actionFailed": "审核操作失败",
+      "filter": {
+        "all": "全部状态"
+      },
+      "status": {
+        "pending": "待审核",
+        "approved": "已通过",
+        "rejected": "已驳回"
+      },
+      "columns": {
+        "id": "编号",
+        "skill": "技能",
+        "creator": "创作者",
+        "price": "当前 → 申请",
+        "mode": "模式",
+        "reason": "原因",
+        "status": "状态",
+        "time": "提交时间",
+        "actions": "操作"
+      },
+      "actions": {
+        "approve": "通过",
+        "reject": "驳回"
+      },
+      "actionLabel": {
+        "approve": "通过",
+        "reject": "驳回"
+      },
+      "actionSuccess": {
+        "approve": "改价已通过",
+        "reject": "改价已驳回"
+      },
+      "confirmTitle": {
+        "approve": "通过改价",
+        "reject": "驳回改价"
+      },
+      "confirmBody": "对 {{skill}} 的改价 {{current}} → {{requested}} 积分，确认{{action}}？",
+      "note": "审核备注（可选）"
+    },
+    "marketplace": {
+      "tabs": {
+        "invocations": "调用账本",
+        "reconciliation": "对账",
+        "risk": "风控"
+      },
+      "filters": {
+        "userId": "用户 ID",
+        "skillId": "Skill ID",
+        "allStatus": "全部状态",
+        "search": "查询",
+        "since": "起",
+        "until": "止"
+      },
+      "invocations": {
+        "title": "调用账本",
+        "hint": "每次计费调用：技能费 / token / 算力拆分，以及创作者与平台分成。",
+        "page": "第",
+        "view": "详情",
+        "partial": "部分成功",
+        "net": "净额",
+        "charged": "实扣",
+        "tokens": "Token 输入/输出",
+        "freeQuota": "免费额度",
+        "errorCode": "错误",
+        "skillsSplit": "多技能分账",
+        "assetsTitle": "算力条目（{{count}}）",
+        "snapshot": "定价快照",
+        "empty": "暂无数据",
+        "detailTitle": "调用 #{{id}}",
+        "columns": {
+          "user": "用户",
+          "skill": "Skill",
+          "status": "状态",
+          "skillFee": "技能费",
+          "token": "Token",
+          "asset": "算力",
+          "total": "合计",
+          "refunded": "已退",
+          "creator": "创作者",
+          "platform": "平台",
+          "actions": "操作"
+        },
+        "assetColumns": {
+          "type": "类型",
+          "quantity": "数量",
+          "unit": "单价",
+          "credits": "消耗",
+          "upstream": "上游成本",
+          "status": "状态"
+        }
+      },
+      "reconciliation": {
+        "title": "对账",
+        "hint": "校验不变量：调用汇总 vs 技能分账、算力条目、创作者账本 vs 账户余额。",
+        "run": "执行对账",
+        "ok": "所有不变量通过",
+        "violations": "{{count}} 项不一致",
+        "empty": "无不一致",
+        "totals": {
+          "invocations": "调用数",
+          "total": "毛额积分",
+          "refunded": "已退积分",
+          "net": "净积分",
+          "creator": "创作者积分",
+          "platform": "平台积分",
+          "retention": "平台留存",
+          "token": "Token 积分",
+          "asset": "算力积分"
+        },
+        "violationTypes": {
+          "skillFee": "技能费不一致",
+          "creator": "创作者积分不一致",
+          "asset": "算力积分不一致",
+          "account": "创作者账户不一致"
+        }
+      },
+      "risk": {
+        "title": "风控",
+        "hint": "自买自卖模式与共用同一收款账户的创作者。",
+        "load": "刷新",
+        "selfDealing": "自买自卖",
+        "sharedProfiles": "共用收款账户",
+        "empty": "暂无风险项",
+        "columns": {
+          "user": "用户",
+          "skill": "Skill",
+          "calls": "调用次数",
+          "fee": "技能费",
+          "blocked": "被拦截的创作者收益",
+          "users": "用户",
+          "count": "账户数"
+        }
+      },
+      "toast": {
+        "invalidUser": "用户 ID 必须是数字",
+        "loadFailed": "调用账本加载失败",
+        "loadDetailFailed": "调用详情加载失败",
+        "reconcileFailed": "对账失败",
+        "abuseFailed": "风控数据加载失败"
+      }
     }
   },
   "onboarding": {
@@ -409,7 +774,8 @@
     "apiKeys": "API 密钥",
     "invoiceRecords": "发票记录",
     "cancelSubscription": "取消订阅",
-    "logout": "退出登录"
+    "logout": "退出登录",
+    "creatorCenter": "创作者中心"
   },
   "workspace": {
     "assets": "素材",
@@ -1400,6 +1766,56 @@
     "instructions": "使用说明",
     "scripts": "脚本列表",
     "references": "参考文档",
+    "pricing": {
+      "adminTitle": "定价（管理员）",
+      "priceLabel": "单次价格（积分/次）",
+      "modeLabel": "定价模式",
+      "mode": {
+        "inherit": "继承平台默认",
+        "fixed": "固定价格",
+        "free": "免费"
+      },
+      "shareRateLabel": "创作者分成率",
+      "shareRateHint": "0-1，留空保持当前值，仅管理员可见可改。",
+      "maxFeeLabel": "技能费封顶（积分）",
+      "maxFeeHint": "留空保持当前封顶值。",
+      "unchanged": "留空保持不变",
+      "reasonLabel": "变更原因（写入审计）",
+      "reasonPlaceholder": "为什么调整这个价格？",
+      "save": "保存定价",
+      "confirmTitle": "确认修改定价",
+      "confirmDesc": "立即生效，跳过创作者审核流程，递增定价版本并写入审计记录。",
+      "saveSuccess": "定价已更新（v{{version}}）",
+      "saveFailed": "定价更新失败",
+      "invalidPrice": "价格必须是 0-500 的整数",
+      "invalidShareRate": "分成率必须在 0 到 1 之间",
+      "invalidMaxFee": "封顶值必须是非负整数",
+      "free": "免费",
+      "freeQuotaValue": "{{count}} 次免费 / {{period}}",
+      "period": {
+        "month": "每月",
+        "lifetime": "永久"
+      },
+      "creatorHint": "创作者不能直接改价。请在创作者中心提交改价申请——审核通过前仍按旧价格生效。",
+      "goCreator": "前往创作者中心"
+    },
+    "reviews": "评分与评论",
+    "ratingStats": "平均 {{avg}} 分 · {{count}} 个评分",
+    "ratingCounts": "{{ratings}} 个评分 · {{comments}} 条评论",
+    "writeReview": "为 Skill 打分或写评论",
+    "updateReview": "更新我的评分",
+    "reviewPlaceholder": "分享你的使用体验...",
+    "submitReview": "发表评论",
+    "updateComment": "更新评论",
+    "reviewSubmitted": "已提交",
+    "reviewSubmitFailed": "提交失败，请重试",
+    "reviewDeleted": "已删除",
+    "reviewDeleteFailed": "删除失败",
+    "loginToReview": "登录后即可为该 Skill 打分和评论",
+    "noReviews": "还没有评论，来抢沙发",
+    "deleteReview": "删除评论",
+    "deleteReviewTitle": "删除评分/评论",
+    "deleteReviewConfirm": "确定要删除你的评分和评论吗？此操作不可撤销。",
     "welcomeTitle": "Skill Agent",
     "welcomeDesc": "选择上方技能，输入命令即可调用 AI 能力。",
     "example1": "帮我生成一张赛博朋克风格的猫",
@@ -1693,5 +2109,106 @@
     "addedToWorkflow": "已添加到工作流",
     "runNode": "运行节点",
     "loadMore": "加载更多"
+  },
+  "creator": {
+    "title": "创作者中心",
+    "subtitle": "查看技能收入、申请提现与提交改价申请。",
+    "loadFailed": "加载创作者数据失败",
+    "account": {
+      "available": "可提现",
+      "pending": "待解冻",
+      "pendingHint": "锁定中，持有期结束后自动解冻",
+      "frozen": "冻结中",
+      "earned": "累计收益",
+      "paid": "累计已提",
+      "caps": "日上限 {{daily}} · 月上限 {{monthly}}"
+    },
+    "bySkill": {
+      "title": "按技能收入",
+      "skill": "技能",
+      "calls": "调用数",
+      "fee": "技能费",
+      "revenue": "技能费分成",
+      "compute": "算力分成",
+      "refunded": "已冲正"
+    },
+    "statement": {
+      "title": "月度对账单",
+      "confirmedCredits": "已确认积分",
+      "lockedCredits": "锁定积分",
+      "hint": "对账单只读。锁定收益会在持有期结束后转为可提现。"
+    },
+    "payout": {
+      "title": "申请提现",
+      "credits": "积分",
+      "method": "方式",
+      "note": "备注（可选）",
+      "submit": "申请提现",
+      "hint": "当前可提现 {{available}} 积分，金额按加权结算价计算。",
+      "creditsUnit": "积分",
+      "invalidCredits": "请输入正整数积分",
+      "methodRequired": "请填写提现方式",
+      "success": "提现申请已提交",
+      "failed": "提现申请失败",
+      "confirmTitle": "确认提现申请",
+      "confirmBody": "确认通过 {{method}} 提现 {{credits}} 积分？",
+      "confirm": "确认申请",
+      "status": {
+        "requested": "待审核",
+        "approved": "已通过",
+        "paid": "已打款",
+        "rejected": "已驳回"
+      }
+    },
+    "earnings": {
+      "title": "收益明细",
+      "allTypes": "全部类型",
+      "skillFilter": "skill_id",
+      "type": {
+        "earning": "收益",
+        "reversal": "冲正",
+        "payout": "提现",
+        "adjustment": "调整"
+      },
+      "source": {
+        "skill_fee": "技能费",
+        "compute": "算力",
+        "payout": "提现",
+        "adjustment": "调整"
+      },
+      "unlockAt": "解锁于 {{time}}",
+      "columns": {
+        "id": "编号",
+        "skill": "技能",
+        "type": "类型",
+        "credits": "积分",
+        "status": "状态",
+        "rate": "结算价",
+        "balance": "变动后余额",
+        "time": "时间"
+      }
+    },
+    "priceChange": {
+      "title": "改价申请",
+      "skillId": "skill_id",
+      "price": "新价格（积分）",
+      "reason": "原因",
+      "hint": "申请审核期间旧价格继续生效。分成率不可由创作者修改。",
+      "submit": "提交申请",
+      "skillRequired": "请填写技能 ID",
+      "invalidPrice": "价格必须是 0–500 的整数",
+      "success": "改价申请已提交",
+      "failed": "改价申请提交失败",
+      "mode": {
+        "fixed": "固定价格",
+        "inherit": "继承平台价格",
+        "free": "免费"
+      },
+      "status": {
+        "pending": "待审核",
+        "approved": "已通过",
+        "rejected": "已驳回"
+      }
+    }
   }
 }

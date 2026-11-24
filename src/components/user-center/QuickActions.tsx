@@ -20,6 +20,7 @@ import {
   Zap,
   CheckCircle2,
   Gift,
+  Store,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
@@ -63,6 +64,12 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
       label: t("uc.invoiceRecords", { defaultValue: "Invoice Records" }),
       color: "bg-accent-purple/80",
       onClick: () => navigate("/invoices"),
+    },
+    {
+      icon: <Store className="w-3.5 h-3.5" />,
+      label: t("uc.creatorCenter", { defaultValue: "Creator Center" }),
+      color: "bg-accent-yellow/80",
+      onClick: () => navigate("/creator"),
     },
   ];
 

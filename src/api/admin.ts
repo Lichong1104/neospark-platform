@@ -1,5 +1,7 @@
 import http from "./request";
 import type {
+  AdminAssetPricingCreatePayload,
+  AdminAssetPricingItem,
   AdminCheckResponse,
   AdminOverview,
   AdminUserListResponse,
@@ -7,7 +9,18 @@ import type {
   AdminDrawingRecord,
   AdminVideoRecord,
   AdminPagedResponse,
+  AdminPricingAuditItem,
+  AdminPricingConfigItem,
+  AdminPricingConfigUpdatePayload,
+  AdminPricingConfigView,
+  AdminPriceChangeRequest,
+  AdminPayoutReviewPayload,
+  AdminRefundPayload,
+  AdminCreatorPayout,
+  AdminSkillRefund,
   AdminStripePayment,
+  AdminTokenPricingView,
+  AdminTokenRate,
   AdminWechatPayment,
   AdminPointsSetParams,
   AdminPointsSetResponse,
@@ -17,6 +30,10 @@ import type {
   AdminSkillSubmissionItem,
   AdminSkillSubmissionDetail,
   AdminSkillSubmissionReviewResult,
+  AdminInvocation,
+  AdminInvocationDetail,
+  AdminMarketplaceAbuse,
+  AdminReconciliation,
 } from "@/types/admin";
 
 export async function checkAdmin(): Promise<AdminCheckResponse> {
@@ -171,6 +188,226 @@ export async function rejectSkillSubmission(
   return (res as unknown as AdminSkillSubmissionReviewResult) ?? res.data;
 }
 
+/* ------------------------------------------------------------ pricing -- */
+
+export async function getPricingConfigs(params?: {
+  scope?: string;
+  scope_key?: string;
+}): Promise<AdminPricingConfigView> {
+  const res = await http.get<AdminPricingConfigView>(
+    "/admin/pricing-configs",
+    params as Record<string, unknown>
+  );
+  return res.data;
+}
+
+export async function updatePricingConfigs(
+  payload: AdminPricingConfigUpdatePayload
+): Promise<{ items: AdminPricingConfigItem[]; config_version: number }> {
+  const res = await http.put<
+    { items: AdminPricingConfigItem[]; config_version: number },
+    AdminPricingConfigUpdatePayload
+  >("/admin/pricing-configs", payload);
+  return res.data;
+}
+
+export async function getPricingConfigAudit(params?: {
+  config_key?: string;
+  scope?: string;
+  page?: number;
+  page_size?: number;
+}): Promise<AdminPagedResponse<AdminPricingAuditItem>> {
+  const res = await http.get<AdminPagedResponse<AdminPricingAuditItem>>(
+    "/admin/pricing-configs/audit",
+    params as Record<string, unknown>
+  );
+  return res.data;
+}
+
+export async function getTokenPricing(): Promise<AdminTokenPricingView> {
+  const res = await http.get<AdminTokenPricingView>("/admin/token-pricing");
+  return res.data;
+}
+
+export async function updateTokenPricing(payload: {
+  pricing: Record<string, AdminTokenRate>;
+  reason?: string;
+}): Promise<AdminTokenPricingView> {
+  const res = await http.put<AdminTokenPricingView, typeof payload>(
+    "/admin/token-pricing",
+    payload
+  );
+  return res.data;
+}
+
+export async function getAssetPricing(params?: {
+  asset_type?: string;
+  provider?: string;
+  model?: string;
+  is_active?: boolean;
+}): Promise<{ items: AdminAssetPricingItem[] }> {
+  const res = await http.get<{ items: AdminAssetPricingItem[] }>(
+    "/admin/asset-pricing",
+    params as Record<string, unknown>
+  );
+  return res.data;
+}
+
+export async function createAssetPricing(
+  payload: AdminAssetPricingCreatePayload
+): Promise<AdminAssetPricingItem> {
+  const res = await http.post<AdminAssetPricingItem, AdminAssetPricingCreatePayload>(
+    "/admin/asset-pricing",
+    payload
+  );
+  return res.data;
+}
+
+export async function updateAssetPricing(
+  configId: number,
+  payload: Partial<AdminAssetPricingCreatePayload>
+): Promise<AdminAssetPricingItem> {
+  const res = await http.put<
+    AdminAssetPricingItem,
+    Partial<AdminAssetPricingCreatePayload>
+  >(`/admin/asset-pricing/${configId}`, payload);
+  return res.data;
+}
+
+export async function setAssetPricingStatus(
+  configId: number,
+  payload: { is_active: boolean; reason?: string }
+): Promise<AdminAssetPricingItem> {
+  const res = await http.patch<AdminAssetPricingItem, typeof payload>(
+    `/admin/asset-pricing/${configId}/status`,
+    payload
+  );
+  return res.data;
+}
+
+/* --------------------------------------------- creator operations (P3) -- */
+
+export async function getCreatorPayouts(params?: {
+  creator_user_id?: number;
+  status?: string;
+  offset?: number;
+  limit?: number;
+}): Promise<{ payouts: AdminCreatorPayout[]; total: number }> {
+  const res = await http.get<{ payouts: AdminCreatorPayout[]; total: number }>(
+    "/admin/creator-payouts",
+    params as Record<string, unknown>
+  );
+  return res.data;
+}
+
+export async function reviewCreatorPayout(
+  payoutId: number,
+  action: "approve" | "reject" | "mark-paid",
+  payload: AdminPayoutReviewPayload
+): Promise<AdminCreatorPayout> {
+  const res = await http.post<AdminCreatorPayout, AdminPayoutReviewPayload>(
+    `/admin/creator-payouts/${payoutId}/${action}`,
+    payload
+  );
+  return res.data;
+}
+
+export async function getSkillRefunds(params?: {
+  invocation_id?: number;
+  user_id?: number;
+  offset?: number;
+  limit?: number;
+}): Promise<{ refunds: AdminSkillRefund[]; total: number }> {
+  const res = await http.get<{ refunds: AdminSkillRefund[]; total: number }>(
+    "/admin/skill-refunds",
+    params as Record<string, unknown>
+  );
+  return res.data;
+}
+
+export async function refundSkillInvocation(
+  invocationId: number,
+  payload: AdminRefundPayload
+): Promise<AdminSkillRefund> {
+  const res = await http.post<AdminSkillRefund, AdminRefundPayload>(
+    `/admin/skill-invocations/${invocationId}/refund`,
+    payload
+  );
+  return res.data;
+}
+
+export async function getPriceChangeRequests(params?: {
+  creator_user_id?: number;
+  skill_id?: string;
+  status?: string;
+  offset?: number;
+  limit?: number;
+}): Promise<{ requests: AdminPriceChangeRequest[]; total: number }> {
+  const res = await http.get<{ requests: AdminPriceChangeRequest[]; total: number }>(
+    "/admin/price-change-requests",
+    params as Record<string, unknown>
+  );
+  return res.data;
+}
+
+export async function reviewPriceChangeRequest(
+  requestId: number,
+  action: "approve" | "reject",
+  note?: string
+): Promise<AdminPriceChangeRequest> {
+  const res = await http.post<AdminPriceChangeRequest>(
+    `/admin/price-change-requests/${requestId}/${action}`,
+    { note }
+  );
+  return res.data;
+}
+
+/* ------------------------------------------ marketplace ledger / risk -- */
+
+export async function getSkillInvocations(params?: {
+  user_id?: number;
+  skill_id?: string;
+  status?: string;
+  offset?: number;
+  limit?: number;
+}): Promise<{ invocations: AdminInvocation[]; total: number }> {
+  const res = await http.get<{ invocations: AdminInvocation[]; total: number }>(
+    "/admin/skill-invocations",
+    params as Record<string, unknown>
+  );
+  return res.data;
+}
+
+export async function getSkillInvocation(
+  invocationId: number
+): Promise<AdminInvocationDetail> {
+  const res = await http.get<AdminInvocationDetail>(
+    `/admin/skill-invocations/${invocationId}`
+  );
+  return res.data;
+}
+
+export async function getMarketplaceReconciliation(params?: {
+  since?: string;
+  until?: string;
+}): Promise<AdminReconciliation> {
+  const res = await http.get<AdminReconciliation>(
+    "/admin/marketplace/reconciliation",
+    params as Record<string, unknown>
+  );
+  return res.data;
+}
+
+export async function getMarketplaceAbuse(params?: {
+  limit?: number;
+}): Promise<AdminMarketplaceAbuse> {
+  const res = await http.get<AdminMarketplaceAbuse>(
+    "/admin/marketplace/abuse",
+    params as Record<string, unknown>
+  );
+  return res.data;
+}
+
 const adminApi = {
   checkAdmin,
   getOverview,
@@ -187,6 +424,25 @@ const adminApi = {
   getSkillSubmission,
   approveSkillSubmission,
   rejectSkillSubmission,
+  getPricingConfigs,
+  updatePricingConfigs,
+  getPricingConfigAudit,
+  getTokenPricing,
+  updateTokenPricing,
+  getAssetPricing,
+  createAssetPricing,
+  updateAssetPricing,
+  setAssetPricingStatus,
+  getCreatorPayouts,
+  reviewCreatorPayout,
+  getSkillRefunds,
+  refundSkillInvocation,
+  getPriceChangeRequests,
+  reviewPriceChangeRequest,
+  getSkillInvocations,
+  getSkillInvocation,
+  getMarketplaceReconciliation,
+  getMarketplaceAbuse,
 };
 
 export default adminApi;

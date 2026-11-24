@@ -43,8 +43,23 @@ import type {
 } from "@/types/admin";
 import { Coins, RefreshCw, Search, Users } from "lucide-react";
 import SkillReviewPanel from "@/components/admin/SkillReviewPanel";
+import PricingPanel from "@/components/admin/PricingPanel";
+import CreatorPayoutPanel from "@/components/admin/CreatorPayoutPanel";
+import RefundPanel from "@/components/admin/RefundPanel";
+import PriceChangePanel from "@/components/admin/PriceChangePanel";
+import MarketplacePanel from "@/components/admin/MarketplacePanel";
 
-type TabKey = "overview" | "users" | "userDetail" | "payments" | "skillReviews";
+type TabKey =
+  | "overview"
+  | "users"
+  | "userDetail"
+  | "payments"
+  | "skillReviews"
+  | "pricing"
+  | "payouts"
+  | "refunds"
+  | "priceChanges"
+  | "marketplace";
 
 const toStorageUrl = (url: string): string =>
   url.startsWith("http") ? url : `${STATIC_BASE_URL}${url}`;
@@ -64,10 +79,26 @@ const Admin: React.FC = () => {
       userDetail: t("admin.tabs.userDetail"),
       payments: t("admin.tabs.payments"),
       skillReviews: t("admin.tabs.skillReviews"),
+      pricing: t("admin.tabs.pricing"),
+      payouts: t("admin.tabs.payouts"),
+      refunds: t("admin.tabs.refunds"),
+      priceChanges: t("admin.tabs.priceChanges"),
+      marketplace: t("admin.tabs.marketplace"),
     }),
     [t]
   );
-  const tabKeys: TabKey[] = ["overview", "users", "userDetail", "payments", "skillReviews"];
+  const tabKeys: TabKey[] = [
+    "overview",
+    "users",
+    "userDetail",
+    "payments",
+    "skillReviews",
+    "pricing",
+    "payouts",
+    "refunds",
+    "priceChanges",
+    "marketplace",
+  ];
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
 
   const [overview, setOverview] = useState<AdminOverview | null>(null);
@@ -1058,6 +1089,21 @@ const Admin: React.FC = () => {
 
           {/* Skill 提交审核 */}
           {activeTab === "skillReviews" ? <SkillReviewPanel /> : null}
+
+          {/* 定价配置 */}
+          {activeTab === "pricing" ? <PricingPanel /> : null}
+
+          {/* 创作者提现结算 */}
+          {activeTab === "payouts" ? <CreatorPayoutPanel /> : null}
+
+          {/* 调用退款 */}
+          {activeTab === "refunds" ? <RefundPanel /> : null}
+
+          {/* 改价审核 */}
+          {activeTab === "priceChanges" ? <PriceChangePanel /> : null}
+
+          {/* 调用账本 / 对账 / 风控 */}
+          {activeTab === "marketplace" ? <MarketplacePanel /> : null}
         </div>
       </main>
 

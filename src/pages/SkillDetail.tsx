@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -11,6 +11,8 @@ import {
   Loader2,
   Download,
   ImagePlus,
+  CircleDollarSign,
+  Store,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -19,7 +21,9 @@ import skillsApi from "@/api/skills";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMcpBundleDownload } from "@/hooks/useMcpBundleDownload";
 import ConfirmDialog from "@/components/ui/confirm-dialog";
+import { BrutalInput } from "@/components/ui/brutal-input";
 import McpBundleDialog from "@/components/skills/McpBundleDialog";
+import SkillReviews from "@/components/skills/SkillReviews";
 const SkillDetail: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -41,6 +45,107 @@ const SkillDetail: React.FC = () => {
 
   const pricePoints = skill?.price_points ?? 0;
   const previews = skill?.previews?.length ? skill.previews : skill?.preview ? [skill.preview] : [];
+
+  const isAdmin = !!userInfo?.is_admin;
+  const isOwner = !!(
+    userInfo?.id != null &&
+    skill?.owner_id != null &&
+    skill.owner_id === userInfo.id
+  );
+
+  // 管理员设价表单。详情接口不下发分成率/封顶，留空表示保持不变。
+  const [pricingPrice, setPricingPrice] = useState("0");
+  const [pricingMode, setPricingMode] = useState<"inherit" | "fixed" | "free">(
+    "inherit"
+  );
+  const [pricingShareRate, setPricingShareRate] = useState("");
+  const [pricingMaxFee, setPricingMaxFee] = useState("");
+  const [pricingReason, setPricingReason] = useState("");
+  const [pricingErrors, setPricingErrors] = useState<string[]>([]);
+  const [pricingSaving, setPricingSaving] = useState(false);
+  const [pricingConfirmOpen, setPricingConfirmOpen] = useState(false);
+
+  useEffect(() => {
+    if (!skill) return;
+    setPricingPrice(String(skill.price_points ?? 0));
+    setPricingMode(skill.pricing_mode ?? "inherit");
+    setPricingShareRate("");
+    setPricingMaxFee("");
+    setPricingReason("");
+    setPricingErrors([]);
+    // 只按 skill_id 初始化；按整个 skill 对象会在后台刷新时覆盖正在编辑的表单
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [skill?.skill_id]);
+
+  const buildPricingPayload = (): {
+    payload: Parameters<typeof skillsApi.updateSkillPricing>[1] | null;
+    errors: string[];
+  } => {
+    const errors: string[] = [];
+    const price = Number(pricingPrice);
+    if (!Number.isInteger(price) || price < 0 || price > 500) {
+      errors.push(t("skill.pricing.invalidPrice"));
+    }
+    let shareRate: number | undefined;
+    if (pricingShareRate.trim()) {
+      shareRate = Number(pricingShareRate);
+      if (!Number.isFinite(shareRate) || shareRate < 0 || shareRate > 1) {
+        errors.push(t("skill.pricing.invalidShareRate"));
+      }
+    }
+    let maxFee: number | undefined;
+    if (pricingMaxFee.trim()) {
+      maxFee = Number(pricingMaxFee);
+      if (!Number.isInteger(maxFee) || maxFee < 0) {
+        errors.push(t("skill.pricing.invalidMaxFee"));
+      }
+    }
+    if (errors.length > 0) return { payload: null, errors };
+    return {
+      payload: {
+        price_credits: price,
+        pricing_mode: pricingMode,
+        ...(shareRate !== undefined ? { creator_share_rate: shareRate } : {}),
+        ...(maxFee !== undefined ? { max_skill_fee_credits: maxFee } : {}),
+        ...(pricingReason.trim() ? { reason: pricingReason.trim() } : {}),
+      },
+      errors: [],
+    };
+  };
+
+  const handleSavePricing = async () => {
+    if (!skillId) return;
+    const { payload, errors } = buildPricingPayload();
+    if (!payload) {
+      setPricingErrors(errors);
+      setPricingConfirmOpen(false);
+      return;
+    }
+    setPricingErrors([]);
+    setPricingSaving(true);
+    try {
+      const result = await skillsApi.updateSkillPricing(skillId, payload);
+      toast.success(
+        t("skill.pricing.saveSuccess", { version: result.pricing_version })
+      );
+      setPricingConfirmOpen(false);
+      setPricingShareRate("");
+      setPricingMaxFee("");
+      setPricingReason("");
+      await queryClient.invalidateQueries({ queryKey: ["skill", skillId] });
+      await queryClient.invalidateQueries({ queryKey: ["skills"] });
+    } catch (err: unknown) {
+      const detail = (err as { response?: { data?: { detail?: unknown } } })
+        ?.response?.data?.detail;
+      toast.error(
+        typeof detail === "string"
+          ? detail
+          : t("skill.pricing.saveFailed")
+      );
+    } finally {
+      setPricingSaving(false);
+    }
+  };
 
   const handleImageUpload = async (files: FileList | null) => {
     if (!skillId || !files || files.length === 0) return;
@@ -286,10 +391,24 @@ const SkillDetail: React.FC = () => {
                 </div>
                 <div className="text-sm font-mono"
                 >
-                  {pricePoints > 0
-                    ? t("skill.costPoints", { count: pricePoints })
-                    : t("skill.metered")}
+                  {skill.pricing_mode === "free"
+                    ? t("skill.pricing.free")
+                    : pricePoints > 0
+                      ? t("skill.costPoints", { count: pricePoints })
+                      : t("skill.metered")}
                 </div>
+                {(skill.free_quota ?? 0) > 0 && (
+                  <div className="mt-0.5 text-[10px] font-mono text-muted-foreground">
+                    {t("skill.pricing.freeQuotaValue", {
+                      count: skill.free_quota,
+                      period: t(
+                        skill.free_quota_period === "lifetime"
+                          ? "skill.pricing.period.lifetime"
+                          : "skill.pricing.period.month"
+                      ),
+                    })}
+                  </div>
+                )}
               </div>
               <div
               >
@@ -392,6 +511,139 @@ const SkillDetail: React.FC = () => {
             </div>
           )}
         </div>
+
+        {isAdmin && (
+          <div className="mt-6 border-brutal border-foreground bg-card brutal-shadow">
+            <div className="flex items-center gap-1.5 border-b border-foreground/10 bg-secondary/20 px-6 py-2">
+              <CircleDollarSign className="w-3.5 h-3.5 text-muted-foreground" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                {t("skill.pricing.adminTitle")}
+              </span>
+            </div>
+            <div className="grid gap-4 p-6 md:grid-cols-2">
+              <label className="block">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  {t("skill.pricing.priceLabel")}
+                </span>
+                <BrutalInput
+                  type="number"
+                  min={0}
+                  max={500}
+                  value={pricingPrice}
+                  onChange={(e) => setPricingPrice(e.target.value)}
+                  className="mt-1 h-9"
+                />
+              </label>
+              <label className="block">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  {t("skill.pricing.modeLabel")}
+                </span>
+                <select
+                  value={pricingMode}
+                  onChange={(e) =>
+                    setPricingMode(
+                      e.target.value as "inherit" | "fixed" | "free"
+                    )
+                  }
+                  className="mt-1 flex h-9 w-full border-brutal border-foreground bg-background px-3 text-sm font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan"
+                >
+                  <option value="inherit">{t("skill.pricing.mode.inherit")}</option>
+                  <option value="fixed">{t("skill.pricing.mode.fixed")}</option>
+                  <option value="free">{t("skill.pricing.mode.free")}</option>
+                </select>
+              </label>
+              <label className="block">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  {t("skill.pricing.shareRateLabel")}
+                </span>
+                <BrutalInput
+                  type="number"
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  value={pricingShareRate}
+                  onChange={(e) => setPricingShareRate(e.target.value)}
+                  placeholder={t("skill.pricing.unchanged")}
+                  className="mt-1 h-9"
+                />
+                <span className="mt-1 block text-[10px] text-muted-foreground">
+                  {t("skill.pricing.shareRateHint")}
+                </span>
+              </label>
+              <label className="block">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  {t("skill.pricing.maxFeeLabel")}
+                </span>
+                <BrutalInput
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={pricingMaxFee}
+                  onChange={(e) => setPricingMaxFee(e.target.value)}
+                  placeholder={t("skill.pricing.unchanged")}
+                  className="mt-1 h-9"
+                />
+                <span className="mt-1 block text-[10px] text-muted-foreground">
+                  {t("skill.pricing.maxFeeHint")}
+                </span>
+              </label>
+              <label className="block md:col-span-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  {t("skill.pricing.reasonLabel")}
+                </span>
+                <BrutalInput
+                  value={pricingReason}
+                  onChange={(e) => setPricingReason(e.target.value)}
+                  placeholder={t("skill.pricing.reasonPlaceholder")}
+                  className="mt-1 h-9"
+                />
+              </label>
+              {pricingErrors.length > 0 && (
+                <ul className="md:col-span-2 space-y-1 border border-accent-red/50 bg-accent-red/10 px-3 py-2 text-[11px] text-accent-red">
+                  {pricingErrors.map((msg) => (
+                    <li key={msg}>{msg}</li>
+                  ))}
+                </ul>
+              )}
+              <div className="flex justify-end md:col-span-2">
+                <button
+                  type="button"
+                  disabled={pricingSaving}
+                  onClick={() => {
+                    const { errors } = buildPricingPayload();
+                    if (errors.length > 0) {
+                      setPricingErrors(errors);
+                      return;
+                    }
+                    setPricingErrors([]);
+                    setPricingConfirmOpen(true);
+                  }}
+                  className="h-9 px-4 border-brutal border-foreground bg-accent-green/20 text-xs font-bold uppercase tracking-wider hover:bg-accent-green/30 transition-none disabled:opacity-50"
+                >
+                  {t("skill.pricing.save")}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {isOwner && !isAdmin && (
+          <div className="mt-6 flex items-start gap-3 border-brutal border-foreground bg-card brutal-shadow p-4">
+            <Store className="mt-0.5 w-4 h-4 shrink-0 text-accent-yellow" />
+            <p className="flex-1 text-xs leading-relaxed text-muted-foreground">
+              {t("skill.pricing.creatorHint")}
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate("/creator")}
+              className="h-8 shrink-0 border-brutal border-foreground bg-card px-3 text-xs font-bold uppercase tracking-wider hover:bg-secondary transition-none"
+            >
+              {t("skill.pricing.goCreator")}
+            </button>
+          </div>
+        )}
+
+        {skillId && <SkillReviews skillId={skillId} />}
       </div>
 
       <input
@@ -421,6 +673,42 @@ const SkillDetail: React.FC = () => {
         destructive
         loading={isDeleting}
         onConfirm={() => void handleDelete()}
+      />
+
+      <ConfirmDialog
+        open={pricingConfirmOpen}
+        onOpenChange={(open) => {
+          if (!pricingSaving) setPricingConfirmOpen(open);
+        }}
+        title={t("skill.pricing.confirmTitle")}
+        description={
+          <div className="space-y-1 font-mono text-xs">
+            <div>
+              {t("skill.pricing.priceLabel")}: {pricingPrice}
+            </div>
+            <div>
+              {t("skill.pricing.modeLabel")}:{" "}
+              {t(`skill.pricing.mode.${pricingMode}`)}
+            </div>
+            {pricingShareRate.trim() && (
+              <div>
+                {t("skill.pricing.shareRateLabel")}: {pricingShareRate}
+              </div>
+            )}
+            {pricingMaxFee.trim() && (
+              <div>
+                {t("skill.pricing.maxFeeLabel")}: {pricingMaxFee}
+              </div>
+            )}
+            <div className="pt-1 text-muted-foreground">
+              {t("skill.pricing.confirmDesc")}
+            </div>
+          </div>
+        }
+        confirmLabel={t("skill.pricing.save")}
+        cancelLabel={t("skill.cancel")}
+        loading={pricingSaving}
+        onConfirm={() => void handleSavePricing()}
       />
 
       <McpBundleDialog

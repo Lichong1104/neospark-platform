@@ -24,7 +24,12 @@
       "userDetail": "User Detail",
       "payments": "Payments",
       "points": "Points & Maintenance",
-      "skillReviews": "Skill Review"
+      "skillReviews": "Skill Review",
+      "pricing": "Pricing",
+      "payouts": "Payouts",
+      "refunds": "Refunds",
+      "priceChanges": "Price Changes",
+      "marketplace": "Marketplace Ledger"
     },
     "actions": {
       "refresh": "Refresh",
@@ -193,6 +198,366 @@
       "expiryDryDone": "Dry-run finished",
       "expiryDone": "Expiry processing finished",
       "expiryFailed": "Failed to run expiry check"
+    },
+    "pricing": {
+      "tabs": {
+        "config": "Config Pricing",
+        "token": "Token Pricing",
+        "asset": "Compute Pricing"
+      },
+      "reasonPlaceholder": "Reason for the change (optional, recorded in audit)",
+      "config": {
+        "title": "Pricing Config (effective values)",
+        "scope": {
+          "global": "Global",
+          "plan": "Plan",
+          "category": "Category",
+          "creator": "Creator"
+        },
+        "scopeKey": "scope key (e.g. * / pro / image / user id)",
+        "version": "Config version",
+        "pending": "{{count}} pending change(s)",
+        "columns": {
+          "key": "Key",
+          "value": "Effective value",
+          "default": "Default",
+          "type": "Type",
+          "updatedAt": "Updated"
+        },
+        "save": "Save changes",
+        "saveSuccess": "Pricing config saved",
+        "saveFailed": "Failed to save pricing config",
+        "loadFailed": "Failed to load pricing config",
+        "noChanges": "No changes to save",
+        "confirmTitle": "Save pricing config",
+        "confirmBody": "Apply {{count}} change(s) to {{scope}}? This takes effect immediately for new billings.",
+        "confirmSave": "Save"
+      },
+      "audit": {
+        "title": "Pricing audit log",
+        "columns": {
+          "time": "Time",
+          "key": "Key",
+          "old": "Old",
+          "new": "New",
+          "operator": "Operator",
+          "reason": "Reason"
+        }
+      },
+      "token": {
+        "title": "Token Pricing (credits per 1M tokens)",
+        "hint": "Input/Output are retail credits per million tokens. Cost fields are upstream cost in fen per million tokens and only feed the margin preview. The `default` row is the fallback for unlisted models and cannot be removed.",
+        "modelPlaceholder": "provider:model, e.g. gemini:gemini-2.5-flash",
+        "addModel": "Add model",
+        "modelRequired": "Enter a model name",
+        "modelExists": "That model already exists",
+        "defaultRequired": "The `default` row is required",
+        "invalidNumber": "Prices must be non-negative integers",
+        "fallback": "fallback for unlisted models",
+        "loadFailed": "Failed to load token pricing",
+        "saveSuccess": "Token pricing saved",
+        "saveFailed": "Failed to save token pricing",
+        "confirmTitle": "Save token pricing",
+        "confirmBody": "Overwrite the token price table with {{count}} changed model(s)? New model calls use the new prices immediately.",
+        "columns": {
+          "model": "Model",
+          "input": "Input (credits/M)",
+          "output": "Output (credits/M)",
+          "costInput": "Cost in (fen/M)",
+          "costOutput": "Cost out (fen/M)",
+          "marginInput": "Input margin",
+          "marginOutput": "Output margin",
+          "actions": "Actions"
+        }
+      },
+      "asset": {
+        "title": "Compute Asset Pricing",
+        "create": "New price",
+        "createTitle": "New asset price",
+        "editTitle": "Edit asset price",
+        "loadFailed": "Failed to load asset pricing",
+        "modelRequired": "Enter a model name",
+        "invalidNumber": "Credits, duration and cost must be non-negative integers",
+        "createSuccess": "Asset price created",
+        "saveSuccess": "Asset price updated",
+        "saveFailed": "Failed to save asset price",
+        "statusSuccess": "Status updated",
+        "statusFailed": "Failed to update status",
+        "enable": "Enable",
+        "disable": "Disable",
+        "enableConfirmTitle": "Enable asset price",
+        "disableConfirmTitle": "Disable asset price",
+        "toggleConfirmBody": "{{asset}} will be {{state}}.{{effect}}",
+        "effectDisable": "New tasks will no longer use this price.",
+        "effectEnable": "This price becomes selectable again for new tasks.",
+        "confirmTitle": "Save asset price",
+        "confirmBody": "Save {{asset}} at {{credits}} credits per run? The new price applies to new generations only.",
+        "confirmToggle": "Confirm",
+        "marginPreview": "Margin preview",
+        "reviewSave": "Review & save",
+        "filter": {
+          "allTypes": "All types",
+          "allStatus": "All status",
+          "active": "Active",
+          "inactive": "Inactive"
+        },
+        "columns": {
+          "type": "Type",
+          "model": "Model",
+          "variant": "Resolution / duration",
+          "unitCredits": "Credits",
+          "cost": "Cost",
+          "margin": "Revenue / margin",
+          "status": "Status",
+          "updatedAt": "Updated",
+          "actions": "Actions"
+        },
+        "form": {
+          "model": "Model",
+          "provider": "Provider",
+          "resolution": "Resolution",
+          "duration": "Duration (s)",
+          "unitCredits": "Credits per run",
+          "costFen": "Cost (fen)",
+          "costOptional": "Optional",
+          "active": "Active",
+          "reason": "Reason"
+        }
+      }
+    },
+    "payouts": {
+      "title": "Creator Payouts",
+      "loadFailed": "Failed to load payouts",
+      "actionFailed": "Payout action failed",
+      "filter": {
+        "all": "All status"
+      },
+      "status": {
+        "requested": "Requested",
+        "approved": "Approved",
+        "paid": "Paid",
+        "rejected": "Rejected"
+      },
+      "columns": {
+        "id": "ID",
+        "creator": "Creator",
+        "credits": "Credits",
+        "amount": "Amount",
+        "method": "Method",
+        "status": "Status",
+        "time": "Requested / Paid",
+        "actions": "Actions"
+      },
+      "actions": {
+        "approve": "Approve",
+        "reject": "Reject",
+        "markPaid": "Mark paid"
+      },
+      "actionLabel": {
+        "approve": "approve",
+        "reject": "reject",
+        "mark-paid": "mark as paid"
+      },
+      "actionSuccess": {
+        "approve": "Payout approved",
+        "reject": "Payout rejected",
+        "mark-paid": "Payout marked as paid"
+      },
+      "confirmTitle": {
+        "approve": "Approve payout",
+        "reject": "Reject payout",
+        "mark-paid": "Mark payout as paid"
+      },
+      "confirmBody": "Payout #{{id}} from creator {{creator}} for {{credits}} credits ({{amount}}) — {{action}}?",
+      "externalRef": "Payment reference (bank / wallet txn)",
+      "note": "Note (optional)"
+    },
+    "refunds": {
+      "title": "Refund a skill invocation",
+      "history": "Refund history",
+      "hint": "Only settled invocations can be refunded. Over-window refunds need a second confirmation. Creator earnings are reversed proportionally.",
+      "loadFailed": "Failed to load refunds",
+      "success": "Refund issued",
+      "failed": "Refund failed",
+      "invocationId": "invocation_id",
+      "userId": "user_id",
+      "invocationRequired": "Enter a valid invocation id",
+      "reasonRequired": "Refund reason is required",
+      "invalidCredits": "Credits must be a positive integer",
+      "creditsOptional": "credits (empty = all)",
+      "reason": "reason",
+      "note": "note (optional)",
+      "submit": "Refund",
+      "scope": {
+        "all": "All",
+        "skill_fee": "Skill fee",
+        "token": "Token",
+        "compute": "Compute"
+      },
+      "columns": {
+        "id": "ID",
+        "invocation": "Invocation",
+        "credits": "Credits",
+        "scope": "Scope",
+        "reversal": "Creator reversal",
+        "status": "Status",
+        "reason": "Reason",
+        "time": "Time"
+      },
+      "overWindowBadge": "Over window",
+      "overWindowTitle": "Over the refund window",
+      "overWindowBody": "This invocation is outside the refund window. Continuing will record the refund as over-window. Confirm?",
+      "overWindowConfirm": "Refund anyway",
+      "confirmTitle": "Refund invocation",
+      "confirmBody": "Refund {{credits}} credits (scope: {{scope}}) to the user of invocation {{invocation}}?",
+      "confirmRefund": "Confirm refund",
+      "allRemaining": "all remaining",
+      "noteLabel": "note"
+    },
+    "priceChanges": {
+      "title": "Skill Price Change Requests",
+      "hint": "Approved changes take effect for new invocations; the old price stays valid while pending.",
+      "loadFailed": "Failed to load price change requests",
+      "actionFailed": "Review action failed",
+      "filter": {
+        "all": "All status"
+      },
+      "status": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "columns": {
+        "id": "ID",
+        "skill": "Skill",
+        "creator": "Creator",
+        "price": "Current → requested",
+        "mode": "Mode",
+        "reason": "Reason",
+        "status": "Status",
+        "time": "Created",
+        "actions": "Actions"
+      },
+      "actions": {
+        "approve": "Approve",
+        "reject": "Reject"
+      },
+      "actionLabel": {
+        "approve": "approve",
+        "reject": "reject"
+      },
+      "actionSuccess": {
+        "approve": "Price change approved",
+        "reject": "Price change rejected"
+      },
+      "confirmTitle": {
+        "approve": "Approve price change",
+        "reject": "Reject price change"
+      },
+      "confirmBody": "{{action}} price change for {{skill}}: {{current}} → {{requested}} credits?",
+      "note": "Review note (optional)"
+    },
+    "marketplace": {
+      "tabs": {
+        "invocations": "Invocations",
+        "reconciliation": "Reconciliation",
+        "risk": "Risk Control"
+      },
+      "filters": {
+        "userId": "User ID",
+        "skillId": "Skill ID",
+        "allStatus": "All statuses",
+        "search": "Search",
+        "since": "Since",
+        "until": "Until"
+      },
+      "invocations": {
+        "title": "Invocation Ledger",
+        "hint": "Every billed skill invocation with skill/token/asset split plus creator and platform shares.",
+        "page": "Page",
+        "view": "Detail",
+        "partial": "partial",
+        "net": "Net",
+        "charged": "Charged",
+        "tokens": "Tokens in/out",
+        "freeQuota": "Free quota",
+        "errorCode": "Error",
+        "skillsSplit": "Skill split",
+        "assetsTitle": "Asset items ({{count}})",
+        "snapshot": "Pricing snapshot",
+        "empty": "No data",
+        "detailTitle": "Invocation #{{id}}",
+        "columns": {
+          "user": "User",
+          "skill": "Skill",
+          "status": "Status",
+          "skillFee": "Skill fee",
+          "token": "Token",
+          "asset": "Assets",
+          "total": "Total",
+          "refunded": "Refunded",
+          "creator": "Creator",
+          "platform": "Platform",
+          "actions": "Actions"
+        },
+        "assetColumns": {
+          "type": "Type",
+          "quantity": "Qty",
+          "unit": "Unit",
+          "credits": "Credits",
+          "upstream": "Upstream cost",
+          "status": "Status"
+        }
+      },
+      "reconciliation": {
+        "title": "Reconciliation",
+        "hint": "Verifies invariants: invocation totals vs skill splits, asset items, and creator ledger vs account balance.",
+        "run": "Run check",
+        "ok": "All invariants pass",
+        "violations": "{{count}} violations",
+        "empty": "No violations",
+        "totals": {
+          "invocations": "Invocations",
+          "total": "Gross credits",
+          "refunded": "Refunded",
+          "net": "Net credits",
+          "creator": "Creator credits",
+          "platform": "Platform credits",
+          "retention": "Platform retention",
+          "token": "Token credits",
+          "asset": "Asset credits"
+        },
+        "violationTypes": {
+          "skillFee": "Skill fee mismatch",
+          "creator": "Creator credits mismatch",
+          "asset": "Asset credits mismatch",
+          "account": "Creator account mismatch"
+        }
+      },
+      "risk": {
+        "title": "Risk Control",
+        "hint": "Self-dealing patterns and creators sharing the same payout profile.",
+        "load": "Refresh",
+        "selfDealing": "Self-dealing",
+        "sharedProfiles": "Shared payout profiles",
+        "empty": "No flags",
+        "columns": {
+          "user": "User",
+          "skill": "Skill",
+          "calls": "Calls",
+          "fee": "Skill fee",
+          "blocked": "Blocked creator credits",
+          "users": "Users",
+          "count": "Accounts"
+        }
+      },
+      "toast": {
+        "invalidUser": "User ID must be a number",
+        "loadFailed": "Failed to load invocations",
+        "loadDetailFailed": "Failed to load invocation detail",
+        "reconcileFailed": "Reconciliation failed",
+        "abuseFailed": "Failed to load risk flags"
+      }
     }
   },
   "onboarding": {
@@ -409,7 +774,8 @@
     "apiKeys": "API KEYS",
     "invoiceRecords": "INVOICE RECORDS",
     "cancelSubscription": "CANCEL SUBSCRIPTION",
-    "logout": "LOGOUT"
+    "logout": "LOGOUT",
+    "creatorCenter": "Creator Center"
   },
   "workspace": {
     "assets": "Assets",
@@ -1400,6 +1766,56 @@
     "instructions": "Instructions",
     "scripts": "Scripts",
     "references": "References",
+    "pricing": {
+      "adminTitle": "Pricing (Admin)",
+      "priceLabel": "Price (credits per call)",
+      "modeLabel": "Pricing mode",
+      "mode": {
+        "inherit": "Inherit platform default",
+        "fixed": "Fixed price",
+        "free": "Free"
+      },
+      "shareRateLabel": "Creator share rate",
+      "shareRateHint": "0-1. Leave blank to keep the current rate. Admins only.",
+      "maxFeeLabel": "Max skill fee cap (credits)",
+      "maxFeeHint": "Leave blank to keep the current cap.",
+      "unchanged": "Leave blank to keep unchanged",
+      "reasonLabel": "Reason (audit log)",
+      "reasonPlaceholder": "Why is this pricing changing?",
+      "save": "Save pricing",
+      "confirmTitle": "Confirm pricing change",
+      "confirmDesc": "Saves immediately, bypasses creator review, increments the pricing version and writes an audit entry.",
+      "saveSuccess": "Pricing updated (v{{version}})",
+      "saveFailed": "Failed to update pricing",
+      "invalidPrice": "Price must be an integer between 0 and 500",
+      "invalidShareRate": "Share rate must be between 0 and 1",
+      "invalidMaxFee": "Cap must be a non-negative integer",
+      "free": "Free",
+      "freeQuotaValue": "{{count}} free calls / {{period}}",
+      "period": {
+        "month": "month",
+        "lifetime": "lifetime"
+      },
+      "creatorHint": "Creators cannot change pricing directly. Submit a price change request in the Creator Center — the current price stays effective until it is approved.",
+      "goCreator": "Open Creator Center"
+    },
+    "reviews": "Ratings & Reviews",
+    "ratingStats": "Avg {{avg}} · {{count}} ratings",
+    "ratingCounts": "{{ratings}} ratings · {{comments}} comments",
+    "writeReview": "Rate or review this skill",
+    "updateReview": "Update my rating",
+    "reviewPlaceholder": "Share your experience...",
+    "submitReview": "Post review",
+    "updateComment": "Update comment",
+    "reviewSubmitted": "Review submitted",
+    "reviewSubmitFailed": "Failed to submit, please try again",
+    "reviewDeleted": "Review deleted",
+    "reviewDeleteFailed": "Failed to delete",
+    "loginToReview": "Log in to rate and review this skill",
+    "noReviews": "No reviews yet — be the first",
+    "deleteReview": "Delete review",
+    "deleteReviewTitle": "Delete rating/review",
+    "deleteReviewConfirm": "Are you sure you want to delete your rating and review? This cannot be undone.",
     "welcomeTitle": "Skill Agent",
     "welcomeDesc": "Select skills above and enter commands to invoke AI capabilities.",
     "example1": "Generate a cyberpunk cat image for me",
@@ -1693,5 +2109,106 @@
     "addedToWorkflow": "Added to workflow",
     "runNode": "Run node",
     "loadMore": "Load more"
+  },
+  "creator": {
+    "title": "Creator Center",
+    "subtitle": "Track skill income, request payouts, and submit price changes.",
+    "loadFailed": "Failed to load creator data",
+    "account": {
+      "available": "Available",
+      "pending": "Pending release",
+      "pendingHint": "Locked; releases automatically after the hold period",
+      "frozen": "Frozen",
+      "earned": "Total earned",
+      "paid": "Total paid",
+      "caps": "Daily cap {{daily}} · Monthly cap {{monthly}}"
+    },
+    "bySkill": {
+      "title": "Income by skill",
+      "skill": "Skill",
+      "calls": "Calls",
+      "fee": "Skill fee",
+      "revenue": "Skill fee share",
+      "compute": "Compute share",
+      "refunded": "Refunded"
+    },
+    "statement": {
+      "title": "Monthly statement",
+      "confirmedCredits": "Confirmed credits",
+      "lockedCredits": "Locked credits",
+      "hint": "Statement is read-only. Pending earnings release after the hold period."
+    },
+    "payout": {
+      "title": "Request payout",
+      "credits": "credits",
+      "method": "method",
+      "note": "note (optional)",
+      "submit": "Request payout",
+      "hint": "Available credits: {{available}}. Amount is calculated with the weighted settlement rate.",
+      "creditsUnit": "credits",
+      "invalidCredits": "Enter a positive integer amount",
+      "methodRequired": "Enter a payout method",
+      "success": "Payout requested",
+      "failed": "Payout request failed",
+      "confirmTitle": "Confirm payout request",
+      "confirmBody": "Request payout of {{credits}} credits via {{method}}?",
+      "confirm": "Request",
+      "status": {
+        "requested": "Requested",
+        "approved": "Approved",
+        "paid": "Paid",
+        "rejected": "Rejected"
+      }
+    },
+    "earnings": {
+      "title": "Earnings ledger",
+      "allTypes": "All entries",
+      "skillFilter": "skill_id",
+      "type": {
+        "earning": "Earning",
+        "reversal": "Reversal",
+        "payout": "Payout",
+        "adjustment": "Adjustment"
+      },
+      "source": {
+        "skill_fee": "Skill fee",
+        "compute": "Compute",
+        "payout": "Payout",
+        "adjustment": "Adjustment"
+      },
+      "unlockAt": "Unlocks {{time}}",
+      "columns": {
+        "id": "ID",
+        "skill": "Skill",
+        "type": "Type",
+        "credits": "Credits",
+        "status": "Status",
+        "rate": "Settlement rate",
+        "balance": "Balance after",
+        "time": "Time"
+      }
+    },
+    "priceChange": {
+      "title": "Price change request",
+      "skillId": "skill_id",
+      "price": "new price (credits)",
+      "reason": "reason",
+      "hint": "The current price stays effective while a request is pending. You cannot change the revenue share rate.",
+      "submit": "Submit request",
+      "skillRequired": "Enter a skill id",
+      "invalidPrice": "Price must be an integer between 0 and 500",
+      "success": "Price change submitted",
+      "failed": "Failed to submit price change",
+      "mode": {
+        "fixed": "Fixed",
+        "inherit": "Inherit platform price",
+        "free": "Free"
+      },
+      "status": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      }
+    }
   }
 }

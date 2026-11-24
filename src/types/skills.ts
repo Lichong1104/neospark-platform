@@ -19,6 +19,17 @@ export interface SkillMeta {
   icon?: string;
   /** 执行模式：inline（进程内代码块）/ subprocess（子进程脚本） */
   execution_mode?: string;
+  pricing_mode?: "inherit" | "fixed" | "free";
+  billing_enabled?: boolean;
+  free_quota?: number;
+  free_quota_period?: "month" | "lifetime";
+  estimated_token_credits?: number;
+  estimated_asset_credits?: number;
+  /** 仅管理员可见 */
+  creator_share_rate?: number | null;
+  max_skill_fee_credits?: number | null;
+  pricing_version?: number;
+  price_review_status?: string | null;
 }
 
 /** Skill 详情 */
@@ -91,6 +102,32 @@ export interface StreamEvent {
 /** Skill 提交状态 */
 export type SkillSubmissionStatus = "pending" | "approved" | "rejected";
 
+/** 单条用户评分/评论（rating 与 comment 至少有一项） */
+export interface SkillReview {
+  id: number;
+  user_id: number;
+  user_name: string;
+  user_avatar: string | null;
+  rating: number | null;
+  comment: string | null;
+  created_at: string | null;
+  /** 当前登录用户是否是作者（匿名访问恒为 false） */
+  is_mine: boolean;
+}
+
+/** GET /agents/skills/{skillId}/reviews 聚合响应 */
+export interface SkillReviewsSummary {
+  skill_id: string;
+  /** 全部评分的平均值（无评分时为 null） */
+  rating_avg: number | null;
+  rating_count: number;
+  comment_count: number;
+  /** 当前登录用户自己的记录（匿名访问为 null） */
+  my_review: SkillReview | null;
+  comments: SkillReview[];
+  offset: number;
+  limit: number;
+}
 /** 我的 Skill 提交记录 */
 export interface SkillSubmissionItem {
   id: number;
