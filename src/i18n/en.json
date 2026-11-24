@@ -116,6 +116,17 @@
       "rejectReasonRequired": "Please enter a reject reason",
       "contentTitle": "SKILL.md Content",
       "packageFiles": "Package Files",
+      "detailContentTitle": "Detail Page Content",
+      "detail": {
+        "headline": "Headline",
+        "subheadline": "Subheadline",
+        "features": "Features",
+        "whatCanCreate": "What you can create",
+        "useCases": "Use cases",
+        "howTo": "How to use",
+        "usageRules": "Usage rules",
+        "author": "Author"
+      },
       "filter": {
         "pending": "Pending",
         "approved": "Approved",

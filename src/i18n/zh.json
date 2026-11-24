@@ -116,6 +116,17 @@
       "rejectReasonRequired": "请填写驳回原因",
       "contentTitle": "SKILL.md 内容",
       "packageFiles": "包内文件",
+      "detailContentTitle": "详情页内容",
+      "detail": {
+        "headline": "主标题",
+        "subheadline": "副标题",
+        "features": "功能亮点",
+        "whatCanCreate": "可创作内容",
+        "useCases": "使用场景",
+        "howTo": "使用步骤",
+        "usageRules": "使用规则",
+        "author": "作者"
+      },
       "filter": {
         "pending": "待审核",
         "approved": "已通过",

@@ -28,6 +28,7 @@ import ConfirmDialog from "@/components/ui/confirm-dialog";
 import adminApi from "@/api/admin";
 import type {
   AdminPagedResponse,
+  AdminSkillDetailSection,
   AdminSkillSubmissionDetail,
   AdminSkillSubmissionItem,
 } from "@/types/admin";
@@ -58,6 +59,24 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
     </span>
   );
 };
+
+const DetailSectionList: React.FC<{ title: string; items: AdminSkillDetailSection[] }> = ({
+  title,
+  items,
+}) => (
+  <div>
+    <div className="font-semibold">{title}</div>
+    <ul className="mt-1 list-disc space-y-1 pl-5">
+      {items.map((item, index) => (
+        <li key={`${title}-${index}`}>
+          {item.title ? <span className="font-semibold">{item.title}</span> : null}
+          {item.title && item.body ? ": " : null}
+          <span className="text-muted-foreground">{item.body}</span>
+        </li>
+      ))}
+    </ul>
+  </div>
+);
 
 const SkillReviewPanel: React.FC = () => {
   const { t } = useTranslation();
@@ -351,6 +370,79 @@ const SkillReviewPanel: React.FC = () => {
                     {detail.package_files.map((f) => (
                       <div key={f}>{f}</div>
                     ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {detail.detail ? (
+                <div>
+                  <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                    {t("admin.skillReviews.detailContentTitle")}
+                  </div>
+                  <div className="space-y-3 border border-foreground/20 bg-background p-3 text-xs leading-relaxed">
+                    {detail.detail.headline ? (
+                      <div>
+                        <span className="text-muted-foreground">
+                          {t("admin.skillReviews.detail.headline")}:{" "}
+                        </span>
+                        <span className="font-semibold">{detail.detail.headline}</span>
+                      </div>
+                    ) : null}
+                    {detail.detail.subheadline ? (
+                      <div>
+                        <span className="text-muted-foreground">
+                          {t("admin.skillReviews.detail.subheadline")}:{" "}
+                        </span>
+                        {detail.detail.subheadline}
+                      </div>
+                    ) : null}
+                    {detail.detail.features?.length ? (
+                      <DetailSectionList
+                        title={t("admin.skillReviews.detail.features")}
+                        items={detail.detail.features}
+                      />
+                    ) : null}
+                    {detail.detail.whatCanCreate?.bullets?.length ? (
+                      <div>
+                        <div className="font-semibold">
+                          {t("admin.skillReviews.detail.whatCanCreate")}
+                        </div>
+                        <ul className="mt-1 list-disc space-y-1 pl-5">
+                          {detail.detail.whatCanCreate.bullets.map((bullet, index) => (
+                            <li key={`bullet-${index}`}>{bullet}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+                    {detail.detail.useCases?.length ? (
+                      <DetailSectionList
+                        title={t("admin.skillReviews.detail.useCases")}
+                        items={detail.detail.useCases}
+                      />
+                    ) : null}
+                    {detail.detail.howTo?.length ? (
+                      <DetailSectionList
+                        title={t("admin.skillReviews.detail.howTo")}
+                        items={detail.detail.howTo}
+                      />
+                    ) : null}
+                    {detail.detail.usageRules?.length ? (
+                      <DetailSectionList
+                        title={t("admin.skillReviews.detail.usageRules")}
+                        items={detail.detail.usageRules}
+                      />
+                    ) : null}
+                    {detail.detail.author ? (
+                      <div>
+                        <div className="font-semibold">{t("admin.skillReviews.detail.author")}</div>
+                        {detail.detail.author.name ? (
+                          <div>{detail.detail.author.name}</div>
+                        ) : null}
+                        {detail.detail.author.bio ? (
+                          <div className="text-muted-foreground">{detail.detail.author.bio}</div>
+                        ) : null}
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               ) : null}

@@ -189,9 +189,23 @@ export type AdminSkillSubmissionItem = {
   reviewed_at: string | null;
 };
 
+export type AdminSkillDetailSection = { title: string; body: string };
+
+export type AdminSkillSubmissionDetailContent = {
+  headline?: string;
+  subheadline?: string;
+  features?: AdminSkillDetailSection[];
+  whatCanCreate?: { bullets: string[] };
+  useCases?: AdminSkillDetailSection[];
+  howTo?: AdminSkillDetailSection[];
+  usageRules?: AdminSkillDetailSection[];
+  author?: { name: string; bio: string };
+};
+
 export type AdminSkillSubmissionDetail = AdminSkillSubmissionItem & {
   content: string;
   package_files: string[];
+  detail: AdminSkillSubmissionDetailContent | null;
 };
 
 export type AdminSkillSubmissionReviewResult = {
