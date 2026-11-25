@@ -199,7 +199,7 @@ export type AdminSkillSubmissionDetailContent = {
   useCases?: AdminSkillDetailSection[];
   howTo?: AdminSkillDetailSection[];
   usageRules?: AdminSkillDetailSection[];
-  author?: { name: string; bio: string };
+  author?: { name: string; bio: string; links?: string[] };
 };
 
 export type AdminSkillSubmissionDetail = AdminSkillSubmissionItem & {

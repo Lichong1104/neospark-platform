@@ -441,6 +441,22 @@ const SkillReviewPanel: React.FC = () => {
                         {detail.detail.author.bio ? (
                           <div className="text-muted-foreground">{detail.detail.author.bio}</div>
                         ) : null}
+                        {detail.detail.author.links?.length ? (
+                          <ul className="mt-1 space-y-0.5">
+                            {detail.detail.author.links.map((link) => (
+                              <li key={link}>
+                                <a
+                                  href={link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="font-mono text-[11px] underline underline-offset-2"
+                                >
+                                  {link}
+                                </a>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : null}
                       </div>
                     ) : null}
                   </div>
